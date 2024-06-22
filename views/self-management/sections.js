@@ -1,0 +1,9 @@
+const sections = {
+  1: "INFORMACIÓN BÁSICA",
+  2: "INFORMACIÓN TRIBUTARIA",
+  3: "ACTIVIDAD EN OPERACIONES INTERNACIONALES",
+  4: "PARTICIPACIÓN POLÍTICA",
+  5: "INFORMACIÓN DE CONTACTO",
+};
+
+export default sections;

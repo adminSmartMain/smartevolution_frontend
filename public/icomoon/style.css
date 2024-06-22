@@ -1,0 +1,218 @@
+@font-face {
+  font-family: 'icomoon';
+  src:  url('fonts/icomoon.eot?295atd');
+  src:  url('fonts/icomoon.eot?295atd#iefix') format('embedded-opentype'),
+    url('fonts/icomoon.ttf?295atd') format('truetype'),
+    url('fonts/icomoon.woff?295atd') format('woff'),
+    url('fonts/icomoon.svg?295atd#icomoon') format('svg');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}
+
+[class^="icon-"], [class*=" icon-"] {
+  /* use !important to prevent issues with browser extensions that change fonts */
+  font-family: 'icomoon' !important;
+  speak: never;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+
+  /* Better Font Rendering =========== */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-Boton-Small---Editar-Cliente:before {
+  content: "\e900";
+  color: #999;
+}
+.icon-Boton-Small---Eliminar:before {
+  content: "\e901";
+  color: #999;
+}
+.icon-Boton-Small---Expediente:before {
+  content: "\e902";
+  color: #488b8f;
+}
+.icon-Boton-Small---Perfil-de-Riesgo-Cliente:before {
+  content: "\e903";
+  color: #488b8f;
+}
+.icon-Boton-Small---Perfil-Financiero-Cliente:before {
+  content: "\e904";
+  color: #488b8f;
+}
+.icon-Boton-Small---Resumen-Financiero:before {
+  content: "\e905";
+  color: #488b8f;
+}
+.icon-Grupo-1549:before {
+  content: "\e906";
+  color: #488b8f;
+}
+.icon-Grupo-1549-1:before {
+  content: "\e907";
+  color: #e66431;
+}
+.icon-Icon---Chrevron-Down-Small:before {
+  content: "\e908";
+  color: #8c7e82;
+}
+.icon-Icon---Descarga:before {
+  content: "\e909";
+  color: #488b8f;
+}
+.icon-Icon---Document---Excel:before {
+  content: "\e90a";
+  color: #fff;
+}
+.icon-Icon---Document---PDF:before {
+  content: "\e90b";
+  color: #fff;
+}
+.icon-Icon---Document---Word:before {
+  content: "\e90c";
+  color: #fff;
+}
+.icon-Icon---Dropdown:before {
+  content: "\e90d";
+  color: #488b8f;
+}
+.icon-Icon---Info:before {
+  content: "\e90e";
+  color: #488b8f;
+}
+.icon-Icon---Info-1:before {
+  content: "\e90f";
+  color: #488b8f;
+}
+.icon-Icon---Iniciar-Sesin:before {
+  content: "\e910";
+  color: #fff;
+}
+.icon-Icon---Notificacin:before {
+  content: "\e911";
+  color: #488b8f;
+}
+.icon-Icon---Perfil-de-riesgo---Alto .path1:before {
+  content: "\e912";
+  color: rgb(255, 255, 255);
+  opacity: 0.4;
+}
+.icon-Icon---Perfil-de-riesgo---Alto .path2:before {
+  content: "\e913";
+  margin-left: -2.0751953125em;
+  color: rgb(255, 255, 255);
+}
+.icon-Icon---Perfil-de-riesgo---Alto .path3:before {
+  content: "\e914";
+  margin-left: -2.0751953125em;
+  color: rgb(255, 255, 255);
+}
+.icon-Icon---Perfil-de-riesgo---Bajo .path1:before {
+  content: "\e915";
+  color: rgb(255, 255, 255);
+  opacity: 0.4;
+}
+.icon-Icon---Perfil-de-riesgo---Bajo .path2:before {
+  content: "\e916";
+  margin-left: -2.0751953125em;
+  color: rgb(255, 255, 255);
+}
+.icon-Icon---Perfil-de-riesgo---Bajo .path3:before {
+  content: "\e917";
+  margin-left: -2.0751953125em;
+  color: rgb(255, 255, 255);
+}
+.icon-Icon---Perfil-de-riesgo---Desconocido .path1:before {
+  content: "\e918";
+  color: rgb(255, 255, 255);
+  opacity: 0.4;
+}
+.icon-Icon---Perfil-de-riesgo---Desconocido .path2:before {
+  content: "\e919";
+  margin-left: -2.0751953125em;
+  color: rgb(255, 255, 255);
+}
+.icon-Icon---Perfil-de-riesgo---Medio .path1:before {
+  content: "\e91a";
+  color: rgb(255, 255, 255);
+  opacity: 0.4;
+}
+.icon-Icon---Perfil-de-riesgo---Medio .path2:before {
+  content: "\e91b";
+  margin-left: -2.0751953125em;
+  color: rgb(255, 255, 255);
+}
+.icon-Icon---Perfil-de-riesgo---Medio .path3:before {
+  content: "\e91c";
+  margin-left: -2.0751953125em;
+  color: rgb(255, 255, 255);
+}
+.icon-Icon---Radio-Bottom:before {
+  content: "\e91d";
+}
+.icon-Icon---Revisado-Check:before {
+  content: "\e91e";
+  color: #575757;
+}
+.icon-Icon---Seleccion_Go:before {
+  content: "\e91f";
+  color: #63595c;
+}
+.icon-Icon---switcher-ON .path1:before {
+  content: "\e920";
+  color: rgb(72, 139, 143);
+}
+.icon-Icon---switcher-ON .path2:before {
+  content: "\e921";
+  margin-left: -1em;
+  color: rgb(255, 255, 255);
+}
+.icon-Icon---Visualizar:before {
+  content: "\e922";
+  color: #488b8f;
+}
+.icon-Icon---Volver-a-cargar:before {
+  content: "\e923";
+  color: #fff;
+}
+.icon-Icon-Animado-Listas---Editar:before {
+  content: "\e924";
+  color: #999;
+}
+.icon-Icon-Home:before {
+  content: "\e925";
+  color: #488b8f;
+}
+.icon-Icon-One-More-Trip:before {
+  content: "\e926";
+  color: #fff;
+}
+.icon-Icon-One-More-Trip-2:before {
+  content: "\e927";
+  color: #63595c;
+}
+.icon-Icono---Cantidad-de-Dias:before {
+  content: "\e928";
+  color: #5ea3a3;
+}
+.icon-Icono---Guardar-Borrador:before {
+  content: "\e929";
+  color: #fff;
+}
+.icon-Icono---Guardar-Datos:before {
+  content: "\e92a";
+  color: #fff;
+}
+.icon-Icono---Tasa-de-descuento:before {
+  content: "\e92b";
+  color: #5ea3a3;
+}
+.icon-Icono---Tasa-Pactada:before {
+  content: "\e92c";
+  color: #5ea3a3;
+}
