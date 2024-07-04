@@ -14,4 +14,8 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: "1G"
