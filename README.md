@@ -1,34 +1,50 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+Proyecto FRONTEND en Next.js - Nombre del Proyecto
 
-## Getting Started
+Este repositorio contiene un proyecto desarrollado en Next.js.
+Instalación y Ejecución
+Instalación usando NVM y Docker
 
-First, run the development server:
+Asegúrate de tener Docker y NVM (Node Version Manager) instalados en tu sistema.
+Paso 1: Clonar el Repositorio
 
-```bash
+bash
+
+git clone <URL_DEL_REPOSITORIO>
+cd <NOMBRE_DEL_DIRECTORIO>
+
+Paso 2: Instalar Node.js 18.17 usando NVM
+
+Si aún no tienes Node.js 18.17 instalado, puedes usar NVM para instalarlo:
+nvm install 18.17
+nvm use 18.17
+
+Paso 3: Instalar Dependencias
+npm install
+
+Paso 4: Ejecutar en Desarrollo
+Para ejecutar la aplicación en modo de desarrollo:
 npm run dev
-# or
-yarn dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+La aplicación estará disponible en http://localhost:3000.
 
-You can start editing the page by modifying `pages/index.js`. The page auto-updates as you edit the file.
+Ejecución usando Docker
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.js`.
+Paso 1: Construir y Ejecutar el Contenedor
+# Construir la imagen del contenedor
+sudo docker compose up --build -d
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
+Esto construirá la imagen del contenedor y comenzará a ejecutar la aplicación en el puerto 3000. Puedes acceder a la aplicación en http://localhost:3000.
 
-## Learn More
+Detener y Eliminar Contenedores
 
-To learn more about Next.js, take a look at the following resources:
+Para detener y eliminar el contenedor Docker:
+# Obtener el ID del contenedor en ejecución
+docker ps
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Detener el contenedor
+docker stop <CONTAINER_ID>
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+# Eliminar el contenedor
+docker rm <CONTAINER_ID>
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+Este README.md proporciona una guía básica para la instalación y ejecución del proyecto Next.js, utilizando Node.js 18.17 instalado mediante NVM y ejecutándose tanto en desarrollo local como en Docker. Asegúrate de personalizarlo según las necesidades específicas de tu proyecto, como las configuraciones adicionales de Docker, variables de entorno, etc.

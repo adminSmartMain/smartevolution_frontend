@@ -1,0 +1,17 @@
+services:
+  web:
+    build: 
+      context: .
+    ports:
+      - "${PORT}:${PORT}"
+    volumes:
+      - .:/app
+      - ./logs:/app/logs
+    env_file:
+      - docker.env
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: always
