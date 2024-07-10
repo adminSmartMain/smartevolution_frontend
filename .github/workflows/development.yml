@@ -1,9 +1,9 @@
-name: Build & Deploy Production
+name: Build & Deploy TEST
 
 on:
   push:
     branches:
-      - main
+      - development
 
 jobs:
   deploy_to_droplet:
@@ -14,15 +14,15 @@ jobs:
       - name: Connect with SSH and Deploy
         uses: appleboy/ssh-action@v1.0.0
         with:
-          host: ${{ secrets.SSH_HOST_PROD }}
-          username: ${{ secrets.SSH_USERNAME_PROD }}
-          key: ${{ secrets.SSH_KEY_PROD }}
-          port: ${{ secrets.SSH_PORT }}
+          host: ${{ secrets.SSH_HOST_TEST }}
+          username: ${{ secrets.SSH_USERNAME_TEST }}
+          key: ${{ secrets.SSH_KEY_TEST }}
+          port: ${{ secrets.SSH_PORT_TEST }}
           script: |
-            cd "${{secrets.PRODUCTION_FOLDER}}"
+            cd "${{secrets.TEST_FOLDER}}"
             git pull origin main
-            echo "${{ secrets.DOT_ENV_PRODUCTION }}" > .env
-            docker build -f Dockerfile.production -t front_costumer .
-            docker rm -f front_costumer
-            docker run -d --restart always --name front_costumer -p 5001:5001 front_costumer
+            echo "${{ secrets.DOT_ENV_TEST }}" > .env
+            sudo docker stop front_smart_evolution
+            docker rm -f front_smart_evolution
+            sudo docker compose --env-file docker.env up --build -d
             exit

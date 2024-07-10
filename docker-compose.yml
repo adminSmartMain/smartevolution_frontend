@@ -9,6 +9,7 @@ services:
       - ./logs:/app/logs
     env_file:
       - docker.env
+    container_name: frontend_smart_evolution
     logging:
       driver: "json-file"
       options:
