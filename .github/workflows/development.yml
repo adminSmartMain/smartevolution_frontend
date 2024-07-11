@@ -19,10 +19,12 @@ jobs:
           key: ${{ secrets.SSH_KEY_TEST }}
           port: ${{ secrets.SSH_PORT_TEST }}
           script: |
+            set -x
             cd "${{secrets.TEST_FOLDER}}"
             git pull origin development
             echo "${{ secrets.DOT_ENV_TEST }}" > .env
             sudo docker stop front_smart_evolution
             sudo docker rm -f front_smart_evolution
             sudo docker compose --env-file docker.env up --build -d
+            set +x
             exit
