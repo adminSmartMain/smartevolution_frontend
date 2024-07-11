@@ -20,7 +20,7 @@ jobs:
           port: ${{ secrets.SSH_PORT_TEST }}
           script: |
             set -x
-            cd "${{secrets.TEST_FOLDER}}"
+            cd ~/project/SmartEvolutionFrontend
             git pull origin development
             echo "${{ secrets.DOT_ENV_TEST }}" > .env
             sudo docker stop front_smart_evolution
