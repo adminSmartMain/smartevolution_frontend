@@ -172,9 +172,7 @@ export default function RegisterClient() {
         object({
           first_name: string("Ingresa un nombre").nullable(),
           last_name: string("Ingresa un apellido").nullable(),
-          phone_number: string("Ingresa un número de teléfono").required(
-            "El número de teléfono es requerido"
-          ),
+          phone_number: string("Ingresa un número de teléfono").nullable(),
           email: string("Ingresa un email").matches(
             /^[a-zA-Z]+[a-zA-Z0-9_.]+@[a-zA-Z.]+[a-zA-Z]$/,
             "Ingresa un email válido"
@@ -242,9 +240,7 @@ export default function RegisterClient() {
 
       address: string("Ingresa una dirección").nullable(),
 
-      phone_number: string("Ingresa un número de teléfono").required(
-        "El número de teléfono es requerido"
-      ),
+      phone_number: string("Ingresa un número de teléfono").nullable(),
 
       position: string("Ingresa un cargo").nullable(),
     }).when("type_client", {
