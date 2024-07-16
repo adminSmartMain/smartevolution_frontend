@@ -22,5 +22,6 @@ jobs:
             cd "${{secrets.PROD_FOLDER}}"
             git pull origin main
             echo "${{ secrets.DOT_ENV_PROD }}" > .env
+            npm run build
             sudo docker compose --env-file docker.env up --build -d
             exit
