@@ -11,21 +11,46 @@ jobs:
     timeout-minutes: 30
     name: Deploy to Droplet
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_KEY_TEST }}
+          known_hosts: ${{ secrets.SSH_HOST_TEST }}
+
       - name: Connect with SSH and Deploy
-        uses: appleboy/ssh-action@v1.0.0
+        uses: appleboy/ssh-action@v0.1.9
         with:
           host: ${{ secrets.SSH_HOST_TEST }}
           username: ${{ secrets.SSH_USERNAME_TEST }}
           key: ${{ secrets.SSH_KEY_TEST }}
           port: ${{ secrets.SSH_PORT_TEST }}
           script: |
-            cd "${{secrets.TEST_FOLDER}}"
+            set -e
+            echo "Connecting to the server..."
+            cd "${{ secrets.TEST_FOLDER }}"
+            echo "Pulling latest changes from development branch..."
             git pull origin development
-            rm -rf .next
-            rm -rf node_modules
-            rm -rf package-lock.json
-            npm i
+            echo "Removing old build artifacts..."
+            rm -rf .next node_modules package-lock.json
+            if ! command -v npm &> /dev/null
+            then
+              echo "npm could not be found, installing Node.js 18.17 and npm..."
+              curl -sL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+              sudo apt-get install -y nodejs
+              sudo npm install -g npm@latest
+            fi
+            echo "Installing npm dependencies..."
+            npm ci
+            echo "Setting up environment variables..."
             echo "${{ secrets.DOT_ENV_TEST }}" > .env
+            echo "Building the project..."
             npm run build
+            echo "Deploying the application with Docker..."
             sudo docker compose --env-file docker.env up --build -d
-            exit
+
+      - name: Notify on failure
+        if: failure()
+        run: echo "Deployment failed. Please check the logs for more details."
