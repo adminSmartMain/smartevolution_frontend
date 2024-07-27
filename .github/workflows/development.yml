@@ -56,8 +56,10 @@ jobs:
             node -v
             echo "npm version:"
             npm -v
+            echo "Setting Node.js memory limit to 2048 MB..."
+            export NODE_OPTIONS=--max-old-space-size=2048
             echo "Installing npm dependencies..."
-            npm i
+            npm ci
             echo "Setting up environment variables..."
             echo "${{ secrets.DOT_ENV_TEST }}" > .env
             echo "Building the project..."
