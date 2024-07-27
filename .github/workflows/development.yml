@@ -21,6 +21,10 @@ jobs:
           script: |
             cd "${{secrets.TEST_FOLDER}}"
             git pull origin development
+            rm -rf .next
+            rm -rf node_modules
+            rm -rf package-lock.json
+            npm i
             echo "${{ secrets.DOT_ENV_TEST }}" > .env
             npm run build
             sudo docker compose --env-file docker.env up --build -d
