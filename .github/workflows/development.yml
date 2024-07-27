@@ -57,7 +57,7 @@ jobs:
             echo "npm version:"
             npm -v
             echo "Installing npm dependencies..."
-            npm ci
+            npm i
             echo "Setting up environment variables..."
             echo "${{ secrets.DOT_ENV_TEST }}" > .env
             echo "Building the project..."
