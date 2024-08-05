@@ -35,36 +35,6 @@ jobs:
             git pull origin development
             echo "Removing old build artifacts..."
             rm -rf .next node_modules package-lock.json
-            echo "Checking if nvm is installed..."
-            if ! command -v nvm &> /dev/null
-            then
-              echo "nvm not found, installing nvm..."
-              curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
-              export NVM_DIR="$HOME/.nvm"
-              [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
-              [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" # This loads nvm bash_completion
-            else
-              echo "nvm is already installed"
-              export NVM_DIR="$HOME/.nvm"
-              [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
-              [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" # This loads nvm bash_completion
-            fi
-            echo "Installing Node.js 18.17.0 using nvm..."
-            nvm install 18.17.0
-            nvm use 18.17.0
-            echo "Node.js version:"
-            node -v
-            echo "npm version:"
-            npm -v
-            echo "Setting Node.js memory limit to 2048 MB..."
-            export NODE_OPTIONS=--max-old-space-size=2048
-            echo "Installing npm dependencies..."
-            npm i
-            echo "Setting up environment variables..."
-            echo "${{ secrets.DOT_ENV_TEST }}" > .env
-            echo "Building the project..."
-            npm run build
-            echo "Deploying the application with Docker..."
             sudo docker compose --env-file docker.env up --build -d
 
       - name: Notify on failure
