@@ -151,8 +151,6 @@ export const ManageOperationV = () => {
     },
   });
 
-  // Effects
-
   // Detect when the user selects an emitter
   useEffect(() => {
     if (formik.values.emitter) {
@@ -621,6 +619,14 @@ useEffect(() => {
   }, [formik.values.operationDays, formik.values.investorProfit,
       formik.values.presentValueInvestor, formik.values.presentValueSF,
       formik.values.commissionSF, formik.values.GM])
+
+  // Efecto para redirigir cuando la operación es exitosa
+  useEffect(() => {
+    if (dataUpdateOperation || dataCreateOperation) {
+      // Redirige a la URL deseada después de una operación exitosa
+      router.push('/operations');
+    }
+  }, [dataUpdateOperation, dataCreateOperation, router]);
 
   return (
     <>
