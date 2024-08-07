@@ -49,8 +49,10 @@ export const RefundV = ({ formik, option, ToastContainer }) => {
 
   useEffect(() => {
     if (formik.values.applyGM) {
-      formik.setFieldValue("gmAmount", formik.values.amount * 0.004);
+      console.log("debug", formik.values.applyGM)
+      formik.setFieldValue("gmAmount", (formik.values.amount * 0.004));
     } else {
+      console.log("debug 2", formik.values.applyGM)
       formik.setFieldValue("gmAmount", 0);
     }
   }, [formik.values.applyGM, formik.values.amount]);
