@@ -9,7 +9,8 @@ Paso 1: Clonar el Repositorio
 
 bash
 
-git clone https://github.com/andresfelipe3112/Test-t-cnico-React-Native.git
+git clone <URL_DEL_REPOSITORIO>
+cd <NOMBRE_DEL_DIRECTORIO>
 
 Paso 2: Instalar Node.js 18.17 usando NVM
 
