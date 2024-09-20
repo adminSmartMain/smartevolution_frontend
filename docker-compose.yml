@@ -1,0 +1,22 @@
+services:
+  web:
+    build: 
+      context: .
+    ports:
+      - "${PORT}:${PORT}"
+    volumes:
+      - .:/app
+      - ./logs:/app/logs
+    env_file:
+      - docker.env
+    container_name: frontend_smart_evolution
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: "1G"
