@@ -10,7 +10,7 @@ export default function Home() {
     <div>
       <Head>
         <title>Smart Evolution - Inicio de sesión</title>
-        <meta name="description" content="Prueba de contenido" />
+        <meta name="description" content="Prueba de contenido 2.0" />
       </Head>
 
       <Grid container spacing={0}>
