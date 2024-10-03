@@ -429,7 +429,7 @@ export const ManageOperationV = () => {
           billFraction: 0,
           DateBill: `${new Date().toISOString().substring(0, 10)}`,
           DateOperation: `${new Date().toISOString().substring(0, 10)}`,
-          probableDate: `${new Date().toISOString().substring(0, 10)}`,
+      //    probableDate: `${new Date().toISOString().substring(0, 10)}`,
           DateExpiration: `${new Date().toISOString().substring(0, 10)}`,
           opExpiration: `${new Date().toISOString().substring(0, 10)}`,
           amount: 0,
