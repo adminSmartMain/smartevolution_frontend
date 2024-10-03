@@ -116,7 +116,11 @@ export const ManageOperationV = () => {
     GM: 0,
     id: "",
     investor: "",
+<<<<<<< HEAD
     //investorBroker: "",
+=======
+    investorBroker: "",
+>>>>>>> main
     investorProfit: 0,
     investorTax: 0,
     opDate: `${new Date().toISOString().substring(0, 10)}`,
@@ -412,8 +416,13 @@ export const ManageOperationV = () => {
         setOperationCreated(true);
         formik.setValues({
           ...formik.values,
+<<<<<<< HEAD
           //payer: "",
           //investor: "",
+=======
+          payer: "",
+          investor: "",
+>>>>>>> main
           bill: "",
           client: "",
           clientAccount: "",
@@ -432,7 +441,11 @@ export const ManageOperationV = () => {
           presentValueInvestor: 0,
           presentValueSF: 0,
           GM: 0,
+<<<<<<< HEAD
           //applyGm: false,
+=======
+          applyGm: false,
+>>>>>>> main
           opPendingAmount: 0,
           commissionSF: 0,
           billCode: "",
@@ -459,6 +472,7 @@ export const ManageOperationV = () => {
 
         formik.setValues({
           ...formik.values,
+<<<<<<< HEAD
           //payer: "",
           //investor: "",
           //bill: "",
@@ -474,12 +488,33 @@ export const ManageOperationV = () => {
           payedAmount: 0,
           payedPercent: 0,
           //investorBroker: "",
+=======
+          payer: "",
+          investor: "",
+          bill: "",
+          client: "",
+          clientAccount: "",
+          billFraction: 0,
+          DateBill: `${new Date().toISOString().substring(0, 10)}`,
+          DateOperation: `${new Date().toISOString().substring(0, 10)}`,
+          probableDate: `${new Date().toISOString().substring(0, 10)}`,
+          DateExpiration: `${new Date().toISOString().substring(0, 10)}`,
+          opExpiration: `${new Date().toISOString().substring(0, 10)}`,
+          amount: 0,
+          payedAmount: 0,
+          payedPercent: 0,
+          investorBroker: "",
+>>>>>>> main
           operationDays: 0,
           investorProfit: 0,
           presentValueInvestor: 0,
           presentValueSF: 0,
           GM: 0,
+<<<<<<< HEAD
           //applyGm: false,
+=======
+          applyGm: false,
+>>>>>>> main
           opPendingAmount: 0,
           commissionSF: 0,
           billCode: "",
@@ -644,4 +679,8 @@ useEffect(() => {
       />
     </>
   );
+<<<<<<< HEAD
 };
+=======
+};
+>>>>>>> main

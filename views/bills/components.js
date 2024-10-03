@@ -104,7 +104,6 @@ export const BillsComponents = () => {
     setFilesBill(b64Files);
   };
 
-
   const {
     fetch: fetchReadCreditNotes,
     loading: loadingReadCreditNotes,
@@ -140,13 +139,11 @@ export const BillsComponents = () => {
     errorSaveBills,
     (loading, data, error) => data,
     "Facturas guardadas",
-
     errorSaveBills?.message
   );
 
   useEffect(() => {
     if (dataSaveBills) {
-    console.log(dataSaveBills)
       setTimeout(() => {
         router.push("/bills/billList");
       }, 2000);
@@ -161,7 +158,7 @@ export const BillsComponents = () => {
     });
     setCreditNote(formData);
   };
-    console.log(bill)
+
   const onRowsSelectionHandler = (ids) => {
     const selectedRowsData = ids.map((id) => bill.find((row) => row.id === id));
     setRowsToModify(selectedRowsData);
@@ -194,17 +191,7 @@ export const BillsComponents = () => {
   function CustomToolbar() {
     const apiRef = useGridApiContext();
     const handleExport = (options) => apiRef.current.exportDataAsCsv(options);
-    const handleSaveBills = () => {
-          if (!bill || bill.length === 0) {
-            console.error("No bills to save");
-            return;
-          }
 
-          const billsData = { bills: bill };
-          console.log('aqui esta el bill' ,billsData)
-           fetchSaveBills(billsData);
-
-        };
     return (
       <GridToolbarContainer
         sx={{
@@ -274,7 +261,12 @@ export const BillsComponents = () => {
         </Button>
         <Button
           variant="standard"
-          onClick={handleSaveBills}
+          onClick={() => {
+            const bills = {
+              bills: bill,
+            };
+            fetchSaveBills(bills);
+          }}
           sx={{
             backgroundColor: "#488B8F",
             borderRadius: "4px",

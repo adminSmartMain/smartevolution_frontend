@@ -1,6 +1,8 @@
+version: '3.8'  # Especifica la versión de Docker Compose que estás utilizando
+
 services:
-  web:
-    build: 
+  frontend:
+    build:
       context: .
     ports:
       - "${PORT}:${PORT}"
@@ -20,3 +22,17 @@ services:
         limits:
           cpus: "1.0"
           memory: "1G"
+
+  backend:
+    image: smartevolutionbackend-web  # Nombre de la imagen del backend
+    ports:
+      - "8000:8000"  # Ajusta según lo que necesites
+    environment:
+      DATABASE_HOST: db  # Ajusta si es necesario
+      DATABASE_PORT: 3306
+    networks:
+      - smartevolution_network 
+
+networks:
+  smartevolution_network:
+    driver: bridge

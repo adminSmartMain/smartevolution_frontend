@@ -9,8 +9,8 @@ export const Toast = (message, type) => {
         <Image
           src="/assets/success-svgrepo-com.svg"
           alt="gif"
-          width={"20"}
-          height={"20"}
+          width={"20px"}
+          height={"20px"}
         />
         <strong>{message}</strong>
       </div>,
@@ -39,8 +39,8 @@ export const Toast = (message, type) => {
           style={{ display: "inline-block" }}
           src="/assets/error-svgrepo-com.svg"
           alt="gif"
-          width={"20"}
-          height={"20"}
+          width={"20px"}
+          height={"20px"}
         />
         <strong style={{ fontSize: "13px", marginLeft: "10px" }}>
           {message}
@@ -71,8 +71,8 @@ export const Toast = (message, type) => {
           style={{ display: "inline-block" }}
           src="/assets/warning-svgrepo-com.svg"
           alt="gif"
-          width={"20"}
-          height={"20"}
+          width={"20px"}
+          height={"20px"}
         />
         <strong style={{ fontSize: "13px", marginLeft: "10px" }}>
           {message}
@@ -103,8 +103,8 @@ export const Toast = (message, type) => {
           style={{ display: "inline-block" }}
           src="/assets/info-svgrepo-com.svg"
           alt="gif"
-          width={"20"}
-          height={"20"}
+          width={"20px"}
+          height={"20px"}
         />
         <strong style={{ fontSize: "13px", marginLeft: "10px" }}>
           {message}
