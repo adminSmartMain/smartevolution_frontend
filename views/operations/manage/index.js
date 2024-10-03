@@ -461,7 +461,7 @@ export const ManageOperationV = () => {
           ...formik.values,
           //payer: "",
           //investor: "",
-          bill: "",
+          //bill: "",
           client: "",
           //clientAccount: "",
           billFraction: 0,
