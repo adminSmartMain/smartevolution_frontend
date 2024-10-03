@@ -105,7 +105,7 @@ export const ManageOperationV = () => {
     applyGm: false,
     //bill: "",
     billFraction: 0,
-    client: "",
+    //client: "",
     clientAccount: "",
     commissionSF: 0,
     DateBill: `${new Date().toISOString().substring(0, 10)}`,
