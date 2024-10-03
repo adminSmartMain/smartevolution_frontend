@@ -116,7 +116,7 @@ export const ManageOperationV = () => {
     GM: 0,
     id: "",
     investor: "",
-    investorBroker: "",
+    //investorBroker: "",
     investorProfit: 0,
     investorTax: 0,
     opDate: `${new Date().toISOString().substring(0, 10)}`,
