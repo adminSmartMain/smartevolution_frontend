@@ -103,7 +103,7 @@ export const ManageOperationV = () => {
   const initialValues = {
     amount: 0,
     applyGm: false,
-    bill: "",
+    //bill: "",
     billFraction: 0,
     client: "",
     clientAccount: "",
