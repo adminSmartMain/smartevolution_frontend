@@ -460,7 +460,7 @@ export const ManageOperationV = () => {
         formik.setValues({
           ...formik.values,
           payer: "",
-          investor: "",
+        //  investor: "",
           bill: "",
           client: "",
           clientAccount: "",
