@@ -424,7 +424,7 @@ export const ManageOperationV = () => {
           investor: "",
 >>>>>>> main
           bill: "",
-          client: "",
+      //    client: "",
           clientAccount: "",
           billFraction: 0,
           DateBill: `${new Date().toISOString().substring(0, 10)}`,
