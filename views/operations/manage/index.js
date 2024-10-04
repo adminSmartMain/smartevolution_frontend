@@ -490,7 +490,7 @@ export const ManageOperationV = () => {
           //investorBroker: "",
 =======
           payer: "",
-          investor: "",
+        //  investor: "",
           bill: "",
           client: "",
           clientAccount: "",
