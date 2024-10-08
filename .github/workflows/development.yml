@@ -33,8 +33,6 @@ jobs:
             cd "${{ secrets.TEST_FOLDER }}"
             echo "Pulling latest changes from development branch..."
             git pull origin development
-            echo "Removing old build artifacts..."
-            rm -rf .next node_modules package-lock.json
             sudo docker compose --env-file docker.env up --build -d
 
       - name: Notify on failure
