@@ -406,6 +406,9 @@ export const ManageOperationV = () => {
     }
   }, [operations]);
 
+
+  //aqui es el primer caso, con multiples operaciones. La solución al problema es comentar los campos que quieren que se mantengan
+
   useEffect(() => {
     if (dataCreateOperation) {
       if (operations.length > 1) {
@@ -414,27 +417,27 @@ export const ManageOperationV = () => {
         setOperationCreated(true);
         formik.setValues({
           ...formik.values,
-          payer: "",
-          investor: "",
+          //payer: "",
+          //investor: "",
           bill: "",
-          client: "",
-          clientAccount: "",
+          //client: "",
+          //clientAccount: "",
           billFraction: 0,
           DateBill: `${new Date().toISOString().substring(0, 10)}`,
-          DateOperation: `${new Date().toISOString().substring(0, 10)}`,
+          //DateOperation: `${new Date().toISOString().substring(0, 10)}`,
           probableDate: `${new Date().toISOString().substring(0, 10)}`,
           DateExpiration: `${new Date().toISOString().substring(0, 10)}`,
           opExpiration: `${new Date().toISOString().substring(0, 10)}`,
           amount: 0,
           payedAmount: 0,
           payedPercent: 0,
-          investorBroker: "",
+          //investorBroker: "",
           operationDays: 0,
           investorProfit: 0,
           presentValueInvestor: 0,
           presentValueSF: 0,
           GM: 0,
-          applyGm: false,
+          //applyGm: false,
           opPendingAmount: 0,
           commissionSF: 0,
           billCode: "",
@@ -455,33 +458,34 @@ export const ManageOperationV = () => {
           );
         }
       } else {
+        //aqui es el caso para una unica operacion
         Toast("operación creada", "success");
         setUpdated(1);
         setOperationCreated(true);
 
         formik.setValues({
           ...formik.values,
-          payer: "",
-          investor: "",
+           //payer: "",
+          //investor: "",
           bill: "",
-          client: "",
-          clientAccount: "",
+          //client: "",
+          //clientAccount: "",
           billFraction: 0,
           DateBill: `${new Date().toISOString().substring(0, 10)}`,
-          DateOperation: `${new Date().toISOString().substring(0, 10)}`,
+          //DateOperation: `${new Date().toISOString().substring(0, 10)}`,
           probableDate: `${new Date().toISOString().substring(0, 10)}`,
           DateExpiration: `${new Date().toISOString().substring(0, 10)}`,
           opExpiration: `${new Date().toISOString().substring(0, 10)}`,
           amount: 0,
           payedAmount: 0,
           payedPercent: 0,
-          investorBroker: "",
+          //investorBroker: "",
           operationDays: 0,
           investorProfit: 0,
           presentValueInvestor: 0,
           presentValueSF: 0,
           GM: 0,
-          applyGm: false,
+          //applyGm: false,
           opPendingAmount: 0,
           commissionSF: 0,
           billCode: "",
