@@ -36,7 +36,24 @@ export const ManageOperationV = () => {
   const handleMultipleOperations = () => {
     formik.handleSubmit();
     setReset(true);
+
   };
+
+// Maneja la lógica de guardar y redirigir
+const handleSaveAndRedirect = () => {
+  formik.handleSubmit();  // Ejecuta la lógica de guardar los datos
+  setReset(true);  // Restablece el estado del formulario
+
+  // Espera 3 segundos para mostrar los toast antes de redirigir
+  setTimeout(() => {
+    if (operationCreated) {
+      router.push("/pre-operations");  // Redirige a la página de pre-operations
+    }
+  }, 5000);  // 3000 milisegundos = 3 segundos
+};
+
+
+
 
   // Router
   const router = useRouter();
@@ -144,9 +161,12 @@ export const ManageOperationV = () => {
         const data = [...operations, { ...formik.values }];
         updateOperationFetch(data, dataGetOperationById, previousDeleted);
         setUpdated(1);
+        
       } else {
         const data = [...operations, { ...formik.values }];
         createOperationFetch(data, opId);
+       
+        
       }
     },
   });
@@ -415,6 +435,7 @@ export const ManageOperationV = () => {
         Toast("operaciones creadas", "success");
         setUpdated(1);
         setOperationCreated(true);
+       
         formik.setValues({
           ...formik.values,
           //payer: "",
@@ -462,6 +483,7 @@ export const ManageOperationV = () => {
         Toast("operación creada", "success");
         setUpdated(1);
         setOperationCreated(true);
+       
 
         formik.setValues({
           ...formik.values,
@@ -626,6 +648,7 @@ useEffect(() => {
       formik.values.presentValueInvestor, formik.values.presentValueSF,
       formik.values.commissionSF, formik.values.GM])
 
+
   return (
     <>
       <ManageOperationC
@@ -637,6 +660,7 @@ useEffect(() => {
         isCreatingBill={isCreatingBill}
         setIsCreatingBill={setIsCreatingBill}
         handleMultipleOperations={handleMultipleOperations}
+        handleSaveAndRedirect={handleSaveAndRedirect}
         status={status}
         reset={reset}
       />

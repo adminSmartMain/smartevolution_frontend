@@ -57,6 +57,7 @@ export const ManageOperationC = ({
   handleMultipleOperations,
   isCreatingBill,
   setIsCreatingBill,
+  handleSaveAndRedirect,
   status,
   reset,
 }) => {
@@ -1477,7 +1478,7 @@ export const ManageOperationC = ({
         >
           <Button
             variant="standard"
-            onClick={formik.handleSubmit}
+            onClick={handleSaveAndRedirect}
             disabled={
               status === 4 || status === 3
                 ? true
