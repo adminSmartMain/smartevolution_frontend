@@ -1,0 +1,203 @@
+[33mcommit a4f92b5f29d64d13792200b22b9ae1192bbd9313[m[33m ([m[1;36mHEAD -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: yjrivas <107074802+yjrivas@users.noreply.github.com>
+Date:   Fri Sep 20 15:52:42 2024 -0400
+
+    Corrige el formato del archivo docker-compose.yml
+
+[33mcommit 27dd5b46c6d7a7796376326dfefc474b521c4f0b[m[33m ([m[1;31morigin/luis-branch[m[33m)[m
+Author: yjrivas <107074802+yjrivas@users.noreply.github.com>
+Date:   Wed Sep 11 13:15:36 2024 -0400
+
+    Actualizar README.md con instrucciones de clonación
+
+[33mcommit 45fc8ec97af91f1347db0d654f10175781c37e53[m
+Author: AndresFelipe-netizen <pmfelipejob@gmail.com>
+Date:   Tue Sep 10 13:28:01 2024 -0500
+
+    Update README.md
+
+[33mcommit a8a7c6fcdcfe2aa52aaf0ced32e5794e77437e5f[m
+Author: Said <pabonsaid@gmail.com>
+Date:   Wed Aug 7 16:18:55 2024 -0500
+
+    codigo para hacer debug del bug en MontoGM
+
+[33mcommit da86d5e8d85c730e0e59b717343b8ee8cb5cc355[m
+Author: Said <pabonsaid@gmail.com>
+Date:   Tue Aug 6 11:49:40 2024 -0500
+
+    agregado redireccionamiento cuando la operacion de crear o actualizar sea correcta
+
+[33mcommit 7615d230a483c34352ff1c2eb187614de16dc907[m
+Author: Said <pabonsaid@gmail.com>
+Date:   Mon Aug 5 17:39:24 2024 -0500
+
+    correcciones nuevas
+
+[33mcommit fe7f5d27b66825773c60f98eb325cf941d8d1a41[m
+Author: Said <pabonsaid@gmail.com>
+Date:   Mon Aug 5 17:38:21 2024 -0500
+
+    correcciones nuevas
+
+[33mcommit c4e3f42664327f2a1f9bf5e46a23e64d0324e0a3[m
+Author: Said <pabonsaid@gmail.com>
+Date:   Mon Aug 5 17:36:00 2024 -0500
+
+    correcciones nuevas
+
+[33mcommit fb1d45db5bec74ec6cf8535178d6828bb001f24d[m
+Author: Said <pabonsaid@gmail.com>
+Date:   Sat Jul 27 16:16:13 2024 -0500
+
+    fixed into actions
+
+[33mcommit 49c4c0ab61a9526e93adbcd311608a95993952e7[m
+Author: Said <pabonsaid@gmail.com>
+Date:   Sat Jul 27 16:14:16 2024 -0500
+
+    fixed into actions
+
+[33mcommit 1869a9595456a7f8a5827b0d8f3f2c676339e8cb[m
+Author: Said <pabonsaid@gmail.com>
+Date:   Sat Jul 27 15:48:38 2024 -0500
+
+    fixed into actions
+
+[33mcommit 432fad0ac2359b177b9673010d3de84d18cc9e9c[m
+Author: Said <pabonsaid@gmail.com>
+Date:   Sat Jul 27 15:47:39 2024 -0500
+
+    fixed into actions
+
+[33mcommit 54bd8fa162489455b30ceea348c7bedf45eb60b4[m
+Author: Said <pabonsaid@gmail.com>
+Date:   Sat Jul 27 15:44:05 2024 -0500
+
+    fixed into actions
+
+[33mcommit 3101496e79b2fe734bd9a5fbae32b521db6fe06f[m
+Author: Said <pabonsaid@gmail.com>
+Date:   Sat Jul 27 15:06:19 2024 -0500
+
+    fixed into actions
+
+[33mcommit 9e4bf8673361c2cb1060bdc609fd863e673785f7[m
+Author: Said <pabonsaid@gmail.com>
+Date:   Wed Jul 17 09:42:41 2024 -0500
+
+    correcciones
+
+[33mcommit 35291e8956b9e2c2d20ccb673683f4fa4e879fb4[m
+Author: Said <pabonsaid@gmail.com>
+Date:   Tue Jul 16 21:57:46 2024 -0500
+
+    corregido version de node
+
+[33mcommit d693a62a48f6c015b187cc5c718a71e017da7f47[m
+Author: Said <pabonsaid@gmail.com>
+Date:   Tue Jul 16 17:01:18 2024 -0500
+
+    correccion en los actions
+
+[33mcommit 933f83c96f33515deca4a729ba4adbfdd6731628[m
+Author: Said <pabonsaid@gmail.com>
+Date:   Tue Jul 16 14:57:02 2024 -0500
+
+    correccion bug en front
+
+[33mcommit 5af4da75b8b8e1953c77d8cefe28f2ca49d5ed28[m
+Author: Said <pabonsaid@gmail.com>
+Date:   Thu Jul 11 16:00:05 2024 -0500
+
+    finalize actions
+
+[33mcommit aad39246ec7eea186da8dfa2d97be056aa6002ab[m
+Author: Said <pabonsaid@gmail.com>
+Date:   Thu Jul 11 15:57:19 2024 -0500
+
+    finalize actions
+
+[33mcommit 45557f0f028e1cc5d6f65f7dc67b6d889e7fd5c0[m
+Author: Said <pabonsaid@gmail.com>
+Date:   Thu Jul 11 15:47:31 2024 -0500
+
+    add actions new
+
+[33mcommit b52de1512803838da3286eed31e5466dbdfcfcd7[m
+Author: Said <pabonsaid@gmail.com>
+Date:   Thu Jul 11 15:26:53 2024 -0500
+
+    add actions new
+
+[33mcommit 92a76a042481eac2606b6f66c477989002a8c643[m
+Author: Said <pabonsaid@gmail.com>
+Date:   Thu Jul 11 15:19:58 2024 -0500
+
+    add actions
+
+[33mcommit f2643f29d2e7f39c9165ef4eaec37eac93b4a339[m
+Author: Said <pabonsaid@gmail.com>
+Date:   Thu Jul 11 15:17:59 2024 -0500
+
+    add actions
+
+[33mcommit 286489422dd64bbcea864cf294ef06ff2cc5a0eb[m
+Author: Said <pabonsaid@gmail.com>
+Date:   Thu Jul 11 15:12:45 2024 -0500
+
+    add actions
+
+[33mcommit edcc06fb00ab9001776a26deadbb541b8ba90802[m
+Author: Said <pabonsaid@gmail.com>
+Date:   Thu Jul 11 15:12:19 2024 -0500
+
+    add actions
+
+[33mcommit 45de917d7dad19068f41e574fe22ac069e03554e[m
+Author: Said <pabonsaid@gmail.com>
+Date:   Tue Jul 9 19:23:47 2024 -0500
+
+    modificado los actions para el despliegue automatico de la app
+
+[33mcommit c93fc78290d94edd5cd41f68c5a1d78daa780ecb[m
+Author: Said Pabon <57160983+saidpabon@users.noreply.github.com>
+Date:   Tue Jul 9 09:33:25 2024 -0500
+
+    Create development workflow action
+
+[33mcommit 941603bb0719bd736c99cce32f2ee10626c18264[m
+Author: Said Pabon <57160983+saidpabon@users.noreply.github.com>
+Date:   Tue Jul 9 09:32:45 2024 -0500
+
+    Create main into workflow front
+
+[33mcommit 9d94d46d4675f6bd519719552f6a8ae001a60333[m
+Author: Said <pabonsaid@gmail.com>
+Date:   Sat Jul 6 10:38:50 2024 -0500
+
+    fixed container
+
+[33mcommit 06a5e2bd0da5981e2d320edcb8a44411bc2b4077[m
+Author: Said <pabonsaid@gmail.com>
+Date:   Thu Jul 4 15:31:53 2024 -0500
+
+    dockerizado sistema y probado
+
+[33mcommit 532a9fc2abebb6331dfe418edeb1ac5cebeca45f[m
+Author: Said <pabonsaid@gmail.com>
+Date:   Thu Jul 4 15:12:03 2024 -0500
+
+    dockerizado sistema y probado
+
+[33mcommit d7fd888464756f8e9911318ff8f068e773f6393f[m
+Author: Said <pabonsaid@gmail.com>
+Date:   Thu Jul 4 13:54:40 2024 -0500
+
+    dockerizado sistema y probado
+
+[33mcommit 14afc3f659d233443e213b53a50f7b9e7606f7a7[m
+Author: Kenneth Dueñas <kduenascontreras@gmail.com>
+Date:   Fri Jun 21 19:10:44 2024 -0500
+
+    feat: front code is implemeted

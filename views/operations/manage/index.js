@@ -120,9 +120,9 @@ const handleSaveAndRedirect = () => {
   const initialValues = {
     amount: 0,
     applyGm: false,
-    bill: "",
+    //bill: "",
     billFraction: 0,
-    client: "",
+    //client: "",
     clientAccount: "",
     commissionSF: 0,
     DateBill: `${new Date().toISOString().substring(0, 10)}`,
@@ -133,7 +133,11 @@ const handleSaveAndRedirect = () => {
     GM: 0,
     id: "",
     investor: "",
+<<<<<<< HEAD
+    //investorBroker: "",
+=======
     investorBroker: "",
+>>>>>>> main
     investorProfit: 0,
     investorTax: 0,
     opDate: `${new Date().toISOString().substring(0, 10)}`,
@@ -170,8 +174,6 @@ const handleSaveAndRedirect = () => {
       }
     },
   });
-
-  // Effects
 
   // Detect when the user selects an emitter
   useEffect(() => {
@@ -666,4 +668,8 @@ useEffect(() => {
       />
     </>
   );
+<<<<<<< HEAD
 };
+=======
+};
+>>>>>>> main
