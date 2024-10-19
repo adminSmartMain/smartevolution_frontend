@@ -36,7 +36,24 @@ export const ManageOperationV = () => {
   const handleMultipleOperations = () => {
     formik.handleSubmit();
     setReset(true);
+
   };
+
+// Maneja la lógica de guardar y redirigir
+const handleSaveAndRedirect = () => {
+  formik.handleSubmit();  // Ejecuta la lógica de guardar los datos
+  setReset(true);  // Restablece el estado del formulario
+
+  // Espera 3 segundos para mostrar los toast antes de redirigir
+  setTimeout(() => {
+    if (operationCreated) {
+      router.push("/pre-operations");  // Redirige a la página de pre-operations
+    }
+  }, 5000);  // 3000 milisegundos = 3 segundos
+};
+
+
+
 
   // Router
   const router = useRouter();
@@ -148,9 +165,12 @@ export const ManageOperationV = () => {
         const data = [...operations, { ...formik.values }];
         updateOperationFetch(data, dataGetOperationById, previousDeleted);
         setUpdated(1);
+        
       } else {
         const data = [...operations, { ...formik.values }];
         createOperationFetch(data, opId);
+       
+        
       }
     },
   });
@@ -408,44 +428,39 @@ export const ManageOperationV = () => {
     }
   }, [operations]);
 
+
+  //aqui es el primer caso, con multiples operaciones. La solución al problema es comentar los campos que quieren que se mantengan
+
   useEffect(() => {
     if (dataCreateOperation) {
       if (operations.length > 1) {
         Toast("operaciones creadas", "success");
         setUpdated(1);
         setOperationCreated(true);
+       
         formik.setValues({
           ...formik.values,
-<<<<<<< HEAD
           //payer: "",
           //investor: "",
-=======
-          payer: "",
-          investor: "",
->>>>>>> main
           bill: "",
-          client: "",
-          clientAccount: "",
+          //client: "",
+          //clientAccount: "",
           billFraction: 0,
           DateBill: `${new Date().toISOString().substring(0, 10)}`,
-          DateOperation: `${new Date().toISOString().substring(0, 10)}`,
-      //    probableDate: `${new Date().toISOString().substring(0, 10)}`,
+          //DateOperation: `${new Date().toISOString().substring(0, 10)}`,
+          probableDate: `${new Date().toISOString().substring(0, 10)}`,
           DateExpiration: `${new Date().toISOString().substring(0, 10)}`,
           opExpiration: `${new Date().toISOString().substring(0, 10)}`,
           amount: 0,
           payedAmount: 0,
           payedPercent: 0,
-          investorBroker: "",
+          //investorBroker: "",
           operationDays: 0,
           investorProfit: 0,
           presentValueInvestor: 0,
           presentValueSF: 0,
           GM: 0,
-<<<<<<< HEAD
           //applyGm: false,
-=======
-          applyGm: false,
->>>>>>> main
           opPendingAmount: 0,
           commissionSF: 0,
           billCode: "",
@@ -466,55 +481,35 @@ export const ManageOperationV = () => {
           );
         }
       } else {
+        //aqui es el caso para una unica operacion
         Toast("operación creada", "success");
         setUpdated(1);
         setOperationCreated(true);
+       
 
         formik.setValues({
           ...formik.values,
-<<<<<<< HEAD
-          //payer: "",
+           //payer: "",
           //investor: "",
-          //bill: "",
-          client: "",
+          bill: "",
+          //client: "",
           //clientAccount: "",
           billFraction: 0,
           DateBill: `${new Date().toISOString().substring(0, 10)}`,
           //DateOperation: `${new Date().toISOString().substring(0, 10)}`,
-          probableDate: `${new Date().toISOString().substring(0, 10)}`,
-          //DateExpiration: `${new Date().toISOString().substring(0, 10)}`,
-          opExpiration: `${new Date().toISOString().substring(0, 10)}`,
-          //amount: 0,
-          payedAmount: 0,
-          payedPercent: 0,
-          //investorBroker: "",
-=======
-          payer: "",
-        //  investor: "",
-          bill: "",
-          client: "",
-          clientAccount: "",
-          billFraction: 0,
-          DateBill: `${new Date().toISOString().substring(0, 10)}`,
-          DateOperation: `${new Date().toISOString().substring(0, 10)}`,
           probableDate: `${new Date().toISOString().substring(0, 10)}`,
           DateExpiration: `${new Date().toISOString().substring(0, 10)}`,
           opExpiration: `${new Date().toISOString().substring(0, 10)}`,
           amount: 0,
           payedAmount: 0,
           payedPercent: 0,
-          investorBroker: "",
->>>>>>> main
+          //investorBroker: "",
           operationDays: 0,
           investorProfit: 0,
           presentValueInvestor: 0,
           presentValueSF: 0,
           GM: 0,
-<<<<<<< HEAD
           //applyGm: false,
-=======
-          applyGm: false,
->>>>>>> main
           opPendingAmount: 0,
           commissionSF: 0,
           billCode: "",
@@ -655,13 +650,6 @@ useEffect(() => {
       formik.values.presentValueInvestor, formik.values.presentValueSF,
       formik.values.commissionSF, formik.values.GM])
 
-  // Efecto para redirigir cuando la operación es exitosa
-  useEffect(() => {
-    if (dataUpdateOperation || dataCreateOperation) {
-      // Redirige a la URL deseada después de una operación exitosa
-      router.push('/operations');
-    }
-  }, [dataUpdateOperation, dataCreateOperation, router]);
 
   return (
     <>
@@ -674,6 +662,7 @@ useEffect(() => {
         isCreatingBill={isCreatingBill}
         setIsCreatingBill={setIsCreatingBill}
         handleMultipleOperations={handleMultipleOperations}
+        handleSaveAndRedirect={handleSaveAndRedirect}
         status={status}
         reset={reset}
       />

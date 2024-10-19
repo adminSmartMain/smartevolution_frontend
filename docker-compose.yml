@@ -1,38 +1,55 @@
-version: '3.8'  # Especifica la versión de Docker Compose que estás utilizando
+version: '3'
 
 services:
+
   frontend:
+
     build:
+
       context: .
+
     ports:
-      - "${PORT}:${PORT}"
+
+      - "3000:3000"
+
     volumes:
+
       - .:/app
+
       - ./logs:/app/logs
+
     env_file:
+
       - docker.env
+
     container_name: frontend_smart_evolution
+
     logging:
+
       driver: "json-file"
+
       options:
+
         max-size: "10m"
+
         max-file: "3"
+
     deploy:
+
       resources:
+
         limits:
+
           cpus: "1.0"
+
           memory: "1G"
 
-  backend:
-    image: smartevolutionbackend-web  # Nombre de la imagen del backend
-    ports:
-      - "8000:8000"  # Ajusta según lo que necesites
-    environment:
-      DATABASE_HOST: db  # Ajusta si es necesario
-      DATABASE_PORT: 3306
     networks:
-      - smartevolution_network 
+
+      - smartevolutionbackend_smartevolution_network
 
 networks:
-  smartevolution_network:
-    driver: bridge
+
+  smartevolutionbackend_smartevolution_network:
+
+    external: true

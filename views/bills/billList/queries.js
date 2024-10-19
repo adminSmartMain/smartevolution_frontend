@@ -31,10 +31,20 @@ export const DeleteBillById = async (id) => {
 };
 
 export const GetBillEvents = async (id) => {
-  const res = await Axios.get(`${API_URL}/bill/?billEvent=${id}`, {
-    headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
-    },
-  });
-  return res.data;
+  console.log("Making request to get bill events with ID:", id);
+
+  try {
+    const res = await Axios.get(`${API_URL}/bill/?billEvent=${id}`, {
+      headers: {
+        authorization: "Bearer " + localStorage.getItem("access-token"),
+      },
+    });
+    
+    console.log("Response data:", res.data);  // Log para ver la respuesta del servidor
+    return res.data;
+
+  } catch (error) {
+    console.error("Error during GetBillEvents request:", error);  // Log para ver si hay algún error en la petición
+    throw error;  // Re-lanzar el error para que sea manejado por el código llamante si es necesario
+  }
 };
