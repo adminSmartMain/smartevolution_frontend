@@ -55,6 +55,7 @@ export const RegisterDepositQuery = async (data) => {
 };
 
 export const DeleteDepositById = async (id) => {
+  console.log("id a eliminar",id)
   const res = await Axios.delete(`${API_URL}/emitter-deposit/${id}`, {
     headers: {
       authorization: "Bearer " + localStorage.getItem("access-token"),

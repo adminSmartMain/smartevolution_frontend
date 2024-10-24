@@ -28,9 +28,11 @@ export default function FinancialProf() {
       setOption(Object.keys(router.query)[0]);
     }
   }, [router.query]);
+
+  
   const initialValues = {
     id: null,
-    opId: "",
+    opId: router.query.id,
     description: "",
     amount: null,
     date: `${new Date().getFullYear()}-${
@@ -85,12 +87,15 @@ export default function FinancialProf() {
     }
   }, [dataSummaryByID]);
 
+
+  //aca se crea la lista con el pendingAccounts
   const formik = useFormik({
     initialValues: initialValues,
     validationSchema: validationSchema,
 
     onSubmit: (values) => {
       if (!values.modify) {
+        console.log("Agregando nuevo descuento:", values)
         setPendingAccounts([...pendingAccounts, values]);
         Toast("Descuento agregado", "success");
       } else {
@@ -150,6 +155,7 @@ export default function FinancialProf() {
       .required("El tipo de egreso es requerido"),
   });
 
+  //valores iniciales para el deposito
   const initialValues2 = {
     client: null,
     account: null,
@@ -186,10 +192,13 @@ export default function FinancialProf() {
     data: dataModifyDeposit,
   } = useFetch({ service: ModifyDepositQuery, init: false });
 
+
+  //aqui es donde se generan los depositos
   const formik2 = useFormik({
     initialValues: initialValues2,
     validationSchema: validationSchema2,
     onSubmit: (values) => {
+      console.log("Agregando nuevo deposito:", values)
       if (values.modify === false) {
         fetchRegisterDeposit(values);
         Toast("Depósito registrado", "success");
@@ -206,6 +215,7 @@ export default function FinancialProf() {
       fetch4(formik2.values.client);
     }
   }, [formik2.values.client]);
+
 
   useEffect(() => {
     if (!formik2.values.modify) {
