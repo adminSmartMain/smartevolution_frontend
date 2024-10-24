@@ -80,7 +80,7 @@ export const NegotiationSummary = ({
   } = useFetch({ service: GetNegotiationSummary, init: false });
   
  //Este es el fetch importante al momento de crear un resumen de negociación
-  //este usa una funcion llamada CreateNegotiationSummary el cual está creada en /views/administration/negotiation-summary/components.js
+  //Este usa una funcion llamada CreateNegotiationSummary el cual está creada en /views/administration/negotiation-summary/components.js
  const {
     fetch: fetchCreateSummary,
     loading: loadingCreateSummary,
