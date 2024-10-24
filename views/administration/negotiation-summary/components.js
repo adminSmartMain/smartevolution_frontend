@@ -431,7 +431,7 @@ export const NegotiationSummary = ({
     formik2.setFieldValue("modify", true);
     handleOpen2("edit");
   };
-  //acá se guardan los descuentos
+  //Acá se guardan los descuentos
   const handleEditPendingClick = (item) => {
     console.log("Editing item:", item);
     formik.setFieldValue("id", item.id);
@@ -448,7 +448,7 @@ export const NegotiationSummary = ({
   
   const handleDeleteDepositClick = (id) => {
     console.log("aqui está el id que se envia al backend",id)
-    DeleteDepositById(id)// esto es lo que elimina el archivo del backend el resto solo es del front de deposit.
+    DeleteDepositById(id)// Esto es lo que elimina el archivo del backend el resto solo es del front de deposit.
       .then(() => {
         setOpen4([false, null]); // Cerrar el diálogo
         setDeposit(deposit.filter((deposit) => deposit.id !== id)); // Filtrar el depósito eliminado
