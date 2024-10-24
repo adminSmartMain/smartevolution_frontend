@@ -445,7 +445,7 @@ export const NegotiationSummary = ({
     formik.setFieldValue("modify", true);
     handleOpen("edit");
   };
-  
+  //esto está encargado de "borrar" el deposito
   const handleDeleteDepositClick = (id) => {
     console.log("aqui está el id que se envia al backend",id)
     DeleteDepositById(id)// Esto es lo que elimina el archivo del backend el resto solo es del front de deposit.
