@@ -109,7 +109,7 @@ export const NegotiationSummary = ({
     data: dataSummaryByID,
   } = useFetch({ service: GetSummaryByID, init: false });
 
-//esta es la constante que define el id en el formulario de creación
+ //Esta es la constante que define el id en el formulario de creación
   const [id, setID] = useState("");
   const [OpID, setOpID] = useState("");
   const router = useRouter();
