@@ -113,7 +113,7 @@ export const NegotiationSummary = ({
   const [id, setID] = useState("");
   const [OpID, setOpID] = useState("");
   const router = useRouter();
-  //esta constante se encarga de manejar el almacenamiento de los datos ingresados en el formulario
+  //Esta constante se encarga de manejar el almacenamiento de los datos ingresados en el formulario
   const [NegotiationSummaryData, setNegotiationSummaryData] = useState({});
   const [billId, setBillId] = useState(null);
   const [manualAdjustment, setManualAdjustment] = useState(0);
