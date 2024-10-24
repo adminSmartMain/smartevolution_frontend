@@ -151,7 +151,7 @@ export const NegotiationSummary = ({
     }
   }, [id, PendingAccounts]);
 
-  //aca es donde se traer el pending account
+  //Aca es donde se traer el pending account
 
   //useEffect(() => {
    // if (id) fetch(id);
