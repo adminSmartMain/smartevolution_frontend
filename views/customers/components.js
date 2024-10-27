@@ -52,7 +52,7 @@ export const SignUpClient = ({
   const handleNext = () => {
     setActiveStep((prevActiveStep) => prevActiveStep + 1);
   };
-
+console.log(activeStep)
   const handleBack = () => {
     setActiveStep((prevActiveStep) => prevActiveStep - 1);
   };
@@ -77,6 +77,7 @@ export const SignUpClient = ({
         position: "",
       })
     );
+
   };
 
   const handleRemoveContact = (index) => {
@@ -85,6 +86,7 @@ export const SignUpClient = ({
   };
 
   useEffect(() => {
+    console.log(formik.values)
     if (
       formik.values.type_client &&
       formik.values.type_client === "21cf32d9-522c-43ac-b41c-4dfdf832a7b8" &&

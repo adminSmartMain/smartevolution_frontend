@@ -52,7 +52,7 @@ export default function RegisterClient() {
     error: error3,
     data: data3,
   } = useFetch({ service: ModifyClientQuery, init: false });
-
+  console.log(data3)
   useEffect(() => {
     if (loading3) Toast("Cargando...", "loading");
     if (error3) Toast("Error al actualizar el cliente", "error");
@@ -341,6 +341,7 @@ export default function RegisterClient() {
       if (option === "register") {
         fetch(values);
       } else if (option === "modify") {
+        console.log(values)
         fetch3(values);
       }
     },
