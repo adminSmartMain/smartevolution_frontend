@@ -120,9 +120,9 @@ const handleSaveAndRedirect = () => {
   const initialValues = {
     amount: 0,
     applyGm: false,
-    //bill: "",
+    bill: "",
     billFraction: 0,
-    //client: "",
+    client: "",
     clientAccount: "",
     commissionSF: 0,
     DateBill: `${new Date().toISOString().substring(0, 10)}`,
@@ -133,11 +133,7 @@ const handleSaveAndRedirect = () => {
     GM: 0,
     id: "",
     investor: "",
-<<<<<<< HEAD
-    //investorBroker: "",
-=======
     investorBroker: "",
->>>>>>> main
     investorProfit: 0,
     investorTax: 0,
     opDate: `${new Date().toISOString().substring(0, 10)}`,
@@ -174,6 +170,8 @@ const handleSaveAndRedirect = () => {
       }
     },
   });
+
+  // Effects
 
   // Detect when the user selects an emitter
   useEffect(() => {
@@ -404,9 +402,11 @@ const handleSaveAndRedirect = () => {
         "commissionSF",
         formik.values.presentValueInvestor - formik.values.presentValueSF
       );
-
+    /*Cambio en el factor de GM
+Por solicitud cambia el factor de GM de 0,004 a 0,002 a partir del 26 de octubre de 2024.
+*/
     if (formik.values.applyGm) {
-      formik.setFieldValue("GM", formik.values.presentValueInvestor * 0.004);
+      formik.setFieldValue("GM", formik.values.presentValueInvestor * 0.002);
     } else {
       formik.setFieldValue("GM", 0);
     }
@@ -668,8 +668,4 @@ useEffect(() => {
       />
     </>
   );
-<<<<<<< HEAD
 };
-=======
-};
->>>>>>> main

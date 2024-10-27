@@ -66,8 +66,10 @@ export const NegotiationSummary = ({
   formik,
   formik2,
   ToastContainer,
+  Deposits,
   PendingAccounts,
   handleDeletePendingAccount,
+  handleDeleteDeposits,
   option,
 }) => {
   //Get ID from URL
@@ -78,8 +80,10 @@ export const NegotiationSummary = ({
     error: error,
     data: data,
   } = useFetch({ service: GetNegotiationSummary, init: false });
-
-  const {
+  
+ //Este es el fetch importante al momento de crear un resumen de negociación
+  //este usa una funcion llamada CreateNegotiationSummary el cual está creada en /views/administration/negotiation-summary/components.js
+ const {
     fetch: fetchCreateSummary,
     loading: loadingCreateSummary,
     error: errorCreateSummary,
@@ -107,27 +111,72 @@ export const NegotiationSummary = ({
     data: dataSummaryByID,
   } = useFetch({ service: GetSummaryByID, init: false });
 
+//esta es la constante que define el id en el formulario de creación
   const [id, setID] = useState("");
   const [OpID, setOpID] = useState("");
   const router = useRouter();
+  //esta constante se encarga de manejar el almacenamiento de los datos ingresados en el formulario
   const [NegotiationSummaryData, setNegotiationSummaryData] = useState({});
   const [billId, setBillId] = useState(null);
   const [manualAdjustment, setManualAdjustment] = useState(0);
   const [observations, setObservations] = useState("");
   const [deposit, setDeposit] = useState([]);
 
+
+  //Este useEffect es el que toma el id que se va a enviar al backend.
   useEffect(() => {
     if (router && router.query.id) {
       setID(router.query.id);
+      console.log("ID configurado:", router.query.id);
       if (option === "modify") {
         setOpID(router.query.opId);
+        console.log("opId configurado:", router.query.opId);
       }
     }
   }, [router.query, option]);
 
   useEffect(() => {
-    if (id) fetch(id);
+    console.log("useEffect triggered");
+    console.log("id:", id);
+    
+    if (id) {
+      console.log("Fetching data for id:", id);
+      fetch(id)
+        .then(() => {
+          console.log("Fetch successful:", data);// Verifica el estado de los datos después del fetch
+          console.log("pending Accounts:", PendingAccounts)
+            console.log("Deposits:", Deposits)
+        })
+        .catch((error) => {
+          console.error("Fetch error:", error);  // Muestra el error si hay problemas
+        });
+    }
   }, [id, PendingAccounts]);
+
+  useEffect(() => {
+    console.log("useEffect triggered");
+    console.log("id:", id);
+    
+    if (id) {
+      console.log("Fetching data for id:", id);
+      fetch(id)
+        .then(() => {
+          setDeposit(data?.data?.emitterDeposits)
+          console.log("Fetch Deposits successful:", data);// Verifica el estado de los datos después del fetch
+          console.log("Deposits:", Deposits)
+            
+        })
+        .catch((error) => {
+          console.error("Fetch Deposits error:", error);  // Muestra el error si hay problemas
+        });
+    }
+  }, [id, Deposits]);
+
+  //aca es donde se traer el pending account
+
+  //useEffect(() => {
+   // if (id) fetch(id);
+  //}, [id, PendingAccounts]);
 
   useEffect(() => {
     if (OpID) {
@@ -142,10 +191,35 @@ export const NegotiationSummary = ({
     }
   }, [dataSummaryByID]);
 
+
   useEffect(() => {
     if (data) {
       setDeposit(data?.data?.emitterDeposits);
       Toast("Resumen de negociación cargado con éxito", "success");
+      console.log(data)
+      console.log("Depositos",deposit.map(deposit => deposit.amount).reduce((a, b) => a + b, 0))
+      console.log("lista Depositos",deposit)
+      
+
+      console.log(data?.data?.operation?.valueToDiscount,data?.data?.operation?.investorDiscount,data?.data?.operation?.billValue,
+        PendingAccounts.reduce((a, b) => a + b.amount, 0) -
+        (manualAdjustment || 0))
+        //561912376 39068757 22843619 0
+
+      console.log(data?.data?.operation?.valueToDiscount -
+          data?.data?.operation?.investorDiscount -
+          data?.data?.operation?.billValue -
+          PendingAccounts.reduce((a, b) => a + b.amount, 0))
+          -(manualAdjustment || 0)
+      
+
+        //1671916222
+
+      console.log(data?.data?.operation?.valueToDiscount -
+          data?.data?.operation?.investorDiscount -
+          data?.data?.operation?.billValue -
+          PendingAccounts.reduce((a, b) => a + b.amount, 0) -
+          (manualAdjustment || 0))
       setNegotiationSummaryData({
         opId: id,
         emitter: data?.data?.emitter?.name,
@@ -155,6 +229,7 @@ export const NegotiationSummary = ({
         ...data?.data?.operation,
         billId: billId,
         date: today,
+        totalDiscounts: PendingAccounts.reduce((a, b) => a + b.amount, 0),
         total:
           data?.data?.operation?.valueToDiscount -
           data?.data?.operation?.investorDiscount -
@@ -165,13 +240,12 @@ export const NegotiationSummary = ({
           data?.data?.operation?.investorDiscount -
           data?.data?.operation?.billValue -
           PendingAccounts.reduce((a, b) => a + b.amount, 0) -
-          (manualAdjustment || 0),
+          (manualAdjustment || 0)-deposit.map(deposit => deposit.amount).reduce((a, b) => a + b, 0),
+        
         pendingAccounts: PendingAccounts,
+        
         observations: observations,
-        totalDeposits: data?.data?.emitterDeposits?.reduce(
-          (a, b) => a + b.amount,
-          0
-        ),
+        totalDeposits: deposit.map(deposit => deposit.amount).reduce((a, b) => a + b, 0),
       });
     }
 
@@ -187,27 +261,11 @@ export const NegotiationSummary = ({
     billId,
     manualAdjustment,
     observations,
+    deposit,
     PendingAccounts,
   ]);
 
-  const {
-    fetch: fetchUpdateDeposit,
-    loading: loadingUpdateDeposit,
-    error: errorUpdateDeposit,
-    data: dataUpdateDeposit,
-  } = useFetch({ service: GetDepositsOnly, init: false });
-
-  useEffect(() => {
-    if (Object.keys(formik2.errors).length === 0 && formik2.isSubmitting) {
-      fetchUpdateDeposit(id);
-    }
-  }, [formik2.errors, formik2.isSubmitting]);
-
-  useEffect(() => {
-    if (dataUpdateDeposit) {
-      setDeposit(dataUpdateDeposit?.data);
-    }
-  }, [dataUpdateDeposit]);
+ 
 
   useEffect(() => {
     if (dataCreateSummary) {
@@ -255,7 +313,7 @@ export const NegotiationSummary = ({
       Object.keys(formik2.errors).length === 0 &&
       formik2.isSubmitting
     ) {
-      //Close pending accounts modal
+      //Close pending deposis modal
       handleClose2();
     }
   }, [formik2.errors, formik2.isSubmitting]);
@@ -274,15 +332,23 @@ export const NegotiationSummary = ({
   };
 
   const [open, setOpen] = useState([false, null]);
+
+  //maneja la apertura del cuadrado de agregar descuentos. cuando se crea el descuento toma la option add
+  
   const handleOpen = (option) => {
+    console.log("handleOpen called with option:", option);
     if (option === "add") {
       formik.resetForm();
-      formik.setFieldValue("opId", Number(OpID));
+      formik.setFieldValue("opId", Number(id));//Aqui está el error
+      console.log("OpID:", id);
       setOpen([true, null]);
     } else {
       setOpen([true, option]);
     }
+    console.log("Form state after open:", formik.values);
   };
+
+
   const handleClose = () => {
     //Reset form
     setOpen([false, null]);
@@ -290,14 +356,18 @@ export const NegotiationSummary = ({
 
   const [open2, setOpen2] = useState([false, null]);
   const handleOpen2 = (option) => {
+    console.log("handleOpen2 called with option:", option);
     if (option === "add") {
       formik2.resetForm();
+      console.log("client", data?.data?.emitter?.id);
+      console.log("operation", data?.data?.operation?.id[0]);
       formik2.setFieldValue("client", data?.data?.emitter?.id);
       formik2.setFieldValue("operation", data?.data?.operation?.id[0]);
       setOpen2([true, option]);
     } else {
       setOpen2([true, option]);
     }
+    console.log("Form state after open2:", formik2.values);
   };
 
   const handleClose2 = () => {
@@ -314,17 +384,25 @@ export const NegotiationSummary = ({
   };
 
   const [open4, setOpen4] = useState([false, null]);
+  console.log("open4",open4)
+
   const handleOpen4 = (item) => {
-    setOpen4([true, item.id]);
+    console.log("item:",item)
+    setOpen4([true, item.id !== undefined ? item.id : item.client]);
   };
+
   const handleClose4 = () => {
     setOpen4([false, null]);
   };
 
   const [open5, setOpen5] = useState([false, null]);
+  console.log("open5",open5)
+  
   const handleOpen5 = (item) => {
-    setOpen5([true, item.id]);
+    console.log("item open5:",item)
+    setOpen5([true, item.opId]);
   };
+
   const handleClose5 = () => {
     setOpen5([false, null]);
   };
@@ -357,7 +435,7 @@ export const NegotiationSummary = ({
     fetchPurchaseOrder(id);
     handleOpen3();
   };
-
+  //aca se guardan los depositos
   const handleEditDepositClick = (item) => {
     formik2.setFieldValue("id", item.id);
     formik2.setFieldValue("client", item.client);
@@ -369,7 +447,7 @@ export const NegotiationSummary = ({
       item.accountingControls[0].observations
     );
     formik2.setFieldValue("beneficiary", item.beneficiary);
-    formik2.setFieldValue("bank", item.bank.id);
+    formik2.setFieldValue("bank", item.bank.description);
     formik2.setFieldValue("accountNumber", item.accountNumber);
     formik2.setFieldValue("accountType", item.accountType);
     formik2.setFieldValue("egressType", item.egressType);
@@ -378,9 +456,11 @@ export const NegotiationSummary = ({
     formik2.setFieldValue("modify", true);
     handleOpen2("edit");
   };
-
+  //acá se guardan los descuentos
   const handleEditPendingClick = (item) => {
+    console.log("Editing item:", item);
     formik.setFieldValue("id", item.id);
+    
     formik.setFieldValue("description", item.description);
     formik.setFieldValue("amount", item.amount);
     formik.setFieldValue("date", item.date);
@@ -390,14 +470,28 @@ export const NegotiationSummary = ({
     formik.setFieldValue("modify", true);
     handleOpen("edit");
   };
+  
+  const handleDeleteDepositClick = async (id) => {
+    console.log("aqui está el id que se envia al backend", id);
+    
+    try {
+        // Intenta eliminar el depósito
+        
+        
+        DeleteDepositById(id);
+    } catch (error) {
+      
+        // Manejar el error, si ocurre
+        console.error("Error eliminando el depósito:", error);
+        // Aquí puedes mostrar una notificación si es necesario
+    } finally {
+        // Esto se ejecuta sin importar si hubo un error o no
+        handleDeleteDeposits(id);
+        setOpen4([false, null]);
+    }
+};
 
-  const handleDeleteDepositClick = (id) => {
-    DeleteDepositById(id);
-    setOpen4([false, null]);
-    setTimeout(() => {
-      setDeposit(deposit.filter((deposit) => deposit.id !== id));
-    }, 1000);
-  };
+  
 
   const handleDeletePendingClick = (id) => {
     handleDeletePendingAccount(id);
@@ -414,11 +508,13 @@ export const NegotiationSummary = ({
             variant="standard"
             color="primary"
             size="large"
+            //funcion que gobierna el boton Guardar/Modificar
             onClick={() => {
               if (option === "modify") {
                 NegotiationSummaryData.billId = "FV-".concat(billId);
                 fetchModifySummary(NegotiationSummaryData, OpID);
               } else {
+                //fetchCreateSummary está arriba definida en la linea 84
                 NegotiationSummaryData.billId = "FV-".concat(billId);
                 fetchCreateSummary(NegotiationSummaryData);
               }
@@ -2011,11 +2107,7 @@ export const NegotiationSummary = ({
                 <ValueFormat
                   prefix="$ "
                   value={
-                    NegotiationSummaryData?.pendingToDeposit -
-                    deposit?.reduce(
-                      (acc, item) => acc + parseFloat(item.amount),
-                      0
-                    )
+                    NegotiationSummaryData?.pendingToDeposit 
                   }
                 />
               </InputTitles>
@@ -2076,7 +2168,7 @@ export const NegotiationSummary = ({
             fontWeight="medium"
             color="#63595C"
           >
-            ¿Estás seguro que deseas este giro
+            ¿Estás seguro que deseas eliminar este giro 
           </Typography>
 
           <Typography
@@ -2148,7 +2240,7 @@ export const NegotiationSummary = ({
               sx={{
                 ml: 2,
               }}
-              onClick={() => handleDeletePendingClick(open5[1])}
+              onClick={() => handleDeletePendingClick(open4[1])}
             >
               Eliminar
             </RedButtonModal>

@@ -46,13 +46,13 @@ export const RefundV = ({ formik, option, ToastContainer }) => {
   const handleBack = () => {
     setActiveStep((prevActiveStep) => prevActiveStep - 1);
   };
-
+  /*Cambio en el factor de GM
+Por solicitud cambia el factor de GM de 0,004 a 0,002 a partir del 26 de octubre de 2024.
+*/
   useEffect(() => {
     if (formik.values.applyGM) {
-      console.log("debug", formik.values.applyGM)
-      formik.setFieldValue("gmAmount", (formik.values.amount * 0.004));
+      formik.setFieldValue("gmAmount", formik.values.amount * 0.002);
     } else {
-      console.log("debug 2", formik.values.applyGM)
       formik.setFieldValue("gmAmount", 0);
     }
   }, [formik.values.applyGM, formik.values.amount]);

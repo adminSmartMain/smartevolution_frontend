@@ -391,9 +391,11 @@ export const ManageOperationV = () => {
       "commissionSF",
       formik.values.presentValueInvestor - formik.values.presentValueSF
     );
-
+    /*Cambio en el factor de GM
+    Por solicitud cambia el factor de GM de 0,004 a 0,002 a partir del 26 de octubre de 2024.
+    */
     if (formik.values.applyGm) {
-      formik.setFieldValue("GM", formik.values.presentValueInvestor * 0.004);
+      formik.setFieldValue("GM", formik.values.presentValueInvestor * 0.002);
     }
   }, [formik.values.presentValueInvestor]);
 

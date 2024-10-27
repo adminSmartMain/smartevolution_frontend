@@ -38,7 +38,7 @@ export const imageHeaderContainer = {
   },
 };
 
-export const footFerGridSx = {
+export const footerGridSx = {
   backgroundColor: "blue",
 };
 
