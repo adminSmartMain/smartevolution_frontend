@@ -15,6 +15,7 @@ export const GetLastOperationId = async (id) => {
 
 // Create new operation
 export const CreateOperation = async (values, op) => {
+  
   let results = [];
   if (values.length === 1) {
     if (values[0].opDate === undefined)

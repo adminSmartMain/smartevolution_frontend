@@ -164,7 +164,9 @@ const handleSaveAndRedirect = () => {
         
       } else {
         const data = [...operations, { ...formik.values }];
+        
         createOperationFetch(data, opId);
+        
        
         
       }
