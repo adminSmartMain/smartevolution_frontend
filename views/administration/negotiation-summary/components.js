@@ -224,7 +224,7 @@ export const NegotiationSummary = ({
         pendingAccounts: PendingAccounts,
         
         observations: observations,
-        totalDeposits: deposit.map(deposit => deposit.amount).reduce((a, b) => a + b, 0),
+        totalDeposits: depositData.map(deposit => deposit.amount).reduce((a, b) => a + b, 0),
       });
     }
 
