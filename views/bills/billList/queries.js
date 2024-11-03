@@ -31,7 +31,7 @@ export const DeleteBillById = async (id) => {
 };
 
 export const GetBillEvents = async (id) => {
-  console.log("Making request to get bill events with ID:", id);
+  
 
   try {
     const res = await Axios.get(`${API_URL}/bill/?billEvent=${id}`, {
@@ -40,7 +40,7 @@ export const GetBillEvents = async (id) => {
       },
     });
     
-    console.log("Response data:", res.data);  // Log para ver la respuesta del servidor
+    c // Log para ver la respuesta del servidor
     return res.data;
 
   } catch (error) {

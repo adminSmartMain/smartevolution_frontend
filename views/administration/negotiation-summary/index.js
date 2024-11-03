@@ -99,7 +99,7 @@ export default function FinancialProf() {
 
     onSubmit: (values) => {
       if (!values.modify) {
-        console.log("Agregando nuevo descuento:", values)
+        
         setPendingAccounts([...pendingAccounts, values]);
         Toast("Descuento agregado", "success");
       } else {
@@ -206,19 +206,19 @@ useEffect(() => {
     initialValues: initialValues2,
     validationSchema: validationSchema2,
     onSubmit: (values) => {
-      console.log("Agregando nuevo deposito:", values)
+      
       if (!values.modify) {
         
         setDeposits([...deposits, values]);
         fetchRegisterDeposit(values)
-        fetchModifyDeposit(values);
+       
         Toast("Depósito registrado", "success");
       } else {
         const index = deposits.findIndex(
           (item) => item.id === values.id
         );
         deposits[index] = values;
-        console.log(deposits)
+        
         setDeposits([...deposits]);
         
         fetchModifyDeposit(values);
@@ -230,7 +230,7 @@ useEffect(() => {
 
   const handleDeleteDeposits = (id) => {
     const index = deposits.findIndex((item) => item.id === id);
-    console.log("objeto eliminado",index)
+    
     deposits.splice(index, 1);
     setDeposits([...deposits]);
     Toast("deposito eliminado", "success");

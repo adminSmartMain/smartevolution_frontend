@@ -127,25 +127,23 @@ export const NegotiationSummary = ({
   useEffect(() => {
     if (router && router.query.id) {
       setID(router.query.id);
-      console.log("ID configurado:", router.query.id);
+      
       if (option === "modify") {
         setOpID(router.query.opId);
-        console.log("opId configurado:", router.query.opId);
+        
       }
     }
   }, [router.query, option]);
 
   useEffect(() => {
-    console.log("useEffect triggered");
-    console.log("id:", id);
+   
     
     if (id) {
       console.log("Fetching data for id:", id);
       fetch(id)
         .then(() => {
           console.log("Fetch successful:", data);// Verifica el estado de los datos después del fetch
-          console.log("pending Accounts:", PendingAccounts)
-            console.log("Deposits:", Deposits)
+          
         })
         .catch((error) => {
           console.error("Fetch error:", error);  // Muestra el error si hay problemas
@@ -154,16 +152,15 @@ export const NegotiationSummary = ({
   }, [id, PendingAccounts]);
 
   useEffect(() => {
-    console.log("useEffect triggered");
-    console.log("id:", id);
+
     
     if (id) {
-      console.log("Fetching data for id:", id);
+   
       fetch(id)
         .then(() => {
           setDeposit(data?.data?.emitterDeposits)
-          console.log("Fetch Deposits successful:", data);// Verifica el estado de los datos después del fetch
-          console.log("Deposits:", Deposits)
+          // Verifica el estado de los datos después del fetch
+         
             
         })
         .catch((error) => {
@@ -187,39 +184,20 @@ export const NegotiationSummary = ({
   useEffect(() => {
     if (dataSummaryByID) {
       setObservations(dataSummaryByID?.data?.observations);
-      setBillId(dataSummaryByID?.data?.billId.substring(3));
+  
+      const id = dataSummaryByID?.data?.billId?.substring(3);
+      setBillId(id);
+      
+      
     }
   }, [dataSummaryByID]);
 
-
   useEffect(() => {
     if (data) {
-      setDeposit(data?.data?.emitterDeposits);
+      const depositData = data?.data?.emitterDeposits || []; // Agrega valor predeterminado
+      setDeposit(depositData);
+     
       Toast("Resumen de negociación cargado con éxito", "success");
-      console.log(data)
-      console.log("Depositos",deposit.map(deposit => deposit.amount).reduce((a, b) => a + b, 0))
-      console.log("lista Depositos",deposit)
-      
-
-      console.log(data?.data?.operation?.valueToDiscount,data?.data?.operation?.investorDiscount,data?.data?.operation?.billValue,
-        PendingAccounts.reduce((a, b) => a + b.amount, 0) -
-        (manualAdjustment || 0))
-        //561912376 39068757 22843619 0
-
-      console.log(data?.data?.operation?.valueToDiscount -
-          data?.data?.operation?.investorDiscount -
-          data?.data?.operation?.billValue -
-          PendingAccounts.reduce((a, b) => a + b.amount, 0))
-          -(manualAdjustment || 0)
-      
-
-        //1671916222
-
-      console.log(data?.data?.operation?.valueToDiscount -
-          data?.data?.operation?.investorDiscount -
-          data?.data?.operation?.billValue -
-          PendingAccounts.reduce((a, b) => a + b.amount, 0) -
-          (manualAdjustment || 0))
       setNegotiationSummaryData({
         opId: id,
         emitter: data?.data?.emitter?.name,
@@ -240,12 +218,13 @@ export const NegotiationSummary = ({
           data?.data?.operation?.investorDiscount -
           data?.data?.operation?.billValue -
           PendingAccounts.reduce((a, b) => a + b.amount, 0) -
-          (manualAdjustment || 0)-deposit.map(deposit => deposit.amount).reduce((a, b) => a + b, 0),
+          (manualAdjustment || 0)
+          -depositData.map(deposit => deposit.amount).reduce((a, b) => a + b, 0),
         
         pendingAccounts: PendingAccounts,
         
         observations: observations,
-        totalDeposits: deposit.map(deposit => deposit.amount).reduce((a, b) => a + b, 0),
+        totalDeposits: depositData.map(deposit => deposit.amount).reduce((a, b) => a + b, 0),
       });
     }
 
@@ -336,16 +315,16 @@ export const NegotiationSummary = ({
   //maneja la apertura del cuadrado de agregar descuentos. cuando se crea el descuento toma la option add
   
   const handleOpen = (option) => {
-    console.log("handleOpen called with option:", option);
+    
     if (option === "add") {
       formik.resetForm();
       formik.setFieldValue("opId", Number(id));//Aqui está el error
-      console.log("OpID:", id);
+     
       setOpen([true, null]);
     } else {
       setOpen([true, option]);
     }
-    console.log("Form state after open:", formik.values);
+   
   };
 
 
@@ -356,7 +335,7 @@ export const NegotiationSummary = ({
 
   const [open2, setOpen2] = useState([false, null]);
   const handleOpen2 = (option) => {
-    console.log("handleOpen2 called with option:", option);
+   
     if (option === "add") {
       formik2.resetForm();
       console.log("client", data?.data?.emitter?.id);
@@ -367,7 +346,7 @@ export const NegotiationSummary = ({
     } else {
       setOpen2([true, option]);
     }
-    console.log("Form state after open2:", formik2.values);
+   
   };
 
   const handleClose2 = () => {
@@ -384,10 +363,10 @@ export const NegotiationSummary = ({
   };
 
   const [open4, setOpen4] = useState([false, null]);
-  console.log("open4",open4)
+  
 
   const handleOpen4 = (item) => {
-    console.log("item:",item)
+    
     setOpen4([true, item.id !== undefined ? item.id : item.client]);
   };
 
@@ -396,10 +375,10 @@ export const NegotiationSummary = ({
   };
 
   const [open5, setOpen5] = useState([false, null]);
-  console.log("open5",open5)
+  
   
   const handleOpen5 = (item) => {
-    console.log("item open5:",item)
+    
     setOpen5([true, item.opId]);
   };
 
@@ -458,7 +437,7 @@ export const NegotiationSummary = ({
   };
   //acá se guardan los descuentos
   const handleEditPendingClick = (item) => {
-    console.log("Editing item:", item);
+    
     formik.setFieldValue("id", item.id);
     
     formik.setFieldValue("description", item.description);
@@ -472,7 +451,7 @@ export const NegotiationSummary = ({
   };
   
   const handleDeleteDepositClick = async (id) => {
-    console.log("aqui está el id que se envia al backend", id);
+    
     
     try {
         // Intenta eliminar el depósito
@@ -510,12 +489,12 @@ export const NegotiationSummary = ({
             size="large"
             //funcion que gobierna el boton Guardar/Modificar
             onClick={() => {
+              // Asigna "FV-<billId>" o "No aplica" si billId es null o undefined
+              NegotiationSummaryData.billId = billId ? "FV-".concat(billId) : "FV-No aplica";
+            
               if (option === "modify") {
-                NegotiationSummaryData.billId = "FV-".concat(billId);
                 fetchModifySummary(NegotiationSummaryData, OpID);
               } else {
-                //fetchCreateSummary está arriba definida en la linea 84
-                NegotiationSummaryData.billId = "FV-".concat(billId);
                 fetchCreateSummary(NegotiationSummaryData);
               }
             }}
