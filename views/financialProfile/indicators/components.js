@@ -78,14 +78,19 @@ export const FinancialInd = () => {
   const getData = (dataKey, dataKey2) => {
     let dataObject = [];
     if (dataIndicators) {
+      console.log(dataIndicators)
+      console.log("dataIndicators.data",dataIndicators.data[dataKey])
+      console.log("dataIndicators.data",dataIndicators.data)
       Object.keys(dataIndicators.data[dataKey]).forEach((period) => {
+        console.log("dataIndicators.data financialRisk en periodo [period]",period,dataIndicators.data[dataKey][period])
         dataObject.push({
           name: dataIndicators.data[dataKey][period].period,
           value: dataIndicators.data[dataKey][period][dataKey2],
         });
       });
     }
-
+    
+    console.log(dataObject)
     return dataObject.reverse();
   };
 
@@ -112,9 +117,13 @@ export const FinancialInd = () => {
 
   useEffect(() => {
     if (dataPDF) {
+      console.log(dataPDF)
       //Download a base64 PDF
-      const base64Data = dataPDF.data?.pdf;
-      const decodedData = window.atob(base64Data);
+      console.log(dataPDF.data)
+      console.log("PDF",dataPDF.data)
+      const base64Data = dataPDF.data;
+      
+      const decodedData = window.atob(base64Data);// base64data = dataPDF.data.pdf asi se tomaba antes
       const byteNumbers = new Array(decodedData.length);
       for (let i = 0; i < decodedData.length; i++) {
         byteNumbers[i] = decodedData.charCodeAt(i);
@@ -387,8 +396,8 @@ export const FinancialInd = () => {
                           borderRight="1px solid #57575780"
                         >
                           <Typography sx={{ ...sxNumbers }}>
-                            {dataIndicators?.data?.activityEfficiency?.period_3
-                              ?.walletRotation ?? ""}
+                            {NumberFormat.format(dataIndicators?.data?.activityEfficiency?.period_3
+                              ?.walletRotation ?? "")}
                           </Typography>
                         </Box>
                         <Box
@@ -397,14 +406,14 @@ export const FinancialInd = () => {
                           borderRight="1px solid #57575780"
                         >
                           <Typography sx={{ ...sxNumbers }}>
-                            {dataIndicators?.data?.activityEfficiency?.period_2
-                              ?.walletRotation ?? ""}
+                            {NumberFormat.format(dataIndicators?.data?.activityEfficiency?.period_2
+                              ?.walletRotation ?? "")}
                           </Typography>
                         </Box>
                         <Box width="calc(91%/3)" ml="3%">
                           <Typography sx={{ ...sxNumbers }}>
-                            {dataIndicators?.data?.activityEfficiency?.period_1
-                              ?.walletRotation ?? ""}
+                            {NumberFormat.format(dataIndicators?.data?.activityEfficiency?.period_1
+                              ?.walletRotation ?? "")}
                           </Typography>
                         </Box>
                       </Box>
@@ -424,8 +433,8 @@ export const FinancialInd = () => {
                           borderRight="1px solid #57575780"
                         >
                           <Typography sx={{ ...sxNumbers }}>
-                            {dataIndicators?.data?.activityEfficiency?.period_3
-                              ?.inventoryRotation ?? ""}
+                            {NumberFormat.format(dataIndicators?.data?.activityEfficiency?.period_3
+                              ?.inventoryRotation ?? "")}
                           </Typography>
                         </Box>
                         <Box
@@ -434,14 +443,14 @@ export const FinancialInd = () => {
                           borderRight="1px solid #57575780"
                         >
                           <Typography sx={{ ...sxNumbers }}>
-                            {dataIndicators?.data?.activityEfficiency?.period_2
-                              ?.inventoryRotation ?? ""}
+                            {NumberFormat.format(dataIndicators?.data?.activityEfficiency?.period_2
+                              ?.inventoryRotation ?? "")}
                           </Typography>
                         </Box>
                         <Box width="calc(91%/3)" ml="3%">
                           <Typography sx={{ ...sxNumbers }}>
-                            {dataIndicators?.data?.activityEfficiency?.period_1
-                              ?.inventoryRotation ?? ""}
+                            {NumberFormat.format(dataIndicators?.data?.activityEfficiency?.period_1
+                              ?.inventoryRotation ?? "")}
                           </Typography>
                         </Box>
                       </Box>
@@ -461,8 +470,8 @@ export const FinancialInd = () => {
                           borderRight="1px solid #57575780"
                         >
                           <Typography sx={{ ...sxNumbers }}>
-                            {dataIndicators?.data?.activityEfficiency?.period_3
-                              ?.operationalCycle ?? ""}
+                            {NumberFormat.format(dataIndicators?.data?.activityEfficiency?.period_3
+                              ?.operationalCycle ?? "")}
                           </Typography>
                         </Box>
                         <Box
@@ -471,14 +480,14 @@ export const FinancialInd = () => {
                           borderRight="1px solid #57575780"
                         >
                           <Typography sx={{ ...sxNumbers }}>
-                            {dataIndicators?.data?.activityEfficiency?.period_2
-                              ?.operationalCycle ?? ""}
+                            {NumberFormat.format(dataIndicators?.data?.activityEfficiency?.period_2
+                              ?.operationalCycle ?? "")}
                           </Typography>
                         </Box>
                         <Box width="calc(91%/3)" ml="3%">
                           <Typography sx={{ ...sxNumbers }}>
-                            {dataIndicators?.data?.activityEfficiency?.period_1
-                              ?.operationalCycle ?? ""}
+                            {NumberFormat.format(dataIndicators?.data?.activityEfficiency?.period_1
+                              ?.operationalCycle ?? "")}
                           </Typography>
                         </Box>
                       </Box>
@@ -498,8 +507,8 @@ export const FinancialInd = () => {
                           borderRight="1px solid #57575780"
                         >
                           <Typography sx={{ ...sxNumbers }}>
-                            {dataIndicators?.data?.activityEfficiency?.period_3
-                              ?.providersRotation ?? ""}
+                            {NumberFormat.format(dataIndicators?.data?.activityEfficiency?.period_3
+                              ?.providersRotation ?? "")}
                           </Typography>
                         </Box>
                         <Box
@@ -508,14 +517,14 @@ export const FinancialInd = () => {
                           borderRight="1px solid #57575780"
                         >
                           <Typography sx={{ ...sxNumbers }}>
-                            {dataIndicators?.data?.activityEfficiency?.period_2
-                              ?.providersRotation ?? ""}
+                            {NumberFormat.format(dataIndicators?.data?.activityEfficiency?.period_2
+                              ?.providersRotation ?? "")}
                           </Typography>
                         </Box>
                         <Box width="calc(91%/3)" ml="3%">
                           <Typography sx={{ ...sxNumbers }}>
-                            {dataIndicators?.data?.activityEfficiency?.period_1
-                              ?.providersRotation ?? ""}
+                            {NumberFormat.format(dataIndicators?.data?.activityEfficiency?.period_1
+                              ?.providersRotation ?? "")}
                           </Typography>
                         </Box>
                       </Box>
@@ -535,8 +544,8 @@ export const FinancialInd = () => {
                           borderRight="1px solid #57575780"
                         >
                           <Typography sx={{ ...sxNumbers }}>
-                            {dataIndicators?.data?.activityEfficiency?.period_3
-                              ?.accumulatedExpensesRotation ?? ""}
+                            {NumberFormat.format(dataIndicators?.data?.activityEfficiency?.period_3
+                              ?.accumulatedExpensesRotation ?? "")}
                           </Typography>
                         </Box>
                         <Box
@@ -545,14 +554,14 @@ export const FinancialInd = () => {
                           borderRight="1px solid #57575780"
                         >
                           <Typography sx={{ ...sxNumbers }}>
-                            {dataIndicators?.data?.activityEfficiency?.period_2
-                              ?.accumulatedExpensesRotation ?? ""}
+                            {NumberFormat.format(dataIndicators?.data?.activityEfficiency?.period_2
+                              ?.accumulatedExpensesRotation ?? "")}
                           </Typography>
                         </Box>
                         <Box width="calc(91%/3)" ml="3%">
                           <Typography sx={{ ...sxNumbers }}>
-                            {dataIndicators?.data?.activityEfficiency?.period_1
-                              ?.accumulatedExpensesRotation ?? ""}
+                            {NumberFormat.format(dataIndicators?.data?.activityEfficiency?.period_1
+                              ?.accumulatedExpensesRotation ?? "")}
                           </Typography>
                         </Box>
                       </Box>
@@ -572,8 +581,8 @@ export const FinancialInd = () => {
                           borderRight="1px solid #57575780"
                         >
                           <Typography sx={{ ...sxNumbers }}>
-                            {dataIndicators?.data?.activityEfficiency?.period_3
-                              ?.cashConversionCycle ?? ""}
+                            {NumberFormat.format(dataIndicators?.data?.activityEfficiency?.period_3
+                              ?.cashConversionCycle ?? "")}
                           </Typography>
                         </Box>
                         <Box
@@ -582,14 +591,14 @@ export const FinancialInd = () => {
                           borderRight="1px solid #57575780"
                         >
                           <Typography sx={{ ...sxNumbers }}>
-                            {dataIndicators?.data?.activityEfficiency?.period_2
-                              ?.cashConversionCycle ?? ""}
+                            {NumberFormat.format(dataIndicators?.data?.activityEfficiency?.period_2
+                              ?.cashConversionCycle ?? "")}
                           </Typography>
                         </Box>
                         <Box width="calc(91%/3)" ml="3%">
                           <Typography sx={{ ...sxNumbers }}>
-                            {dataIndicators?.data?.activityEfficiency?.period_1
-                              ?.cashConversionCycle ?? ""}
+                            {NumberFormat.format(dataIndicators?.data?.activityEfficiency?.period_1
+                              ?.cashConversionCycle ?? "")}
                           </Typography>
                         </Box>
                       </Box>
@@ -858,8 +867,8 @@ export const FinancialInd = () => {
                         borderRight="1px solid #57575780"
                       >
                         <Typography sx={{ ...sxNumbers }}>
-                          {dataIndicators?.data?.rentability?.period_3
-                            ?.operationalMargin ?? ""}{" "}
+                          {NumberFormat.format(dataIndicators?.data?.rentability?.period_3
+                            ?.operationalMargin ?? "")}{" "}
                           %
                         </Typography>
                       </Box>
@@ -869,15 +878,15 @@ export const FinancialInd = () => {
                         borderRight="1px solid #57575780"
                       >
                         <Typography sx={{ ...sxNumbers }}>
-                          {dataIndicators?.data?.rentability?.period_2
-                            ?.operationalMargin ?? ""}{" "}
+                          {NumberFormat.format(dataIndicators?.data?.rentability?.period_2
+                            ?.operationalMargin ?? "")}{" "}
                           %
                         </Typography>
                       </Box>
                       <Box width="calc(91%/3)" ml="3%">
                         <Typography sx={{ ...sxNumbers }}>
-                          {dataIndicators?.data?.rentability?.period_1
-                            ?.operationalMargin ?? ""}{" "}
+                          {NumberFormat.format(dataIndicators?.data?.rentability?.period_1
+                            ?.operationalMargin ?? "")}{" "}
                           %
                         </Typography>
                       </Box>
@@ -898,7 +907,7 @@ export const FinancialInd = () => {
                         <Typography sx={{ ...sxNumbers }}>
                           {NumberFormat.format(
                             dataIndicators?.data?.rentability?.period_3?.EBITDA
-                          ) ?? ""}
+                           ?? "")}
                         </Typography>
                       </Box>
                       <Box
@@ -909,14 +918,14 @@ export const FinancialInd = () => {
                         <Typography sx={{ ...sxNumbers }}>
                           {NumberFormat.format(
                             dataIndicators?.data?.rentability?.period_2?.EBITDA
-                          ) ?? ""}
+                           ?? "")}
                         </Typography>
                       </Box>
                       <Box width="calc(91%/3)" ml="3%">
                         <Typography sx={{ ...sxNumbers }}>
                           {NumberFormat.format(
                             dataIndicators?.data?.rentability?.period_1?.EBITDA
-                          ) ?? ""}
+                           ?? "")}
                         </Typography>
                       </Box>
                     </Box>
@@ -936,8 +945,8 @@ export const FinancialInd = () => {
                         borderRight="1px solid #57575780"
                       >
                         <Typography sx={{ ...sxNumbers }}>
-                          {dataIndicators?.data?.rentability?.period_3
-                            ?.EBITDAMargin ?? ""}{" "}
+                          {NumberFormat.format(dataIndicators?.data?.rentability?.period_3
+                            ?.EBITDAMargin ?? "")}{" "}
                           %
                         </Typography>
                       </Box>
@@ -947,15 +956,15 @@ export const FinancialInd = () => {
                         borderRight="1px solid #57575780"
                       >
                         <Typography sx={{ ...sxNumbers }}>
-                          {dataIndicators?.data?.rentability?.period_2
-                            ?.EBITDAMargin ?? ""}{" "}
+                          {NumberFormat.format(dataIndicators?.data?.rentability?.period_2
+                            ?.EBITDAMargin ?? "")}{" "}
                           %
                         </Typography>
                       </Box>
                       <Box width="calc(91%/3)" ml="3%">
                         <Typography sx={{ ...sxNumbers }}>
-                          {dataIndicators?.data?.rentability?.period_1
-                            ?.EBITDAMargin ?? ""}{" "}
+                          {NumberFormat.format(dataIndicators?.data?.rentability?.period_1
+                            ?.EBITDAMargin ?? "")}{" "}
                           %
                         </Typography>
                       </Box>
@@ -976,8 +985,8 @@ export const FinancialInd = () => {
                         borderRight="1px solid #57575780"
                       >
                         <Typography sx={{ ...sxNumbers }}>
-                          {dataIndicators?.data?.rentability?.period_3
-                            ?.netMargin ?? ""}{" "}
+                          {NumberFormat.format(dataIndicators?.data?.rentability?.period_3
+                            ?.netMargin ?? "")}{" "}
                           %
                         </Typography>
                       </Box>
@@ -987,15 +996,15 @@ export const FinancialInd = () => {
                         borderRight="1px solid #57575780"
                       >
                         <Typography sx={{ ...sxNumbers }}>
-                          {dataIndicators?.data?.rentability?.period_2
-                            ?.netMargin ?? ""}{" "}
+                          {NumberFormat.format(dataIndicators?.data?.rentability?.period_2
+                            ?.netMargin ?? "")}{" "}
                           %
                         </Typography>
                       </Box>
                       <Box width="calc(91%/3)" ml="3%">
                         <Typography sx={{ ...sxNumbers }}>
-                          {dataIndicators?.data?.rentability?.period_1
-                            ?.netMargin ?? ""}{" "}
+                          {NumberFormat.format(dataIndicators?.data?.rentability?.period_1
+                            ?.netMargin ?? "")}{" "}
                           %
                         </Typography>
                       </Box>
@@ -1016,8 +1025,8 @@ export const FinancialInd = () => {
                         borderRight="1px solid #57575780"
                       >
                         <Typography sx={{ ...sxNumbers }}>
-                          {dataIndicators?.data?.rentability?.period_3
-                            ?.rentabilityTotalAssets ?? ""}{" "}
+                          {Math.round(dataIndicators?.data?.rentability?.period_3
+                            ?.rentabilityTotalAssets ?? "")}{" "}
                           %
                         </Typography>
                       </Box>
@@ -1027,15 +1036,15 @@ export const FinancialInd = () => {
                         borderRight="1px solid #57575780"
                       >
                         <Typography sx={{ ...sxNumbers }}>
-                          {dataIndicators?.data?.rentability?.period_2
-                            ?.rentabilityTotalAssets ?? ""}{" "}
+                          {Math.round(dataIndicators?.data?.rentability?.period_2
+                            ?.rentabilityTotalAssets ?? "")}{" "}
                           %
                         </Typography>
                       </Box>
                       <Box width="calc(91%/3)" ml="3%">
                         <Typography sx={{ ...sxNumbers }}>
-                          {dataIndicators?.data?.rentability?.period_1
-                            ?.rentabilityTotalAssets ?? ""}{" "}
+                          {Math.round(dataIndicators?.data?.rentability?.period_1
+                            ?.rentabilityTotalAssets ?? "")}{" "}
                           %
                         </Typography>
                       </Box>
@@ -1256,8 +1265,8 @@ export const FinancialInd = () => {
                         borderRight="1px solid #57575780"
                       >
                         <Typography sx={{ ...sxNumbers }}>
-                          {dataIndicators?.data?.financialRisk?.period_3
-                            ?.currentReason ?? ""}
+                          {NumberFormat.format(dataIndicators?.data?.financialRisk?.period_3
+                            ?.currentReason ?? "")}
                         </Typography>
                       </Box>
                       <Box
@@ -1266,14 +1275,14 @@ export const FinancialInd = () => {
                         borderRight="1px solid #57575780"
                       >
                         <Typography sx={{ ...sxNumbers }}>
-                          {dataIndicators?.data?.financialRisk?.period_2
-                            ?.currentReason ?? ""}
+                          {NumberFormat.format(dataIndicators?.data?.financialRisk?.period_2
+                            ?.currentReason ?? "")}
                         </Typography>
                       </Box>
                       <Box width="calc(91%/3)" ml="3%">
                         <Typography sx={{ ...sxNumbers }}>
-                          {dataIndicators?.data?.financialRisk?.period_1
-                            ?.currentReason ?? ""}
+                          {NumberFormat.format(dataIndicators?.data?.financialRisk?.period_1
+                            ?.currentReason ?? "")}
                         </Typography>
                       </Box>
                     </Box>
@@ -1296,7 +1305,7 @@ export const FinancialInd = () => {
                           {NumberFormat.format(
                             dataIndicators?.data?.financialRisk?.period_3
                               ?.workingCapital
-                          ) ?? ""}
+                           ?? "")}
                         </Typography>
                       </Box>
                       <Box
@@ -1308,7 +1317,7 @@ export const FinancialInd = () => {
                           {NumberFormat.format(
                             dataIndicators?.data?.financialRisk?.period_2
                               ?.workingCapital
-                          ) ?? ""}
+                           ?? "")}
                         </Typography>
                       </Box>
                       <Box width="calc(91%/3)" ml="3%">
@@ -1316,7 +1325,7 @@ export const FinancialInd = () => {
                           {NumberFormat.format(
                             dataIndicators?.data?.financialRisk?.period_1
                               ?.workingCapital
-                          ) ?? ""}
+                           ?? "")}
                         </Typography>
                       </Box>
                     </Box>
@@ -1336,8 +1345,8 @@ export const FinancialInd = () => {
                         borderRight="1px solid #57575780"
                       >
                         <Typography sx={{ ...sxNumbers }}>
-                          {dataIndicators?.data?.financialRisk?.period_3
-                            ?.debt ?? ""}{" "}
+                          {NumberFormat.format(dataIndicators?.data?.financialRisk?.period_3
+                            ?.debt ?? "")}{" "}
                           %
                         </Typography>
                       </Box>
@@ -1347,15 +1356,15 @@ export const FinancialInd = () => {
                         borderRight="1px solid #57575780"
                       >
                         <Typography sx={{ ...sxNumbers }}>
-                          {dataIndicators?.data?.financialRisk?.period_2
-                            ?.debt ?? ""}{" "}
+                          {NumberFormat.format(dataIndicators?.data?.financialRisk?.period_2
+                            ?.debt ?? "")}{" "}
                           %
                         </Typography>
                       </Box>
                       <Box width="calc(91%/3)" ml="3%">
                         <Typography sx={{ ...sxNumbers }}>
-                          {dataIndicators?.data?.financialRisk?.period_1
-                            ?.debt ?? ""}{" "}
+                          {NumberFormat.format(dataIndicators?.data?.financialRisk?.period_1
+                            ?.debt ?? "")}{" "}
                           %
                         </Typography>
                       </Box>
@@ -1376,8 +1385,8 @@ export const FinancialInd = () => {
                         borderRight="1px solid #57575780"
                       >
                         <Typography sx={{ ...sxNumbers }}>
-                          {dataIndicators?.data?.financialRisk?.period_3
-                            ?.avgFinancialDebt ?? ""}{" "}
+                          {NumberFormat.format(dataIndicators?.data?.financialRisk?.period_3
+                            ?.avgFinancialDebt ?? "")}{" "}
                           %
                         </Typography>
                       </Box>
@@ -1387,15 +1396,15 @@ export const FinancialInd = () => {
                         borderRight="1px solid #57575780"
                       >
                         <Typography sx={{ ...sxNumbers }}>
-                          {dataIndicators?.data?.financialRisk?.period_2
-                            ?.avgFinancialDebt ?? ""}{" "}
+                          {NumberFormat.format(dataIndicators?.data?.financialRisk?.period_2
+                            ?.avgFinancialDebt ?? "")}{" "}
                           %
                         </Typography>
                       </Box>
                       <Box width="calc(91%/3)" ml="3%">
                         <Typography sx={{ ...sxNumbers }}>
-                          {dataIndicators?.data?.financialRisk?.period_1
-                            ?.avgFinancialDebt ?? ""}{" "}
+                          {NumberFormat.format(dataIndicators?.data?.financialRisk?.period_1
+                            ?.avgFinancialDebt ?? "")}{" "}
                           %
                         </Typography>
                       </Box>
@@ -1416,9 +1425,9 @@ export const FinancialInd = () => {
                         borderRight="1px solid #57575780"
                       >
                         <Typography sx={{ ...sxNumbers }}>
-                          {dataIndicators?.data?.financialRisk?.period_3[
-                            "financialDebt/EBITDA"
-                          ] ?? ""}{" "}
+                          {NumberFormat.format(dataIndicators?.data?.financialRisk?.period_3[
+                            "financialDebt_EBITDA"
+                          ] ?? "")}{" "}
                           %
                         </Typography>
                       </Box>
@@ -1428,17 +1437,17 @@ export const FinancialInd = () => {
                         borderRight="1px solid #57575780"
                       >
                         <Typography sx={{ ...sxNumbers }}>
-                          {dataIndicators?.data?.financialRisk?.period_2[
-                            "financialDebt/EBITDA"
-                          ] ?? ""}{" "}
+                          {NumberFormat.format(dataIndicators?.data?.financialRisk?.period_2[
+                            "financialDebt_EBITDA"
+                          ] ?? "")}{" "}
                           %
                         </Typography>
                       </Box>
                       <Box width="calc(91%/3)" ml="3%">
                         <Typography sx={{ ...sxNumbers }}>
-                          {dataIndicators?.data?.financialRisk?.period_1[
-                            "financialDebt/EBITDA"
-                          ] ?? ""}{" "}
+                          {NumberFormat.format(dataIndicators?.data?.financialRisk?.period_1[
+                            "financialDebt_EBITDA"
+                          ] ?? "")}{" "}
                           %
                         </Typography>
                       </Box>
@@ -1459,9 +1468,9 @@ export const FinancialInd = () => {
                         borderRight="1px solid #57575780"
                       >
                         <Typography sx={{ ...sxNumbers }}>
-                          {dataIndicators?.data?.financialRisk?.period_3[
-                            "EBITDA/financialExpenses"
-                          ] ?? ""}
+                          {NumberFormat.format(dataIndicators?.data?.financialRisk?.period_3[
+                            "EBITDA_financialExpenses"
+                          ] ?? "")}
                         </Typography>
                       </Box>
                       <Box
@@ -1470,16 +1479,16 @@ export const FinancialInd = () => {
                         borderRight="1px solid #57575780"
                       >
                         <Typography sx={{ ...sxNumbers }}>
-                          {dataIndicators?.data?.financialRisk?.period_2[
-                            "EBITDA/financialExpenses"
-                          ] ?? ""}
+                          {NumberFormat.format(dataIndicators?.data?.financialRisk?.period_2[
+                             "EBITDA_financialExpenses"
+                          ] ?? "")}
                         </Typography>
                       </Box>
                       <Box width="calc(91%/3)" ml="3%">
                         <Typography sx={{ ...sxNumbers }}>
-                          {dataIndicators?.data?.financialRisk?.period_1[
-                            "EBITDA/financialExpenses"
-                          ] ?? ""}
+                          {NumberFormat.format(dataIndicators?.data?.financialRisk?.period_1[
+                             "EBITDA_financialExpenses"
+                          ] ?? "")}
                         </Typography>
                       </Box>
                     </Box>
@@ -1644,7 +1653,7 @@ export const FinancialInd = () => {
                     EBITDA / Gastos financieros
                   </Typography>
                   <BarChart
-                    data={getData("financialRisk", "EBITDA/financialExpenses")}
+                    data={getData("financialRisk", "EBITDA_financialExpenses")}
                   />
                 </Box>
                 <Box
@@ -1748,7 +1757,7 @@ export const FinancialInd = () => {
                         <Typography sx={{ ...sxNumbers }}>
                           {NumberFormat.format(
                             dataIndicators?.data?.results?.period_3?.sales
-                          ) ?? ""}
+                           ?? "")}
                         </Typography>
                       </Box>
                       <Box
@@ -1759,14 +1768,14 @@ export const FinancialInd = () => {
                         <Typography sx={{ ...sxNumbers }}>
                           {NumberFormat.format(
                             dataIndicators?.data?.results?.period_2?.sales
-                          ) ?? ""}
+                           ?? "")}
                         </Typography>
                       </Box>
                       <Box width="calc(91%/3)" ml="3%">
                         <Typography sx={{ ...sxNumbers }}>
                           {NumberFormat.format(
                             dataIndicators?.data?.results?.period_1?.sales
-                          ) ?? ""}
+                           ?? "")}
                         </Typography>
                       </Box>
                     </Box>
@@ -1789,7 +1798,7 @@ export const FinancialInd = () => {
                           {NumberFormat.format(
                             dataIndicators?.data?.results?.period_3
                               ?.avgMonthBilling
-                          ) ?? ""}
+                           ?? "")}
                         </Typography>
                       </Box>
                       <Box
@@ -1801,7 +1810,7 @@ export const FinancialInd = () => {
                           {NumberFormat.format(
                             dataIndicators?.data?.results?.period_2
                               ?.avgMonthBilling
-                          ) ?? ""}
+                           ?? "")}
                         </Typography>
                       </Box>
                       <Box width="calc(91%/3)" ml="3%">
@@ -1809,7 +1818,7 @@ export const FinancialInd = () => {
                           {NumberFormat.format(
                             dataIndicators?.data?.results?.period_1
                               ?.avgMonthBilling
-                          ) ?? ""}
+                           ?? "")}
                         </Typography>
                       </Box>
                     </Box>
