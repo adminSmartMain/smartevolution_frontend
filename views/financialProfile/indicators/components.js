@@ -1,5 +1,5 @@
 //React imports
-import { useEffect, useState } from "react";
+import { useEffect, useState,useRef } from "react";
 
 import Link from "next/link";
 //Next imports
@@ -36,7 +36,7 @@ import {
 import { saveAs } from "file-saver";
 
 export const FinancialInd = () => {
-  //Get ID from URL
+  // Obtener ID de la URL
   const {
     fetch: fetch,
     loading: loading,
@@ -44,7 +44,7 @@ export const FinancialInd = () => {
     data: data,
   } = useFetch({ service: GetCustomerById, init: false });
 
-  //Get Financial Profile Indicators by ID
+  // Obtener Indicadores del Perfil Financiero por ID
   const {
     fetch: fetchIndicators,
     loading: loadingIndicators,
@@ -61,6 +61,7 @@ export const FinancialInd = () => {
 
   const [id, setID] = useState("");
   const router = useRouter();
+  const chartRef = useRef(null); // Referencia para el gráfico
 
   useEffect(() => {
     if (router && router.query) {
@@ -78,19 +79,14 @@ export const FinancialInd = () => {
   const getData = (dataKey, dataKey2) => {
     let dataObject = [];
     if (dataIndicators) {
-      console.log(dataIndicators)
-      console.log("dataIndicators.data",dataIndicators.data[dataKey])
-      console.log("dataIndicators.data",dataIndicators.data)
+      console.log(dataIndicators);
       Object.keys(dataIndicators.data[dataKey]).forEach((period) => {
-        console.log("dataIndicators.data financialRisk en periodo [period]",period,dataIndicators.data[dataKey][period])
         dataObject.push({
           name: dataIndicators.data[dataKey][period].period,
           value: dataIndicators.data[dataKey][period][dataKey2],
         });
       });
     }
-    
-    console.log(dataObject)
     return dataObject.reverse();
   };
 
@@ -111,19 +107,45 @@ export const FinancialInd = () => {
 
   const handlePrint = () => {
     if (id) {
-      fetchPDF(id);
+      // Obtener la gráfica en base64 y enviarla al backend
+      const chartCanvas = chartRef.current?.getCanvas();
+      if (chartCanvas) {
+        const base64Image = chartCanvas.toDataURL("image/png");
+        sendImageToBackend(base64Image);
+      }
+
+      fetchPDF(id); // Llamada al servicio que genera el PDF
     }
+  };
+
+  const sendImageToBackend = (base64Image) => {
+    const requestData = {
+      id,
+      graphImage: base64Image,
+    };
+
+    fetch("/api/generate-pdf", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(requestData),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("PDF generado correctamente.");
+      })
+      .catch((error) => {
+        console.error("Error generando el PDF", error);
+      });
   };
 
   useEffect(() => {
     if (dataPDF) {
-      console.log(dataPDF)
-      //Download a base64 PDF
-      console.log(dataPDF.data)
-      console.log("PDF",dataPDF.data)
+      console.log(dataPDF);
       const base64Data = dataPDF.data;
-      
-      const decodedData = window.atob(base64Data);// base64data = dataPDF.data.pdf asi se tomaba antes
+
+      const decodedData = window.atob(base64Data);
       const byteNumbers = new Array(decodedData.length);
       for (let i = 0; i < decodedData.length; i++) {
         byteNumbers[i] = decodedData.charCodeAt(i);
@@ -685,6 +707,7 @@ export const FinancialInd = () => {
                       Rotación de Cartera
                     </Typography>
                     <BarChart
+                      ref={chartRef} // Pasar la referencia al componente BarChart
                       data={getData("activityEfficiency", "walletRotation")}
                     />
                   </Box>

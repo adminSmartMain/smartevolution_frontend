@@ -58,6 +58,7 @@ export default (props) => {
     );
 
     setSelecteObject(selected);
+    setPeriodRange(null);
   };
   const [periodRange, setPeriodRange] = useState(null);
   const [loadingSave, setLoadingSave] = useState(false);

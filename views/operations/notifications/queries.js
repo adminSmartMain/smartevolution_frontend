@@ -4,7 +4,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export const getNotifications = async (params) => {
   const res = await Axios.get(
-    `${API_URL}/preOperation?opId=undefined&opIdV=undefined&notifications=notifications&nOpId=undefined`,
+    `${API_URL}/${params}`,
     {
       headers: {
         authorization: "Bearer " + localStorage.getItem("access-token"),
