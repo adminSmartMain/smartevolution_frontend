@@ -28,7 +28,7 @@ export default function ClientSelect({
   } = useFetch({ service: Clients, init: true });
 
   const [client, setClient] = useState([]);
-
+  console.log('PayerSelect en su mismo objeto')
   useEffect(() => {
     if (data) {
       var Clients = [];
