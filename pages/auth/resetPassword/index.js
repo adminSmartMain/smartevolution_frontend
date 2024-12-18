@@ -3,13 +3,14 @@ import Image from "next/image";
 
 import { Grid } from "@mui/material";
 
-import { InputV } from "@views/login/index";
+import { NewPasswordIndex } from "@views/login/resetPassword/index";
 
-export default function Home() {
+export default function ResetPassword() {
   return (
-    <div>
+    <>
+      <div>
   <Head>
-    <title>Smart Evolution - Inicio de sesión</title>
+    <title>Smart Evolution - Nueva contraseña</title>
     <meta name="description" content="Prueba de contenido 2.0" />
   </Head>
 
@@ -23,8 +24,7 @@ export default function Home() {
         height: "100vh", // Altura ajustada para mayor proporción
         background: "#ebebeb",
         margin: "auto",
-        boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)", // Mejor estética
-        borderRadius: "10px", // Bordes redondeados
+      
       }}
       display="flex"
       alignItems="center"
@@ -37,7 +37,7 @@ export default function Home() {
           width={312}
           alt="Smart Evolution"
         />
-        <InputV />
+        < NewPasswordIndex />
       </div>
     </Grid>
 
@@ -59,5 +59,7 @@ export default function Home() {
   </Grid>
 </div>
 
+    </>
+  
   );
 }

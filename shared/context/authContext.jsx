@@ -11,7 +11,7 @@ export default authContext;
 
 const pathsToRedirectDashboard = ["/auth/login", "/auth/register"];
 const pathIsUserIsLogged = "/dashboard";
-const pathsExcluded = ["/self-management"];
+const pathsExcluded = ["/self-management","/auth/forgotPassword","/auth/resetPassword"];
 
 export const AuthProvider = (child) => {
   const router = useRouter();

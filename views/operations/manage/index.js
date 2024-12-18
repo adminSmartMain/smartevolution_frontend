@@ -260,6 +260,7 @@ const handleSaveAndRedirect = () => {
   }, [formik.values.bill, dataGetOperationById]);
 
   // Get the bill data
+  console.log('getbilldATA')
   useEffect(() => {
     if (dataGetOperationById) {
       formik.setValues(dataGetOperationById.data);
@@ -287,6 +288,7 @@ const handleSaveAndRedirect = () => {
   }, [dataGetOperationById, loadingGetOperationById, errorGetOperationById]);
 
   // Set the values of the bill
+  console.log('values of the bill')
   useEffect(() => {
     if (dataGetBillFraction && !isEditing) {
       formik.setFieldValue("billFraction", dataGetBillFraction.data.fraction);
