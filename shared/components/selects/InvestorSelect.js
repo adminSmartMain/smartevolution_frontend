@@ -22,7 +22,7 @@ export default function ClientSelect({ formik, customer, disabled }) {
   } = useFetch({ service: Clients, init: true });
 
   const [client, setClient] = useState([]);
-
+  console.log('investor select')
   useEffect(() => {
     if (data) {
       let Clients = [];

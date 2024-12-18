@@ -737,7 +737,7 @@ export const BillsComponents = () => {
       setBill(bill.filter((bill) => bill.id !== id));
     }, 1000);
   };
-
+  console.log(dataGetBillEvents)
   const [openEvents, setOpenEvents] = useState([false, null]);
   const handleOpenEvents = (id) => handleEvents(id);
   const handleCloseEvents = () => setOpenEvents([false, null]);

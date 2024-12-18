@@ -23,6 +23,7 @@ export default function ClientSelect({ formik, customer, disabled }) {
 
   const [client, setClient] = useState([]);
 
+  console.log('emitter select en emitter select')
   useEffect(() => {
     if (data) {
       var Clients = [];

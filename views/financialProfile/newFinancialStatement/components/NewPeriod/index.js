@@ -58,6 +58,7 @@ export default (props) => {
     );
 
     setSelecteObject(selected);
+    setPeriodRange(null);
   };
   const [periodRange, setPeriodRange] = useState(null);
   const [loadingSave, setLoadingSave] = useState(false);
@@ -305,28 +306,29 @@ export default (props) => {
                       }}
                     >
                       <LocalizationProvider dateAdapter={AdapterDayjs}>
-                        <DatePicker
-                          views={["month", "day"]}
-                          minDate={new Date(`${currentYear}-01-01`)}
-                          maxDate={new Date(`${currentYear}-12-31`)}
-                          label="Fecha de Inicio"
-                          inputFormat="DD/MM/YYYY"
-                          value={
-                            startDate
-                              ? startDate
-                              : new Date(`${currentYear}-01-02`)
-                          }
-                          onChange={(newValue) => {
-                            setStartDate(newValue);
-                          }}
-                          renderInput={(params) => <TextField {...params} />}
-                        />
+                      <DatePicker
+                      views={["month", "day"]}
+                      minDate={new Date(`${currentYear}-01-01T00:00:00`)}
+                      maxDate={new Date(`${currentYear}-12-31`)}
+                      label="Fecha de Inicio"
+                      inputFormat="DD/MM/YYYY"
+                      value={
+                        startDate
+                          ? startDate
+                          : new Date(`${currentYear}-01-01`)// esta linea es la que arregla normalmente esta ${currentYear}-01-02 yo puse 01 al final y funcionó
+                      }
+                      onChange={(newValue) => {
+                        setStartDate(newValue);
+                      }}
+                      renderInput={(params) => <TextField {...params} />}
+                    />
+
                       </LocalizationProvider>
                       <LocalizationProvider dateAdapter={AdapterDayjs}>
                         <DatePicker
                           views={["month", "day"]}
                           minDate={new Date(`${currentYear}-01-01`)}
-                          maxDate={new Date(`${currentYear}-12-31`)}
+                          maxDate={new Date(`${currentYear}-12-31T23:59:59`)}
                           label="Fecha de Fin"
                           inputFormat="DD/MM/YYYY"
                           value={

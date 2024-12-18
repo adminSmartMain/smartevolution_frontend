@@ -442,7 +442,7 @@ Por solicitud cambia el factor de GM de 0,004 a 0,002 a partir del 26 de octubre
        
         formik.setValues({
           ...formik.values,
-          //payer: "",
+          payer: "",
           //investor: "",
           bill: "",
           //client: "",
@@ -491,7 +491,7 @@ Por solicitud cambia el factor de GM de 0,004 a 0,002 a partir del 26 de octubre
 
         formik.setValues({
           ...formik.values,
-           //payer: "",
+           payer: "",
           //investor: "",
           bill: "",
           //client: "",

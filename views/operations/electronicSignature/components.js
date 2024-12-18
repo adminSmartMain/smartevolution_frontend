@@ -58,6 +58,7 @@ export const SignatureListC = () => {
 
   useEffect(() => {
     if (dataGetOperationById) {
+      console.log(dataGetOperationById)
       const data = {
         investorId: dataGetOperationById?.data?.investor?.investorId,
         investor: dataGetOperationById?.data?.investor?.investor,
@@ -98,12 +99,19 @@ export const SignatureListC = () => {
     }
   }, [dataBuyOrderFetch, errorBuyOrderFetch, loadingBuyOrderFetch]);
 
+
+    //La logic de acá no está conectada con la de las operaciones, solamente con los inversores. las operaciones son unicas por lo que solo busca unos solo en cambio en inversores pueden ser
+    // varias por lo que seria una lista.
   useEffect(() => {
-    const orders =
+    console.log(dataOrders)
+
+    if (dataOrders?.results){
+      console.log(dataOrders)
+      const orders =
       dataOrders?.results?.map((order) => ({
         id: order.id,
         NoOP: order.opId,
-        DateBill: order.DateBill,
+        DateBill: order.opDate,
         Investor: order.investor?.social_reason
           ? order.investor?.social_reason
           : order.investor?.first_name + " " + order.investor?.last_name,
@@ -122,12 +130,51 @@ export const SignatureListC = () => {
         signStatusDate: order.signStatusDate,
         investorId: order.investor?.id,
       })) || [];
-
+    console.log(orders)
     setData(orders);
+
+    } else{
+      
+      console.log(dataOrders)
+      const orders = dataOrders?.data?.map((order) => ({
+        id: order.id,
+        NoOP: order.opId,
+        DateBill: order.opDate,
+        Investor: order.investor?.social_reason
+          ? order.investor?.social_reason
+          : order.investor?.first_name + " " + order.investor?.last_name,
+        Emitter: order.emitter?.social_reason
+          ? order.emitter?.social_reason
+          : order.emitter?.first_name + " " + order.emitter?.last_name,
+        billCount: order.billCount,
+        promDays: order.promDays,
+        investorTax: order.investorTax,
+        presentValueInvestor: order.presentValueInvestor,
+        payedAmount: order.payedAmount,
+        isSellOrderSent: order.isSellOrderSent,
+        BuyOrderSent: order.BuyOrderSent,
+        buyOrderSentDate: order.buyOrderSentDate,
+        isSignatureSent: order.isSignatureSent,
+        signStatusDate: order.signStatusDate,
+        investorId: order.investor?.id,
+      })) || [];
+      console.log( orders,"aqui data de operacion")
+      setData( orders);
+    }
+      
+    
+
+
+
+
+    
   }, [dataOrders]);
 
   const dataCount = dataOrders?.count || 0;
 
+
+
+  //aca se definen las columnas
   const columns = [
     {
       field: "NoOP",
@@ -335,6 +382,10 @@ export const SignatureListC = () => {
     },
   ];
 
+
+  //aca se empieza el front
+
+
   return (
     <>
       <BackButton path="/pre-operations" />
@@ -389,6 +440,8 @@ export const SignatureListC = () => {
           >
             Operacion
           </Typography>
+
+
         </Button>
 
         <Button
@@ -416,6 +469,8 @@ export const SignatureListC = () => {
             Inversionista
           </Typography>
         </Button>
+
+
 
         <BaseField
           placeholder="Escriba su respuesta aquí"
@@ -445,6 +500,7 @@ export const SignatureListC = () => {
         width="100%"
         height="100%"
       >
+      
         <CustomDataGrid
           rows={data}
           columns={columns}
@@ -493,6 +549,7 @@ export const SignatureListC = () => {
                       color: "#63595C",
                     }}
                     onClick={() => {
+                      console.log({ [filter]: query })
                       if (page > 1) {
                         fetch({
                           page: page - 1,
@@ -537,6 +594,8 @@ export const SignatureListC = () => {
           }}
           loading={loading}
         />
+
+
       </Box>
       <ToastContainer
         position="top-right"

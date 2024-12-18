@@ -40,7 +40,7 @@ export const GetBillEvents = async (id) => {
       },
     });
     
-    c // Log para ver la respuesta del servidor
+    // Log para ver la respuesta del servidor
     return res.data;
 
   } catch (error) {

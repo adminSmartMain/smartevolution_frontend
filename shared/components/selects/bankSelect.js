@@ -22,7 +22,6 @@ export default function BankSelect({ formik, width, disabled }) {
   } = useFetch({ service: Banks, init: true });
 
   const [bank, setBank] = useState([]);
- 
 
   useEffect(() => {
     if (data) {

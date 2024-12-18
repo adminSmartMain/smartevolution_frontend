@@ -51,16 +51,25 @@ export default function RegisterAccount() {
 
   useEffect(() => {
     if (option === "modify" || option === "preview") {
+      console.log({
+        id: data?.data?.id || "",
+        accountType: data?.data?.primary === true ? "Primaria" : "Secundaria",
+        client: data?.data?.client.id || null,
+        account_number: data?.data?.account_number || "",
+        state: data?.data?.state === true ? "Activo" : "Inactivo",
+        observations: data?.data?.observations || "", 
+      })
       fetch2(Object.values(router.query)[0]).then((data) => {
         formik.setValues({
-          id: data?.data?.id,
+          id: data?.data?.id || "",
           accountType: data?.data?.primary === true ? "Primaria" : "Secundaria",
-          client: data?.data?.client.id,
-          account_number: data?.data?.account_number,
+          client: data?.data?.client.id || null,
+          account_number: data?.data?.account_number || "",
           state: data?.data?.state === true ? "Activo" : "Inactivo",
-          observations: data?.data?.observations,
+          observations: data?.data?.observations || "", 
         });
       });
+      
     }
   }, [option]);
 
@@ -112,9 +121,10 @@ export default function RegisterAccount() {
 
     if (data3) {
       Toast("Cuenta actualizada correctamente", "success");
+      console.log(data3)
       setTimeout(() => {
         router.push("accountList");
-      }, 2000);
+      }, 8000);
     }
   }, [loading3, data3, error3]);
 
@@ -135,7 +145,7 @@ export default function RegisterAccount() {
       Toast("Cuenta creada correctamente", "success");
       setTimeout(() => {
         router.push("accountList");
-      }, 2000);
+      }, 8000);
     }
   }, [loading, data, error]);
 

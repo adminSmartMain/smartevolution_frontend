@@ -241,7 +241,7 @@ export const ManageOperationC = ({
         >
           <BillSelect
             width={"17vw"}
-            formik={formik}
+            formik={formik}//CON ESTE BOTON SE SELECCIONAN LAS FACTURAS
             marginLeft={"1rem"}
             marginTop={"2rem"}
             setIsCreatingBill={setIsCreatingBill}

@@ -133,42 +133,56 @@ export const AccountComponent = ({
                 <TextareaAutosize
                   minRows={5}
                   maxRows={5}
-                  placeholder="Esribe aquí sus observaciones..."
+                  placeholder="Escribe aquí sus observaciones..."
                   name="observations"
                   type="text"
                   variant="standard"
                   margin="normal"
                   color="#575757"
-                  value={formik.values.observations}
-                  onChange={formik.handleChange}
+                  value={formik.values.observations || ""} // Aseguramos que nunca sea null o undefined
+                  onChange={(e) => {
+                    if (e.target.value.length <= 255) {
+                      formik.handleChange(e); // Solo actualizar el estado si no supera 255 caracteres
+                    }
+                  }}
                   disabled={option === "preview"}
                   error={
-                    formik.touched.observations &&
-                    Boolean(formik.errors.observations)
+                    formik.touched.observations && Boolean(formik.errors.observations)
                   }
                   style={{
                     resize: "none",
                     width: "100%",
                     backgroundColor: "white",
                     border: "1.4px solid #ACCFCF",
-
                     borderRadius: "5px",
                     padding: "10px",
-
                     fontFamily: "Montserrat",
                     fontSize: "0.9rem",
-
                     letterSpacing: "0.28px",
                     outline: "none",
                   }}
                   sx={
-                    formik.touched.observations &&
-                    Boolean(formik.errors.observations)
+                    formik.touched.observations && Boolean(formik.errors.observations)
                       ? { border: "1.4px solid #E6643180" }
                       : null
                   }
+                  maxLength={255} 
                 />
+
+                
+                <Box
+                  display="flex"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  mt={1}
+                  style={{ fontSize: "0.8rem", color: "#575757" }}
+                >
+                  <span>{(formik.values.observations || "").length} caracteres</span>
+
+                  <span>{255 - (formik.values.observations || "").length} caracteres restantes</span>
+                </Box>
               </Box>
+
               <Box
                 display="flex"
                 flexDirection="row-reverse"
@@ -231,7 +245,7 @@ export const AccountComponent = ({
       </Grid>
       <ToastContainer
         position="top-right"
-        autoClose={50000}
+        autoClose={500000}
         hideProgressBar={false}
         newestOnTop={false}
         closeOnClick
