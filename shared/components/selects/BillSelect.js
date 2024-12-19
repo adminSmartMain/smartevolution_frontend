@@ -51,110 +51,103 @@ export default function BillSelect({
 
   const options1 = { style: "currency", currency: "COP" };
   const numberFormat1 = new Intl.NumberFormat("es-ES", options1);
-  // Manejo de cambios en el emisor
-  console.log('manejo en el emisor')
-useEffect(() => {
-  if (formik.values.emitter) {
-    console.log('Fetching emitter data');
-    if (formik.values.emitter !== id) {
+
+  useEffect(() => {
+    if (formik.values.emitter) {
       fetch(formik.values.emitter);
       setId(formik.values.emitter);
     }
-  }
-}, [formik.values.emitter]);
+  }, [formik.values.emitter]);
 
-// Manejo de cambios en el ID
-console.log('manejo de cambios en el ID')
-useEffect(() => {
-  if (id) {
-    console.log('Fetching data by ID');
-    fetch(id);
-  }
-}, [id]);
+  useEffect(() => {
+    if (id) {
+      fetch(id);
+    }
+  }, [reset, formik.values.investor]);
 
-// Procesamiento de datos y actualización de facturas
-console.log('logica de procesamiento de datos y actualizacion de facturas')
-useEffect(() => {
-  if (data) {
-    console.log('Processing data');
-    const bills = data.data
-      ?.filter((item) => isEditing || preview || item.currentBalance > 0)
-      ?.map((item) => ({
-        label: `${item.billId} - ${numberFormat1.format(item.currentBalance)}`.replace("COP", ""),
-        value: item.id,
-        integrationCode: item.integrationCode || "",
-      }));
-    setValues(bills || []);
-  }
-}, [data, isEditing, preview]);
+  useEffect(() => {
+    if (data) {
+      let bills = [];
+      if (data !== undefined) {
+        data?.data?.map((item) => {
+          if (isEditing || preview) {
+            const value = `${item.billId} - ${numberFormat1
+              .format(item.currentBalance)
+              .replace("COP", "")}`;
+  
+            bills.push({
+              label: value,
+              value: item.id,
+              integrationCode: item.integrationCode ? item.integrationCode : "",
+            });
+          } else {
+            if (item.currentBalance > 0) {
+              const value = `${item.billId} - ${numberFormat1
+                .format(item.currentBalance)
+                .replace("COP", "")}`;
+              bills.push({
+                label: value,
+                value: item.id,
+                integrationCode: item.integrationCode ? item.integrationCode : "",
+              });
+            }
+          }
+        });
+        setValues(bills);
+      }
+    }
+  }, [data, loading, error]);
+  
+  
 
-// Manejo de lógica de la factura seleccionada
-console.log('logica de la factura seleccionada')
-useEffect(() => {
-  if (formik.values.bill && data) {
-    console.log('Handling bill logic');
-    const bill = data?.data?.find((bill) => bill.id === formik.values.bill);
-    if (
-      formik.values.integrationCode !== bill?.integrationCode &&
-      formik.values.integrationCode !== ""
-    ) {
-      Toast("El código de integración debe coincidir con el de la factura previa", "error");
-      formik.setFieldValue("bill", null);
-    } else {
-      fetchPayer(formik.values.bill);
-      if (bill?.reBuyAvailable && !preview) fetchBill(formik.values.bill);
+  useEffect(() => {
+    if (formik.values.bill) {
+      const bill = data?.data?.find((bill) => bill.id === formik.values.bill);
+      if (
+        formik.values.integrationCode != bill?.integrationCode &&
+        formik.values.integrationCode != ""
+      ) {
+        Toast(
+          "El código de integración debe coincidir con el de la factura previa",
+          "error"
+        );
+        formik.setFieldValue("bill", null);
+      } else {
+        fetchPayer(formik.values.bill);
 
-      // Actualizar valores del formik solo si son diferentes
-      const updatedFields = {
-        DateBill: bill?.dateBill,
-        DateExpiration: bill?.expirationDate,
-        probableDate: bill?.expirationDate,
-        amount: bill?.currentBalance,
-        payedAmount: bill?.currentBalance,
-        integrationCode: bill?.integrationCode || "",
-      };
-
-      Object.keys(updatedFields).forEach((key) => {
-        if (formik.values[key] !== updatedFields[key]) {
-          formik.setFieldValue(key, updatedFields[key]);
+        if (bill?.reBuyAvailable && !preview) {
+          fetchBill(formik.values.bill);
         }
-      });
+        // get the bill data from the first query
+        formik.setFieldValue("DateBill", bill?.dateBill);
+        formik.setFieldValue("DateExpiration", bill?.expirationDate);
+        formik.setFieldValue("probableDate", bill?.expirationDate);
+        formik.setFieldValue("amount", bill?.currentBalance);
+        formik.setFieldValue("payedAmount", bill?.currentBalance);
+        formik.setFieldValue(
+          "integrationCode",
+          bill?.integrationCode ? bill?.integrationCode : ""
+        );
+      }
     }
-  }
-}, [formik.values.bill, data, preview]);
-console.log('PayerSelect en BillSelect')
-// Manejo del pagador
-useEffect(() => {
-  if (dataPayer) {
-    console.log('Setting payer data');
-    if (!formik.values.payer) {
-      formik.setFieldValue("payer", dataPayer.data);
+  }, [formik.values.bill]);
+
+  useEffect(() => {
+    if (dataPayer) {
+      if (!formik.values.payer) formik.setFieldValue("payer", dataPayer.data);
     }
-  }
-}, [dataPayer]);
+  }, [dataPayer]);
 
-// Manejo de detalles de la factura
-console.log('manejo de detalles de factura')
-useEffect(() => {
-  if (dataBill) {
-    console.log('Processing bill details');
-    if (dataBill?.data?.bill?.reBuyAvailable && !preview) {
-      const updatedFields = {
-        isRebuy: true,
-        isReBuy: true,
-        discountTax: dataBill?.data?.discountTax,
-        investorTax: dataBill?.data?.discountTax,
-      };
-
-      Object.keys(updatedFields).forEach((key) => {
-        if (formik.values[key] !== updatedFields[key]) {
-          formik.setFieldValue(key, updatedFields[key]);
-        }
-      });
+  useEffect(() => {
+    if (dataBill) {
+      if (dataBill?.data?.bill?.reBuyAvailable && !preview) {
+        formik.setFieldValue("isRebuy", true);
+        formik.setFieldValue("isReBuy", true);
+        formik.setFieldValue("discountTax", dataBill?.data?.discountTax);
+        formik.setFieldValue("investorTax", dataBill?.data?.discountTax);
+      }
     }
-  }
-}, [dataBill, preview]);
-
+  }, [errorBill, dataBill]);
 
   return (
     <Box
@@ -248,4 +241,4 @@ useEffect(() => {
       </Box>
     </Box>
   );
-}
+} 
