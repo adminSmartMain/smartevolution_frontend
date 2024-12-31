@@ -4,6 +4,7 @@ import {
   Typography,
   TextField,
   Button,
+  FormControl,
   CircularProgress,
   Dialog,
   DialogActions,
@@ -14,6 +15,8 @@ import {
   Alert,
   Container,
 } from "@mui/material";
+import MuiTextField from "@styles/fields";
+import BackButton from "@styles/buttons/BackButton";
 import Image from "next/image";
 import Link from 'next/link';
 import { useRouter } from "next/router";
@@ -27,8 +30,14 @@ const ForgotPassword = ({ email, setEmail, onSubmit, loading, error, attempts,su
   const router = useRouter();
   const [timeLeft, setTimeLeft] = useState(180); // Tiempo restante para el temporizador
   const [timeLeftError, setTimeLeftError] = useState(180); // Tiempo restante para el temporizador
+  const [isButtonDisabled, setIsButtonDisabled] = useState(false); // Controla si el botón de reenviar está desactivado
 
-  
+
+  const formatTime = (time) => {
+    const minutes = Math.floor(time / 60);
+    const seconds = time % 60;
+    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  };
   // Mostrar el toast si hay error
   useEffect(() => {
     if (error) {
@@ -36,6 +45,8 @@ const ForgotPassword = ({ email, setEmail, onSubmit, loading, error, attempts,su
       
     }
   }, [error]);
+
+
   useEffect(() => {
     if (success) {
       setOpenSuccessModal(true);
@@ -43,7 +54,7 @@ const ForgotPassword = ({ email, setEmail, onSubmit, loading, error, attempts,su
         setTimeLeft((prevTime) => {
           if (prevTime <= 1) {
             clearInterval(timer);  // Limpiar el intervalo cuando llegue a 0
-            router.push("/auth/login");  // Redirigir al login
+            
             return 0;
           }
           return prevTime - 1;
@@ -61,12 +72,30 @@ console.log(attempts)
 
 
 
-// Función para reenviar el correo
-const handleResendEmail = () => {
-  resendEmail(email);  // Esta función se pasa como prop para manejar el reenvío
-  setTimeLeft(30);  // Reiniciar el temporizador
-};
- 
+  // Función para reenviar el correo
+  const handleResendEmail = () => {
+    resendEmail(email);  // Esta función se pasa como prop para manejar el reenvío
+    setIsButtonDisabled(true);  // Desactivar el botón de reenviar
+    setTimeLeft(180);  // Reiniciar el temporizador
+  };
+
+useEffect(() => {
+  if (isButtonDisabled && timeLeft > 0) {
+    const timer = setInterval(() => {
+      setTimeLeft((prevTime) => {
+        if (prevTime <= 1) {
+          clearInterval(timer);  // Limpiar el intervalo cuando llegue a 0
+          setIsButtonDisabled(false);  // Rehabilitar el botón de reenviar
+          return 0;
+        }
+        return prevTime - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }
+}, [isButtonDisabled, timeLeft]);
+
   // Estado para manejar la animación de carga
   const [loading2, setLoading2] = useState(false);
 
@@ -81,19 +110,7 @@ const handleResendEmail = () => {
 
 
 
-//timer de errores
 
-
- // Mostrar el modal de éxito si success es true
- //useEffect(() => {
- // if (attempts=='0') {
-    //setOpenErrorModal(true);
-    //setTimeout(() => {
-      
-      //router.push("/auth/login");  // Redirigir después de unos segundos
-    //}, 3000); // Redirigir después de 3 segundos
-  //}
-//}, [attempts, router]);
 
 useEffect(() => {
   if (attempts=='0') {
@@ -164,7 +181,7 @@ useEffect(() => {
         sx={{
           color: "#757575",
           fontSize: "0.9rem",
-          marginBottom: "40px",
+          marginBottom: "25px",
           textAlign: "center",
         }}
       >
@@ -172,106 +189,95 @@ useEffect(() => {
       </Typography>
 
       {/* Formulario */}
+
+
       <Box
-        component="form"
-        onSubmit={onSubmit}
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          width: "100%",
-          maxWidth: "400px",
-        }}
-      >
-        <TextField
-          id="email" 
-          aria-label="Ingresar correo"
-    
-          label="Ingresa tu correo electrónico"
-          variant="outlined"
-          type="email"
-          fullWidth
-          sx={{ marginBottom: "20px" }}
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-
-        {/* Error */}
-        {error && (
-          <Typography
-            color="error"
-            sx={{ marginBottom: "10px", textAlign: "center" }}
-          >
-            {error.message || "Correo no encontrado."}
-          </Typography>
-        )}
-
-        {/* Botón */}
-        <Box
-      sx={{
-        display: "flex",
-        justifyContent: "space-between", // Acomoda los botones en extremos opuestos
-        alignItems: "center", // Alinea verticalmente
-        width: "100%", // Ocupa el ancho total del contenedor
-        marginTop: "20px",
-      }}
-    >
-      {/* Botón de flecha a la izquierda */}
-      <Link href="/auth/login" passHref>
-      <Button
-      aria-label="Ir hacia atrás"
-      id="back"
-  variant="contained"
-  startIcon={
-    <ArrowBackIcon
-      sx={{
-        color: "white", // Color de la flecha en blanco para mayor contraste
-        fontSize: "2rem", // Tamaño más grande
-      }}
-    />
-  }
+  component="form"
+  onSubmit={onSubmit}
   sx={{
-    backgroundColor: "red", // Fondo rojo más intenso
-    color: "white", // Texto blanco para contraste
-    border: "1px solid red", // Borde rojo
-    textTransform: "none",
-    padding: "10px 20px", // Agregar más espacio alrededor del botón
-    borderRadius: "8px", // Bordes redondeados
-    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)", // Sombra suave para profundidad
-    "&:hover": {
-      backgroundColor: "#e53935", // Sombra más oscura en hover
-      transform: "scale(1.05)", // Escala ligeramente el botón al pasar el mouse
-      boxShadow: "0 6px 8px rgba(0, 0, 0, 0.2)", // Más sombra en hover
-    },
+    display: "flex",
+    flexDirection: "column",
   }}
 >
-  {/* Sin texto, solo flecha */}
-</Button>
-      </Link>
+  <FormControl fullWidth sx={{ marginBottom: "15px" }}>
+    <MuiTextField
+      id="email"
+      placeholder="Ingresa tu email"
+      name="email"
+      type="email"
+      aria-label="Correo electrónico"
+      onChange={(e) => setEmail(e.target.value)}
+      value={email}
+      variant="standard"
+      margin="normal"
+      fullWidth
+      InputProps={{
+        disableUnderline: true, // Deshabilita la línea inferior
+        sx: {
+          backgroundColor: "transparent", // Fondo transparente
+          marginTop: "-5px",
+        },
+      }}
+      error={error && Boolean(error.message)} // Muestra error si lo hay
+      sx={{
+        backgroundColor: "transparent", // Fondo transparente
+        border: error ? "1.4px solid #E6643180" : "1px solid rgba(0, 0, 0, 0.23)", // Borde con color rojo si hay error
+        borderRadius: "4px", // Bordes redondeados para un estilo limpio
+        padding: "8px 14px", // Espaciado dentro del campo de texto
+      }}
+    />
+    {error && (
+      <Typography color="error" sx={{ marginBottom: "10px", textAlign: "center" }}>
+        {error.message || "Correo no encontrado."}
+      </Typography>
+    )}
+    {/* Mensaje de error para campo vacío */}
+    {!email && !loading && (
+      <Typography color="error" sx={{ marginTop: "10px", textAlign: "center" }}>
+        El campo de correo electrónico es obligatorio.
+      </Typography>
+    )}
+  </FormControl>
 
-      {/* Botón Cambiar a la derecha */}
-      <Button
-        aria-label="Cambiar contraseña"
-        id="change-password"
-        type="submit"
-        variant="contained"
-        sx={{
-          backgroundColor: "#64b5f6",
-          color: "#fff",
-          width: "170px",
-          height: "40px",
-          textTransform: "none",
-          "&:hover": {
-            backgroundColor: "#42a5f5",
-          },
-        }}
-        disabled={loading}
-      >
-        {loading ? <CircularProgress size={24} color="inherit" /> : "Cambiar"}
-      </Button>
-    </Box>
-      </Box>
+  {/* Botón */}
+  <Box
+    sx={{
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      width: "100%",
+      marginTop: "20px",
+      gap: "40px",
+    }}
+  >
+    {/* Botón de flecha a la izquierda */}
+    <BackButton path="/auth/login" />
+
+    {/* Botón Cambiar a la derecha */}
+    <Button
+      aria-label="Cambiar contraseña"
+      id="change-password"
+      type="submit"
+      variant="contained"
+      sx={{
+        backgroundColor: "#64b5f6",
+        color: "#fff",
+        width: "200px",
+        height: "35px",
+        fontSize: "0.75rem",
+        textTransform: "none",
+        borderRadius: "5px",
+        "&:hover": {
+          backgroundColor: "#42a5f5",
+        },
+      }}
+      disabled={loading || !email} // Deshabilitar si no hay email
+    >
+      {loading ? <CircularProgress size={24} color="inherit" /> : "Cambiar"}
+    </Button>
+  </Box>
+</Box>
+
 
       {/* Modal de Éxito */}
       <Dialog
@@ -291,7 +297,7 @@ useEffect(() => {
         >
           {/* Imagen */}
           <img
-            src="/assets/Gemini_Generated_Image_s3hst5s3hst5s3hs.jpeg"
+            src="/assets/Gemini_Generated_Image_s3hst5s3hst5s3hs-removebg-preview.png"
             alt="Logo"
             style={{
               width: "80px",
@@ -319,7 +325,7 @@ useEffect(() => {
                 marginTop: "20px",
               }}
             >
-              {timeLeft}
+              {formatTime(timeLeft)}
             </DialogContentText>
           </DialogContent>
 
@@ -331,46 +337,53 @@ useEffect(() => {
               width: "100%",
             }}
           >
-            {/* Botón de Reenviar */}
-            <Button
-            role="button" 
-            aria-label="Reenviar token"
-            id="resend-code-button" 
-            className="modal-button secondary-button disabled"
-              onClick={handleResendEmail}
-              disabled={loading}
-              sx={{
-                backgroundColor: "#B0BEC5",
-                color: "white",
-                width: "160px",
-                "&:hover": { backgroundColor: "#90A4AE" },
-              }}
-            >
-              Reenviar Correo
-            </Button>
+         {/* Botón de Reenviar */}
+         <Button
+                role="button"
+                aria-label="Reenviar token"
+                id="resend-code-button"
+                onClick={handleResendEmail}
+                disabled={isButtonDisabled}
+                sx={{
+                  backgroundColor: "#B0BEC5",
+                  color: "white",
+                  width: "200px",
+                  height: "40px",
+                  "&:hover": { backgroundColor: "#90A4AE" },
+                  textTransform: "none",
+                  fontSize: "16px",
+                }}
+              >
+                Reenviar Correo
+              </Button>
 
-            {/* Botón de Aceptar */}
-            <Button
-            id="confirm-button" 
-            className="modal-button primary-button"
-            role="button"  
-            aria-label="Cerrar"
-              onClick={handleAccept}
-              disabled={loading2}
-              sx={{
-                backgroundColor: "#65b5f6",
-                color: "white",
-                width: "160px",
-                "&:hover": { backgroundColor: "#42a5f5" },
-                marginLeft: "10px",
-              }}
-            >
-              {loading2 ? (
-                <CircularProgress size={24} color="inherit" />
-              ) : (
-                "Aceptar"
-              )}
-            </Button>
+{/* Botón de Aceptar */}
+<Button
+  id="confirm-button" 
+  className="modal-button primary-button"
+  role="button"  
+  aria-label="Cerrar"
+  onClick={handleAccept}
+  disabled={loading2}
+  sx={{
+    backgroundColor: "#65b5f6",
+    color: "white",
+    width: "200px", // Aumenta el ancho del botón
+    height: "40px", // Aumenta la altura para hacerlo más grande
+    "&:hover": { backgroundColor: "#42a5f5" },
+    marginLeft: "20px", // Aumenta el espacio entre los botones
+    textTransform: 'none', // Evitar mayúsculas sostenidas
+    fontSize: '16px',
+  }}
+>
+  {loading2 ? (
+    <CircularProgress size={24} color="inherit" />
+  ) : (
+    "Aceptar"
+  )}
+</Button>
+
+
           </DialogActions>
         </Box>
       </Dialog>

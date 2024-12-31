@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useEffect } from "react";
-
+import Axios from "axios";
 import Link from "next/link";
 
 import { SearchOutlined } from "@mui/icons-material";
@@ -11,6 +11,7 @@ import {
   Fade,
   IconButton,
   Typography,
+  TextField,
 } from "@mui/material";
 
 import TitleModal from "@components/modals/titleModal";
@@ -34,7 +35,9 @@ import moment from "moment";
 export const SummaryListComponent = () => {
   const [filter, setFilter] = useState("");
   const [query, setQuery] = useState("");
-
+  const [filterInput, setFilterInput] = useState("");
+  const [errorFilter, setError] = useState("");
+  const [dataFiltered, setDataFiltered] = useState(null);
   const columns = [
     {
       field: "NoOP",
@@ -252,24 +255,68 @@ export const SummaryListComponent = () => {
     service: GetSummaryList,
     init: true,
   });
+  let dataCount = 0;
 
-  const dataCount = data?.count || 0;
+  if (Array.isArray(dataFiltered?.results)) {
+    // Si `dataFiltered.results` es un array, contamos los elementos
+    dataCount = dataFiltered.count;
+  } else if (typeof dataFiltered?.data === "object") {
+    // Si `dataFiltered.data` es un objeto, asumimos que hay un solo resultado
+    dataCount = 1;
+  } else if (Array.isArray(data?.results)) {
+    // Si `data.results` es un array, contamos los elementos
+    dataCount = data.count;
+  }
+  
+  console.log("dataCount:", dataCount);
+  
 
+  
   const [page, setPage] = useState(1);
+  console.log(dataFiltered)
+  console.log(data)
+  console.log('dataCount',dataCount)
 
-  const summary =
-    data?.results?.map((summary) => ({
-      id: summary.id,
-      NoOP: summary.opId,
-      date: summary.date,
-      date: summary.date,
-      emitter: summary.emitter,
-      payer: summary.payer,
-      total: summary.total,
-      totalDeposits: summary.totalDeposits,
-      pendingToDeposit: summary.pendingToDeposit,
-    })) || [];
-
+  const summary = (
+    
+    dataFiltered?.results // Si `dataFiltered.data` es un array con elementos
+      ? dataFiltered.results.map((summary) => ({
+          id: summary.id,
+          NoOP: summary.opId,
+          date: summary.date,
+          emitter: summary.emitter,
+          payer: summary.payer,
+          total: summary.total,
+          totalDeposits: summary.totalDeposits,
+          pendingToDeposit: summary.pendingToDeposit,
+        }))
+      : dataFiltered?.data // Si `dataFiltered.data` no es un array, se asume que es un objeto único
+      ? [
+          {
+            id: dataFiltered.data.id,
+            NoOP: dataFiltered.data.opId,
+            date: dataFiltered.data.date,
+            emitter: dataFiltered.data.emitter,
+            payer: dataFiltered.data.payer,
+            total: dataFiltered.data.total,
+            totalDeposits: dataFiltered.data.totalDeposits,
+            pendingToDeposit: dataFiltered.data.pendingToDeposit,
+          },
+        ]
+      : data?.results // Si `data` tiene `results`, mapeamos los resultados
+      ? data.results.map((summary) => ({
+          id: summary.id,
+          NoOP: summary.opId,
+          date: summary.date,
+          emitter: summary.emitter,
+          payer: summary.payer,
+          total: summary.total,
+          totalDeposits: summary.totalDeposits,
+          pendingToDeposit: summary.pendingToDeposit,
+        }))
+      : [] // Si no hay ni `data` ni `dataFiltered`, devolvemos un array vacío
+  ) || [];
+  
   const [open, setOpen] = useState(false);
   const handleOpen = () => {
     setOpen(true);
@@ -290,6 +337,146 @@ export const SummaryListComponent = () => {
     handleOpen();
   };
 
+
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+   // Leer parámetros iniciales de la URL
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const id = searchParams.get("id") || "";
+    const emitter = searchParams.get("emitter") || "";
+
+    if (emitter) {
+      setFilterInput(emitter);
+    } else if (id) {
+      setFilterInput(id);
+    }
+  }, []);
+
+  console.log(page)
+
+  const [pageFiltered,setPageFiltered]=useState(1)
+
+  // Actualizar `pageFiltered` cada vez que `page` cambie
+  useEffect(() => {
+    setPageFiltered(page);
+  }, [page]);
+  console.log(pageFiltered)
+
+
+  const handleFilterChange = (e) => {
+    setFilterInput(e.target.value);
+    
+  };
+
+  const isNumber = (value) => {
+    return /^\d+$/.test(value); // Comprueba si es un número entero
+  };
+ 
+
+
+  const fetchFilteredData = async () => {
+    let url = `${API_URL}/report/negotiationSummary`;
+    let params;
+   
+    // Si hay un filtro
+    if (filterInput !== "") {
+      if (isNumber(filterInput)) {
+        // Si el filtro es un número, es un filtro por `id`
+        params = {
+          id: filterInput,
+          mode: "filter",
+          emitter: "",
+         
+        };
+      } else {
+        // Si el filtro es texto, es un filtro por `emitter`
+        params = {
+          id: "",
+          mode: "filter",
+          emitter: filterInput,
+          page:pageFiltered,
+          
+        };
+      }
+    } else {
+      
+    }
+  
+    try {
+      // Actualizar la URL del navegador con los parámetros
+      const searchParams = new URLSearchParams(params);
+      window.history.pushState(null, "", `?${searchParams.toString()}`);
+  
+      // Realizar la solicitud al backend
+      const response = await Axios.get(url, {
+        headers: {
+          authorization: `Bearer ${localStorage.getItem("access-token")}`,
+        },
+        params: params,
+      });
+  
+      setDataFiltered(response.data);
+      setError(""); // Limpiar errores previos
+    } catch (err) {
+      setError("Error al realizar la solicitud. Verifique su entrada.");
+      console.error("Error en la solicitud:", err);
+    }
+  };
+
+
+
+
+
+  const [isFirstLoad, setIsFirstLoad] = useState(true); // Controla si es la primera carga o un cambio de página
+  const [isFilterApplied, setIsFilterApplied] = useState(false); // Controla si el filtro está aplicado
+  
+  // Efecto para aplicar el filtro al cargar la página o cuando cambia filterInput
+  useEffect(() => {
+    if (filterInput !== "") {
+      fetchFilteredData(); // Aplica el filtro
+      setIsFilterApplied(true); // Marca que el filtro ha sido aplicado
+    } else {
+      setIsFilterApplied(false); // Si no hay filtro, reseteamos el estado
+    }
+  }, [filterInput]);
+  
+  // Efecto para manejar la paginación, que solo se activa después de aplicar el filtro
+  useEffect(() => {
+    if (!isFirstLoad && isFilterApplied) {
+      fetchFilteredData(); // Realiza la búsqueda de la página solo si el filtro está activo
+    }
+  }, [pageFiltered, isFirstLoad, isFilterApplied]);
+  
+  // Efecto que se ejecuta al inicio para marcar que es la primera carga y no cambiar el filtro
+  useEffect(() => {
+    if (isFirstLoad && filterInput !== "") {
+      setIsFirstLoad(false); // Después de la primera carga, cambiamos el estado
+    }
+  }, [isFirstLoad, filterInput]);
+
+
+
+  // Función para limpiar filtros
+const clearFilters = async () => {
+  try {
+    // Actualizar la URL eliminando los filtros
+    window.history.pushState(null, "", "/administration/negotiation-summary/summaryList");
+
+    // Restablecer el estado de entrada y datos
+    setFilterInput(""); // Limpiar el input del filtro
+    setPageFiltered(1); // Restablecer la página filtrada a la inicial
+
+    // Realizar la solicitud sin parámetros adicionales
+    const response = await fetch()
+
+    setDataFiltered(response.data); // Actualizar los datos mostrados
+    setError(""); // Limpiar errores
+  } catch (err) {
+    setError("Error al limpiar los filtros.");
+    console.error("Error al limpiar los filtros:", err);
+  }
+};
   return (
     <>
       <BackButton path="/administration" />
@@ -331,6 +518,7 @@ export const SummaryListComponent = () => {
             >
               Registrar nuevo resumen de negociación
             </Typography>
+            
 
             <Typography
               fontFamily="icomoon"
@@ -342,6 +530,61 @@ export const SummaryListComponent = () => {
             </Typography>
           </Button>
         </Link>
+      </Box>
+            <Box
+        container
+        display="flex"
+        flexDirection="row"
+        justifyContent="flex-end" // Alinea contenido al final (derecha)
+        alignItems="center" // Asegura que estén verticalmente alineados
+        gap="8px" // Espaciado entre el input y el botón
+      >
+        <TextField
+        label="Ingrese noOp o nombre del emisor"
+        variant="outlined"
+        value={filterInput}
+        onChange={handleFilterChange}
+        required
+        sx={{
+          width: 250,  // Controla el ancho del campo
+          height: 40,  // Ajusta la altura
+          '& .MuiInputBase-root': {
+            borderRadius: '4px',
+            padding: '6px 10px',  // Reduce el padding
+            height: '40px',  // Ajusta la altura interna del input
+          },
+          '& .MuiInputLabel-root': {
+            fontSize: '0.875rem',  // Tamaño de la etiqueta
+          },
+          '& .MuiOutlinedInput-root': {
+            fontSize: '0.875rem',  // Tamaño de la fuente del input
+          },
+        }}
+      />
+      <Button
+        onClick={fetchFilteredData}
+        variant="contained"
+        color="primary"
+        sx={{
+          padding: '10px 20px',
+          borderRadius: '4px',
+          fontSize: '0.875rem',
+          textTransform: 'none',
+          '&:hover': {
+            backgroundColor: '#0056b3',
+          },
+        }}
+      >
+        Filtrar
+      </Button>
+      <Button
+  onClick={clearFilters}
+  variant="outlined"
+  color="secondary"
+  size="small"
+>
+  Limpiar Filtros
+</Button>
       </Box>
 
       <Box
@@ -415,11 +658,21 @@ export const SummaryListComponent = () => {
                     }}
                     onClick={() => {
                       if (page > 1) {
-                        fetch({
-                          page: page - 1,
-                          ...(Boolean(filter) && { [filter]: query }),
-                        });
-                        setPage(page - 1);
+                        if(data){
+                          fetch({
+                            page: page - 1,
+                            ...(Boolean(filter) && { [filter]: query }),
+                          });
+                          setPage(page - 1);
+
+                        }else{
+
+                          fetchFilteredData() 
+                        }
+                        
+                        
+                       
+                        
                       }
                     }}
                   >
@@ -437,11 +690,22 @@ export const SummaryListComponent = () => {
                     }}
                     onClick={() => {
                       if (page < dataCount / 15) {
-                        fetch({
-                          page: page + 1,
-                          ...(Boolean(filter) && { [filter]: query }),
-                        });
-                        setPage(page + 1);
+                        if(data){
+                          fetch({
+                            page: page + 1,
+                            ...(Boolean(filter) && { [filter]: query }),
+                          });
+                          
+                          setPage(page + 1);
+                        }
+                        else{
+
+                          fetchFilteredData() 
+
+
+                        }
+                        
+                        
                       }
                     }}
                   >

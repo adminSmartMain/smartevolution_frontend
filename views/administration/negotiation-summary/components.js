@@ -1,12 +1,17 @@
 import { useEffect, useState } from "react";
-
+import Axios from "axios";
 import Link from "next/link";
 import { useRouter } from "next/router";
+import CloseIcon from "@mui/icons-material/Close";
 
 import {
   Box,
   Button,
   Divider,
+  Dialog, 
+  DialogActions, 
+  DialogContent, 
+  DialogTitle,
   Fade,
   IconButton,
   InputAdornment,
@@ -74,6 +79,8 @@ export const NegotiationSummary = ({
 }) => {
   //Get ID from URL
 
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
   const {
     fetch: fetch,
     loading: loading,
@@ -140,6 +147,7 @@ export const NegotiationSummary = ({
     
     if (id) {
       console.log("Fetching data for id:", id);
+      setOpIdSelected(id)
       fetch(id)
         .then(() => {
           console.log("Fetch successful:", data);// Verifica el estado de los datos después del fetch
@@ -174,15 +182,23 @@ export const NegotiationSummary = ({
   //useEffect(() => {
    // if (id) fetch(id);
   //}, [id, PendingAccounts]);
-
+  const [opIdSelected,setOpIdSelected]=useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [negotiationSummarySelected,setNegotiationSummarySelected]=useState([]);
+  const [notFound,setNotFound]=useState(null);
+  const handleCloseModal = () => setModalOpen(false);
+  const [isOperationExists, setIsOperationExists] = useState(false);
   useEffect(() => {
     if (OpID) {
+      
       fetchSummaryByID(OpID);
+      
     }
   }, [OpID]);
 
   useEffect(() => {
     if (dataSummaryByID) {
+      
       setObservations(dataSummaryByID?.data?.observations);
   
       const id = dataSummaryByID?.data?.billId?.substring(3);
@@ -192,8 +208,55 @@ export const NegotiationSummary = ({
     }
   }, [dataSummaryByID]);
 
+  
+  useEffect(() => {
+    if (opIdSelected) {
+      console.log("Seleccionada operación:", opIdSelected);
+
+      const fetchOperations = async () => {
+        try {
+          const response = await Axios.get(
+            `${API_URL}/report/negotiationSummary?id=${opIdSelected}&mode=query`,
+            {
+              headers: {
+                authorization: `Bearer ${localStorage.getItem("access-token")}`,
+              },
+            }
+          );
+
+          if (response && response.data) {
+            console.log("Respuesta de la API:", response.data);
+            setIsOperationExists(true);
+            setNegotiationSummarySelected(response.data); // Asume que 'data' contiene los datos correctos
+            setNotFound(false); // Resetea el estado de "no encontrado"
+          } else {
+            console.warn("Datos vacíos en la respuesta de la API.");
+            setNegotiationSummarySelected(null);
+          }
+        } catch (error) {
+          console.error("Error al obtener las operaciones:", error);
+
+          // Manejo de errores específicos
+          if (error.response && error.response.status === 404) {
+            setNotFound(true);
+            setNegotiationSummarySelected(null);
+            
+          } else {
+            setNegotiationSummarySelected(null);
+            
+          }
+        }
+      };
+
+      fetchOperations();
+    }
+  }, [opIdSelected]);
+
   useEffect(() => {
     if (data) {
+      console.log(opIdSelected)
+      
+      console.log('obtengo la operacion ingresada')
       const depositData = data?.data?.emitterDeposits || []; // Agrega valor predeterminado
       setDeposit(depositData);
      
@@ -248,21 +311,29 @@ export const NegotiationSummary = ({
 
   useEffect(() => {
     if (dataCreateSummary) {
-      Toast("Resumen de negociación creado con éxito", "success");
-      setTimeout(() => {
-        router.push("/administration/negotiation-summary/summaryList");
-      }, 2000);
-    }
+      
+        Toast("Resumen de negociación creado con éxito", "success");
+        setTimeout(() => {
+          router.push("/administration/negotiation-summary/summaryList");
+        }, 2000);
+        
+      
+
+      } 
+      
+     
 
     if (errorCreateSummary) {
       typeof errorCreateSummary.message === "object"
         ? Toast(`${Object.values(errorCreateSummary.message)}`, "error")
         : Toast(`${errorCreateSummary.message}`, "error");
     }
-  }, [dataCreateSummary, errorCreateSummary]);
+  }, [dataCreateSummary, errorCreateSummary, notFound, router]);
+
+
   useEffect(() => {
     if (dataModifySummary) {
-      Toast("Resumen de negociación creado con éxito", "success");
+      Toast("Resumen de negociación modificado con éxito", "success");
       setTimeout(() => {
         router.push("/administration/negotiation-summary/summaryList");
       }, 2000);
@@ -302,8 +373,10 @@ export const NegotiationSummary = ({
   const fns = require("date-fns");
   const today = fns.format(new Date(), "yyyy-MM-dd");
 
-  const handleOpEntered = (e) => {
+  
+  const handleOpEntered = async (e) => {
     if (e.target.value) {
+      
       router.push(
         `/administration/negotiation-summary?${option}&id=${e.target.value}`
       );
@@ -477,6 +550,30 @@ export const NegotiationSummary = ({
     setOpen5([false, null]);
   };
 
+
+  console.log(isOperationExists)
+  const handleButtonClick = () => {
+    // Asigna "FV-<billId>" o "FV-No aplica" si billId es null o undefined
+    const updatedNegotiationData = {
+      ...NegotiationSummaryData,
+      billId: billId ? `FV-${billId}` : "FV-No aplica",
+    };
+
+    if (option === "modify") {
+      fetchModifySummary(updatedNegotiationData, OpID);
+    } else if (isOperationExists) {
+      
+      setModalOpen(true);
+    } else {
+      fetchCreateSummary(updatedNegotiationData);
+    }
+  };
+
+
+  const handleButtonGoToSummaryClick = () => {
+    const url = `http://localhost:3000/administration/negotiation-summary/summaryList?id=${opIdSelected}&mode=filter&emitter=`;
+    window.location.href = url;
+  };
   return (
     <>
       <Box display="flex" flexDirection="column">
@@ -488,16 +585,7 @@ export const NegotiationSummary = ({
             color="primary"
             size="large"
             //funcion que gobierna el boton Guardar/Modificar
-            onClick={() => {
-              // Asigna "FV-<billId>" o "No aplica" si billId es null o undefined
-              NegotiationSummaryData.billId = billId ? "FV-".concat(billId) : "FV-No aplica";
-            
-              if (option === "modify") {
-                fetchModifySummary(NegotiationSummaryData, OpID);
-              } else {
-                fetchCreateSummary(NegotiationSummaryData);
-              }
-            }}
+            onClick={handleButtonClick}
             sx={{
               height: "2.6rem",
               backgroundColor: "#488B8F",
@@ -2226,6 +2314,85 @@ export const NegotiationSummary = ({
           </Box>
         </Box>
       </Modal>
+
+
+   
+      <Dialog
+      open={modalOpen}
+      onClose={handleCloseModal} // La función onClose maneja el cierre
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        backdropFilter: "blur(4px)", // Efecto de desenfoque en el fondo
+        bgcolor: "rgba(0, 0, 0, 0.5)", // Fondo semitransparente
+        zIndex: 1500, // Asegura que el modal esté por encima de otros elementos
+        
+      }}
+    >
+      {/* Aquí agregamos el ícono de cierre */}
+      <CloseIcon
+        onClick={handleCloseModal} // Función para cerrar el modal al hacer clic en la X
+        sx={{
+          position: "absolute",
+          top: 10,
+          right: 10,
+          cursor: "pointer", // Cambia el cursor a 'pointer' cuando pasas sobre la X
+          color: "#488B8F", // Color de la X
+          "&:hover": {
+            color: "#5EA3A3", // Cambia el color al pasar el mouse
+          },
+        }}
+      />
+
+      {/* Contenido del Dialog */}
+      <DialogTitle sx={{ textAlign: "center" }}>
+        Resumen de Negociación
+      </DialogTitle>
+
+      <Divider
+  sx={{
+    my: 1, // Margen más pequeño para acercar la línea al título
+    width: "80%", // Reducir el ancho de la línea para que no llegue a los bordes
+    borderColor: "#488B8F", // Color personalizado para la línea
+    mx: "auto", // Centrar el Divider horizontalmente
+  }}
+/>
+
+      <DialogContent sx={{ textAlign: "center" }}>
+        <Typography variant="body1" sx={{ mb: 3 }}>
+        El resumen de negociación para la operación <br /> <strong>{opIdSelected}</strong> ya existe.
+        </Typography>
+
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            gap: 2,
+            mt: 3,
+          }}
+        >
+         
+          <Button
+            variant="outlined"
+            color="primary"
+            onClick={handleButtonGoToSummaryClick}
+            sx={{
+              width: "45%",
+              borderColor: "#488B8F",
+              color: "#488B8F",
+              "&:hover": {
+                bgcolor: "rgba(72, 139, 143, 0.1)",
+              },
+            }}
+          >
+            Ir al Resumen de negociación
+          </Button>
+        </Box>
+      </DialogContent>
+    </Dialog>
+
+
     </>
   );
 };
