@@ -839,11 +839,15 @@ const handleDateChange = (type, value) => {
       ? `${format(startDatePicker, "dd/MM/yyyy")} - ${format(endDatePicker, "dd/MM/yyyy")}`
       : "Seleccionar rango"}
   </Button>
-
+  <Link
+          href="/administration/negotiation-summary?register"
+          underline="none"
+        >
   <Button
   variant="standard"
   color="primary"
   size="large"
+  
   sx={{
     height: "2.6rem",
     backgroundColor: "transparent",
@@ -872,6 +876,7 @@ const handleDateChange = (type, value) => {
     </div>
   </Tooltip>
 </Button>
+</Link>
 </Box>
 
 {/* Popover para rango de fechas */}
