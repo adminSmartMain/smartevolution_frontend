@@ -22,7 +22,10 @@ export const InputNewPassword = ({ formik, ToastContainer, loading,invalidToken 
   return (
     <>
     <form onSubmit={formik.handleSubmit}>
-      <Box display="flex" flexDirection="column" sx={{ marginTop: "30px" }}>
+      <Box display="flex" flexDirection="column" 
+      sx={{ marginTop: "30px",
+        width:"275px",    
+    marginRight:"28px"}}>
         <Typography
           sx={{
             color: "#1E88E5",
@@ -30,6 +33,7 @@ export const InputNewPassword = ({ formik, ToastContainer, loading,invalidToken 
             fontWeight: "bold",
             textAlign: "center",
             marginBottom: "8px",
+            marginLeft:"40px"
           }}
         >
           Recuperar contraseña
@@ -41,13 +45,15 @@ export const InputNewPassword = ({ formik, ToastContainer, loading,invalidToken 
             fontSize: "0.75rem",
             textAlign: "center",
             marginBottom: "20px",
+            marginLeft:"40px",
           }}
         >
           Por favor ingresa tu nueva contraseña
         </Typography>
   
         {/* Nueva contraseña */}
-        <FormControl fullWidth sx={{ marginBottom: "15px" }}>
+        <FormControl fullWidth sx={{ marginBottom: "15px",marginRight:"10px",
+              marginLeft:"25px", }}>
           <MuiTextField
             aria-label="newPassword"
             id="newPassword"
@@ -85,7 +91,7 @@ export const InputNewPassword = ({ formik, ToastContainer, loading,invalidToken 
               position: "relative",
               minWidth: "0px",
               margin: "16px 0px 8px",
-              width: "100%",
+              width: "250px",
               borderRadius: "5px",
               padding: "10px",
               height: "1rem",
@@ -101,7 +107,9 @@ export const InputNewPassword = ({ formik, ToastContainer, loading,invalidToken 
         </FormControl>
   
         {/* Confirmar contraseña */}
-        <FormControl fullWidth sx={{ marginBottom: "15px" }}>
+        <FormControl fullWidth sx={{ marginBottom: "15px",width: "260px",
+              marginRight:"10px",
+              marginLeft:"25px", }}>
           <MuiTextField
             aria-label="confirmPassword"
             id="confirmPassword"
@@ -139,7 +147,8 @@ export const InputNewPassword = ({ formik, ToastContainer, loading,invalidToken 
               position: "relative",
               minWidth: "0px",
               margin: "16px 0px 8px",
-              width: "100%",
+              width: "250px",
+              
               borderRadius: "5px",
               padding: "10px",
               height: "1rem",
@@ -155,7 +164,7 @@ export const InputNewPassword = ({ formik, ToastContainer, loading,invalidToken 
         </FormControl>
   
         {/* Botón de actualizar */}
-        <Box display="flex" justifyContent="center" sx={{ marginTop: "10px" }}>
+        <Box display="flex" justifyContent="center" sx={{ marginTop: "10px",marginLeft:"30px" }}>
           <MuiButton
             variant="contained"
             disabled={loading}

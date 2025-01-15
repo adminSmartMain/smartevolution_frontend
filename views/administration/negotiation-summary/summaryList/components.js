@@ -572,6 +572,46 @@ const clearFilters = async () => {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //Configuración de datepicker
+ // Restablecer el filtro
+ const handleClear = async () => {
+  let url = `${API_URL}/report/negotiationSummary`;
+  setStartDatePicker(today);
+  setAnchorEl(null); // Cierra el picker
+  setEndDatePicker(today);
+  setErrorPicker("");
+  try{
+       // Obtener los parámetros actuales de la URL
+        const params = new URLSearchParams(window.location.search);
+
+        // Eliminar los parámetros específicos
+        params.delete("startDate");
+        params.delete("endDate");
+
+        // Actualizar la URL en el navegador
+        window.history.pushState(null, "", `?${params.toString()}`);
+
+            
+        // Realizar la solicitud al backend
+        const response = await Axios.get(url, {
+          headers: {
+            authorization: `Bearer ${localStorage.getItem("access-token")}`,
+          },
+          params: params,
+        });
+
+        setDataFiltered(response.data);
+        setError(""); // Limpiar errores previos
+
+
+
+  }
+  
+  catch (err) {
+    setError("Error al realizar la solicitud. Verifique su entrada.");
+    console.error("Error en la solicitud:", err);
+  }
+};
+
 
 const formatDateSelected = (date) => {
   const d = new Date(date);
@@ -586,7 +626,11 @@ const [errorPicker, setErrorPicker] = useState("");
 const openPicker = Boolean(anchorEl);
 
 const handleOpenPicker = (event) => setAnchorEl(event.currentTarget);
-
+const handleClosePickerSimple = () => {
+  setOpen(false);
+  
+  setAnchorEl(null); // Cierra el picker
+};
 
 const handleClosePicker = async () => {
   let url = `${API_URL}/report/negotiationSummary`;
@@ -700,30 +744,29 @@ const setQuickFilter = (type) => {
 
 
 
-const handleDateChange = (type, value) => {
-  //const selectedDate = setToNoon(new Date(value));
-    //const selectedDate = setToNoon(new Date(value));
-    const selectedDate = parseISO(value);//Evitar problemas con la fecha
-    if (isNaN(selectedDate.getTime())) {
-      setError(`La fecha ${type === "start" ? "de inicio" : "de fin"} no es válida.`);
-      return;
+ // Manejar el cambio de fecha
+ const handleDateChange = (type, value) => {
+  const selectedDate = parseISO(value); // Evitar problemas con la hora
+  if (isNaN(selectedDate.getTime())) {
+    setError(`La fecha ${type === "start" ? "de inicio" : "de fin"} no es válida.`);
+    return;
   }
 
   if (type === "start") {
     if (endDatePicker && selectedDate > endDatePicker) {
-      setErrorPicker("La fecha de inicio no puede ser posterior a la fecha de fin.");
+      setError("La fecha de inicio no puede ser posterior a la fecha de fin.");
       return;
     }
     setStartDatePicker(selectedDate);
   } else if (type === "end") {
     if (startDatePicker && selectedDate < startDatePicker) {
-      setErrorPicker("La fecha de fin no puede ser anterior a la fecha de inicio.");
+      setError("La fecha de fin no puede ser anterior a la fecha de inicio.");
       return;
     }
     setEndDatePicker(selectedDate);
   }
 
-  setErrorPicker("");
+  setError("");
 };
 
 
@@ -839,6 +882,8 @@ const handleDateChange = (type, value) => {
       ? `${format(startDatePicker, "dd/MM/yyyy")} - ${format(endDatePicker, "dd/MM/yyyy")}`
       : "Seleccionar rango"}
   </Button>
+
+
   <Link
           href="/administration/negotiation-summary?register"
           underline="none"
@@ -881,78 +926,86 @@ const handleDateChange = (type, value) => {
 
 {/* Popover para rango de fechas */}
 <Popover
-  open={openPicker}
-  anchorEl={anchorEl}
-  onClose={handleClosePicker}
-  anchorOrigin={{
-    vertical: "bottom",
-    horizontal: "left",
-  }}
-  transformOrigin={{
-    vertical: "top",
-    horizontal: "left",
-  }}
->
-  <Box sx={{ padding: 2, width: 300 }}>
-    <Typography variant="subtitle2" gutterBottom>
-      Seleccionar Rango de Fechas
-    </Typography>
+        open={openPicker}
+        anchorEl={anchorEl}
+        onClose={handleClosePickerSimple}
+        anchorOrigin={{
+          vertical: "bottom",
+          horizontal: "left",
+        }}
+        transformOrigin={{
+          vertical: "top",
+          horizontal: "left",
+        }}
+      >
+        <Box sx={{ padding: 2, width: 300 }}>
+          <Typography variant="subtitle2" gutterBottom>
+            Seleccionar Rango de Fechas
+          </Typography>
 
-    <Grid container spacing={2}>
-      <Grid item xs={6}>
-        <TextField
-          fullWidth
-          type="date"
-          label="Fecha Inicio"
-          value={startDatePicker ? format(startDatePicker, "yyyy-MM-dd") : ""}
-          onChange={(e) => handleDateChange("start", e.target.value)}
-          InputLabelProps={{ shrink: true }}
-          error={!!errorPicker && errorPicker.includes("inicio")}
-          helperText={errorPicker && errorPicker.includes("inicio") ? error : ""}
-        />
-      </Grid>
-      <Grid item xs={6}>
-        <TextField
-          fullWidth
-          type="date"
-          label="Fecha Fin"
-          value={endDatePicker ? format(endDatePicker, "yyyy-MM-dd") : ""}
-          onChange={(e) => handleDateChange("end", e.target.value)}
-          InputLabelProps={{ shrink: true }}
-          error={!!errorPicker && errorPicker.includes("fin")}
-          helperText={errorPicker && errorPicker.includes("fin") ? error : ""}
-        />
-      </Grid>
-    </Grid>
+          <Grid container spacing={2}>
+            <Grid item xs={6}>
+              <TextField
+                fullWidth
+                type="date"
+                label="Fecha Inicio"
+                value={startDatePicker ? format(startDatePicker, "yyyy-MM-dd") : ""}
+                onChange={(e) => handleDateChange("start", e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                error={!!errorPicker  && errorPicker .includes("inicio")}
+                helperText={errorPicker  && errorPicker .includes("inicio") ? errorPicker  : ""}
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <TextField
+                fullWidth
+                type="date"
+                label="Fecha Fin"
+                value={endDatePicker ? format(endDatePicker, "yyyy-MM-dd") : ""}
+                onChange={(e) => handleDateChange("end", e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                error={!!errorPicker && errorPicker .includes("fin")}
+                helperText={errorPicker  && errorPicker .includes("fin") ? errorPicker  : ""}
+              />
+            </Grid>
+          </Grid>
 
-    {/* Filtros rápidos */}
-    <Box sx={{ marginTop: 2 }}>
-      <Typography variant="subtitle2" gutterBottom>
-        Filtros Rápidos
-      </Typography>
-      <StyledButton fullWidth onClick={() => setQuickFilter("today")}>
-        Hoy
-      </StyledButton>
-      <StyledButton fullWidth onClick={() => setQuickFilter("thisWeek")}>
-        Esta Semana
-      </StyledButton>
-      <StyledButton fullWidth onClick={() => setQuickFilter("lastWeek")}>
-        Semana Anterior
-      </StyledButton>
-      <StyledButton fullWidth onClick={() => setQuickFilter("thisMonth")}>
-        Este Mes
-      </StyledButton>
-      <StyledButton fullWidth onClick={() => setQuickFilter("lastMonth")}>
-        Mes Anterior
-      </StyledButton>
-    </Box>
+          {/* Filtros rápidos */}
+          <Box sx={{ marginTop: 2 }}>
+            <Typography variant="subtitle2" gutterBottom>
+              Filtros Rápidos
+            </Typography>
+            <StyledButton fullWidth onClick={() => setQuickFilter("today")}>
+              Hoy
+            </StyledButton>
+            <StyledButton fullWidth onClick={() => setQuickFilter("thisWeek")}>
+              Esta Semana
+            </StyledButton>
+            <StyledButton fullWidth onClick={() => setQuickFilter("lastWeek")}>
+              Semana Anterior
+            </StyledButton>
+            <StyledButton fullWidth onClick={() => setQuickFilter("thisMonth")}>
+              Este Mes
+            </StyledButton>
+            <StyledButton fullWidth onClick={() => setQuickFilter("lastMonth")}>
+              Mes Anterior
+            </StyledButton>
+          </Box>
 
-    {/* Botón de aplicar */}
-    <Box sx={{ display: "flex", justifyContent: "flex-end", marginTop: 2 }}>
-      <StyledApplyButton onClick={handleClosePicker}>Aplicar</StyledApplyButton>
-    </Box>
-  </Box>
-</Popover>
+          {/* Botones de acciones */}
+          <Box sx={{ display: "flex", justifyContent: "space-between", marginTop: 2 }}>
+            <Button
+              variant="text"
+              color="primary"
+              onClick={handleClear}
+              sx={{ textTransform: "none" }}
+            >
+              Limpiar
+            </Button>
+            <StyledApplyButton onClick={handleClosePicker}>Aplicar</StyledApplyButton>
+          </Box>
+        </Box>
+      </Popover>
 
 
    

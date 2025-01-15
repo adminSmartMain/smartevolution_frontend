@@ -197,6 +197,8 @@ useEffect(() => {
   sx={{
     display: "flex",
     flexDirection: "column",
+    width:"275px",
+    marginRight:"28px"
   }}
 >
   <FormControl fullWidth sx={{ marginBottom: "12px" }}>
@@ -233,7 +235,7 @@ useEffect(() => {
     )}
     {/* Mensaje de error para campo vacío */}
     {!email && !loading && (
-      <Typography color="error" sx={{ marginTop: "10px", textAlign: "center",fontSize: "0.75rem" }}>
+      <Typography color="error" sx={{ marginTop: "10px", textAlign: "center",fontSize: "0.75rem", marginRight:"5px", marginLeft:"20px"}}>
         El campo de correo electrónico es obligatorio.
       </Typography>
     )}

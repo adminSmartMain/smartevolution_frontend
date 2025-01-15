@@ -13,23 +13,23 @@ export default function Home() {
     <meta name="description" content="Prueba de contenido 2.0" />
   </Head>
 
-  <Grid container spacing={0}>
+  <Grid container spacing={0} style={{ height: "100vh" }}>
     {/* Relleno Izquierdo - Login */}
     <Grid
-      item
-      xs={12}
-      md={4} // Reducir el tamaño del recuadro izquierdo
-      style={{
-        height: "100vh", // Altura ajustada para mayor proporción
-        background: "#ebebeb",
-        margin: "auto",
-        boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)", // Mejor estética
-        borderRadius: "10px", // Bordes redondeados
-      }}
-      display="flex"
-      alignItems="center"
-      justifyContent="center"
-    >
+    item
+    xs={12}
+    md={4}
+    sx={{
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "center",
+      alignItems: "center",
+      background: "#ebebeb",
+      boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
+      borderRadius: "10px 0 0 10px", // Bordes redondeados solo a la izquierda
+      minHeight: "100vh", // Ajusta altura
+    }}
+  >
       <div style={{ textAlign: "center" }}>
         <Image
           src="/assets/Icono Smart + Texto.svg"

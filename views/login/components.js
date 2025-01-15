@@ -30,7 +30,10 @@ export const InputAdornments = ({
   return (
     <>
     <form onSubmit={formik.handleSubmit}>
-      <Box display="flex" flexDirection="column" sx={{ marginTop: "30px" }}>
+    <Box display="flex" flexDirection="column" 
+      sx={{ marginTop: "30px",
+        width:"275px",    
+    marginRight:"28px"}}>
         {/* Título principal */}
         <Typography
           sx={{
@@ -39,6 +42,7 @@ export const InputAdornments = ({
             fontWeight: "bold",
             textAlign: "center",
             marginBottom: "8px",
+            marginLeft:"40px"
           }}
         >
           Inicia sesión
@@ -51,6 +55,7 @@ export const InputAdornments = ({
             fontSize: "0.75rem", // Tamaño reducido
             textAlign: "center",
             marginBottom: "20px",
+             marginLeft:"40px",
           }}
         >
           ¿No tienes cuenta? Contacta con la administración
@@ -58,7 +63,7 @@ export const InputAdornments = ({
   
         <Box display="flex" flexDirection="column">
           {/* Campo Email */}
-          <FormControl fullWidth sx={{ marginBottom: "15px" }}>
+          <FormControl fullWidth sx={{ marginBottom: "15px",width:"270px",marginLeft:"8px"}}>
             <MuiTextField
               id="email"
               placeholder="Ingresa tu email"
@@ -89,7 +94,7 @@ export const InputAdornments = ({
           </FormControl>
   
           {/* Campo Contraseña */}
-          <FormControl fullWidth>
+          <FormControl fullWidth sx={{ marginBottom: "15px",width:"270px",marginLeft:"8px"}}>
           <MuiTextField
             id="password"
             placeholder="Ingresa tu contraseña"
@@ -137,7 +142,7 @@ export const InputAdornments = ({
         </FormControl>
   
           {/* Enlace de Olvidaste tu contraseña */}
-          <Box display="flex" justifyContent="flex-end" sx={{ marginTop: "5px" }}>
+          <Box display="flex" justifyContent="flex-end" sx={{ marginTop: "2px" }}>
             <Typography
               component="a"
               href="/auth/forgotPassword" // Usamos el href normal para la ruta
@@ -146,6 +151,7 @@ export const InputAdornments = ({
                 fontSize: "0.75rem", // Tamaño reducido
                 textDecoration: "none",
                 cursor: "pointer",
+                marginRight:"1px"
               }}
             >
               ¿Olvidaste tu contraseña?
@@ -154,7 +160,7 @@ export const InputAdornments = ({
         </Box>
   
         {/* Botón de inicio */}
-        <Box display="flex" justifyContent="center" sx={{ marginTop: "10px" }}>
+        <Box display="flex" justifyContent="center" sx={{ marginTop: "10px",marginLeft:"30px" }}>
           <MuiButton
             variant="contained"
             sx={{
