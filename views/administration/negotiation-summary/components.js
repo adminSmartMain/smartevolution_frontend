@@ -633,7 +633,7 @@ export const NegotiationSummary = ({
     // Asigna "FV-<billId>" o "FV-No aplica" si billId es null o undefined
     const updatedNegotiationData = {
       ...NegotiationSummaryData,
-      billId: billId ? `FE-${billId}` : "",
+      billId: billId ? `FE-${billId}` : "FE-",
     };
 
     if (option === "modify") {
@@ -2192,7 +2192,7 @@ export const NegotiationSummary = ({
                   thousandSeparator="."
                   decimalSeparator=","
                   decimalScale={2}
-                  allowNegative={false}
+                  allowNegative={true}
                   value={manualAdjustment}
                   onChangeMasked={(values) => {
                     handleManualAdjustment(values.floatValue);
