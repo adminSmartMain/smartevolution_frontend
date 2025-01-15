@@ -199,7 +199,7 @@ useEffect(() => {
     flexDirection: "column",
   }}
 >
-  <FormControl fullWidth sx={{ marginBottom: "15px" }}>
+  <FormControl fullWidth sx={{ marginBottom: "12px" }}>
     <MuiTextField
       id="email"
       placeholder="Ingresa tu email"
@@ -227,13 +227,13 @@ useEffect(() => {
       }}
     />
     {error && (
-      <Typography color="error" sx={{ marginBottom: "10px", textAlign: "center" }}>
+      <Typography color="error" sx={{ marginBottom: "10px", textAlign: "center",fontSize: "0.75rem" }}>
         {error.message || "Correo no encontrado."}
       </Typography>
     )}
     {/* Mensaje de error para campo vacío */}
     {!email && !loading && (
-      <Typography color="error" sx={{ marginTop: "10px", textAlign: "center" }}>
+      <Typography color="error" sx={{ marginTop: "10px", textAlign: "center",fontSize: "0.75rem" }}>
         El campo de correo electrónico es obligatorio.
       </Typography>
     )}

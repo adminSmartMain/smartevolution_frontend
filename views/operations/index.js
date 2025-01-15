@@ -49,14 +49,9 @@ export default function Operations() {
   };
 
   useEffect(() => {
-    setPage(1);
     getOperationsFetch();
-  }, [filters.opId, filters.billId, filters.investor]);
-
-  useEffect(() => {
-    getOperationsFetch();
-  }, [page]);
-
+  }, [filters.opId, filters.billId, filters.investor, page]);
+  
   useEffect(() => {
     if (dataGetOperations) {
       dataCount = dataGetOperations?.count || 0;

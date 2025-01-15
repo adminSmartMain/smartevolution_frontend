@@ -42,6 +42,7 @@ export const GetRiskProfile = async (data) => {
       authorization: "Bearer " + localStorage.getItem("access-token"),
     },
   });
+  console.log(`${API_URL}/riskProfile/client/${data}`)
   return res.data;
 };
 
@@ -104,6 +105,26 @@ export const GetSummaryByID = async (id) => {
 
 export const GetDepositsOnly = async (id) => {
   const res = await Axios.get(`${API_URL}/emitter-deposit?opId=${id}`, {
+    headers: {
+      authorization: "Bearer " + localStorage.getItem("access-token"),
+    },
+  });
+  return res.data;
+};
+
+
+export const GetBankById = async (id) => {
+  const res = await Axios.get(`${API_URL}/bank/${id}`, {
+    headers: {
+      authorization: "Bearer " + localStorage.getItem("access-token"),
+    },
+  });
+  return res.data;
+};
+
+
+export const GetAccountTypeById = async (id) => {
+  const res = await Axios.get(`${API_URL}/account_type/${id}`, {
     headers: {
       authorization: "Bearer " + localStorage.getItem("access-token"),
     },

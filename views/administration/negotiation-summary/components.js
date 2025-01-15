@@ -55,6 +55,9 @@ import {
   CreateNegotiationSummary,
   DeleteDepositById,
   GetDepositsOnly,
+  GetAccountTypeById,
+  GetBankById,
+  GetRiskProfile,
   GetNegotiationSummary,
   GetPurchaseOrderPDF,
   GetSummaryByID,
@@ -87,7 +90,8 @@ export const NegotiationSummary = ({
     error: error,
     data: data,
   } = useFetch({ service: GetNegotiationSummary, init: false });
-  
+
+
  //Este es el fetch importante al momento de crear un resumen de negociación
   //este usa una funcion llamada CreateNegotiationSummary el cual está creada en /views/administration/negotiation-summary/components.js
  const {
@@ -137,6 +141,7 @@ export const NegotiationSummary = ({
       
       if (option === "modify") {
         setOpID(router.query.opId);
+        console.log("data",data)
         
       }
     }
@@ -158,6 +163,10 @@ export const NegotiationSummary = ({
         });
     }
   }, [id, PendingAccounts]);
+
+
+
+
 
   useEffect(() => {
 
@@ -254,9 +263,9 @@ export const NegotiationSummary = ({
 
   useEffect(() => {
     if (data) {
-      console.log(opIdSelected)
       
-      console.log('obtengo la operacion ingresada')
+      
+      
       const depositData = data?.data?.emitterDeposits || []; // Agrega valor predeterminado
       setDeposit(depositData);
      
@@ -406,15 +415,82 @@ export const NegotiationSummary = ({
     setOpen([false, null]);
   };
 
+
+  
+  const {
+    fetch: fetchRisk,
+    loading: loadingRisk,
+    error: errorRisk,
+    data: dataRiskProfile,
+  } = useFetch({ service: GetRiskProfile, init: false });
+  
+  const {
+    fetch: fetchBank,
+    loading: loadingBank,
+    error: errorBank,
+    data: dataBank,
+  } = useFetch({ service: GetBankById, init: false });
+
+  const {
+    fetch: fetchAccountType,
+    loading: loadingAccountType,
+    error: errorAccountType,
+    data: dataAccountType,
+  } = useFetch({ service: GetAccountTypeById, init: false });
+  
+  
+  useEffect(() => {
+    console.log(data)
+    if (data) {
+      console.log(data?.data?.emitter?.id)
+      fetchRisk(data?.data?.emitter?.id);
+      
+      console.log(dataRiskProfile)
+      
+    }
+    
+  }, [data]);
+
+
+  useEffect(() => {
+    console.log(dataRiskProfile)
+    if (dataRiskProfile) {
+      
+      fetchBank(dataRiskProfile?.data?.bank)
+      
+      console.log(dataBank)
+    }
+    
+  }, [dataRiskProfile]);
+
+  useEffect(() => {
+    console.log(dataRiskProfile)
+    if (dataRiskProfile) {
+      
+      fetchAccountType(dataRiskProfile?.data?.account_type)
+      
+      console.log(dataAccountType)
+    }
+    
+  }, [dataRiskProfile]);
+
+
+
   const [open2, setOpen2] = useState([false, null]);
   const handleOpen2 = (option) => {
    
     if (option === "add") {
       formik2.resetForm();
+      console.log("data",data)
       console.log("client", data?.data?.emitter?.id);
       console.log("operation", data?.data?.operation?.id[0]);
+      console.log("beneficiary",data?.data?.emitterDeposits)
       formik2.setFieldValue("client", data?.data?.emitter?.id);
       formik2.setFieldValue("operation", data?.data?.operation?.id[0]);
+      formik2.setFieldValue("beneficiary", data?.data?.emitterDeposits?.beneficiary);
+      formik2.setFieldValue("bank", dataBank?.data?.description);
+      formik2.setFieldValue("accountNumber", dataRiskProfile?.data?.account_number);
+      formik2.setFieldValue("accountType", dataAccountType?.data?.id);
       setOpen2([true, option]);
     } else {
       setOpen2([true, option]);
@@ -487,7 +563,7 @@ export const NegotiationSummary = ({
     fetchPurchaseOrder(id);
     handleOpen3();
   };
-  //aca se guardan los depositos
+  //aca se cargan los depositos
   const handleEditDepositClick = (item) => {
     formik2.setFieldValue("id", item.id);
     formik2.setFieldValue("client", item.client);
@@ -507,6 +583,7 @@ export const NegotiationSummary = ({
     formik2.setFieldValue("egressType", item.accountingControls[0].type);
     formik2.setFieldValue("modify", true);
     handleOpen2("edit");
+   
   };
   //acá se guardan los descuentos
   const handleEditPendingClick = (item) => {
@@ -551,12 +628,12 @@ export const NegotiationSummary = ({
   };
 
 
-  console.log(isOperationExists)
+ 
   const handleButtonClick = () => {
     // Asigna "FV-<billId>" o "FV-No aplica" si billId es null o undefined
     const updatedNegotiationData = {
       ...NegotiationSummaryData,
-      billId: billId ? `FV-${billId}` : "FV-No aplica",
+      billId: billId ? `FE-${billId}` : "",
     };
 
     if (option === "modify") {
@@ -571,7 +648,7 @@ export const NegotiationSummary = ({
 
 
   const handleButtonGoToSummaryClick = () => {
-    const url = `http://localhost:3000/administration/negotiation-summary/summaryList?id=${opIdSelected}&mode=filter&emitter=`;
+    const url = `https://devapp.smartevolution.com.co/administration/negotiation-summary/summaryList?id=${opIdSelected}&mode=filter&emitter=`;
     window.location.href = url;
   };
   return (
@@ -1724,7 +1801,7 @@ export const NegotiationSummary = ({
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <InputTitles>FV -</InputTitles>
+                      <InputTitles>FE -</InputTitles>
                     </InputAdornment>
                   ),
                 }}
@@ -2316,81 +2393,92 @@ export const NegotiationSummary = ({
       </Modal>
 
 
-   
       <Dialog
-      open={modalOpen}
-      onClose={handleCloseModal} // La función onClose maneja el cierre
+  open={modalOpen}
+  onClose={handleCloseModal}
+  sx={{
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    backdropFilter: "blur(3px)", // Efecto de desenfoque en el fondo
+    bgcolor: "rgba(0, 0, 0, 0.5)", // Fondo semitransparente
+    zIndex: 1500, // Asegura que el modal esté por encima de otros elementos
+    "& .MuiDialog-paper": {
+      width: "500px", // Ajusta el ancho del modal
+      height: "260px", // Ajusta la altura del modal
+     
+    },
+  }}
+>
+  {/* Ícono de cierre */}
+  <CloseIcon
+    onClick={handleCloseModal}
+    sx={{
+      position: "absolute",
+      top: 10,
+      right: 10,
+      cursor: "pointer",
+      color: "#488B8F",
+      "&:hover": {
+        color: "#5EA3A3",
+      },
+    }}
+  />
+
+  {/* Título */}
+  <DialogTitle
+    sx={{
+      textAlign: "center",
+      fontWeight: "bold",
+      color: "#488B8F",
+    }}
+  >
+    Resumen de Negociación
+  </DialogTitle>
+ {/* Línea divisora */}
+ <Divider
+    sx={{
+      width: "95%", // Línea más ancha
+      borderWidth: "0.5px", // Más gruesa
+      borderColor: "#488B8F", // Color personalizado
+      mx: "auto", // Centrar la línea horizontalmente
+    }}
+  />
+
+  {/* Contenido */}
+  <DialogContent sx={{ textAlign: "center" }}>
+    <Typography variant="body1" sx={{ mb: 3, fontSize: "1rem", color: "#000" }}>
+      El resumen de negociación para la operación <br /> <strong>{opIdSelected}</strong> ya existe.
+    </Typography>
+
+    {/* Botón */}
+    <Box
       sx={{
         display: "flex",
-        alignItems: "center",
         justifyContent: "center",
-        backdropFilter: "blur(4px)", // Efecto de desenfoque en el fondo
-        bgcolor: "rgba(0, 0, 0, 0.5)", // Fondo semitransparente
-        zIndex: 1500, // Asegura que el modal esté por encima de otros elementos
-        
+        gap: 2,
+        mt: 6,
       }}
     >
-      {/* Aquí agregamos el ícono de cierre */}
-      <CloseIcon
-        onClick={handleCloseModal} // Función para cerrar el modal al hacer clic en la X
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={handleButtonGoToSummaryClick}
         sx={{
-          position: "absolute",
-          top: 10,
-          right: 10,
-          cursor: "pointer", // Cambia el cursor a 'pointer' cuando pasas sobre la X
-          color: "#488B8F", // Color de la X
+          width: "45%",
+          bgcolor: "#488B8F",
+          color: "#fff",
           "&:hover": {
-            color: "#5EA3A3", // Cambia el color al pasar el mouse
+            bgcolor: "#5EA3A3",
+            
           },
         }}
-      />
-
-      {/* Contenido del Dialog */}
-      <DialogTitle sx={{ textAlign: "center" }}>
-        Resumen de Negociación
-      </DialogTitle>
-
-      <Divider
-  sx={{
-    my: 1, // Margen más pequeño para acercar la línea al título
-    width: "80%", // Reducir el ancho de la línea para que no llegue a los bordes
-    borderColor: "#488B8F", // Color personalizado para la línea
-    mx: "auto", // Centrar el Divider horizontalmente
-  }}
-/>
-
-      <DialogContent sx={{ textAlign: "center" }}>
-        <Typography variant="body1" sx={{ mb: 3 }}>
-        El resumen de negociación para la operación <br /> <strong>{opIdSelected}</strong> ya existe.
-        </Typography>
-
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "center",
-            gap: 2,
-            mt: 3,
-          }}
-        >
-         
-          <Button
-            variant="outlined"
-            color="primary"
-            onClick={handleButtonGoToSummaryClick}
-            sx={{
-              width: "45%",
-              borderColor: "#488B8F",
-              color: "#488B8F",
-              "&:hover": {
-                bgcolor: "rgba(72, 139, 143, 0.1)",
-              },
-            }}
-          >
-            Ir al Resumen de negociación
-          </Button>
-        </Box>
-      </DialogContent>
-    </Dialog>
+      >
+        Ir al Resumen
+      </Button>
+    </Box>
+  </DialogContent>
+</Dialog>
 
 
     </>

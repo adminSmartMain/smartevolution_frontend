@@ -25,7 +25,7 @@ export default function BankSelect({ formik, width, disabled }) {
 
   useEffect(() => {
     if (data) {
-      let banks = [];
+      var banks = [];
       data.data.map((bank) => {
         banks.push({
           label: `${bank.description}`,
@@ -35,10 +35,18 @@ export default function BankSelect({ formik, width, disabled }) {
       setBank(banks);
     }
   }, [data, loading, error]);
-
+  
   useEffect(() => {
-    fetch();
+    fetch({ client: formik.values.client });
   }, [formik.values.client]);
+
+  console.log("Bank Options:", bank);
+  console.log("Formik Value:", formik.values.bank);
+  console.log(
+    "Matched Option:",
+    bank.find((option) => option.label === formik.values.bank)
+  );
+
 
   return (
     <Box
@@ -59,16 +67,16 @@ export default function BankSelect({ formik, width, disabled }) {
           getOptionLabel={(option) => option.label}
           onChange={(e, value) => {
             if (value !== null) {
+              console.log('aaa')
               formik.setFieldValue("bank", value.value);
             } else {
+              console.log('bbbb')
               formik.setFieldValue("bank", null);
             }
           }}
           color="#5EA3A3"
-          value={
-            bank.filter((option) => option.value === formik.values.bank)[0] ||
-            null
-          }
+          value={bank.find((option) => option.label === formik.values.bank) || null}
+
           popupIcon={<KeyboardArrowDownIcon sx={{ color: "#5EA3A3" }} />}
           clearIcon={<Clear sx={{ color: "#5EA3A3" }} />}
           renderInput={(params) => (

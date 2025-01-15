@@ -302,6 +302,9 @@ export const OperationsComponents = ({
     setOpen([false, ""]);
   };
 
+   
+
+
   const {
     fetch: fetchDeleteOperation,
     loading: loadingDeleteOperation,
@@ -1200,7 +1203,7 @@ export const OperationsComponents = ({
                     }}
                     onClick={() => {
                       if (page > 1) {
-                       
+                        
                         setPage(page - 1);
                         console.log('e')
                       }
@@ -1220,7 +1223,7 @@ export const OperationsComponents = ({
                     }}
                     onClick={() => {
                       if (page < dataCount / 15) {
-                       
+                        
                         setPage(page + 1);
                       }
                       console.log('f')
