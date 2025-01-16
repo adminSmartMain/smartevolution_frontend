@@ -545,9 +545,29 @@ export const SummaryListComponent = () => {
 
 // Función para limpiar filtros
 const clearFilters = async () => {
+  let url = `${API_URL}/report/negotiationSummary`;
   try {
-    // Actualizar la URL eliminando los parámetros de consulta
-    window.history.pushState(null, "", "/administration/negotiation-summary/summaryList");
+    // Obtener los parámetros actuales de la URL
+    const params = new URLSearchParams(window.location.search);
+
+    // Variables para determinar el estado de los parámetros
+    const startDate = params.get("startDate");
+    const endDate = params.get("endDate");
+    const emitter = params.get("emitter");
+    const id = params.get("id");
+
+    // Lógica condicional según los parámetros
+    if (startDate && endDate && !emitter && !id) {
+      // Caso: Si están startDate y endDate llenos, y emitter e id vacíos, no hacer nada
+      return;
+    }
+
+    if (startDate && endDate && (emitter || id)) {
+      // Caso: Si están startDate y endDate llenos y emitter o id llenos, vaciarlos sin borrarlos
+      if (emitter) params.set("emitter", "");
+      if (id) params.set("id", "");
+
+      window.history.pushState(null, "", `/administration/negotiation-summary/summaryList?${params.toString()}`);
 
     // Restablecer el estado
     setFilterInput(""); // Limpiar el input del filtro
@@ -555,18 +575,75 @@ const clearFilters = async () => {
     setPage(1); // Restablecer la página a la inicial
     setError(""); // Limpiar errores
 
-    // Realizar la solicitud inicial sin filtros
-    const response = await fetch({
+    // Realizamos la solicitud al backend con los parámetros actualizados
+    const responsef = await Axios.get(url, {
+      headers: {
+          authorization: `Bearer ${localStorage.getItem("access-token")}`,
+      },
+      params: Object.fromEntries(params.entries()), // Convertimos URLSearchParams a un objeto plano
+  });
+
+    // Actualizar los datos mostrados
+    setDataFiltered(responsef.data);
+
+    } else if (emitter && !id) {
+      // Caso: Si emitter está lleno, borrar todo
+      params.delete("emitter");
+      params.delete("startDate");
+      params.delete("endDate");
+      params.delete("id");
+      params.delete("filter");
+        // Actualizar la URL con los parámetros restantes
+    window.history.pushState(null, "", `/administration/negotiation-summary/summaryList?${params.toString()}`);
+
+    // Restablecer el estado
+    setFilterInput(""); // Limpiar el input del filtro
+    setPageFiltered(1); // Restablecer la página filtrada
+    setPage(1); // Restablecer la página a la inicial
+    setError(""); // Limpiar errores
+
+    // Realizar la solicitud inicial con los parámetros actualizados
+    const responsec = await fetch({
       page: 1, // Página inicial
     });
 
     // Actualizar los datos mostrados
-    setDataFiltered(response.data);
+    setDataFiltered(responsec.data);
+
+    } else if (id && !emitter) {
+      // Caso: Si id está lleno, borrar todo
+      params.delete("id");
+      params.delete("startDate");
+      params.delete("endDate");
+      params.delete("emitter");
+      params.delete("filter");
+
+         // Actualizar la URL con los parámetros restantes
+    window.history.pushState(null, "", `/administration/negotiation-summary/summaryList?${params.toString()}`);
+
+    // Restablecer el estado
+    setFilterInput(""); // Limpiar el input del filtro
+    setPageFiltered(1); // Restablecer la página filtrada
+    setPage(1); // Restablecer la página a la inicial
+    setError(""); // Limpiar errores
+
+    // Realizar la solicitud inicial con los parámetros actualizados
+    const responsed = await fetch({
+      page: 1, // Página inicial
+    });
+
+    // Actualizar los datos mostrados
+    setDataFiltered(responsed.data);
+    }
+
+    
+    
   } catch (err) {
     setError("Error al limpiar los filtros.");
     console.error("Error al limpiar los filtros:", err);
   }
 };
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -579,34 +656,45 @@ const clearFilters = async () => {
   setAnchorEl(null); // Cierra el picker
   setEndDatePicker(today);
   setErrorPicker("");
-  try{
-       // Obtener los parámetros actuales de la URL
-        const params = new URLSearchParams(window.location.search);
 
-        // Eliminar los parámetros específicos
-        params.delete("startDate");
-        params.delete("endDate");
+  try {
+    // Obtener los parámetros actuales de la URL
+    const params = new URLSearchParams(window.location.search);
 
-        // Actualizar la URL en el navegador
-        window.history.pushState(null, "", `?${params.toString()}`);
+    // Verificar si los parámetros `id` y `emitter` están vacíos
+    const id = params.get("id");
+    const emitter = params.get("emitter");
 
-            
-        // Realizar la solicitud al backend
-        const response = await Axios.get(url, {
-          headers: {
-            authorization: `Bearer ${localStorage.getItem("access-token")}`,
-          },
-          params: params,
-        });
+    if (!id && !emitter) {
+      // Si ambos están vacíos, eliminar todos los parámetros
+      window.history.pushState(null, "", window.location.pathname);
+      const responseb = await fetch({
+      page: 1, // Página inicial
+    });
+    setPage(1);
+    setDataFiltered(responseb.data);
+    } else {
+      // Eliminar solo los parámetros de fecha
+      params.delete("startDate");
+      params.delete("endDate");
 
-        setDataFiltered(response.data);
-        setError(""); // Limpiar errores previos
+      // Actualizar la URL en el navegador
+      window.history.pushState(null, "", `?${params.toString()}`);
+      // Realizar la solicitud al backend
+    const responsea = await Axios.get(url, {
+      headers: {
+        authorization: `Bearer ${localStorage.getItem("access-token")}`,
+      },
+      params: params,
+    });
+    setDataFiltered(responsea.data);
+    setPage(1);
+    }
 
-
-
-  }
-  
-  catch (err) {
+    
+   
+    setError(""); // Limpiar errores previos
+  } catch (err) {
     setError("Error al realizar la solicitud. Verifique su entrada.");
     console.error("Error en la solicitud:", err);
   }
@@ -744,31 +832,38 @@ const setQuickFilter = (type) => {
 
 
 
- // Manejar el cambio de fecha
- const handleDateChange = (type, value) => {
-  const selectedDate = parseISO(value); // Evitar problemas con la hora
-  if (isNaN(selectedDate.getTime())) {
-    setError(`La fecha ${type === "start" ? "de inicio" : "de fin"} no es válida.`);
-    return;
-  }
-
-  if (type === "start") {
-    if (endDatePicker && selectedDate > endDatePicker) {
-      setError("La fecha de inicio no puede ser posterior a la fecha de fin.");
-      return;
+// Manejar cambios en las fechas (soportar edición parcial)
+  // Manejar cambios en las fechas (soportar edición parcial)
+  const handleDateChange = (type, value) => {
+    // Actualizar el valor directamente
+    if (type === "start") {
+      setStartDatePicker(value);
+    } else if (type === "end") {
+      setEndDatePicker(value);
     }
-    setStartDatePicker(selectedDate);
-  } else if (type === "end") {
-    if (startDatePicker && selectedDate < startDatePicker) {
-      setError("La fecha de fin no puede ser anterior a la fecha de inicio.");
-      return;
+
+    // Validar solo si el valor es una fecha completa (formato YYYY-MM-DD)
+    if (value.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      const selectedDate = new Date(value);
+      if (isNaN(selectedDate.getTime())) {
+        setErrorPicker(`La fecha ${type === "start" ? "de inicio" : "de fin"} no es válida.`);
+        return;
+      }
+
+      if (type === "start") {
+        if (new Date(value) > new Date(endDatePicker)) {
+          setErrorPicker("La fecha de inicio no puede ser posterior a la fecha de fin.");
+          return;
+        }
+      } else if (type === "end") {
+        if (new Date(value) < new Date(startDatePicker)) {
+          setErrorPicker("La fecha de fin no puede ser anterior a la fecha de inicio.");
+          return;
+        }
+      }
     }
-    setEndDatePicker(selectedDate);
-  }
-
-  setError("");
-};
-
+    setError("");
+  };
 
   return (
     <>
@@ -879,7 +974,7 @@ const setQuickFilter = (type) => {
     }}
   >
     {startDatePicker && endDatePicker
-      ? `${format(startDatePicker, "dd/MM/yyyy")} - ${format(endDatePicker, "dd/MM/yyyy")}`
+      ? `${format(new Date(startDatePicker), "dd/MM/yyyy")} - ${format(new Date(endDatePicker), "dd/MM/yyyy")}`
       : "Seleccionar rango"}
   </Button>
 
@@ -938,7 +1033,7 @@ const setQuickFilter = (type) => {
           horizontal: "left",
         }}
       >
-        <Box sx={{ padding: 2, width: 300 }}>
+         <Box sx={{ padding: 2, width: 300 }}>
           <Typography variant="subtitle2" gutterBottom>
             Seleccionar Rango de Fechas
           </Typography>
@@ -949,11 +1044,11 @@ const setQuickFilter = (type) => {
                 fullWidth
                 type="date"
                 label="Fecha Inicio"
-                value={startDatePicker ? format(startDatePicker, "yyyy-MM-dd") : ""}
+                value={startDatePicker}
                 onChange={(e) => handleDateChange("start", e.target.value)}
                 InputLabelProps={{ shrink: true }}
-                error={!!errorPicker  && errorPicker .includes("inicio")}
-                helperText={errorPicker  && errorPicker .includes("inicio") ? errorPicker  : ""}
+                error={!!error && error.includes("inicio")}
+                helperText={error && error.includes("inicio") ? error : ""}
               />
             </Grid>
             <Grid item xs={6}>
@@ -961,11 +1056,11 @@ const setQuickFilter = (type) => {
                 fullWidth
                 type="date"
                 label="Fecha Fin"
-                value={endDatePicker ? format(endDatePicker, "yyyy-MM-dd") : ""}
+                value={endDatePicker}
                 onChange={(e) => handleDateChange("end", e.target.value)}
                 InputLabelProps={{ shrink: true }}
-                error={!!errorPicker && errorPicker .includes("fin")}
-                helperText={errorPicker  && errorPicker .includes("fin") ? errorPicker  : ""}
+                error={!!error && error.includes("fin")}
+                helperText={error && error.includes("fin") ? error : ""}
               />
             </Grid>
           </Grid>
@@ -996,9 +1091,14 @@ const setQuickFilter = (type) => {
           <Box sx={{ display: "flex", justifyContent: "space-between", marginTop: 2 }}>
             <Button
               variant="text"
-              color="primary"
               onClick={handleClear}
-              sx={{ textTransform: "none" }}
+              sx={{
+                textTransform: "none",
+                color: "#488b8f",
+                "&:hover": {
+                  color: "#376b6d",
+                },
+              }}
             >
               Limpiar
             </Button>

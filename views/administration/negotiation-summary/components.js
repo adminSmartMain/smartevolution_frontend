@@ -197,6 +197,7 @@ export const NegotiationSummary = ({
   const [notFound,setNotFound]=useState(null);
   const handleCloseModal = () => setModalOpen(false);
   const [isOperationExists, setIsOperationExists] = useState(false);
+  const [manualAdjustmentValue,setManualAdjustmentValue]= useState(null)
   useEffect(() => {
     if (OpID) {
       
@@ -263,13 +264,14 @@ export const NegotiationSummary = ({
 
   useEffect(() => {
     if (data) {
-      
+        console.log(data)
       
       
       const depositData = data?.data?.emitterDeposits || []; // Agrega valor predeterminado
       setDeposit(depositData);
      
       Toast("Resumen de negociación cargado con éxito", "success");
+      
       setNegotiationSummaryData({
         opId: id,
         emitter: data?.data?.emitter?.name,
@@ -918,7 +920,7 @@ export const NegotiationSummary = ({
                           thousandSeparator="."
                           decimalSeparator=","
                           decimalScale={0}
-                          allowNegative={false}
+                          allowNegative={true}
                           error={
                             formik.touched.amount &&
                             Boolean(formik.errors.amount)
