@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { useEffect } from "react";
+import { useEffect,useRef } from "react";
 import Axios from "axios";
 import Link from "next/link";
+import { debounce } from "lodash";
 import { parseISO } from 'date-fns';
 import SearchIcon from '@mui/icons-material/Search'; // Importa el ícono de búsqueda
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
@@ -53,6 +54,13 @@ const StyledButton = styled(Button)`
     border-color: #488b8f;
   }
 `;
+const tableWrapperSx = {
+  marginTop: 2,
+  display: "flex",
+  flexDirection: "column",
+  width: "100%",
+  height: "100%",
+};
 
 const StyledApplyButton = styled(Button)`
   background-color: #488b8f;
@@ -593,6 +601,8 @@ const clearFilters = async () => {
       params.delete("endDate");
       params.delete("id");
       params.delete("filter");
+      params.delete("mode");
+      params.delete("page");
         // Actualizar la URL con los parámetros restantes
     window.history.pushState(null, "", `/administration/negotiation-summary/summaryList?${params.toString()}`);
 
@@ -612,11 +622,14 @@ const clearFilters = async () => {
 
     } else if (id && !emitter) {
       // Caso: Si id está lleno, borrar todo
+      console.log('casoid')
       params.delete("id");
       params.delete("startDate");
       params.delete("endDate");
       params.delete("emitter");
       params.delete("filter");
+      params.delete("mode");
+      params.delete("page");
 
          // Actualizar la URL con los parámetros restantes
     window.history.pushState(null, "", `/administration/negotiation-summary/summaryList?${params.toString()}`);
@@ -666,6 +679,8 @@ const clearFilters = async () => {
     const emitter = params.get("emitter");
 
     if (!id && !emitter) {
+        
+
       // Si ambos están vacíos, eliminar todos los parámetros
       window.history.pushState(null, "", window.location.pathname);
       const responseb = await fetch({
@@ -673,11 +688,13 @@ const clearFilters = async () => {
     });
     setPage(1);
     setDataFiltered(responseb.data);
+    
     } else {
       // Eliminar solo los parámetros de fecha
       params.delete("startDate");
       params.delete("endDate");
 
+      params.delete("page");
       // Actualizar la URL en el navegador
       window.history.pushState(null, "", `?${params.toString()}`);
       // Realizar la solicitud al backend
@@ -902,61 +919,69 @@ const setQuickFilter = (type) => {
   justifyContent="space-between" // Espaciado entre los elementos
   sx={{
     width: '100%', // Asegura que el contenedor ocupe todo el ancho disponible
-    padding: '16px', // Espaciado interno para separación
-    gap: '20px', // Espacio entre el filtro y el botón de rango de fechas
-    marginRigth: '10px', // Elimina cualquier margen adicional
-    marginLeft: '-15px', // Mueve el contenedor 10 píxeles a la izquierda
+    padding: '20px', // Espaciado interno
+    gap: '10px', // Espacio entre los elementos
+    marginRight: '10px', // Ajuste de margen derecho
+    marginLeft: '10px', // Ajuste de margen izquierdo
   }}
 >
   {/* Filtro */}
   <Box
-    display="flex"
-    alignItems="center"
-    gap="8px"
+  display="flex"
+  alignItems="center"
+  gap="8px"
+  sx={{
+    border: '1px solid #488f8f', // Borde del filtro
+    borderRadius: '4px', // Bordes redondeados
+    padding: '4px', // Espaciado interno
+    backgroundColor: '#f8f9fa', // Fondo del filtro
+    flex: 1, // Ocupa el máximo espacio disponible
+    height:'29px',
+    marginRight:'30px',
+   
+  }}
+>
+  <TextField
+    placeholder="Ingrese número de operación o emisor"
+    variant="standard"
+    value={filterInput}
+    onChange={handleFilterChange}
+    required
+    InputProps={{
+      disableUnderline: true, // Elimina la línea inferior
+      sx: {
+        fontSize: '0.875rem', // Tamaño del texto
+        color: '#6c757d', // Color del texto
+        height:'7px',
+        
+      },
+    }}
     sx={{
-      border: '1px solid #488f8f', // Borde gris claro
-      borderRadius: '4px', // Bordes redondeados
-      padding: '1px 1px', // Espaciado interno
-      backgroundColor: '#f8f9fa', // Fondo gris claro
-      width: '760px', // Ancho específico del componente
+      flex: 1, // El input ocupa el máximo espacio disponible
+      '& .MuiInputBase-root': {
+        padding: '8px', // Ajusta el padding interno
+      },
+      
+    }}
+  />
+
+  <Button
+    onClick={clearFilters}
+    variant="text"
+    size="small"
+    sx={{
+      minWidth: 'unset', // Elimina el ancho mínimo predeterminado
+      padding: '4px 6px', // Ajusta el padding interno
+      height: '32px', // Define una altura específica
+      lineHeight: '1.2', // Ajusta la altura de línea para el contenido del botón
+      color: '#488f8f', // Color del botón
       
     }}
   >
-    <TextField
-      placeholder="Ingrese número de operación o emisor"
-      variant="standard"
-      value={filterInput}
-      onChange={handleFilterChange}
-      required
-      InputProps={{
-        disableUnderline: true, // Elimina la línea inferior
-        sx: {
-          fontSize: '0.875rem', // Tamaño del texto
-          color: '#6c757d', // Color del texto
-        },
-      }}
-      sx={{
-        flex: 1, // El input ocupará el máximo espacio disponible
-        '& .MuiInputBase-root': {
-          padding: 0.2, // Ajusta el padding interno
-        },
-      }}
-    />
+    <ClearIcon />
+  </Button>
+</Box>
 
-    <Button
-      onClick={clearFilters}
-      variant="text"
-      size="small"
-      sx={{
-        minWidth: 'unset', // Ajusta el tamaño del botón
-        padding: 0.23,
-        color: '#488f8f', // Color del ícono
-        
-      }}
-    >
-      <ClearIcon />
-    </Button>
-  </Box>
 
   {/* Botón para abrir el rango de fechas */}
   <Button
@@ -964,59 +989,60 @@ const setQuickFilter = (type) => {
     variant="outlined"
     startIcon={<CalendarTodayIcon />}
     sx={{
-      textTransform: "none",
-      borderColor: "#488b8f",
-      color: "#488b8f",
-      whiteSpace: "nowrap", // Evita que el texto del botón se divida en varias líneas
+      textTransform: 'none',
+      borderColor: '#488b8f',
+      color: '#488b8f',
+      whiteSpace: 'nowrap', // Evita que el texto se divida en líneas
       backgroundColor: '#f8f9fa',
-      marginRigth: "7px", // Mueve el botón 10 píxeles a la izquierda
-      width: '260px'
+      width: '280px',
+      height:'41px',
+      marginRight:'27px',
+     
     }}
   >
     {startDatePicker && endDatePicker
-      ? `${format(new Date(startDatePicker), "dd/MM/yyyy")} - ${format(new Date(endDatePicker), "dd/MM/yyyy")}`
-      : "Seleccionar rango"}
+      ? `${format(new Date(startDatePicker), 'dd/MM/yyyy')} - ${format(new Date(endDatePicker), 'dd/MM/yyyy')}`
+      : 'Seleccionar rango'}
   </Button>
 
-
+  {/* Botón para registrar un nuevo resumen */}
   <Link
-          href="/administration/negotiation-summary?register"
-          underline="none"
-        >
-  <Button
-  variant="standard"
-  color="primary"
-  size="large"
-  
-  sx={{
-    height: "2.6rem",
-    backgroundColor: "transparent",
-    border: "1.4px solid #63595C",
-    borderRadius: "4px",
-  }}
->
-  <Tooltip title="Registrar Nuevo Resumen de Negociación" placement="top">
-    <div style={{ display: 'flex', alignItems: 'center' }}>
-      <Typography
-        letterSpacing={0}
-        fontSize="80%"
-        fontWeight="bold"
-        color="#63595C"
-      >
-        Nuevo Resumen
-      </Typography>
-      <Typography
-        fontFamily="icomoon"
-        fontSize="1.2rem"
-        color="#63595C"
-        marginLeft="0.9rem"
-      >
-        &#xe927;
-      </Typography>
-    </div>
-  </Tooltip>
-</Button>
-</Link>
+    href="/administration/negotiation-summary?register"
+    underline="none"
+  >
+    <Button
+      variant="outlined"
+      color="primary"
+      size="large"
+      sx={{
+        height: '2.6rem',
+        backgroundColor: 'transparent',
+        border: '1.4px solid #63595C',
+        borderRadius: '4px',
+      }}
+    >
+      <Tooltip title="Registrar Nuevo Resumen de Negociación" placement="top">
+        <Box display="flex" alignItems="center" >
+          <Typography
+            letterSpacing={0}
+            fontSize="0.875rem"
+            fontWeight="bold"
+            color="#63595C"
+          >
+            Nuevo Resumen
+          </Typography>
+          <Typography
+            fontFamily="icomoon"
+            fontSize="1.2rem"
+            color="#63595C"
+            marginLeft="0.9rem"
+          >
+            &#xe927;
+          </Typography>
+        </Box>
+      </Tooltip>
+    </Button>
+  </Link>
 </Box>
 
 {/* Popover para rango de fechas */}
@@ -1112,12 +1138,7 @@ const setQuickFilter = (type) => {
 
 
       <Box
-        container
-        marginTop={4}
-        display="flex"
-        flexDirection="column"
-        width="100%"
-        height="100%"
+        sx={{ ...tableWrapperSx }}
       >
         <CustomDataGrid
           rows={summary}

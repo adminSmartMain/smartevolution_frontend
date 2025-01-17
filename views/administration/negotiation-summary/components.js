@@ -650,9 +650,12 @@ export const NegotiationSummary = ({
 
 
   const handleButtonGoToSummaryClick = () => {
-    const url = `https://devapp.smartevolution.com.co/administration/negotiation-summary/summaryList?id=${opIdSelected}&mode=filter&emitter=`;
+    const baseUrl = window.location.origin; // Obtiene la base de la URL actual
+    console.log(baseUrl)
+    const url = `${baseUrl}/administration/negotiation-summary/summaryList?id=${opIdSelected}&mode=filter&emitter=`;
     window.location.href = url;
   };
+  
   return (
     <>
       <Box display="flex" flexDirection="column">
