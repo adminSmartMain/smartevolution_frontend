@@ -3,7 +3,9 @@ import { useEffect,useRef } from "react";
 import Axios from "axios";
 import Link from "next/link";
 import { debounce } from "lodash";
-import { parseISO } from 'date-fns';
+import { parseISO,parse, isValid } from 'date-fns';
+import es from 'date-fns/locale/es';
+
 import SearchIcon from '@mui/icons-material/Search'; // Importa el ícono de búsqueda
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import {
@@ -717,11 +719,26 @@ const clearFilters = async () => {
   }
 };
 
-
 const formatDateSelected = (date) => {
-  const d = new Date(date);
-  return d.toISOString().split('T')[0]; // Esto devuelve el formato YYYY-MM-DD
+  try {
+    if (!date) {
+      throw new Error("La fecha proporcionada es nula o indefinida.");
+    }
+
+    const d = new Date(date);
+    if (isNaN(d.getTime())) {
+      throw new Error("La fecha proporcionada no es válida.");
+    }
+
+    return d.toISOString().split('T')[0]; // Formato YYYY-MM-DD
+  } catch (error) {
+    console.error(`Error al formatear la fecha: ${error.message}`);
+    return null; // Devuelve `null` si hay un error
+  }
 };
+
+
+
 const today = new Date();
 const [anchorEl, setAnchorEl] = useState(null);
 const [startDatePicker, setStartDatePicker] = useState(today);
@@ -1073,8 +1090,8 @@ const setQuickFilter = (type) => {
                 value={startDatePicker}
                 onChange={(e) => handleDateChange("start", e.target.value)}
                 InputLabelProps={{ shrink: true }}
-                error={!!error && error.includes("inicio")}
-                helperText={error && error.includes("inicio") ? error : ""}
+                error={!!errorPicker && errorPicker.includes("inicio")}
+                helperText={errorPicker && errorPicker.includes("inicio") ? errorPicker : ""}
               />
             </Grid>
             <Grid item xs={6}>
@@ -1085,8 +1102,8 @@ const setQuickFilter = (type) => {
                 value={endDatePicker}
                 onChange={(e) => handleDateChange("end", e.target.value)}
                 InputLabelProps={{ shrink: true }}
-                error={!!error && error.includes("fin")}
-                helperText={error && error.includes("fin") ? error : ""}
+                error={!!errorPicker && errorPicker.includes("fin")}
+                helperText={errorPicker && errorPicker.includes("fin") ? errorPicker : ""}
               />
             </Grid>
           </Grid>
