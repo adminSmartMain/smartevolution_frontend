@@ -23,6 +23,8 @@ export const Cities = async (data) => {
   return res.data;
 };
 
+
+
 export const IdentityType = async (data) => {
   const res = await Axios.get(`${API_URL}/type_identity/`, {
     headers: {
@@ -71,6 +73,27 @@ export const Clients = async (data) => {
   const res = await Axios.get(`${API_URL}/client/all`, {
     headers: {
       authorization: "Bearer " + localStorage.getItem("access-token"),
+    },
+  });
+  return res.data;
+};
+
+
+
+export const operationById = async (data) => {
+  const res = await Axios.get(`${API_URL}/preOperation/${data.id}`, {
+    headers: {
+      authorization: `Bearer ${readToken}`,
+    },
+  });
+  return res.data;
+};
+
+
+export const getAllOperations  = async (data) => {
+  const res = await Axios.get(`${API_URL}/preOperation/`, {
+    headers: {
+      authorization: `Bearer ${readToken}`,
     },
   });
   return res.data;

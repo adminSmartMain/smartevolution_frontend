@@ -99,13 +99,13 @@ export const Toast = (message, type) => {
           alignItems: "center",
         }}
       >
-        <Image
-          style={{ display: "inline-block" }}
-          src="/assets/info-svgrepo-com.svg"
-          alt="gif"
-          width={"20px"}
-          height={"20px"}
-        />
+        <img
+      style={{ display: "inline-block" }}
+      src="/assets/error-svgrepo-com.svg"
+      alt="Error icon"
+      width={20}
+      height={20}
+    />
         <strong style={{ fontSize: "13px", marginLeft: "10px" }}>
           {message}
         </strong>

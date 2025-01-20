@@ -296,6 +296,8 @@ export const OperationsComponents = ({
   const handleOpen = (id) => {
     setOpen([true, id]);
   };
+
+
   const handleClose = () => {
     setOpen([false, ""]);
   };
@@ -319,6 +321,9 @@ export const OperationsComponents = ({
     }, 1000);
   };
 
+  console.log(rows)
+  console.log(rows[0])
+  console.log(calcs)
   useEffect(() => {
     if (dataDeleteOperation) {
       Toast("Operación eliminada", "success");
@@ -417,7 +422,7 @@ export const OperationsComponents = ({
     currency: "USD",
   };
   const numberFormat = new Intl.NumberFormat("en-US", formatOptions);
-
+  console.log(page)
   const columns = [
     {
       field: "opId",
@@ -1195,10 +1200,9 @@ export const OperationsComponents = ({
                     }}
                     onClick={() => {
                       if (page > 1) {
-                        getOperationsFetch({
-                          page: page - 1,
-                        });
+                       
                         setPage(page - 1);
+                        console.log('e')
                       }
                     }}
                   >
@@ -1216,11 +1220,10 @@ export const OperationsComponents = ({
                     }}
                     onClick={() => {
                       if (page < dataCount / 15) {
-                        getOperationsFetch({
-                          page: page + 1,
-                        });
+                       
                         setPage(page + 1);
                       }
+                      console.log('f')
                     }}
                   >
                     &#xe91f;

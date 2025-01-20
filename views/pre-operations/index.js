@@ -29,7 +29,13 @@ export default function Operations() {
     init: true,
   });
 
+
   let dataCount = dataGetOperations?.count || 0;
+  console.log(data)
+  console.log(filteredData)
+  console.log(dataGetOperations)
+  console.log(page)
+
 
   const filtersHandlers = {
     value: filters,
@@ -41,34 +47,29 @@ export default function Operations() {
   };
 
   useEffect(() => {
-    setPage(1);
     getOperationsFetch();
-  }, [filters.opId, filters.billId, filters.investor]);
-
-  useEffect(() => {
-    getOperationsFetch();
-  }, [page]);
+  }, [filters.opId, filters.billId, filters.investor, page]);
 
   useEffect(() => {
     if (dataGetOperations) {
+
       dataCount = dataGetOperations?.count || 0;
-      const preOperations = dataGetOperations.results.filter(
-        (x) => x.status <= 3 || x.status == 1
-      );
+      
 
-      setFilteredData(preOperations);
+      setFilteredData(dataGetOperations.results);
 
-      if (preOperations?.length == 0) filtersHandlers.data.calcs = {};
+      if (dataGetOperations.results?.length == 0) filtersHandlers.data.calcs = {};
     }
+    console.log('c')
   }, [dataGetOperations]);
 
   useEffect(() => {
     if (dataGetOperations) {
-      const preOperations = dataGetOperations?.results.filter(
-        (x) => x.status < 3
-      );
-      setData(preOperations);
+     
+      console.log(dataGetOperations.results)
+      setData(dataGetOperations.results);
     }
+    console.log('d')
   }, [dataGetOperations, loadingGetOperations, errorGetOperations]);
 
   return (
@@ -82,7 +83,7 @@ export default function Operations() {
         rows={data}
         filtersHandlers={filtersHandlers}
         getOperationsFetch={getOperationsFetch}
-        dataGetOperations={dataGetOperations}
+        
         loadingGetOperations={loadingGetOperations}
         page={page}
         setPage={setPage}

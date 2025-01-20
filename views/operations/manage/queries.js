@@ -13,6 +13,16 @@ export const GetLastOperationId = async (id) => {
   return res.data;
 };
 
+export const getAllOperations  = async (data) => {
+  const res = await Axios.get(`${API_URL}/preOperation/`, {
+    headers: {
+      authorization: "Bearer " + localStorage.getItem("access-token"),
+    },
+  });
+  return res.data;
+};
+
+
 // Create new operation
 export const CreateOperation = async (values, op) => {
   

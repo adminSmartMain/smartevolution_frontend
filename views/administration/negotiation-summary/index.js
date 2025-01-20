@@ -227,6 +227,7 @@ useEffect(() => {
       formik2.resetForm();
     },
   });
+ 
 
   const handleDeleteDeposits = (id) => {
     const index = deposits.findIndex((item) => item.id === id);

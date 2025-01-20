@@ -869,9 +869,7 @@ export const OperationsComponents = ({
                     }}
                     onClick={() => {
                       if (page > 1) {
-                        getOperationsFetch({
-                          page: page - 1,
-                        });
+                       
                         setPage(page - 1);
                       }
                     }}
@@ -890,9 +888,7 @@ export const OperationsComponents = ({
                     }}
                     onClick={() => {
                       if (page < dataCount / 15) {
-                        getOperationsFetch({
-                          page: page + 1,
-                        });
+                        
                         setPage(page + 1);
                       }
                     }}
