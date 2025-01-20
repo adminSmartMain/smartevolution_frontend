@@ -2,8 +2,8 @@ import { useState } from "react";
 import { useEffect,useRef } from "react";
 import Axios from "axios";
 import Link from "next/link";
-import { debounce } from "lodash";
-import { parseISO,parse, isValid } from 'date-fns';
+import { debounce, set } from "lodash";
+import { parseISO, parse, isValid } from 'date-fns';
 import es from 'date-fns/locale/es';
 
 import SearchIcon from '@mui/icons-material/Search'; // Importa el ícono de búsqueda
@@ -667,9 +667,9 @@ const clearFilters = async () => {
  // Restablecer el filtro
  const handleClear = async () => {
   let url = `${API_URL}/report/negotiationSummary`;
-  setStartDatePicker(today);
+  setStartDatePicker(format(today, "yyyy-MM-dd"));
   setAnchorEl(null); // Cierra el picker
-  setEndDatePicker(today);
+  setEndDatePicker(format(today, "yyyy-MM-dd"));
   setErrorPicker("");
 
   try {
@@ -741,15 +741,16 @@ const formatDateSelected = (date) => {
 
 const today = new Date();
 const [anchorEl, setAnchorEl] = useState(null);
-const [startDatePicker, setStartDatePicker] = useState(today);
-const [endDatePicker, setEndDatePicker] = useState(today);
-const [errorPicker, setErrorPicker] = useState("");
+const [startDatePicker, setStartDatePicker] = useState(format(today, "yyyy-MM-dd")); // Almacena la fecha de inicio como string;
+const [endDatePicker, setEndDatePicker] = useState(format(today, "yyyy-MM-dd")); // Almacena la fecha de fin como string;
+const [errorPicker, setErrorPicker] = useState("");// Almacena errores relacionados con la validación de fechas
 
 const openPicker = Boolean(anchorEl);
-
+//abrir el popover
 const handleOpenPicker = (event) => setAnchorEl(event.currentTarget);
+// Cerrar el Popover
 const handleClosePickerSimple = () => {
-  setOpen(false);
+  setOpen(null);
   
   setAnchorEl(null); // Cierra el picker
 };
@@ -838,29 +839,30 @@ const setQuickFilter = (type) => {
   const options = { weekStartsOn: 1 }; // Configura la semana para que empiece el lunes
   switch (type) {
     case "today":
-      setStartDatePicker(today);
-      setEndDatePicker(today);
+      setStartDatePicker(format(today, "yyyy-MM-dd"));
+      setEndDatePicker(format(today, "yyyy-MM-dd"));
       break;
     case "thisWeek":
-      setStartDatePicker(startOfWeek(today, options));
-      setEndDatePicker(endOfWeek(today, options));
+      setStartDatePicker(format(startOfWeek(today, options), "yyyy-MM-dd"));
+      setEndDatePicker(format(endOfWeek(today, options), "yyyy-MM-dd"));
       break;
     case "lastWeek":
-      setStartDatePicker(startOfWeek(subWeeks(today, 1), options));
-      setEndDatePicker(endOfWeek(subWeeks(today, 1), options));
+      setStartDatePicker(format(startOfWeek(subWeeks(today, 1), options), "yyyy-MM-dd"));
+      setEndDatePicker(format(endOfWeek(subWeeks(today, 1), options), "yyyy-MM-dd"));
       break;
     case "thisMonth":
-      setStartDatePicker(startOfMonth(today));
-      setEndDatePicker(endOfMonth(today));
+      setStartDatePicker(format(startOfMonth(today), "yyyy-MM-dd"));
+      setEndDatePicker(format(endOfMonth(today), "yyyy-MM-dd"));
       break;
     case "lastMonth":
-      setStartDatePicker(startOfMonth(subMonths(today, 1)));
-      setEndDatePicker(endOfMonth(subMonths(today, 1)));
+      setStartDatePicker(format(startOfMonth(subMonths(today, 1)), "yyyy-MM-dd"));
+      setEndDatePicker(format(endOfMonth(subMonths(today, 1)), "yyyy-MM-dd"));
       break;
     default:
-      setStartDatePicker(today);
-      setEndDatePicker(today);
+      setStartDatePicker(format(today, "yyyy-MM-dd"));
+      setEndDatePicker(format(today, "yyyy-MM-dd"));
   }
+  setErrorPicker("");// Limpiar errores previos
 };
 
 
@@ -869,47 +871,75 @@ const setQuickFilter = (type) => {
 // Manejar cambios en las fechas (soportar edición parcial)
   // Manejar cambios en las fechas (soportar edición parcial)
   const handleDateChange = (type, value) => {
-    // Actualizar el valor directamente
+    const parsedDate = parseISO(value); // Convertir la fecha ingresada en un objeto Date
+
+    if (isNaN(parsedDate)) {
+      setError(`La fecha ${type === "start" ? "de inicio" : "de fin"} no es válida.`);
+      return;
+    }
+    // Primero, actualizamos el valor de la fecha de inicio o fin según corresponda
     if (type === "start") {
-      setStartDatePicker(value);
+      setStartDatePicker(format(parsedDate, "yyyy-MM-dd")); // Formatear y almacenar como cadena;
+      if (parsedDate > parseISO(endDatePicker)) {
+        setErrorPicker("La fecha de inicio no puede ser posterior a la fecha de fin.");
+        return;
+      }
     } else if (type === "end") {
-      setEndDatePicker(value);
+      setEndDatePicker(format(parsedDate, "yyyy-MM-dd")); // Formatear y almacenar como cadena
+      if (parsedDate < parseISO(startDatePicker)) {
+        setErrorPicker("La fecha de fin no puede ser anterior a la fecha de inicio.");
+        return;
+      }
     }
 
+    setErrorPicker(""); // Limpiar el error si todo está bien
+  
     // Validar solo si el valor es una fecha completa (formato YYYY-MM-DD)
     if (value.match(/^\d{4}-\d{2}-\d{2}$/)) {
       const selectedDate = new Date(value);
+  
+      // Verificar si la fecha es válida
       if (isNaN(selectedDate.getTime())) {
         setErrorPicker(`La fecha ${type === "start" ? "de inicio" : "de fin"} no es válida.`);
         return;
       }
 
+      // Convertir la fecha a medianoche (sin hora) para evitar problemas con las zonas horarias
+      //const dateAtMidnight = new Date(selectedDate.setHours(0, 0, 0, 0));
+  
+      // Validaciones
       if (type === "start") {
-        if (new Date(value) > new Date(endDatePicker)) {
+        // Si la fecha de inicio es posterior a la de fin
+        if (new Date() > new Date(endDatePicker)) {
           setErrorPicker("La fecha de inicio no puede ser posterior a la fecha de fin.");
           return;
+        } else {
+          setErrorPicker(""); // Limpiar el error si todo está bien
         }
       } else if (type === "end") {
-        if (new Date(value) < new Date(startDatePicker)) {
+        // Si la fecha de fin es anterior a la de inicio
+        if (new Date() < new Date(startDatePicker)) {
           setErrorPicker("La fecha de fin no puede ser anterior a la fecha de inicio.");
           return;
+        } else {
+          setErrorPicker(""); // Limpiar el error si todo está bien
         }
       }
     }
-    setError("");
   };
+  
 
   return (
     <>
      
-      <Box
-  container
-  display="flex"
-  flexDirection="row"
-  justifyContent="flex-start"  // Alinea a la izquierda
-  alignItems="center"          // Alinea verticalmente los elementos
-  gap="1rem"                   // Espacio entre el botón y el título
->
+  <Box
+    container
+    display="flex"
+    flexDirection="row"
+    justifyContent="flex-start"  // Alinea a la izquierda
+    alignItems="center"          // Alinea verticalmente los elementos
+    gap="1rem"                   // Espacio entre el botón y el título
+  >
   <BackButton path="/administration" />
   <Typography
     letterSpacing={0}
@@ -1017,9 +1047,13 @@ const setQuickFilter = (type) => {
      
     }}
   >
-    {startDatePicker && endDatePicker
+    {/* {startDatePicker && endDatePicker
       ? `${format(new Date(startDatePicker), 'dd/MM/yyyy')} - ${format(new Date(endDatePicker), 'dd/MM/yyyy')}`
-      : 'Seleccionar rango'}
+      : 'Seleccionar rango'} */}
+
+    {startDatePicker && endDatePicker
+      ? `${format(parseISO(startDatePicker), "dd/MM/yyyy")} - ${format(parseISO(endDatePicker), "dd/MM/yyyy")}`
+      : "Seleccionar rango"}
   </Button>
 
   {/* Botón para registrar un nuevo resumen */}
@@ -1145,7 +1179,10 @@ const setQuickFilter = (type) => {
             >
               Limpiar
             </Button>
-            <StyledApplyButton onClick={handleClosePicker}>Aplicar</StyledApplyButton>
+            <StyledApplyButton 
+            onClick={handleClosePicker}
+            disabled={!!errorPicker}
+            >Aplicar</StyledApplyButton>
           </Box>
         </Box>
       </Popover>
