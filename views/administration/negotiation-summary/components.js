@@ -147,6 +147,8 @@ export const NegotiationSummary = ({
     }
   }, [router.query, option]);
 
+
+  //comentario de prueba
   useEffect(() => {
    
     
