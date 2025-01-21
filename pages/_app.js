@@ -19,6 +19,8 @@ const pathsWithoutDefaultLayout = [
   "/auth/login",
   "/financialProfile/financialStatement",
   "/financialProfile/indicators",
+  "/auth/resetPassword",
+  "/auth/forgotPassword"
 ];
 
 function MyApp({ Component, pageProps }) {

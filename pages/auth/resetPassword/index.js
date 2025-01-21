@@ -3,33 +3,33 @@ import Image from "next/image";
 
 import { Grid } from "@mui/material";
 
-import { InputV } from "@views/login/index";
+import { NewPasswordIndex } from "@views/login/resetPassword/index";
 
-export default function Home() {
+export default function ResetPassword() {
   return (
-    <div>
+    <>
+      <div>
   <Head>
-    <title>Smart Evolution - Inicio de sesión</title>
+    <title>Smart Evolution - Nueva contraseña</title>
     <meta name="description" content="Prueba de contenido 2.0" />
   </Head>
 
-  <Grid container spacing={0} style={{ height: "100vh" }}>
+  <Grid container spacing={0}>
     {/* Relleno Izquierdo - Login */}
     <Grid
-    item
-    xs={12}
-    md={4}
-    sx={{
-      display: "flex",
-      flexDirection: "column",
-      justifyContent: "center",
-      alignItems: "center",
-      background: "#ebebeb",
-      boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
-      borderRadius: "10px 0 0 10px", // Bordes redondeados solo a la izquierda
-      minHeight: "100vh", // Ajusta altura
-    }}
-  >
+      item
+      xs={12}
+      md={4} // Reducir el tamaño del recuadro izquierdo
+      style={{
+        height: "100vh", // Altura ajustada para mayor proporción
+        background: "#ebebeb",
+        margin: "auto",
+      
+      }}
+      display="flex"
+      alignItems="center"
+      justifyContent="center"
+    >
       <div style={{ textAlign: "center" }}>
         <Image
           src="/assets/Icono Smart + Texto.svg"
@@ -37,7 +37,7 @@ export default function Home() {
           width={312}
           alt="Smart Evolution"
         />
-        <InputV />
+        < NewPasswordIndex />
       </div>
     </Grid>
 
@@ -59,5 +59,7 @@ export default function Home() {
   </Grid>
 </div>
 
+    </>
+  
   );
 }
