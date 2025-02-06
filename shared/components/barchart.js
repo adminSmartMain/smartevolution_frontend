@@ -61,13 +61,22 @@ const renderCustomBarLabel = ({ x, y, width, value }) => {
 };
 
 export default function BarChartComponent({ data }) {
+
+   // Asegurar que `data` tenga valores válidos
+   const validData =
+   Array.isArray(data) && data.length > 0
+     ? data.map((d) => ({
+         name: d.name || "N/A",
+         value: typeof d.value === "number" && isFinite(d.value) ? d.value : 0,
+       }))
+     : [{ name: "No Data", value: 0 }];
   const maxVal = Math.max(...data.map((d) => d.value));
   const minVal = Math.min(...data.map((d) => d.value));
 
   return (
     <ResponsiveContainer width="100%" height="70%">
       <BarChart
-        data={data}
+        data={validData}
         margin={{ top: 20, left: 20, right: 20, bottom: 20 }}
       >
         <CartesianGrid
@@ -113,7 +122,7 @@ export default function BarChartComponent({ data }) {
   radius={[6, 6, 0, 0]}
   label={renderCustomBarLabel}
 >
-  {data.map((entry) => {
+  {validData.map((entry) => {
     // Aseguramos valores de maxVal y minVal
     const adjustedMaxVal = maxVal > 0 ? maxVal : 1; // Evitar divisiones por 0 o valores negativos
     const adjustedMinVal = minVal < 0 ? minVal : -1;

@@ -410,6 +410,8 @@ export const BillsComponents = () => {
     }
   }, [dataReadBills, dataReadCreditNotes, retIVA, retICA, retFTE, otherRet]);
 
+  console.log(bill)
+
   const columns = [
     {
       field: "billId",
