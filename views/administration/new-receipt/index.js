@@ -79,15 +79,20 @@ export default function Receipt() {
   });
   
   useEffect(() => {
-    if (errorRegisterReceipt) Toast("error al registrar recaudo", "error");
-
+    if (errorRegisterReceipt) Toast("Error al registrar recaudo", "error");
+  
     if (loadingRegisterReceipt) Toast("Registrando recaudo", "info");
-
+  
     if (dataRegisterReceipt) {
       Toast("Recaudo registrado", "success");
-      router.push("/operations");
+  
+      // Agregar un retraso antes de redirigir
+      setTimeout(() => {
+        router.push("/operations");
+      }, 3500); // Espera 2 segundos antes de redirigir
     }
   }, [dataRegisterReceipt, errorRegisterReceipt, loadingRegisterReceipt]);
+  
 
   useEffect(() => {
     if (router.query.id) {
