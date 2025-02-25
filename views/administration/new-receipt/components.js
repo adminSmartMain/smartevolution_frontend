@@ -1052,7 +1052,7 @@ export const ReceiptC = ({ formik, data, pendingAmount, presentValueInvestor }) 
               type="submit"
               variant="contained"
               onClick={formik.handleSubmit}
-              disabled={formik.values.payedAmount === 0}
+              disabled={formik.values.payedAmount === 0 || formik.isSubmitting}
               sx={{
                 mb: 2,
                 boxShadow: "none",

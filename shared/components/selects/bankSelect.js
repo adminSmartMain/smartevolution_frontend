@@ -75,7 +75,7 @@ export default function BankSelect({ formik, width, disabled }) {
             }
           }}
           color="#5EA3A3"
-          value={bank.find((option) => option.label === formik.values.bank) || null}
+          value={bank.find((option) => option.value === formik.values.bank) || null}
 
           popupIcon={<KeyboardArrowDownIcon sx={{ color: "#5EA3A3" }} />}
           clearIcon={<Clear sx={{ color: "#5EA3A3" }} />}

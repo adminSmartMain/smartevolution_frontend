@@ -5,12 +5,22 @@ import scrollSx from "@styles/scroll";
 
 const CustomDataGrid = styled(DataGrid)({
   border: "none",
+    // ... otros estilos
+  
+    '& .MuiDataGrid-detailPanel': {
+      overflow: 'visible !important',
+      zIndex: 1,
+    },
+    
+    '& .MuiDataGrid-detailPanelToggle': {
+      height: '100% !important',
+    },
 
   "& .MuiDataGrid-virtualScroller": {
     ...scrollSx,
     overflowX: "auto",
   },
-
+  
   "& .MuiDataGrid-cellCheckbox": {
     "& .MuiCheckbox-root": {
       color: "#488B8F",

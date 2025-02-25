@@ -109,3 +109,46 @@ body {
 .div-test > strong {
   margin-left: 10px;
 }
+
+
+.badge {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  padding: 5px 15px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  color: white;
+  font-weight: 500;
+  text-transform: capitalize;
+  font-size: 14px;
+  margin-bottom: 12px;
+  line-height: 1;
+  min-width: 100px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.badge.por-aprobar {
+  background-color: #ff9800; /* Naranja para 'Por aprobar' */
+}
+
+.badge.aprobado {
+  background-color: #4caf50; /* Verde para 'Aprobado' */
+}
+
+.badge.rechazado {
+  background-color: #f44336; /* Rojo para 'Rechazado' */
+}
+
+.badge.vigente {
+  background-color: #0f58ac; /* Naranja para 'Vigente' */
+}
+
+.badge.cancelado {
+  background-color: #ff0000; /* rojo  para 'Cancelado' */
+}
+
+.badge.vencido {
+  background-color: #3f3f3f; /* Gris Naranja para 'Vencido' */
+}
+

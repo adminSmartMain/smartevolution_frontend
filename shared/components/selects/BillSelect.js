@@ -54,6 +54,7 @@ export default function BillSelect({
 
   useEffect(() => {
     if (formik.values.emitter) {
+      console.log(formik.values.emitter)
       fetch(formik.values.emitter);
       setId(formik.values.emitter);
     }
