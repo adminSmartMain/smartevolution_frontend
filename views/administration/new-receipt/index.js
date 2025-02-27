@@ -89,7 +89,7 @@ export default function Receipt() {
       // Agregar un retraso antes de redirigir
       setTimeout(() => {
         router.push("/operations");
-      }, 3500); // Espera 2 segundos antes de redirigir
+      }, 4500); // Espera 2 segundos antes de redirigir
     }
   }, [dataRegisterReceipt, errorRegisterReceipt, loadingRegisterReceipt]);
   
