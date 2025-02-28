@@ -16,7 +16,7 @@ export const Toast = (message, type) => {
       </div>,
       {
         position: "bottom-right",
-        autoClose: 2000,
+        autoClose: 3500,
         hideProgressBar: true,
         closeOnClick: true,
         pauseOnHover: true,
@@ -80,7 +80,7 @@ export const Toast = (message, type) => {
       </div>,
       {
         position: "bottom-right",
-        autoClose: 2000,
+        autoClose: 3500,
         hideProgressBar: true,
         closeOnClick: true,
         pauseOnHover: true,
@@ -101,8 +101,8 @@ export const Toast = (message, type) => {
       >
         <img
       style={{ display: "inline-block" }}
-      src="/assets/error-svgrepo-com.svg"
-      alt="Error icon"
+      src="/assets/warning-svgrepo-com.svg"
+      alt="Warning icon"
       width={20}
       height={20}
     />
@@ -112,7 +112,7 @@ export const Toast = (message, type) => {
       </div>,
       {
         position: "bottom-right",
-        autoClose: 2000,
+        autoClose: 3500,
         hideProgressBar: true,
         closeOnClick: true,
         pauseOnHover: true,

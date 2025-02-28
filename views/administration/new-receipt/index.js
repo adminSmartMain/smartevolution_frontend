@@ -53,31 +53,46 @@ export default function Receipt() {
 
   const formik = useFormik({
     initialValues: initialValues,
-    onSubmit: (values) => {
+    onSubmit: async (values, { setSubmitting }) => {  // ✅ Se obtiene setSubmitting desde Formik
       if (values.payedAmount <= 0) {
         Toast("Debe ingresar un valor a pagar", "error");
         return;
       }
-
+  
       if (values.receiptStatus === "") {
         Toast("Debe seleccionar un tipo de recaudo", "error");
         return;
       }
-
-      fetchRegisterReceipt({ ...values, presentValueInvestor });
+  
+      setSubmitting(true); // 🔥 Deshabilita el botón
+  
+      try {
+        console.log("Enviando datos...");
+        await fetchRegisterReceipt({ ...values, presentValueInvestor }); // ✅ Se asegura de esperar la petición
+        Toast("Registro exitoso", "success");
+      } catch (error) {
+        Toast("Hubo un error al registrar", "error");
+      } finally {
+        setSubmitting(false); // 🔥 Habilita el botón cuando termine la petición
+      }
     },
   });
-
+  
   useEffect(() => {
-    if (errorRegisterReceipt) Toast("error al registrar recaudo", "error");
-
+    if (errorRegisterReceipt) Toast("Error al registrar recaudo", "error");
+  
     if (loadingRegisterReceipt) Toast("Registrando recaudo", "info");
-
+  
     if (dataRegisterReceipt) {
       Toast("Recaudo registrado", "success");
-      router.push("/operations");
+  
+      // Agregar un retraso antes de redirigir
+      setTimeout(() => {
+        router.push("/operations");
+      }, 4500); // Espera 2 segundos antes de redirigir
     }
   }, [dataRegisterReceipt, errorRegisterReceipt, loadingRegisterReceipt]);
+  
 
   useEffect(() => {
     if (router.query.id) {
