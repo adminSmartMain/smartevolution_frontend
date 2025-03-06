@@ -21,6 +21,9 @@ import { object, string } from "yup";
 export default function RegisterBroker() {
   const [option, setOption] = useState("");
   const router = useRouter();
+  const [loading7, setLoading] = useState(false);
+  const [success, setSuccess] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     if (router && router.query) {
@@ -139,11 +142,21 @@ export default function RegisterBroker() {
   const formik = useFormik({
     initialValues: initialValues,
     validationSchema: validationSchema,
-    onSubmit: (values) => {
+    onSubmit: (values, { setSubmitting }) => {
       if (option === "register") {
+        setLoading(true);
+        setSubmitting(true); // 🔥 Deshabilita el botón antes de cualquier validación
+        setSuccess(null); 
+        setIsModalOpen(true); // Abrir el modal
         fetch(values);
+        
       } else {
+        setSubmitting(true); // 🔥 Deshabilita el botón antes de cualquier validación
+        setSuccess(null); 
+        setIsModalOpen(true); // Abrir el modal
         fetch3(values);
+        
+       // 🔥 Rehabilita el botón si hay error
       }
     },
   });
@@ -154,31 +167,48 @@ export default function RegisterBroker() {
     if (error3) Toast("Error al actualizar el corredor", "error");
 
     if (data3) {
+      setSuccess(true);
       Toast("Corredor actualizado correctamente", "success");
       setTimeout(() => {
         router.push("brokers/brokerList");
-      }, 2000);
+      }, 5000);
     }
   }, [loading3, data3, error3]);
 
-  useEffect(() => {
-    if (loading == true) {
-      Toast("Cargando..", "loading");
-    }
+  // Efecto para manejar el estado de "loading"
+useEffect(() => {
+  if (loading) {
+    Toast("Cargando...", "loading");
+  }
+}, [loading]);
 
-    if (error) {
-      typeof error.message === "object"
-        ? Toast(`${Object.values(error.message)}`, "error")
-        : Toast(`${error.message}`, "error");
-    }
+// Efecto para manejar el estado de "error"
+useEffect(() => {
+  if (error) {
+    setSuccess(false);
+    setLoading(false);
+    setTimeout(() => {
+      setIsModalOpen(false); // Cerrar el modal de error después de 4 segundos
+    }, 4000);
 
-    if (data) {
-      Toast("Corredor creado correctamente", "success");
-      setTimeout(() => {
-        router.push("brokers/brokerList");
-      }, 2000);
-    }
-  }, [loading, data, error]);
+    // Mostrar el mensaje de error
+    typeof error.message === "object"
+      ? Toast(`${Object.values(error.message)}`, "error")
+      : Toast(`${error.message}`, "error");
+  }
+}, [error]);
+
+// Efecto para manejar el estado de "data"
+useEffect(() => {
+  if (data) {
+    setSuccess(true);
+    Toast("Corredor creado correctamente", "success");
+    setIsModalOpen(true); // Abrir el modal de éxito
+    setTimeout(() => {
+      router.push("brokers/brokerList"); // Redirigir después de 5 segundos
+    }, 5000);
+  }
+}, [data]);
 
   return (
     <>
@@ -194,6 +224,9 @@ export default function RegisterBroker() {
         formik={formik}
         option={option}
         ToastContainer={ToastContainer}
+        loading={loading}
+      success={success}
+      isModalOpen={isModalOpen}
       />
     </>
   );
