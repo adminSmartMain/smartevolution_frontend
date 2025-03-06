@@ -704,16 +704,16 @@ export const ManageOperationC = ({
             marginLeft: "1.5rem",
           }}
         >
-          <InputTitles marginBottom={2}>Tasa Inversionista </InputTitles>
+          <InputTitles marginBottom={2}>Tasa Descuento</InputTitles>
           <MuiTextField
-            id="investorTax"
+            id="discountTax"
             placeholder=""
-            name="investorTax"
+            name="discountTax"
             type="number"
             variant="standard"
-            disabled={option === "preview"}
+            disabled={formik.values.isReBuy || option === "preview"}
             margin="normal"
-            value={formik.values.investorTax}
+            value={formik.values.discountTax}
             InputProps={{
               disableUnderline: true,
               sx: {
@@ -731,10 +731,10 @@ export const ManageOperationC = ({
             }}
             onChange={formik.handleChange}
             error={
-              formik.touched.investorTax && Boolean(formik.errors.investorTax)
+              formik.touched.discountTax && Boolean(formik.errors.discountTax)
             }
             sx={
-              formik.touched.investorTax && Boolean(formik.errors.investorTax)
+              formik.touched.discountTax && Boolean(formik.errors.discountTax)
                 ? {
                     border: "1.4px solid #E6643180",
                     marginTop: "0px",
@@ -754,6 +754,7 @@ export const ManageOperationC = ({
             }
           />
         </Box>
+
 
         <Box
           sx={{
@@ -865,22 +866,21 @@ export const ManageOperationC = ({
             }}
           />
         </Box>
-
         <Box
           sx={{
             marginLeft: "1.5rem",
           }}
         >
-          <InputTitles marginBottom={2}>Tasa Descuento</InputTitles>
+          <InputTitles marginBottom={2}>Tasa Inversionista </InputTitles>
           <MuiTextField
-            id="discountTax"
+            id="investorTax"
             placeholder=""
-            name="discountTax"
+            name="investorTax"
             type="number"
             variant="standard"
-            disabled={formik.values.isReBuy || option === "preview"}
+            disabled={option === "preview"}
             margin="normal"
-            value={formik.values.discountTax}
+            value={formik.values.investorTax}
             InputProps={{
               disableUnderline: true,
               sx: {
@@ -898,10 +898,10 @@ export const ManageOperationC = ({
             }}
             onChange={formik.handleChange}
             error={
-              formik.touched.discountTax && Boolean(formik.errors.discountTax)
+              formik.touched.investorTax && Boolean(formik.errors.investorTax)
             }
             sx={
-              formik.touched.discountTax && Boolean(formik.errors.discountTax)
+              formik.touched.investorTax && Boolean(formik.errors.investorTax)
                 ? {
                     border: "1.4px solid #E6643180",
                     marginTop: "0px",
@@ -921,7 +921,7 @@ export const ManageOperationC = ({
             }
           />
         </Box>
-
+        
         <Box
           sx={{
             marginLeft: "3rem",
