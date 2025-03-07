@@ -17,12 +17,15 @@ import MuiTextField from "@styles/fields";
 import HelperText from "@styles/helperText";
 import InputTitles from "@styles/inputTitles";
 import scrollSx from "@styles/scroll";
-
+import { Dialog,DialogContent, CircularProgress} from "@mui/material";
+import { CheckCircle, Error } from "@mui/icons-material";
 export const AccountComponent = ({
   formik,
   option,
   ToastContainer,
   loading,
+  success,
+  isModalOpen
 }) => {
   const router = useRouter();
   return (
@@ -213,6 +216,7 @@ export const AccountComponent = ({
                     >
                       &#xe91f;
                     </Typography>
+                    
                   </MuiButton>
                 ) : (
                   <MuiButton
@@ -238,6 +242,27 @@ export const AccountComponent = ({
                     </Typography>
                   </MuiButton>
                 )}
+                 {/* MODAL DE PROCESO */}
+                 <Dialog  open={isModalOpen} PaperProps={{ sx: { borderRadius: "10px", textAlign: "center", p: 3 } }}>
+                                            <DialogContent>
+                                              {success === null ? (
+                                                <>
+                                                  <CircularProgress size={80} sx={{ color: "#1976D2", mb: 2 }} />
+                                                  <Typography variant="h6">Procesando...</Typography>
+                                                </>
+                                              ) : success ? (
+                                                <>
+                                                  <CheckCircle sx={{ fontSize: 80, color: "green", mb: 2 }} />
+                                                  <Typography variant="h5" color="success.main">¡Registro Exitoso!</Typography>
+                                                </>
+                                              ) : (
+                                                <>
+                                                  <Error sx={{ fontSize: 80, color: "red", mb: 2 }} />
+                                                  <Typography variant="h5" color="error.main">Error al Registrar</Typography>
+                                                </>
+                                              )}
+                                            </DialogContent>
+                                          </Dialog>
               </Box>
             </Box>
           </form>

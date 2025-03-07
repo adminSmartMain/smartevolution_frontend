@@ -21,6 +21,8 @@ import { object, string } from "yup";
 export default function RegisterAccount() {
   const [option, setOption] = useState("");
   const router = useRouter();
+  const [success, setSuccess] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     if (router && router.query) {
@@ -90,11 +92,16 @@ export default function RegisterAccount() {
   const formik = useFormik({
     initialValues: initialValues,
     validationSchema: validationSchema,
-    onSubmit: (values) => {
+    onSubmit: (values,{ setSubmitting }) => {
       if (option === "register") {
         if(values.accountType === "Primaria"){
           Toast(`Solo se puede tener una cuenta primaria por cliente`, "error");
         } else {
+
+        
+        setSubmitting(true); // 🔥 Deshabilita el botón antes de cualquier validación
+        setSuccess(null); 
+        setIsModalOpen(true); // Abrir el modal
           fetch({
             client: values.client,
             primary: values.accountType === "Primaria" ? true : false,
@@ -102,6 +109,10 @@ export default function RegisterAccount() {
           });
         }
       } else {
+        
+        setSubmitting(true); // 🔥 Deshabilita el botón antes de cualquier validación
+        setSuccess(null); 
+        setIsModalOpen(true); // Abrir el modal
         fetch3({
           client: values.client,
           primary: values.accountType === "Primaria" ? true : false,
@@ -120,6 +131,7 @@ export default function RegisterAccount() {
     if (error3) Toast("Error al actualizar la cuenta", "error");
 
     if (data3) {
+      setSuccess(true);
       Toast("Cuenta actualizada correctamente", "success");
       console.log(data3)
       setTimeout(() => {
@@ -130,24 +142,35 @@ export default function RegisterAccount() {
 
   useEffect(() => {
     if (loading == true) {
-      Toast("Cargando..", "loading");
+      Toast("Cargando...", "loading");
     }
+  }, [loading]);
 
+  useEffect(() => {
     if (error) {
-
+      setSuccess(false);
+     
+      setTimeout(() => {
+        setIsModalOpen(false); // Cerrar el modal de error después de 4 segundos
+      }, 4000);
+  
+      // Mostrar el mensaje de error
       typeof error.message === "object"
         ? Toast(`${Object.values(error.message)}`, "error")
         : Toast(`${error.message}`, "error");
-
     }
+  }, [error]);
 
+  useEffect(() => {
     if (data) {
+      setSuccess(true);
       Toast("Cuenta creada correctamente", "success");
+      setIsModalOpen(true);
       setTimeout(() => {
         router.push("accountList");
       }, 8000);
     }
-  }, [loading, data, error]);
+  }, [data]);
 
   return (
     <>
@@ -164,6 +187,8 @@ export default function RegisterAccount() {
         option={option}
         ToastContainer={ToastContainer}
         loading={loading2}
+        success={success}
+        isModalOpen={isModalOpen}
       />
     </>
   );
