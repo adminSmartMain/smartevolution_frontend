@@ -1419,7 +1419,7 @@ export const SignUpClient = ({
                     </MuiButton>
                   ) : (
                     <MuiButton
-                      onClick={() => router.push("/customers/customerList")}
+                      onClick={() => console.log('')}
                       sx={{
                         mb: 2,
                         boxShadow: "none",
