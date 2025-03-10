@@ -330,12 +330,18 @@ export const SignUpBroker = ({ formik, option, ToastContainer,loading,success,is
                           ) : success ? (
                             <>
                               <CheckCircle sx={{ fontSize: 80, color: "green", mb: 2 }} />
-                              <Typography variant="h5" color="success.main">¡Registro Exitoso!</Typography>
+                              <Typography variant="h5" color="success.main">
+                                {option === "register" && "¡Registro de corredor Exitoso!"}
+                                {option === "modify" && "¡El corredor se ha modificado con éxito!"}
+                              </Typography>
                             </>
                           ) : (
                             <>
                               <Error sx={{ fontSize: 80, color: "red", mb: 2 }} />
-                              <Typography variant="h5" color="error.main">Error al Registrar</Typography>
+                              <Typography variant="h5" color="error.main">
+                                {option === "register" && "Error al Registrar el corredor"}
+                                {option === "modify" && "Error al Modificar el corredor"}
+                              </Typography>
                             </>
                           )}
                         </DialogContent>

@@ -1482,12 +1482,18 @@ export const SignUpClient = ({
                 ) : success ? (
                   <>
                     <CheckCircle sx={{ fontSize: 80, color: "green", mb: 2 }} />
-                    <Typography variant="h5" color="success.main">¡Registro Exitoso!</Typography>
+                    <Typography variant="h5" color="success.main">
+                      {option === "register" && "¡Registro Exitoso!"}
+                      {option === "modify" && "¡El cliente se ha modificado con éxito!"}
+                    </Typography>
                   </>
                 ) : (
                   <>
                     <Error sx={{ fontSize: 80, color: "red", mb: 2 }} />
-                    <Typography variant="h5" color="error.main">Error al Registrar</Typography>
+                    <Typography variant="h5" color="error.main">
+                      {option === "register" && "Error al Registrar"}
+                      {option === "modify" && "Error al Modificar"}
+                    </Typography>
                   </>
                 )}
               </DialogContent>
