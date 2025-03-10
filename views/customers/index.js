@@ -367,7 +367,7 @@ export default function RegisterClient() {
         setSuccess(true);
         Toast("Corredor actualizado correctamente", "success");
         setTimeout(() => {
-          router.push("brokers/brokerList");
+          router.push("customers/customerList");
         }, 5000);
       }
     }, [loading3, data3, error3]);
