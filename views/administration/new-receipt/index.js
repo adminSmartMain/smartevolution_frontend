@@ -16,6 +16,9 @@ export default function Receipt() {
   const [pendingAmount, setPendingAmount] = useState(0);
   const [presentValueInvestor, setPresentValueInvestor] = useState(0);
   const [counter, setCounter] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const initialValues = {
     date: `${new Date().toISOString().substring(0, 10)}`,
@@ -53,43 +56,60 @@ export default function Receipt() {
 
   const formik = useFormik({
     initialValues: initialValues,
-    onSubmit: async (values, { setSubmitting }) => {  // ✅ Se obtiene setSubmitting desde Formik
+    onSubmit: async (values, { setSubmitting }) => {
+      setLoading(true);
+      setSubmitting(true); // 🔥 Deshabilita el botón antes de cualquier validación
+      setSuccess(null); 
+      setIsModalOpen(true); // Abrir el modal
       if (values.payedAmount <= 0) {
         Toast("Debe ingresar un valor a pagar", "error");
+        setLoading(false);
+        setSubmitting(false); // 🔥 Rehabilita el botón si hay error
         return;
       }
   
       if (values.receiptStatus === "") {
         Toast("Debe seleccionar un tipo de recaudo", "error");
+        setLoading(false);
+        setSubmitting(false); // 🔥 Rehabilita el botón si hay error
         return;
       }
   
-      setSubmitting(true); // 🔥 Deshabilita el botón
-  
+      setSuccess(null); // Asegura que el modal de carga se muestre
       try {
         console.log("Enviando datos...");
-        await fetchRegisterReceipt({ ...values, presentValueInvestor }); // ✅ Se asegura de esperar la petición
+        await fetchRegisterReceipt({ ...values, presentValueInvestor });
+        setSuccess(true);
+        
         Toast("Registro exitoso", "success");
+  
+      
       } catch (error) {
+        setSuccess(false);
+        setLoading(false);
+        setTimeout(() => {
+          setIsModalOpen(false)
+        }, 4000);
+        
         Toast("Hubo un error al registrar", "error");
-      } finally {
-        setSubmitting(false); // 🔥 Habilita el botón cuando termine la petición
       }
     },
   });
-  
+
   useEffect(() => {
     if (errorRegisterReceipt) Toast("Error al registrar recaudo", "error");
   
     if (loadingRegisterReceipt) Toast("Registrando recaudo", "info");
   
     if (dataRegisterReceipt) {
+      setSuccess(true);
       Toast("Recaudo registrado", "success");
   
-      // Agregar un retraso antes de redirigir
-      setTimeout(() => {
-        router.push("/operations");
-      }, 4500); // Espera 2 segundos antes de redirigir
+        // Espera 2.5s antes de redirigir
+        setTimeout(() => {
+          router.push("/operations");
+          setLoading(false);
+        },6000);
     }
   }, [dataRegisterReceipt, errorRegisterReceipt, loadingRegisterReceipt]);
   
@@ -102,7 +122,7 @@ export default function Receipt() {
 
   const {
     fetch: fetch,
-    loading: loading,
+    loading: loadingOpById,
     error: error,
     data: data,
   } = useFetch({ service: getOperationById, init: false });
@@ -143,7 +163,7 @@ export default function Receipt() {
         );
       }
     }
-  }, [data, loading, error]);
+  }, [data, loadingOpById, error]);
 
   useEffect(() => {
     formik.setFieldValue(
@@ -593,6 +613,9 @@ function calcAdditionalInterests(payedAmount, discountTax, additionalDays, inves
       data={data?.data}
       pendingAmount={pendingAmount}
       presentValueInvestor={presentValueInvestor}
+      loading={loadingRegisterReceipt}
+      success={success}
+      isModalOpen={isModalOpen}
     />
   );
 }

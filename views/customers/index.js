@@ -25,6 +25,10 @@ export default function RegisterClient() {
   const [enteredBy, setEnteredBy] = useState("");
   const [updatedAt, setUpdatedAt] = useState("");
   const router = useRouter();
+  const [loading6, setLoading] = useState(false);
+  const [success, setSuccess] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
 
   useEffect(() => {
     if (router && router.query) {
@@ -337,32 +341,60 @@ export default function RegisterClient() {
   const formik = useFormik({
     initialValues: initialValues,
     validationSchema: validationSchema,
-    onSubmit: (values) => {
+    onSubmit: (values, { setSubmitting }) => {
       if (option === "register") {
+        setSubmitting(true); // 🔥 Deshabilita el botón antes de cualquier validación
+      setSuccess(null); 
+      setIsModalOpen(true); // Abrir el modal
         fetch(values);
+
       } else if (option === "modify") {
-       
+        setSubmitting(true); // 🔥 Deshabilita el botón antes de cualquier validación
+        setSuccess(null); 
+        setIsModalOpen(true); // Abrir el modal
         fetch3(values);
       }
     },
   });
 
+
+    useEffect(() => {
+      if (loading3) Toast("Cargando...", "loading");
+  
+      if (error3) Toast("Error al actualizar el corredor", "error");
+  
+      if (data3) {
+        setSuccess(true);
+        Toast("Corredor actualizado correctamente", "success");
+        setTimeout(() => {
+          router.push("/customers/customerList");
+        }, 5000);
+      }
+    }, [loading3, data3, error3]);
+  
   useEffect(() => {
     if (loading == true) {
       Toast("Cargando..", "loading");
     }
 
     if (error) {
+      setSuccess(false);
+      setLoading(false);
+      setTimeout(() => {
+        setIsModalOpen(false)
+      }, 4000);
+      
       typeof error.message === "object"
         ? Toast(`${Object.values(error.message)}`, "error")
         : Toast(`${error.message}`, "error");
     }
 
     if (data) {
+      setSuccess(true);
       Toast("Cliente creado correctamente", "success");
       setTimeout(() => {
         router.push("customers/customerList");
-      }, 2000);
+      }, 5000);
     }
   }, [loading, data, error]);
 
@@ -383,6 +415,9 @@ export default function RegisterClient() {
         loading={loading2}
         enteredBy={enteredBy}
         updatedAt={updatedAt}
+        
+        success={success}
+        isModalOpen={isModalOpen}
       />
     </>
   );

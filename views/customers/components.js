@@ -34,7 +34,8 @@ import LoadingCircle from "@styles/loading";
 import scrollSx from "@styles/scroll";
 
 import { ModifyClientQuery } from "./queries";
-
+import { Dialog,DialogContent, CircularProgress } from "@mui/material";
+import { CheckCircle, Error } from "@mui/icons-material";
 import dayjs from "dayjs";
 
 export const SignUpClient = ({
@@ -44,6 +45,9 @@ export const SignUpClient = ({
   loading,
   enteredBy,
   updatedAt,
+
+  success,
+  isModalOpen
 }) => {
   const [steps, setSteps] = useState(["Primer paso", "Segundo paso"]);
   const [activeStep, setActiveStep] = useState(0);
@@ -1466,6 +1470,34 @@ export const SignUpClient = ({
             </Box>
           )}
         </Fragment>
+
+         {/* MODAL DE PROCESO */}
+            <Dialog  open={isModalOpen} PaperProps={{ sx: { borderRadius: "10px", textAlign: "center", p: 3 } }}>
+              <DialogContent>
+                {success === null ? (
+                  <>
+                    <CircularProgress size={80} sx={{ color: "#1976D2", mb: 2 }} />
+                    <Typography variant="h6">Procesando...</Typography>
+                  </>
+                ) : success ? (
+                  <>
+                    <CheckCircle sx={{ fontSize: 80, color: "green", mb: 2 }} />
+                    <Typography variant="h5" color="success.main">
+                      {option === "register" && "¡Registro Exitoso!"}
+                      {option === "modify" && "¡El cliente se ha modificado con éxito!"}
+                    </Typography>
+                  </>
+                ) : (
+                  <>
+                    <Error sx={{ fontSize: 80, color: "red", mb: 2 }} />
+                    <Typography variant="h5" color="error.main">
+                      {option === "register" && "Error al Registrar"}
+                      {option === "modify" && "Error al Modificar"}
+                    </Typography>
+                  </>
+                )}
+              </DialogContent>
+            </Dialog>
       </Box>
 
       <ToastContainer

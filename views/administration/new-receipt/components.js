@@ -20,7 +20,8 @@ import InputTitles from "@styles/inputTitles";
 import scrollSx from "@styles/scroll";
 import dayjs from "dayjs";
 
-
+import { Dialog,DialogContent, CircularProgress} from "@mui/material";
+import { CheckCircle, Error } from "@mui/icons-material";
 const aSx = {
   border: "1.4px solid #E6643180",
   marginTop: "0px",
@@ -61,9 +62,12 @@ const dSx = {
   },
 };
 
-export const ReceiptC = ({ formik, data, pendingAmount, presentValueInvestor }) => {
+export const ReceiptC = ({ formik, data, pendingAmount, presentValueInvestor,loading,success,isModalOpen }) => {
+  
   const [valueD, setValue] = useState(dayjs("2014-08-18T21:11:54"));
   const [valueDate, setValueDate] = useState(dayjs("2014-08-18T21:11:54"));
+ 
+
   const handleChange = (newValue) => {
     setValue(newValue);
   };
@@ -1049,33 +1053,49 @@ export const ReceiptC = ({ formik, data, pendingAmount, presentValueInvestor }) 
               }}
             ></Box>
             <MuiButton
-              type="submit"
-              variant="contained"
-              onClick={formik.handleSubmit}
-              disabled={formik.values.payedAmount === 0}
-              sx={{
-                mb: 2,
-                boxShadow: "none",
-                borderRadius: "4px",
-                position: "absolute",
-                bottom: "10%",
-                right: "10%",
-              }}
-            >
-              <Typography fontSize="90%" fontWeight="bold">
-                Registrar
-              </Typography>
-              <Typography
-                fontFamily="icomoon"
-                sx={{
-                  color: "#fff",
-                  ml: 2,
-                  fontSize: "medium",
-                }}
-              >
-                &#xe91f;
-              </Typography>
-            </MuiButton>
+      type="submit"
+      variant="contained"
+      onClick={formik.handleSubmit}
+      disabled={formik.isSubmitting || loading} // Deshabilita el botón correctamente
+      sx={{
+        mb: 2,
+        boxShadow: "none",
+        borderRadius: "4px",
+        position: "absolute",
+        bottom: "10%",
+        right: "10%",
+      }}
+    >
+      <Typography fontSize="90%" fontWeight="bold">Registrar</Typography>
+      <Typography
+        fontFamily="icomoon"
+        sx={{ color: "#fff", ml: 2, fontSize: "medium" }}
+      >
+        &#xe91f;
+      </Typography>
+    </MuiButton>
+
+    {/* MODAL DE PROCESO */}
+    <Dialog  open={isModalOpen} PaperProps={{ sx: { borderRadius: "10px", textAlign: "center", p: 3 } }}>
+      <DialogContent>
+        {success === null ? (
+          <>
+            <CircularProgress size={80} sx={{ color: "#1976D2", mb: 2 }} />
+            <Typography variant="h6">Procesando...</Typography>
+          </>
+        ) : success ? (
+          <>
+            <CheckCircle sx={{ fontSize: 80, color: "green", mb: 2 }} />
+            <Typography variant="h5" color="success.main">¡Registro Exitoso!</Typography>
+          </>
+        ) : (
+          <>
+            <Error sx={{ fontSize: 80, color: "red", mb: 2 }} />
+            <Typography variant="h5" color="error.main">Error al Registrar</Typography>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
           </Box>
         </form>
       </Box>
