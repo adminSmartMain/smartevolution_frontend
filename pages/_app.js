@@ -20,7 +20,8 @@ const pathsWithoutDefaultLayout = [
   "/financialProfile/financialStatement",
   "/financialProfile/indicators",
   "/auth/resetPassword",
-  "/auth/forgotPassword"
+  "/auth/forgotPassword",
+  "/pre-operations2beta/manage",
 ];
 
 function MyApp({ Component, pageProps }) {

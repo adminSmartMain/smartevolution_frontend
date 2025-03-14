@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { ToastContainer } from "react-toastify";
 import Link from "next/link";
 import { SearchOutlined } from "@mui/icons-material";
-import { Box, Button, Fade, FormControl, Grid, IconButton, InputLabel, MenuItem, Select, TextField, Typography } from "@mui/material";
+import { Box, Button, Fade, FormControl, Grid, IconButton, InputLabel,Menu, MenuItem, InputAdornment , Select, TextField, Typography } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import Modal from "@components/modals/modal";
 import TitleModal from "@components/modals/titleModal";
@@ -18,13 +18,19 @@ import CustomTooltip from "@styles/customTooltip";
 import MuiTextField from "@styles/fields";
 import { StandardTextField } from "@styles/fields/BaseField";
 import InputTitles from "@styles/inputTitles";
+import ModalValorAGirar from "./ModalValorAGirar";
+import AdvancedDateRangePicker from "./AdvancedDateRangePicker";
+import { DataGrid } from "@mui/x-data-grid";
+
 import scrollSx from "@styles/scroll";
+
 import CustomDataGrid from "@styles/tables";
 import { DeleteOperation, MassiveUpdateOperation, UpdateOperation } from "./queries";
 import { id } from "date-fns/locale";
 import moment from "moment";
-
-
+import DocumentIcon from '@mui/icons-material/Description';
+import { Tooltip } from "@mui/material";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 const sectionTitleContainerSx = {
   display: "flex",
   justifyContent: "space-between",
@@ -143,13 +149,35 @@ const SortIcon = () => (
 
 const RegisterButton = (props) => {
   const { ...rest } = props;
+ // Función que maneja la apertura de la ventana de registro de operación
 
+ const [anchorEl, setAnchorEl] = useState(null); // Estado para controlar el menú
+ const openMenu = Boolean(anchorEl); // Determina si el menú está abierto
+
+ //Estado de la pestana de registro de operacion
+
+ const [openWindow, setOpenWindow] = useState(null); // Estado para almacenar la referencia de la ventana
+ const handleOpenRegisterOperation = () => {
+  if (openWindow && !openWindow.closed) {
+    // Si la ventana ya está abierta, solo le damos el foco (la trae al frente)
+    openWindow.focus();
+  } else {
+    // Si la ventana no está abierta, la abrimos y guardamos la referencia
+    const newWindow = window.open("/pre-operations2beta/manage", "_blank", "width=800, height=600");
+    setOpenWindow(newWindow); // Guardamos la referencia de la ventana
+    // Escuchar el evento de cierre de la ventana
+    newWindow.onbeforeunload = () => {
+      setOpenWindow(null); // Restablecer la referencia cuando la ventana se cierre
+    };
+  }
+};
   return (
-    <Link href="/operations/manage" underline="none">
+    
       <Button
         variant="standard"
         color="primary"
         size="large"
+        onClick={handleOpenRegisterOperation}
         sx={{
           height: "2.6rem",
           backgroundColor: "transparent",
@@ -175,9 +203,46 @@ const RegisterButton = (props) => {
           &#xe927;
         </Typography>
       </Button>
-    </Link>
+    
   );
 };
+
+
+
+const EditPreOperation = (props) => {
+  const { ...rest } = props;
+ // Función que maneja la apertura de la ventana de registro de operación
+
+ const [anchorEl, setAnchorEl] = useState(null); // Estado para controlar el menú
+ const openMenu = Boolean(anchorEl); // Determina si el menú está abierto
+
+ //Estado de la pestana de registro de operacion
+
+ const [openWindow, setOpenWindow] = useState(null); // Estado para almacenar la referencia de la ventana
+ const handleOpenEditPreOperation = () => {
+  if (openWindow && !openWindow.closed) {
+    // Si la ventana ya está abierta, solo le damos el foco (la trae al frente)
+    openWindow.focus();
+  } else {
+    // Si la ventana no está abierta, la abrimos y guardamos la referencia
+    const newWindow = window.open("/pre-operations2beta/editPreOp", "_blank", "width=800, height=600");
+    setOpenWindow(newWindow); // Guardamos la referencia de la ventana
+    // Escuchar el evento de cierre de la ventana
+    newWindow.onbeforeunload = () => {
+      setOpenWindow(null); // Restablecer la referencia cuando la ventana se cierre
+    };
+  }
+};
+  return (
+    <MenuItem onClick={() => handleOpenEditPreOperation()}>
+                Editar
+              </MenuItem>
+    
+  );
+};
+
+
+
 
 const EntryField = styled(StandardTextField)(({ theme }) => ({
   "& label": {
@@ -279,6 +344,7 @@ const SellOrderButton = (props) => {
   );
 };
 
+const formatNumber = (value) => new Intl.NumberFormat("es-ES").format(value || 0);
 export const OperationsComponents = ({
   rows,
   filtersHandlers,
@@ -293,17 +359,156 @@ export const OperationsComponents = ({
   const [tempFilters, setTempFilters] = useState({ ...filtersHandlers.value });
 
   const [open, setOpen] = useState([false, ""]);
+  const [rowCount, setRowCount] = useState(dataCount);
+  const [pageSize, setPageSize] = useState(10);
+  const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState("");
+  const [dateRange, setDateRange] = useState({ start: null, end: null });
+  const [anchorEl, setAnchorEl] = useState(null);
+  const openMenu = Boolean(anchorEl);
+  const [openWindow, setOpenWindow] = useState(null);
+  const [openModal, setOpenModal] = useState(false);
+ 
+
+
+  const [openUpdateModal, setOpenUpdateModal] = useState(false);
+  const [selectedOperation, setSelectedOperation] = useState(null);
+  const [currentStatus, setCurrentStatus] = useState("");
+  const [operationLabel, setOperationLabel] = useState("");
+  const [operationToDelete, setOperationToDelete] = useState(null);
+  const [openDeleteModal, setOpenDeleteModal] = useState(false);
+
+
+  
+  const handleActionClick = (action, operation) => {
+    if (action === "Actualizar Estado") {
+      setSelectedOperation(operation.id); // Establecer el ID de la operación
+      setCurrentStatus(operation.estado);  // Establecer el estado actual
+      setOperationLabel(`Factura: ${operation.factura_fraccion}`); // Establecer el número de factura/fracción
+      setOpenUpdateModal(true); // Abrir el modal
+    }
+  };
+  
+
+
+
+
   const handleOpen = (id) => {
     setOpen([true, id]);
   };
 
 
+  const EditPreOperation = ({ id, status }) => {
+    const [openWindow, setOpenWindow] = useState(null);
+  
+    const handleOpenEditPreOperation = () => {
+      if (openWindow && !openWindow.closed) {
+        openWindow.focus();
+      } else {
+        const url =
+          status == 0
+            ? `/pre-operations2beta/editPreOp?id=${id}`
+            : status === 2
+            ? `/pre-operations2beta/editPreOp?id=${id}&previousDeleted=${true}`
+            : "#";
+        
+        if (url !== "#") {
+          const newWindow = window.open(url, "_blank", "width=800,height=600");
+          setOpenWindow(newWindow);
+          newWindow.onbeforeunload = () => setOpenWindow(null);
+        }
+      }
+    };
+  
+    return (
+      <Typography
+        fontFamily="icomoon"
+        fontSize="1.9rem"
+        color="#999999"
+        borderRadius="5px"
+        sx={{
+          "&:hover": {
+            backgroundColor: "#B5D1C980",
+            color: "#488B8F",
+          },
+          cursor: "pointer",
+        }}
+        onClick={handleOpenEditPreOperation}
+      >
+        &#xe900;
+      </Typography>
+    );
+  };
+  
+  
+
+  const DetailPreOperation = ({ id }) => {
+    const [openWindow, setOpenWindow] = useState(null);
+  
+    const handleOpenDetailPreOperation = () => {
+      if (openWindow && !openWindow.closed) {
+        openWindow.focus();
+      } else {
+        const newWindow = window.open(
+          `/pre-operations2beta/detailPreOp?id=${id}`,
+          "_blank",
+          "width=800,height=600"
+        );
+        setOpenWindow(newWindow);
+        newWindow.onbeforeunload = () => setOpenWindow(null);
+      }
+    };
+  
+    return (
+      <Typography
+        fontFamily="icomoon"
+        fontSize="1.9rem"
+        color="#999999"
+        borderRadius="5px"
+        sx={{
+          "&:hover": {
+            backgroundColor: "#B5D1C980",
+            color: "#488B8F",
+          },
+          cursor: "pointer",
+        }}
+        onClick={handleOpenDetailPreOperation}
+      >
+        &#xe922;
+      </Typography>
+    );
+  };
+
+
+  const handleMenuClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleCloseMenu = () => {
+    setAnchorEl(null);
+  };
+
+  const handleExportXML = () => {
+    alert("Exportar como XML");
+    handleCloseMenu();
+  };
+
+  const handleClearSearch = () => {
+    setSearch("");
+  };
+
+  const handleOpenModal = () => {
+    console.log("Datos seleccionados para el modal:", selectedData);
+    setOpenModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setOpenModal(false);
+  };
+
   const handleClose = () => {
     setOpen([false, ""]);
   };
-
-   
-
 
   const {
     fetch: fetchDeleteOperation,
@@ -325,7 +530,7 @@ export const OperationsComponents = ({
   };
 
   console.log(rows)
-  console.log(rows[0])
+
   console.log(calcs)
   useEffect(() => {
     if (dataDeleteOperation) {
@@ -359,6 +564,25 @@ export const OperationsComponents = ({
   const handleOperationState = (e) => {
     setOperationState(e.target.value);
   };
+
+
+  // Función que maneja la acción de eliminar
+  const handleDeleteOperation = (operationId) => {
+    setRows(rows.filter(row => row.id !== operationId)); // Filtrar las filas y eliminar la operación
+  };
+
+  const handleActionClickdelete = (action, operation) => {
+    if (action === "Eliminar") {
+      setOperationToDelete(operation); // Establecemos la operación seleccionada para eliminar
+      setOpenDeleteModal(true); // Abrimos el modal de confirmación
+    }
+  };
+
+  const handleCloseDeleteModal = () => {
+    setOpenDeleteModal(false); // Cerramos el modal sin hacer nada
+    setOperationToDelete(null); // Limpiar la operación seleccionada
+  };
+
 
   const handleUpdateClick = (e) => {
     fetchUpdateOperationMassive({
@@ -427,356 +651,94 @@ export const OperationsComponents = ({
   const numberFormat = new Intl.NumberFormat("en-US", formatOptions);
   console.log(page)
   const columns = [
-    {
-      field: "opId",
-      headerName: "NRO Operacion",
-      width: 120,
-      valueGetter: (params) => {
-        return params.row?.opId;
-      },
+    { field: "status", headerName: "Estado", width: 160,
       renderCell: (params) => {
-        return (
-          <InputTitles>{params.value ? `P-${params.value}` : ""}</InputTitles>
-        );
-      },
-    },
-    {
-      field: "status",
-      headerName: "Estado",
-      width: 150,
-      valueGetter: (params) => {
-        switch (params.row.status) {
-          case 0:
-            return "Por Aprobar";
-          case 1:
-            return "Aprobada";
-          case 2:
-            return "Rechazada";
-          case 3:
-            return "Vigente";
-          case 4:
-            return "Cancelada";
+        console.log(params.row); 
+        let badgeClass = "";
+        switch (params.value) {
+          case "Por aprobar":
+            badgeClass = "badge por-aprobar";
+            break;
+          case "Aprobado":
+            badgeClass = "badge aprobado";
+            break;
+          case "Rechazado":
+            badgeClass = "badge rechazado";
+            break;
           default:
-            return "Por Aprobar";
+            badgeClass = "badge";
         }
-      },
-      renderCell: (params) => {
-        return (
-          <>
-            <Typography
-              fontSize="80%"
-              width="80%"
-              fontWeight="bold"
-              color="#63595C"
-              textAlign="center"
-              border="1.4px solid #63595C"
-              backgroundColor="transparent"
-              textTransform="uppercase"
-              padding="3% 8%"
-              borderRadius="4px"
-            >
-              {params.value}
-            </Typography>
-          </>
-        );
+        return <span className={badgeClass}>{params.value}</span>;
       },
     },
-    {
-      field: "opType",
-      headerName: "Tipo de Operacion",
-      width: 130,
-      valueGetter: (params) => {
-        return "COMPRA TITULO";
-      },
-      renderCell: (params) => {
-        return <InputTitles>{params.value ? params.value : ""}</InputTitles>;
-      },
-    },
-    {
-      field: "opDate",
-      headerName: "Fecha de Radicado",
-      width: 150,
-      valueGetter: (params) => {
-        return params.row.opDate;
-      },
-      renderCell: (params) => {
-        return (
-          <InputTitles>
-            {params.value ? moment(params.value).format("DD/MM/YYYY") : ""}
-          </InputTitles>
-        );
+    
+    { field: "opId", headerName: "ID", width: 80 },
+    { field: "opDate", headerName: "Creado el", width: 110 },
+    { field: "billFraction", headerName: "# Factura / Fracción", width: 90 },
+    { field: "emitterName", headerName: "Emisor", width: 200 },
+    { field: "investorName", headerName: "Inversionista", width: 200 },
+    { field: "payerName", headerName: "Pagador", width: 150 },
+    { field: "discountTax", headerName: "Tasa Desc.", width: 90 },
+    { field: "percent", headerName: "% Desc.", width: 90 }, // Nueva columna
+    { field: "investorTax", headerName: "Tasa Inv.", width: 90 },
+    { field: "payedAmount", headerName: "Valor Nominal", width: 110,
+      valueFormatter: ({ value }) => {
+        if (value == null) return "$0.00";
+        return new Intl.NumberFormat("es-CO", {
+          style: "currency",
+          currency: "COP",
+        }).format(value);
       },
     },
-    {
-      field: "reBuy",
-      headerName: "Re compra",
-      width: 150,
-      valueGetter: (params) => {
-        return params.row.isRebuy;
-      },
-      renderCell: (params) => {
-        return (
-          <InputTitles>
-            {params.value ? "SI" : "NO"}
-          </InputTitles>
-        );
+    { field: "presentValueInvestor", headerName: "Valor Inversionista", width: 110,
+      valueFormatter: ({ value }) => {
+        if (value == null) return "$0.00";
+        return new Intl.NumberFormat("es-CO", {
+          style: "currency",
+          currency: "COP",
+        }).format(value);
       },
     },
+    { field: "probableDate", headerName: "Fecha Probable", width: 110 },
+    { field: "opExpiration", headerName: "Fecha Fin", width: 110 },
     {
-      field: "bill",
-      headerName: "Nro Factura",
-      width: 150,
-      valueGetter: (params) => {
-        return params.row?.billData;
-      },
-      renderCell: (params) => {
-        return <InputTitles>{params.value ? params.value : ""}</InputTitles>;
-      },
-    },
-    {
-      field: "fraction",
-      headerName: "fracción",
-      width: 150,
-      valueGetter: (params) => {
-        return params.row?.billFraction ? params.row?.billFraction : 1;
-      },
-      renderCell: (params) => {
-        return <InputTitles>{params.value ? params.value : ""}</InputTitles>;
-      },
-    },
-    {
-      field: "emitter",
-      headerName: "Emisor",
-      width: 150,
-      valueGetter: (params) => {
-        return params.row?.emitterName;
-      },
-      renderCell: (params) => {
-        return (
-          <CustomTooltip
-            title={params.value}
-            arrow
-            placement="bottom-start"
-            TransitionComponent={Fade}
-            PopperProps={{
-              modifiers: [
-                {
-                  name: "offset",
-                  options: {
-                    offset: [0, 0],
-                  },
-                },
-              ],
-            }}
-          >
-            <InputTitles>{params.value}</InputTitles>
-          </CustomTooltip>
-        );
-      },
-    },
-    {
-      field: "payer",
-      headerName: "Pagador",
-      width: 170,
-      valueGetter: (params) => {
-        return params.row?.payerName;
-      },
-      renderCell: (params) => {
-        return (
-          <CustomTooltip
-            title={params.value}
-            arrow
-            placement="bottom-start"
-            TransitionComponent={Fade}
-            PopperProps={{
-              modifiers: [
-                {
-                  name: "offset",
-                  options: {
-                    offset: [0, 0],
-                  },
-                },
-              ],
-            }}
-          >
-            <InputTitles>{params.value}</InputTitles>
-          </CustomTooltip>
-        );
-      },
-    },
-    {
-      field: "investor",
-      headerName: "Inversionista",
-      width: 170,
-      valueGetter: (params) => {
-        return params.row?.investorName;
-      },
-      renderCell: (params) => {
-        return (
-          <CustomTooltip
-            title={params.value}
-            arrow
-            placement="bottom-start"
-            TransitionComponent={Fade}
-            PopperProps={{
-              modifiers: [
-                {
-                  name: "offset",
-                  options: {
-                    offset: [0, 0],
-                  },
-                },
-              ],
-            }}
-          >
-            <InputTitles>{params.value}</InputTitles>
-          </CustomTooltip>
-        );
-      },
-    },
-    {
-      field: "discountTax",
-      headerName: "Tasa Descuento",
-      width: 150,
-      renderCell: (params) => {
-        return (
-          <CustomTooltip
-            title={numberFormat.format(params.value)}
-            arrow
-            placement="bottom-start"
-            TransitionComponent={Fade}
-            PopperProps={{
-              modifiers: [
-                {
-                  name: "offset",
-                  options: {
-                    offset: [0, 0],
-                  },
-                },
-              ],
-            }}
-          >
-            <InputTitles>{`${Number(params.value).toFixed(2)}%`}</InputTitles>
-          </CustomTooltip>
-        );
-      },
-    },
-    {
-      field: "investorTax",
-      headerName: "Tasa Inversionista",
-      width: 150,
-      renderCell: (params) => {
-        return (
-          <CustomTooltip
-            title={numberFormat.format(params.value)}
-            arrow
-            placement="bottom-start"
-            TransitionComponent={Fade}
-            PopperProps={{
-              modifiers: [
-                {
-                  name: "offset",
-                  options: {
-                    offset: [0, 0],
-                  },
-                },
-              ],
-            }}
-          >
-            <InputTitles>{`${Number(params.value).toFixed(2)}%`}</InputTitles>
-          </CustomTooltip>
-        );
-      },
-    },
-    {
-      field: "payedAmount",
-      headerName: "Valor Nominal",
-      width: 150,
-      renderCell: (params) => {
-        return (
-          <CustomTooltip
-            title={numberFormat.format(params.value)}
-            arrow
-            placement="bottom-start"
-            TransitionComponent={Fade}
-            PopperProps={{
-              modifiers: [
-                {
-                  name: "offset",
-                  options: {
-                    offset: [0, 0],
-                  },
-                },
-              ],
-            }}
-          >
-            <InputTitles>{numberFormat.format(params.value)}</InputTitles>
-          </CustomTooltip>
-        );
-      },
-    },
-    {
-      field: "presentValueInvestor",
-      headerName: "Valor Inversionistas",
-      width: 150,
-      renderCell: (params) => {
-        return (
-          <CustomTooltip
-            title={numberFormat.format(params.value)}
-            arrow
-            placement="bottom-start"
-            TransitionComponent={Fade}
-            PopperProps={{
-              modifiers: [
-                {
-                  name: "offset",
-                  options: {
-                    offset: [0, 0],
-                  },
-                },
-              ],
-            }}
-          >
-            <InputTitles>{numberFormat.format(params.value)}</InputTitles>
-          </CustomTooltip>
-        );
-      },
-    },
-    {
-      field: "probableDate",
-      headerName: "Fecha Probable",
-      width: 150,
-      renderCell: (params) => {
-        return (
-          <InputTitles>
-            {params.value ? moment(params.value).format("DD/MM/YYYY") : ""}
-          </InputTitles>
-        );
-      },
-    },
-    {
-      field: "opExpiration",
-      headerName: "Fecha Fin",
-      width: 150,
-      renderCell: (params) => {
-        return (
-          <InputTitles>
-            {params.value ? moment(params.value).format("DD/MM/YYYY") : ""}
-          </InputTitles>
-        );
-      },
-    },
-
-    {
-      field: "Actualizar estado",
+      field: "Editar operacion",
       headerName: "",
-      width: 20,
+      width: 50,
+      sortable: false,
+      filterable: false,
+      renderCell: (params) => (
+        <CustomTooltip
+          title="Editar operación"
+          arrow
+          placement="bottom-start"
+          TransitionComponent={Fade}
+          PopperProps={{
+            modifiers: [
+              {
+                name: "offset",
+                options: {
+                  offset: [0, -15],
+                },
+              },
+            ],
+          }}
+        >
+          <EditPreOperation id={params.row.id} status={params.row.status} />
+        </CustomTooltip>
+      ),
+    },
+    {
+      field: "Detalles operación 2",
+      headerName: "",
+      width: 50,
       sortable: false,
       filterable: false,
       renderCell: (params) => {
+        
         return (
           <CustomTooltip
-            title="Actualizar estado"
+            title="Ver operación"
             arrow
             placement="bottom-start"
             TransitionComponent={Fade}
@@ -791,220 +753,15 @@ export const OperationsComponents = ({
               ],
             }}
           >
-            <IconButton onClick={() => handleOpen(params.row.id)}>
-              <i
-                className="fa-regular fa-check"
-                style={{
-                  fontSize: "1.3rem",
-                  color: "#488B8F",
-                  borderRadius: "5px",
-
-                  "&:hover": {
-                    backgroundColor: "#B5D1C980",
-                    color: "#488B8F",
-                  },
-                }}
-              ></i>
-            </IconButton>
+            <DetailPreOperation id={params.row.id} />
           </CustomTooltip>
         );
       },
-    },
-    {
-      field: "Editar operacion",
-      headerName: "",
-      width: 50,
-      sortable: false,
-      filterable: false,
-      renderCell: (params) => {
-        return (
-          <Link
-            href={
-              params.row.status == 0
-                ? `/operations/manage/?id=${params.row.id}`
-                : params.row.status === 2
-                ? `/operations/manage/?id=${
-                    params.row.id
-                  }&previousDeleted=${true}`
-                : `#`
-            }
-          >
-            <CustomTooltip
-              title="Editar operación"
-              arrow
-              placement="bottom-start"
-              TransitionComponent={Fade}
-              PopperProps={{
-                modifiers: [
-                  {
-                    name: "offset",
-                    options: {
-                      offset: [0, -15],
-                    },
-                  },
-                ],
-              }}
-            >
-              <Typography
-                fontFamily="icomoon"
-                fontSize="1.9rem"
-                color="#999999"
-                borderRadius="5px"
-                sx={{
-                  "&:hover": {
-                    backgroundColor: "#B5D1C980",
-                    color: "#488B8F",
-                  },
-                  cursor: "pointer",
-                }}
-              >
-                &#xe900;
-              </Typography>
-            </CustomTooltip>
-          </Link>
-        );
-      },
-    },
-    {
-      field: "Detalles operación 2",
-      headerName: "",
-      width: 50,
-      sortable: false,
-      filterable: false,
-      renderCell: (params) => {
-        return (
-          <Link href={`/operations/manage?preview&id=${params.row.id}`}>
-            <CustomTooltip
-              title="Ver operación"
-              arrow
-              placement="bottom-start"
-              TransitionComponent={Fade}
-              PopperProps={{
-                modifiers: [
-                  {
-                    name: "offset",
-                    options: {
-                      offset: [0, -15],
-                    },
-                  },
-                ],
-              }}
-            >
-              <Typography
-                fontFamily="icomoon"
-                fontSize="1.9rem"
-                color="#999999"
-                borderRadius="5px"
-                sx={{
-                  "&:hover": {
-                    backgroundColor: "#B5D1C980",
-                    color: "#488B8F",
-                  },
-                  cursor: "pointer",
-                }}
-              >
-                &#xe922;
-              </Typography>
-            </CustomTooltip>
-          </Link>
-        );
-      },
-    },
-    {
-      field: "Eliminar",
-      headerName: "",
-      width: 50,
-      sortable: false,
-      filterable: false,
-      renderCell: (params) => {
-        return (
-          <>
-            <CustomTooltip
-              title="Eliminar"
-              arrow
-              placement="bottom-start"
-              TransitionComponent={Fade}
-              PopperProps={{
-                modifiers: [
-                  {
-                    name: "offset",
-                    options: {
-                      offset: [0, -15],
-                    },
-                  },
-                ],
-              }}
-            >
-              <Typography
-                fontFamily="icomoon"
-                fontSize="1.9rem"
-                color="#999999"
-                borderRadius="5px"
-                sx={{
-                  "&:hover": {
-                    backgroundColor: "#B5D1C980",
-                    color: "#488B8F",
-                  },
-                  cursor: "pointer",
-                }}
-                onClick={() => {
-                  if (params.row.status === 1) {
-                    Toast(
-                      "No se puede eliminar una operación aprobada",
-                      "error"
-                    );
-                  } else {
-                    handleOpenDelete(params.row.id);
-                  }
-                }}
-              >
-                &#xe901;
-              </Typography>
-            </CustomTooltip>
-            <Modal open={openDelete[0]} handleClose={handleCloseDelete}>
-              <Box
-                display="flex"
-                flexDirection="column"
-                alignItems="center"
-                justifyContent="center"
-                height="100%"
-                width="100%"
-              >
-                <Typography
-                  letterSpacing={0}
-                  fontSize="1vw"
-                  fontWeight="medium"
-                  color="#63595C"
-                >
-                  ¿Estás seguro que deseas la operación?
-                </Typography>
-
-                <Box
-                  display="flex"
-                  flexDirection="row"
-                  alignItems="center"
-                  justifyContent="center"
-                  mt={4}
-                >
-                  <GreenButtonModal onClick={handleCloseDelete}>
-                    Volver
-                  </GreenButtonModal>
-                  <RedButtonModal
-                    sx={{
-                      ml: 2,
-                    }}
-                    onClick={() => handleDelete(openDelete[1])}
-                  >
-                    Eliminar
-                  </RedButtonModal>
-                </Box>
-              </Box>
-            </Modal>
-          </>
-        );
-      },
-    },
+    }
+    
+   
   ];
+
 
   const handleTextFieldChange = async (evt, field) => {
     setTempFilters({ ...tempFilters, [field]: evt.target.value });
@@ -1016,6 +773,7 @@ export const OperationsComponents = ({
 
   return (
     <>
+    
       <BackButton path="/dashboard" />
       <Box sx={{ ...sectionTitleContainerSx }}>
         <Typography
@@ -1027,6 +785,38 @@ export const OperationsComponents = ({
         >
           Consulta de Pre-operaciones
         </Typography>
+        <SellOrderButton />
+         <Button
+                variant="standard"
+                color="primary"
+                size="large"
+                
+                sx={{
+                  height: "2.6rem",
+                  backgroundColor: "transparent",
+                  border: "1.4px solid #63595C",
+                  borderRadius: "4px",
+                }}
+              >
+                <Typography
+                  letterSpacing={0}
+                  fontSize="80%"
+                  fontWeight="bold"
+                  color="#63595C"
+                >
+                  Operaciones
+                </Typography>
+        
+                <Typography
+                  fontFamily="icomoon"
+                  fontSize="1.2rem"
+                  color="#63595C"
+                  marginLeft="0.9rem"
+                >
+                  &#xe927;
+                </Typography>
+              </Button>
+            
       </Box>
 
       <Box sx={{ ...filtersContainerSx }}>
@@ -1080,77 +870,85 @@ export const OperationsComponents = ({
 
         <Box display="flex" alignSelf="flex-end" ml="auto" mb={1}>
           <RegisterButton />
-          <SellOrderButton />
+          <AdvancedDateRangePicker
+          onDateRangeChange={(range) => setDateRange(range)}
+          className="date-picker"
+        />
+       
+          <Link href="/pre-operations2beta/byOp" underline="none">
+            <Button
+              variant="standard"
+              color="primary"
+              size="large"
+              sx={{
+                height: "2.6rem",
+                backgroundColor: "transparent",
+                border: "1.4px solid #63595C",
+                borderRadius: "4px",
+              }}
+            >
+              <Typography
+                letterSpacing={0}
+                fontSize="80%"
+                fontWeight="bold"
+                color="#63595C"
+              >
+                Ver por Grupos
+              </Typography>
+
+              <Typography
+                fontFamily="icomoon"
+                fontSize="1.2rem"
+                color="#63595C"
+                marginLeft="0.9rem"
+              >
+                &#xe927;
+              </Typography>
+            </Button>
+          </Link>
+          
         </Box>
       </Box>
+      <Box display="flex" alignSelf="flex-end" ml="auto" mb={1}>
 
-      <Grid container spacing={1.5} sx={{ ...entriesGrid }}>
-        <Grid item xs={2}>
-          <Entry title="Comisión">
-            <ValueFormat value={Math.round(calcs?.commission) || 0} />
-          </Entry>
-        </Grid>
+      <Grid container spacing={2} alignItems="center" sx={{ whiteSpace: "nowrap", overflowX: "auto", p: 1 }}>
+            {[
+              { title: "Comisión", value: calcs?.commission },
+              { title: "IVA", value: calcs?.iva },
+              { title: "Valor inversor", value: calcs?.investorValue },
+              { title: "RETEFUENTE", value: calcs?.rteFte },
+              { title: "FACTURAR NETO", value: calcs?.netFact },
+              { title: "RETEICA", value: calcs?.retIca },
+              { title: "VALOR FUTURO", value: calcs?.futureValue },
+              { title: "RETEIVA", value: calcs?.retIva },
+              { title: "VALOR A GIRAR", value: calcs?.depositValue - other },
+            ].map((item, index) => (
+              <Box key={index} sx={{ display: "flex", flexDirection: "column", alignItems: "center", mx: 2.7 }}>
+                <Typography variant="caption" color="textSecondary">{item.title}</Typography>
+                <Typography variant="body2">{formatNumber(Math.round(item.value))}</Typography>
+              </Box>
+            ))}
 
-        <Grid item xs={2}>
-          <EditableEntry
-            title="Otros"
-            onChangeMasked={(values) => {
-              setOther(values.floatValue);
-            }}
-          />
-        </Grid>
+            {/* Campo editable para "Otros" */}
+            <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", mx: 2.7 }}>
+              <Typography variant="caption" color="textSecondary">Otros</Typography>
+              <TextField
+                variant="standard"
+                size="small"
+                type="number"
+                value={other}
+                onChange={(e) => setOther(parseFloat(e.target.value) || 0)}
+                sx={{ width: 90, textAlign: "right", textAlignLast: "right" }}
+              />
+            </Box>
+          </Grid>
 
-        <Grid item xs={2}>
-          <Entry title="IVA">
-            <ValueFormat value={Math.round(calcs?.iva) || 0} />
-          </Entry>
-        </Grid>
 
-        <Grid item xs={2}>
-          <Entry title="Valor inversor">
-            <ValueFormat value={Math.round(calcs?.investorValue) || 0} />
-          </Entry>
-        </Grid>
-
-        <Grid item xs={2}>
-          <Entry title="RETEFUENTE">
-            <ValueFormat value={Math.round(calcs?.rteFte) || 0} />
-          </Entry>
-        </Grid>
-
-        <Grid item xs={2}>
-          <Entry title="FACTURAR NETO">
-            <ValueFormat value={Math.round(calcs?.netFact) || 0} />
-          </Entry>
-        </Grid>
-
-        <Grid item xs={2}>
-          <Entry title="RETEICA">
-            <ValueFormat value={Math.round(calcs?.retIca) || 0} />
-          </Entry>
-        </Grid>
-
-        <Grid item xs={2}>
-          <Entry title="VALOR FUTURO">
-            <ValueFormat value={Math.round(calcs?.futureValue) || 0} />
-          </Entry>
-        </Grid>
-
-        <Grid item xs={2}>
-          <Entry title="RETEIVA">
-            <ValueFormat value={Math.round(calcs?.retIva) || 0} />
-          </Entry>
-        </Grid>
-
-        <Grid item xs={2}>
-          <Entry title="VALOR A GIRAR">
-            <ValueFormat value={Math.round(calcs?.depositValue - other) || 0} />
-          </Entry>
-        </Grid>
-      </Grid>
+      </Box>
+     
 
       <Box sx={{ ...tableWrapperSx }}>
-        <CustomDataGrid
+      <CustomDataGrid
           rows={rows}
           columns={columns}
           pageSize={15}
@@ -1203,7 +1001,7 @@ export const OperationsComponents = ({
                     }}
                     onClick={() => {
                       if (page > 1) {
-                        
+                       
                         setPage(page - 1);
                         console.log('e')
                       }
@@ -1223,7 +1021,7 @@ export const OperationsComponents = ({
                     }}
                     onClick={() => {
                       if (page < dataCount / 15) {
-                        
+                       
                         setPage(page + 1);
                       }
                       console.log('f')
@@ -1241,6 +1039,7 @@ export const OperationsComponents = ({
             },
           }}
         />
+        
       </Box>
       <TitleModal
         open={open[0]}

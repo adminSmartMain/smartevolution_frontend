@@ -16,7 +16,6 @@ import { ManageOperationC } from "./components";
 import {
   CreateOperation,
   DeleteOperation,
-  TypeOperation,
   GetBillFraction,
   GetLastOperationId,
   GetOperationById,
@@ -37,7 +36,7 @@ export const ManageOperationV = () => {
   const [opId, setOpId] = useState(null);
   const [id, setId] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [operations, setOperations] = useState([]);
+  const [operation, setOperation] = useState([]);
   const [isAddingBill, setIsAddingBill] = useState(false);
   const [isCreatingBill, setIsCreatingBill] = useState(false);
 
@@ -128,16 +127,35 @@ export const ManageOperationV = () => {
     data: dataUpdateOperation,
   } = useFetch({ service: UpdateOperation, init: false });
 
-
-
-    // Hooks
-    const {
-      fetch: fetchTypeIdSelect,
-      loading: loadingTypeIdSelect,
-      error: errorTypeIdSelect,
-      data: dataTypeIdSelect,
-    } =  useFetch({ service: TypeOperation, init: true });
+    // Detect when the user is editing an operation
+    useEffect(() => {
+      if (router && router.query) {
         
+        if (router.query.id) {
+          console.log(router.query)
+          setId(router.query.id);
+        }
+  
+        if (router.query.previousDeleted) {
+          
+        }
+      }
+    }, [router.query]);
+    console.log(id)
+  
+    useEffect(() => {
+      if (id) {
+        getOperationByIdFetch(id); // Hace la consulta
+        setIsEditing(true);
+      }
+    }, [id]);
+    
+    useEffect(() => {
+      if (dataGetOperationById) {
+        setOperation(dataGetOperationById);
+      }
+    }, [dataGetOperationById]); // Espera a que los datos lleguen
+
  // Get the last operation id
   useEffect(() => {
     if (dataGetLastId) {
@@ -148,25 +166,6 @@ export const ManageOperationV = () => {
 console.log(opId)
 
 const [client, setClient] = useState([]);
-const [payer, setPayer] = useState([]);
-const [typeOp, setTypeOp] = useState([]);
-
-
-//GET TYPE OPERATION
-
-useEffect(() => {
-  if (dataTypeIdSelect) {
-    console.log(dataTypeIdSelect)
-    var typesID = [];
-    dataTypeIdSelect.data.map((typeID) => {
-      typesID.push({ label: typeID.description, value: typeID.id });
-    });
-
-    setTypeOp(typesID);
-  }
-}, [dataTypeIdSelect, loadingTypeIdSelect, errorTypeIdSelect]);
-
-
 //GET CLIENTS (EMITTERS)
   
   useEffect(() => {
@@ -190,33 +189,6 @@ useEffect(() => {
   }, [data, loading, error]);
   console.log(client)
 
-  useEffect(() => {
-    if (data) {
-      var Payers = [];
-      data.data.map((client) => {
-       Payers.push({
-          label: client.first_name
-            ? client.first_name +
-              " " +
-              client.last_name +
-              " - " +
-              client.document_number
-            : client.social_reason + " - " + client.document_number,
-          value: client.first_name
-          ? client.first_name +
-            " " +
-            client.last_name 
-          : client.social_reason,
-          data:client,
-          id:client.id,
-        });
-      });
-      setPayer(Payers);
-    }
-  }, [data, loading, error]);
-  console.log(payer)
-
-
 
 
 
@@ -228,8 +200,7 @@ return (
               opId={opId}
               emitters={client}
               investors={client}
-              payers={payer}
-              typeOperation={dataTypeIdSelect}
+              dataDetails={operation}
                />}
 
   </>

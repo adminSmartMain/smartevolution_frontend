@@ -214,6 +214,7 @@ const handleSaveAndRedirect = () => {
   useEffect(() => {
     if (id) {
       getOperationByIdFetch(id);
+      console.log(id)
       setIsEditing(true);
     }
   }, [id]);
@@ -259,6 +260,8 @@ const handleSaveAndRedirect = () => {
     }
   }, [formik.values.bill, dataGetOperationById]);
 
+
+  //EDICION Y OBSERVACION
   // Get the bill data
   useEffect(() => {
     if (dataGetOperationById) {
@@ -289,6 +292,7 @@ const handleSaveAndRedirect = () => {
   // Set the values of the bill
   useEffect(() => {
     if (dataGetBillFraction && !isEditing) {
+      console.log(formik.values.opExpiration,formik.values.opDate)
       formik.setFieldValue("billFraction", dataGetBillFraction.data.fraction);
       const substractDays = differenceInDays(
         parseISO(formik.values.opExpiration),
@@ -296,6 +300,7 @@ const handleSaveAndRedirect = () => {
       );
       formik.setFieldValue("operationDays", substractDays);
     } else {
+      console.log(formik.values.opExpiration,formik.values.opDate)
       const substractDays = differenceInDays(
         parseISO(formik.values.opExpiration),
         parseISO(formik.values.opDate)
@@ -309,6 +314,7 @@ const handleSaveAndRedirect = () => {
     formik.values.DateExpiration,
   ]);
 
+  //VIZUALIZACION y CREACION
   // update the operation values when the user is editing the values
   useEffect(() => {
     if (dataRiskProfile) {
@@ -327,6 +333,7 @@ const handleSaveAndRedirect = () => {
     }
   }, [formik.values.discountTax, formik.values.isReBuy]);
 
+  //ESTO ES PARA CREAR
   useEffect(() => {
     if (dataGetBillFraction?.data?.billValue && option != 'preview') {
       if (
@@ -337,6 +344,9 @@ const handleSaveAndRedirect = () => {
       }
     }
 
+
+
+//ESTO ES PARA EDITAR Y VER
     if (formik.values.payedAmount !== 0 && option != 'preview') {
       if (!isEditing) {
         formik.setFieldValue(
@@ -392,6 +402,8 @@ const handleSaveAndRedirect = () => {
     formik.values.discountTax,
     formik.values.investorTax,
   ]);
+
+  //CREACION
 
   useEffect(() => {
     if (option != 'preview') {
@@ -575,6 +587,7 @@ Por solicitud cambia el factor de GM de 0,004 a 0,002 a partir del 26 de octubre
     }
   }, [formik.values.DateExpiration]);
 
+  //CREACION Y EDICION
   // update payedAmount only when  payedPercent changes
   useEffect(() => {
     if (!isEditing) {
@@ -618,12 +631,16 @@ Por solicitud cambia el factor de GM de 0,004 a 0,002 a partir del 26 de octubre
     formik.values.investorTax,
   ]);
 
+
+  //EDICION  
 // Check type of investor profit
   useEffect(() => {
     if (isNaN(formik.values.investorProfit) && option != 'preview') {
      formik.setFieldValue("investorProfit", dataGetOperationById?.data?.investorProfit);
     }
   }, [formik.values.investorProfit])
+
+//EDICION 
 
 // check if amount is undefined
 useEffect(() => {
@@ -633,7 +650,7 @@ useEffect(() => {
   }
 }, [formik.values.amount, dataLoaded])
 
-
+//EDICION 
 // check if payedPercent is NaN
 useEffect(() => {
   if (isNaN(formik.values.payedPercent) && isEditing && option != 'preview') {
@@ -642,6 +659,7 @@ useEffect(() => {
 }, [formik.values.amount,formik.values.payedPercent, dataLoaded]);
 
   useEffect(() => {
+    console.log(formik.values.operationDays)
     // if all of these values is not 0, then set dataLoaded to true only if is editing 
     if (formik.values.operationDays > 0 && formik.values.investorProfit > 0 && formik.values.presentValueInvestor > 0 && formik.values.presentValueSF > 0 && formik.values.commissionSF > 0 && option != 'preview') {
       if (isEditing) {

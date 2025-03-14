@@ -170,13 +170,3 @@ export const AccountsFromClient = async (data) => {
   });
   return res.data;
 };
-
-
-export const TypeOperation = async (data) => {
-  const res = await Axios.get(`${API_URL}/type_operation`, {
-    headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
-    },
-  });
-  return res.data;
-};
