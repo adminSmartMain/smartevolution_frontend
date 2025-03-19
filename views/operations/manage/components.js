@@ -704,55 +704,68 @@ export const ManageOperationC = ({
             marginLeft: "1.5rem",
           }}
         >
-          <InputTitles marginBottom={2}>Tasa Descuento</InputTitles>
-          <MuiTextField
-            id="discountTax"
-            placeholder=""
-            name="discountTax"
-            type="number"
-            variant="standard"
-            disabled={formik.values.isReBuy || option === "preview"}
-            margin="normal"
-            value={formik.values.discountTax}
-            InputProps={{
-              disableUnderline: true,
-              sx: {
-                marginTop: "-5px",
-              },
-              endAdornment: (
-                <i
-                  style={{
-                    color: "#5EA3A3",
-                    fontSize: "1.1vw",
-                  }}
-                  className="far fa-percent"
-                ></i>
-              ),
-            }}
-            onChange={formik.handleChange}
-            error={
-              formik.touched.discountTax && Boolean(formik.errors.discountTax)
-            }
-            sx={
-              formik.touched.discountTax && Boolean(formik.errors.discountTax)
-                ? {
-                    border: "1.4px solid #E6643180",
-                    marginTop: "0px",
-                    width: "7vw",
-                    "@media (max-height: 900px)": {
-                      width: "8vw",
-                    },
-                  }
-                : {
-                    border: "1.4px solid #5EA3A3",
-                    marginTop: "0px",
-                    width: "7vw",
-                    "@media (max-height: 900px)": {
-                      width: "8vw",
-                    },
-                  }
-            }
-          />
+        <InputTitles marginBottom={2}>Tasa Descuento</InputTitles>
+<MuiTextField
+  id="discountTax"
+  placeholder=""
+  name="discountTax"
+  type="number"
+  variant="standard"
+  disabled={formik.values.isReBuy || option === "preview"}
+  margin="normal"
+  value={formik.values.discountTax}
+  InputProps={{
+    disableUnderline: true,
+    sx: {
+      marginTop: "-5px",
+    },
+    endAdornment: (
+      <i
+        style={{
+          color: "#5EA3A3",
+          fontSize: "1.1vw",
+        }}
+        className="far fa-percent"
+      ></i>
+    ),
+  }}
+  onChange={(e) => {
+    const newDiscountTax = parseFloat(e.target.value);
+
+    // Validar que la Tasa Descuento no sea mayor a 100
+    if (newDiscountTax > 100) {
+      // Mostrar un error o ajustar automáticamente el valor
+      formik.setFieldError("discountTax", "La Tasa Descuento no puede ser mayor a 100.");
+      formik.setFieldValue("discountTax", 100); // Ajustar al valor máximo permitido
+    } else {
+      // Si es válido, actualizar el valor y limpiar el error
+      formik.setFieldError("discountTax", ""); // Limpiar el error
+      formik.setFieldValue("discountTax", newDiscountTax); // Actualizar el valor
+    }
+  }}
+  error={
+    formik.touched.discountTax && Boolean(formik.errors.discountTax)
+  }
+  sx={
+    formik.touched.discountTax && Boolean(formik.errors.discountTax)
+      ? {
+          border: "1.4px solid #E6643180",
+          marginTop: "0px",
+          width: "7vw",
+          "@media (max-height: 900px)": {
+            width: "8vw",
+          },
+        }
+      : {
+          border: "1.4px solid #5EA3A3",
+          marginTop: "0px",
+          width: "7vw",
+          "@media (max-height: 900px)": {
+            width: "8vw",
+          },
+        }
+  }
+/>
         </Box>
 
 
@@ -871,55 +884,68 @@ export const ManageOperationC = ({
             marginLeft: "1.5rem",
           }}
         >
-          <InputTitles marginBottom={2}>Tasa Inversionista </InputTitles>
-          <MuiTextField
-            id="investorTax"
-            placeholder=""
-            name="investorTax"
-            type="number"
-            variant="standard"
-            disabled={option === "preview"}
-            margin="normal"
-            value={formik.values.investorTax}
-            InputProps={{
-              disableUnderline: true,
-              sx: {
-                marginTop: "-5px",
-              },
-              endAdornment: (
-                <i
-                  style={{
-                    color: "#5EA3A3",
-                    fontSize: "1.1vw",
-                  }}
-                  className="far fa-percent"
-                ></i>
-              ),
-            }}
-            onChange={formik.handleChange}
-            error={
-              formik.touched.investorTax && Boolean(formik.errors.investorTax)
-            }
-            sx={
-              formik.touched.investorTax && Boolean(formik.errors.investorTax)
-                ? {
-                    border: "1.4px solid #E6643180",
-                    marginTop: "0px",
-                    width: "7vw",
-                    "@media (max-height: 900px)": {
-                      width: "8vw",
-                    },
-                  }
-                : {
-                    border: "1.4px solid #5EA3A3",
-                    marginTop: "0px",
-                    width: "7vw",
-                    "@media (max-height: 900px)": {
-                      width: "8vw",
-                    },
-                  }
-            }
-          />
+         <InputTitles marginBottom={2}>Tasa Inversionista</InputTitles>
+<MuiTextField
+  id="investorTax"
+  placeholder=""
+  name="investorTax"
+  type="number"
+  variant="standard"
+  disabled={option === "preview"}
+  margin="normal"
+  value={formik.values.investorTax}
+  InputProps={{
+    disableUnderline: true,
+    sx: {
+      marginTop: "-5px",
+    },
+    endAdornment: (
+      <i
+        style={{
+          color: "#5EA3A3",
+          fontSize: "1.1vw",
+        }}
+        className="far fa-percent"
+      ></i>
+    ),
+  }}
+  onChange={(e) => {
+    const newInvestorTax = parseFloat(e.target.value);
+
+    // Validar que la Tasa Inversionista no sea mayor que la Tasa Descuento
+    if (newInvestorTax > formik.values.discountTax) {
+      // Mostrar un error o ajustar automáticamente el valor
+      formik.setFieldError("investorTax", "La Tasa Inversionista no puede ser mayor que la Tasa Descuento.");
+      formik.setFieldValue("investorTax", formik.values.discountTax); // Ajustar al valor máximo permitido
+    } else {
+      // Si es válido, actualizar el valor y limpiar el error
+      formik.setFieldError("investorTax", ""); // Limpiar el error
+      formik.setFieldValue("investorTax", newInvestorTax); // Actualizar el valor
+    }
+  }}
+  error={
+    formik.touched.investorTax && Boolean(formik.errors.investorTax)
+  }
+  sx={
+    formik.touched.investorTax && Boolean(formik.errors.investorTax)
+      ? {
+          border: "1.4px solid #E6643180",
+          marginTop: "0px",
+          width: "7vw",
+          "@media (max-height: 900px)": {
+            width: "8vw",
+          },
+        }
+      : {
+          border: "1.4px solid #5EA3A3",
+          marginTop: "0px",
+          width: "7vw",
+          "@media (max-height: 900px)": {
+            width: "8vw",
+          },
+        }
+  }
+/>
         </Box>
         
         <Box
