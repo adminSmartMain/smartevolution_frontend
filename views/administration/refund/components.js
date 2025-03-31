@@ -51,7 +51,7 @@ Por solicitud cambia el factor de GM de 0,004 a 0,002 a partir del 26 de octubre
 */
   useEffect(() => {
     if (formik.values.applyGM) {
-      formik.setFieldValue("gmAmount", formik.values.amount * 0.002);
+      formik.setFieldValue("gmAmount", formik.values.amount * 0.004);
     } else {
       formik.setFieldValue("gmAmount", 0);
     }
