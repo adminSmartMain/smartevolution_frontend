@@ -378,6 +378,13 @@ const handleSaveAndRedirect = () => {
           ) * -1
         )
       );
+      console.log(PV(
+        formik.values.investorTax / 100,
+        formik.values.operationDays / 365,
+        0,
+        formik.values.payedAmount,
+        0
+      ))
 
       formik.setFieldValue(
         "presentValueSF",
@@ -489,9 +496,10 @@ Por solicitud cambia el factor de GM de 0,004 a 0,002 a partir del 26 de octubre
         //}
         setReset(false);
         if (dataCreateOperation?.data?.insufficientAccountBalance) {
+          console.log(dataCreateOperation?.data?.insufficientAccountBalance)
           toast(
             "El monto de la operación es mayor al saldo disponible en la cuenta del cliente",
-            "warning"
+            "info"
           );
         }
       } else {
