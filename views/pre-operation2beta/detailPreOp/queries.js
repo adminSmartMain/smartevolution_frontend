@@ -14,6 +14,21 @@ export const GetLastOperationId = async (id) => {
   return res.data;
 };
 
+// Función para resetear la contraseña
+export const GetAllUsers = async (data) => {
+  try {
+    const res = await Axios.get(`${API_URL}/user/`, {
+      headers: {
+        authorization: "Bearer " + localStorage.getItem("access-token"),
+      },
+    });
+    return res.data;
+  } catch (error) {
+    console.error("Error al resetear la contraseña:", error);
+    throw error;
+  }
+};
+
 // Create new operation
 export const CreateOperation = async (values, op) => {
   const res = await Axios.post(

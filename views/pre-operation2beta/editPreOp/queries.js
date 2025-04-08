@@ -31,17 +31,20 @@ export const CreateOperation = async (values, op) => {
   return res.data;
 };
 
-export const UpdateOperation = async (data) => {
+
+export const UpdateOperation = async (data, previousValues, previousDeleted) => {
   let results = [];
   if (data.length > 1) {
-  console.log('entre', data);
-
     data.forEach(async (item) => {
-      if (item.opId > 0) {
-        console.log(item.opId)
+      if (item.billCode === undefined) {
+        item.billCode = "";
+        if (previousDeleted === "true" && item.status !== 2) {
+          // add previousDeleted attribute to the item
+          item.previousDeleted = "true";
+        }
         const res = await Axios.patch(
           `${API_URL}/preOperation/${item.id}`,
-          item,
+          { ...item },
           {
             headers: {
               authorization: "Bearer " + localStorage.getItem("access-token"),
@@ -49,26 +52,47 @@ export const UpdateOperation = async (data) => {
           }
         );
         results.push(res.data);
+      } else {
+        if (previousDeleted === "true" && item.status !== 2) {
+          // add previousDeleted attribute to the item
+          item.previousDeleted = 'true';
+        }
+        const res = await Axios.post(
+          `${API_URL}/preOperation/`,
+          {
+            ...item,
+          },
+          {
+            headers: {
+              authorization: "Bearer " + localStorage.getItem("access-token"),
+            },
+          }
+        );
       }
     });
     return results;
   } else {
-    console.log('entre a else', data);
-    if (data[0].opId > 0) {
-      console.log(data.opId)
-      const res = await Axios.patch(
-        `${API_URL}/preOperation/${data[0].id}`,
-        data[0],
-        {
-          headers: {
-            authorization: "Bearer " + localStorage.getItem("access-token"),
-          },
-        }
-      );
-      return res.data;
+    if (data[0].billCode === undefined) data[0].billCode = "";
+    if (data[0].DateBill === undefined || data[0].DateBill === null) data[0].DateBill = previousValues?.data.DateBill;
+    if (data[0].DateExpiration === undefined || data[0].DateExpiration === null) data[0].DateExpiration = previousValues?.data.DateExpiration;
+    if (data[0].investorProfit === undefined || data[0].investorProfit === null || isNaN(data[0].investorProfit) === true) data[0].investorProfit = previousValues?.data.investorProfit;
+    if (previousDeleted === "true") {
+      // add previousDeleted attribute to the item
+      data[0].previousDeleted = 'true';      
     }
+    const res = await Axios.patch(
+      `${API_URL}/preOperation/${data[0].id}`,
+      { ...data[0] },
+      {
+        headers: {
+          authorization: "Bearer " + localStorage.getItem("access-token"),
+        },
+      }
+    );
+    return res.data;
   }
 };
+
 
 export const GetOperationById = async (data) => {
   const res = await Axios.get(`${API_URL}/preOperation/${data}`, {
@@ -169,4 +193,29 @@ export const AccountsFromClient = async (data) => {
     },
   });
   return res.data;
+};
+
+
+export const TypeOperation = async (data) => {
+  const res = await Axios.get(`${API_URL}/type_operation`, {
+    headers: {
+      authorization: "Bearer " + localStorage.getItem("access-token"),
+    },
+  });
+  return res.data;
+};
+
+// Función para resetear la contraseña
+export const GetAllUsers = async (data) => {
+  try {
+    const res = await Axios.get(`${API_URL}/user/`, {
+      headers: {
+        authorization: "Bearer " + localStorage.getItem("access-token"),
+      },
+    });
+    return res.data;
+  } catch (error) {
+    console.error("Error al resetear la contraseña:", error);
+    throw error;
+  }
 };

@@ -79,6 +79,22 @@ export const GetOperationById = async (data) => {
   return res.data;
 };
 
+
+
+export const getOperationsByInvestor = async (params = {}) => {
+  const res = await Axios.get(
+    `${API_URL}/preOperation?status=0&investor=${params.investor || ""}`,
+    {
+      headers: {
+        authorization: "Bearer " + localStorage.getItem("access-token"),
+      },
+    }
+  );
+  return res.data;
+};
+
+
+
 export const GetBillFraction = async (id) => {
   const res = await Axios.get(`${API_URL}/preOperation/billFraction/${id}`, {
     headers: {

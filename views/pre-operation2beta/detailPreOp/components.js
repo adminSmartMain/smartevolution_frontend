@@ -20,13 +20,17 @@ export const ManageOperationDetails = ({
   opId,
   emitters,
   investors,
-  dataDetails
+  dataDetails,
+  users,
 }) => {
   console.log('data details',dataDetails)
   const emisores = emitters;
   const tipoOperaciones = ['Compra Título', 'Lorem Ipsum', 'Lorem Ipsum'];
   
-    
+      // Encontrar el usuario que coincide con dataDetails.user_id
+const usuarioEncontrado = users?.data?.find(user => user.id === dataDetails?.data?.user_created_at);
+
+console.log(usuarioEncontrado)
 
   // Formatear monto como moneda colombiana
 const formatCurrency = (value) =>
@@ -151,9 +155,24 @@ const formatDate = (date) => {
   {/* Para mostrar los toast */}
   <ToastContainer position="top-right" autoClose={5000} />
   <Box sx={{ padding: 3 }}>
-    <Typography variant="h4" gutterBottom>
-      Registrar Operación
-    </Typography>
+       <Box 
+      sx={{ 
+        display: "flex", 
+        justifyContent: "space-between", 
+        alignItems: "center", 
+        marginBottom: 3 
+      }}
+    >
+            <Typography variant="h4" gutterBottom>
+              Ver Operación
+            </Typography>
+            <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+              Creado por : 
+        {usuarioEncontrado?.social_reason 
+          ? usuarioEncontrado?.social_reason 
+          : `${usuarioEncontrado?.first_name} ${usuarioEncontrado?.last_name}`}
+      </Typography>
+      </Box>
 
     <Grid container spacing={2}>
       {/* Número de Operación */}
@@ -335,7 +354,7 @@ const formatDate = (date) => {
                                         label="Valor Futuro"
                                         fullWidth
                                         type="text" // Usamos tipo "text" para manejar el formato
-                                        value={dataDetails?.data?.clientAccount?.balance  ? formatNumberWithThousandsSeparator(Math.floor(dataDetails?.data?.clientAccount?.balance )) : ""} // Aplicamos el formato solo en la visualización, usando Math.floor para eliminar decimales
+                                        value={dataDetails?.data?.amount ? formatNumberWithThousandsSeparator(Math.floor(dataDetails?.data?.clientAccount?.balance )) : ""} // Aplicamos el formato solo en la visualización, usando Math.floor para eliminar decimales
                                         disabled
                                       />
                                       {/** Ícono Infotip con Tooltip */}

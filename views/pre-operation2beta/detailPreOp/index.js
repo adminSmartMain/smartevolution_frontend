@@ -21,7 +21,7 @@ import {
   GetOperationById,
   GetRiskProfile,
   UpdateOperation,
-  Clients,
+  Clients,GetAllUsers
 } from "./queries";
 import { Bills, billById, payerByBill } from "./queries";
 // Utils
@@ -39,12 +39,18 @@ export const ManageOperationV = () => {
   const [operation, setOperation] = useState([]);
   const [isAddingBill, setIsAddingBill] = useState(false);
   const [isCreatingBill, setIsCreatingBill] = useState(false);
-
+  const [users, setUsers] = useState([]);
  
   // Router
   const router = useRouter();
   console.log(router.query)
   // Queries
+const {
+      fetch: fetchAllUsers,
+      loading: loadingAllUsers,
+      error: errorAllUsers,
+      data: dataAllUsers,
+    } = useFetch({ service: GetAllUsers, init: true });
 
     const {
       fetch: fetch,
@@ -189,7 +195,11 @@ const [client, setClient] = useState([]);
   }, [data, loading, error]);
   console.log(client)
 
-
+  useEffect(() => {
+    if (dataAllUsers) {
+      setUsers(dataAllUsers);
+    }
+  }, [dataAllUsers]); // Espera a que los datos lleguen
 
 
   
@@ -200,6 +210,7 @@ return (
               emitters={client}
               investors={client}
               dataDetails={operation}
+              users={users}
                />}
 
   </>

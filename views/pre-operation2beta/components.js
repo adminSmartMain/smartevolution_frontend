@@ -34,7 +34,7 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 const sectionTitleContainerSx = {
   display: "flex",
   justifyContent: "space-between",
-  alignItems: "center",
+  alignItems: "rigth",
 };
 
 const filtersContainerSx = {
@@ -117,7 +117,7 @@ const TextFieldSearch = (props) => {
       type="text"
       variant="standard"
       margin="normal"
-      InputProps={{
+      Inputprops={{
         disableUnderline: true,
         sx: {
           marginTop: "-5px",
@@ -173,36 +173,15 @@ const RegisterButton = (props) => {
 };
   return (
     
-      <Button
-        variant="standard"
-        color="primary"
-        size="large"
+      <button className="button"
         onClick={handleOpenRegisterOperation}
-        sx={{
-          height: "2.6rem",
-          backgroundColor: "transparent",
-          border: "1.4px solid #63595C",
-          borderRadius: "4px",
-        }}
+       
       >
-        <Typography
-          letterSpacing={0}
-          fontSize="80%"
-          fontWeight="bold"
-          color="#63595C"
-        >
-          Registrar nueva operacion
-        </Typography>
-
-        <Typography
-          fontFamily="icomoon"
-          fontSize="1.2rem"
-          color="#63595C"
-          marginLeft="0.9rem"
-        >
-          &#xe927;
-        </Typography>
-      </Button>
+        
+          Registrar operacion
+        
+       
+        </button>
     
   );
 };
@@ -310,36 +289,11 @@ const SellOrderButton = (props) => {
 
   return (
     <Link href="/operations/electronicSignature" underline="none">
-      <Button
-        variant="standard"
-        color="primary"
-        size="large"
-        sx={{
-          height: "2.6rem",
-          ml: 1,
-          backgroundColor: "transparent",
-          border: "1.4px solid #63595C",
-          borderRadius: "4px",
-        }}
-      >
-        <Typography
-          letterSpacing={0}
-          fontSize="80%"
-          fontWeight="bold"
-          color="#63595C"
-        >
+      <button className="button">
+     
           Notificaciones de Compra
-        </Typography>
-
-        <Typography
-          fontFamily="icomoon"
-          fontSize="1.5rem"
-          color="#63595C"
-          marginLeft="0.9rem"
-        >
-          &#xe911;
-        </Typography>
-      </Button>
+       
+        </button>
     </Link>
   );
 };
@@ -364,11 +318,25 @@ export const OperationsComponents = ({
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [dateRange, setDateRange] = useState({ start: null, end: null });
+  const [anchorElCSV, setAnchorElCSV] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
   const openMenu = Boolean(anchorEl);
+  const openMenuCSV = Boolean(anchorElCSV);
   const [openWindow, setOpenWindow] = useState(null);
   const [openModal, setOpenModal] = useState(false);
- 
+  const [openDelete, setOpenDelete] = useState([false, null]);
+  const handleOpenDelete = (id) => setOpenDelete([true, id]);
+  const handleCloseDelete = () => setOpenDelete([false, null]);
+
+  const handleDelete = (id) => {
+    fetchDeleteOperation(id);
+    setOpenDelete([false, null]);
+    setTimeout(() => {
+      getOperationsFetch();
+    }, 1000);
+  };
+
+
 
 
   const [openUpdateModal, setOpenUpdateModal] = useState(false);
@@ -378,8 +346,25 @@ export const OperationsComponents = ({
   const [operationToDelete, setOperationToDelete] = useState(null);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
 
+// En el componente padre que contiene el DataGrid
+const [menuState, setMenuState] = useState({
+  anchorEl: null,
+  currentRowId: null,
+  currentStatus: null
+});
 
-  
+const handleMenuClick = (event, rowId, rowStatus) => {
+  event.stopPropagation();
+  setMenuState({
+    anchorEl: event.currentTarget,
+    currentRowId: rowId,
+    currentStatus: rowStatus
+  });
+};
+
+const handleCloseMenu = () => {
+  setMenuState({ anchorEl: null, currentRowId: null, currentStatus: null });
+};
   const handleActionClick = (action, operation) => {
     if (action === "Actualizar Estado") {
       setSelectedOperation(operation.id); // Establecer el ID de la operación
@@ -401,45 +386,43 @@ export const OperationsComponents = ({
   const EditPreOperation = ({ id, status }) => {
     const [openWindow, setOpenWindow] = useState(null);
   
-    const handleOpenEditPreOperation = () => {
+    const handleOpenEditPreOperation = (e) => {
+      e.stopPropagation();
+      if (!id) return;
+  
       if (openWindow && !openWindow.closed) {
         openWindow.focus();
-      } else {
-        const url =
-          status == 0
-            ? `/pre-operations2beta/editPreOp?id=${id}`
-            : status === 2
-            ? `/pre-operations2beta/editPreOp?id=${id}&previousDeleted=${true}`
-            : "#";
-        
-        if (url !== "#") {
-          const newWindow = window.open(url, "_blank", "width=800,height=600");
-          setOpenWindow(newWindow);
-          newWindow.onbeforeunload = () => setOpenWindow(null);
-        }
+        return;
+      }
+  
+      let url;
+      switch(status) {
+        case 0: 
+          url = `/pre-operations2beta/editPreOp?id=${id}`;
+          break;
+        case 2: 
+          url = `/pre-operations2beta/editPreOp?id=${id}&previousDeleted=true`;
+          break;
+        default:
+          return;
+      }
+  
+      const newWindow = window.open(url, '_blank', 'width=800,height=600');
+      if (newWindow) {
+        setOpenWindow(newWindow);
+        newWindow.onbeforeunload = () => setOpenWindow(null);
       }
     };
   
     return (
       <Typography
-        fontFamily="icomoon"
-        fontSize="1.9rem"
-        color="#999999"
-        borderRadius="5px"
-        sx={{
-          "&:hover": {
-            backgroundColor: "#B5D1C980",
-            color: "#488B8F",
-          },
-          cursor: "pointer",
-        }}
         onClick={handleOpenEditPreOperation}
+        sx={{ /* estilos */ }}
       >
         &#xe900;
       </Typography>
     );
   };
-  
   
 
   const DetailPreOperation = ({ id }) => {
@@ -458,6 +441,10 @@ export const OperationsComponents = ({
         newWindow.onbeforeunload = () => setOpenWindow(null);
       }
     };
+
+
+  
+    
   
     return (
       <Typography
@@ -480,13 +467,114 @@ export const OperationsComponents = ({
   };
 
 
-  const handleMenuClick = (event) => {
-    setAnchorEl(event.currentTarget);
+
+
+  
+  const DeletePreOperation = ({ id, status }) => {
+
+  
+   
+
+  
+    return (
+      <>
+      <CustomTooltip
+        title="Eliminar"
+        arrow
+        placement="bottom-start"
+        TransitionComponent={Fade}
+        PopperProps={{
+          modifiers: [
+            {
+              name: "offset",
+              options: {
+                offset: [0, -15],
+              },
+            },
+          ],
+        }}
+      >
+        <Typography
+          fontFamily="icomoon"
+          fontSize="1.9rem"
+          color="#999999"
+          borderRadius="5px"
+          sx={{
+            "&:hover": {
+              backgroundColor: "#B5D1C980",
+              color: "#488B8F",
+            },
+            cursor: "pointer",
+          }}
+          onClick={() => {
+            if ( status === 1) {
+              Toast(
+                "No se puede eliminar una operación aprobada",
+                "error"
+              );
+            } else {
+              handleOpenDelete(id);
+            }
+          }}
+        >
+          &#xe901;
+        </Typography>
+      </CustomTooltip>
+     
+    </>
+    );
   };
 
-  const handleCloseMenu = () => {
-    setAnchorEl(null);
+  const UpdateStatusOperation = ({ id}) => {
+    
+  
+   
+  
+  
+    return (
+      <CustomTooltip
+          title="Actualizar estado"
+          arrow
+          placement="bottom-start"
+          TransitionComponent={Fade}
+          PopperProps={{
+            modifiers: [
+              {
+                name: "offset",
+                options: {
+                  offset: [0, -15],
+                },
+              },
+            ],
+          }}
+        >
+          <IconButton onClick={() => handleOpen(id)}>
+            <i
+              className="fa-regular fa-check"
+              style={{
+                fontSize: "1.3rem",
+                color: "#488B8F",
+                borderRadius: "5px",
+
+                "&:hover": {
+                  backgroundColor: "#B5D1C980",
+                  color: "#488B8F",
+                },
+              }}
+            ></i>
+          </IconButton>
+        </CustomTooltip>
+    );
   };
+
+  const handleMenuClickCSV = (event) => {
+    setAnchorElCSV(event.currentTarget);
+  };
+  
+  const handleCloseMenuCSV = () => {
+    setAnchorElCSV(null);
+  };
+
 
   const handleExportXML = () => {
     alert("Exportar como XML");
@@ -517,18 +605,7 @@ export const OperationsComponents = ({
     data: dataDeleteOperation,
   } = useFetch({ service: DeleteOperation, init: false });
 
-  const [openDelete, setOpenDelete] = useState([false, null]);
-  const handleOpenDelete = (id) => setOpenDelete([true, id]);
-  const handleCloseDelete = () => setOpenDelete([false, null]);
-
-  const handleDelete = (id) => {
-    fetchDeleteOperation(id);
-    setOpenDelete([false, null]);
-    setTimeout(() => {
-      getOperationsFetch();
-    }, 1000);
-  };
-
+  
   console.log(rows)
 
   console.log(calcs)
@@ -651,35 +728,54 @@ export const OperationsComponents = ({
   const numberFormat = new Intl.NumberFormat("en-US", formatOptions);
   console.log(page)
   const columns = [
-    { field: "status", headerName: "Estado", width: 160,
+    {
+      field: "status",
+      headerName: "Estado",
+      width: 160,
       renderCell: (params) => {
         console.log(params.row); 
+        let statusText = "";
         let badgeClass = "";
+        
         switch (params.value) {
-          case "Por aprobar":
+          case 0:
+            statusText = "Por Aprobar";
             badgeClass = "badge por-aprobar";
             break;
-          case "Aprobado":
+          case 1:
+            statusText = "Aprobada";
             badgeClass = "badge aprobado";
             break;
-          case "Rechazado":
+          case 2:
+            statusText = "Rechazada";
             badgeClass = "badge rechazado";
             break;
+          case 3:
+            statusText = "Vigente";
+            badgeClass = "badge vigente";
+            break;
+          case 4:
+            statusText = "Cancelada";
+            badgeClass = "badge cancelada";
+            break;
           default:
+            statusText = "Por Aprobar";
             badgeClass = "badge";
         }
-        return <span className={badgeClass}>{params.value}</span>;
+        
+        return <span className={badgeClass}>{statusText}</span>;
       },
     },
     
     { field: "opId", headerName: "ID", width: 80 },
     { field: "opDate", headerName: "Creado el", width: 110 },
-    { field: "billFraction", headerName: "# Factura / Fracción", width: 90 },
+    { field: "billFraction", headerName: "Fracción", width: 90 },
+    { field: "billData", headerName: "# Factura", width: 90 },
     { field: "emitterName", headerName: "Emisor", width: 200 },
     { field: "investorName", headerName: "Inversionista", width: 200 },
     { field: "payerName", headerName: "Pagador", width: 150 },
     { field: "discountTax", headerName: "Tasa Desc.", width: 90 },
-    { field: "percent", headerName: "% Desc.", width: 90 }, // Nueva columna
+    { field: "payedPercent", headerName: "% Desc.", width: 90 }, // Nueva columna
     { field: "investorTax", headerName: "Tasa Inv.", width: 90 },
     { field: "payedAmount", headerName: "Valor Nominal", width: 110,
       valueFormatter: ({ value }) => {
@@ -701,63 +797,80 @@ export const OperationsComponents = ({
     },
     { field: "probableDate", headerName: "Fecha Probable", width: 110 },
     { field: "opExpiration", headerName: "Fecha Fin", width: 110 },
+   
     {
-      field: "Editar operacion",
-      headerName: "",
-      width: 50,
-      sortable: false,
-      filterable: false,
-      renderCell: (params) => (
-        <CustomTooltip
-          title="Editar operación"
-          arrow
-          placement="bottom-start"
-          TransitionComponent={Fade}
-          PopperProps={{
-            modifiers: [
-              {
-                name: "offset",
-                options: {
-                  offset: [0, -15],
-                },
-              },
-            ],
-          }}
-        >
-          <EditPreOperation id={params.row.id} status={params.row.status} />
-        </CustomTooltip>
-      ),
-    },
-    {
-      field: "Detalles operación 2",
-      headerName: "",
-      width: 50,
-      sortable: false,
-      filterable: false,
+      field: "Acciones",
+      headerName: "Acciones",
+      width: 90,
       renderCell: (params) => {
+        const isOperationApproved = params.row.estado === "Aprobado";
         
         return (
-          <CustomTooltip
-            title="Ver operación"
-            arrow
-            placement="bottom-start"
-            TransitionComponent={Fade}
-            PopperProps={{
-              modifiers: [
-                {
-                  name: "offset",
-                  options: {
-                    offset: [0, -15],
-                  },
-                },
-              ],
-            }}
-          >
-            <DetailPreOperation id={params.row.id} />
-          </CustomTooltip>
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            {/* Botón de Documento */}
+            <Tooltip title="Crear o ver resumen de negociación" arrow>
+              <IconButton
+                onClick={() => console.log("Redirigiendo a:", params.row.id)}
+                style={{ marginRight: 10 }}
+              >
+                <DocumentIcon />
+              </IconButton>
+            </Tooltip>
+    
+            {/* Botón de Menú */}
+            <IconButton 
+              onClick={(e) => handleMenuClick(e, params.row.id, params.row.status)}
+              className="context-menu"
+            >
+              <MoreVertIcon />
+            </IconButton>
+    
+            {/* Menú Contextual */}
+            <Menu
+              anchorEl={menuState.anchorEl}
+              open={Boolean(menuState.anchorEl)}
+              onClose={handleCloseMenu}
+            >
+              <MenuItem onClick={(e) => {
+                e.stopPropagation();
+                handleCloseMenu();
+              }}>
+                <UpdateStatusOperation id={menuState.currentRowId} />
+              </MenuItem>
+    
+              <MenuItem onClick={(e) => {
+                e.stopPropagation();
+                handleCloseMenu();
+              }}>
+                <DetailPreOperation id={menuState.currentRowId} />
+              </MenuItem>
+    
+              <MenuItem onClick={(e) => {
+                e.stopPropagation();
+                handleCloseMenu();
+              }}>
+                <EditPreOperation 
+                  id={menuState.currentRowId} 
+                  status={menuState.currentStatus} 
+                />
+              </MenuItem>
+    
+              {!isOperationApproved && (
+                <MenuItem onClick={(e) => {
+                  e.stopPropagation();
+                  handleCloseMenu();
+                }}>
+                  <DeletePreOperation 
+                    id={menuState.currentRowId} 
+                    status={menuState.currentStatus} 
+                  />
+                </MenuItem>
+              )}
+            </Menu>
+          </div>
         );
-      },
-    }
+      }
+    },
     
    
   ];
@@ -771,6 +884,40 @@ export const OperationsComponents = ({
     filtersHandlers.set({ ...tempFilters, [field]: value });
   };
 
+  /* Experimento para exportar los datos del data grid a un archivo csv que pueda ser leido por Excel*/
+  const handleExportExcel = () => {
+    // Obtener los datos de las filas visibles en la página actual del DataGrid
+    const currentRows = rows; // Aquí, rows son los datos actuales de la página.
+  
+    // Generar los encabezados de las columnas
+    const columnHeaders = columns.map(col => col.headerName);
+  
+    // Convertir las filas de datos en formato CSV
+    const csvContent = [
+      columnHeaders.join(","), // Cabecera de las columnas
+      ...currentRows.map(row =>
+        columns.map(col => row[col.field] ? row[col.field] : "").join(",") // Filas de datos
+      ),
+    ].join("\n");
+  
+    // Crear un Blob con el contenido CSV
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  
+    // Crear un enlace de descarga
+    const link = document.createElement("a");
+  
+    // Crear un URL para el Blob
+    const url = URL.createObjectURL(blob);
+    
+    // Configurar el enlace para que descargue el archivo CSV
+    link.setAttribute("href", url);
+    link.setAttribute("download", "datos_exportados.csv"); // Nombre del archivo
+  
+    // Simular un clic en el enlace para iniciar la descarga
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
   return (
     <>
     
@@ -785,167 +932,147 @@ export const OperationsComponents = ({
         >
           Consulta de Pre-operaciones
         </Typography>
-        <SellOrderButton />
-         <Button
-                variant="standard"
-                color="primary"
-                size="large"
-                
-                sx={{
-                  height: "2.6rem",
-                  backgroundColor: "transparent",
-                  border: "1.4px solid #63595C",
-                  borderRadius: "4px",
-                }}
-              >
-                <Typography
-                  letterSpacing={0}
-                  fontSize="80%"
-                  fontWeight="bold"
-                  color="#63595C"
-                >
+        <Box sx={{ ...sectionTitleContainerSx }}>
+        <button className="button">
+               
                   Operaciones
-                </Typography>
-        
-                <Typography
-                  fontFamily="icomoon"
-                  fontSize="1.2rem"
-                  color="#63595C"
-                  marginLeft="0.9rem"
-                >
-                  &#xe927;
-                </Typography>
-              </Button>
-            
+                
+                </button>
+              <SellOrderButton /> 
+              </Box>
       </Box>
 
       <Box sx={{ ...filtersContainerSx }}>
-        <Box display="flex" flexDirection="column">
-          <InputTitles sx>Buscar N° Operación</InputTitles>
-          <TextFieldSearch
-            id="searchOperation"
-            placeholder="N° Operación"
-            value={tempFilters.opId}
-            onChange={(evt) => handleTextFieldChange(evt, "opId")}
-            onKeyPress={(event) => {
-              if (event.key === "Enter") {
-                updateFilters(event.target.value, "opId");
-              }
-              handleTextFieldChange(event, "opId");
-            }}
-          />
-        </Box>
-
-        <Box display="flex" flexDirection="column">
-          <InputTitles>Buscar N° Factura</InputTitles>
-          <TextFieldSearch
-            id="searchBill"
-            placeholder="N° Factura"
-            value={tempFilters.billId}
-            onChange={(evt) => handleTextFieldChange(evt, "billId")}
-            onKeyPress={(event) => {
-              if (event.key === "Enter") {
-                updateFilters(event.target.value, "billId");
-              }
-              handleTextFieldChange(event, "billId");
-            }}
-          />
-        </Box>
-
-        <Box display="flex" flexDirection="column">
-          <InputTitles>Buscar nombres</InputTitles>
-          <TextFieldSearch
-            id="searchName"
-            placeholder="Nombre"
-            value={tempFilters.investor}
-            onChange={(evt) => handleTextFieldChange(evt, "investor")}
-            onKeyPress={(event) => {
-              if (event.key === "Enter") {
-                updateFilters(event.target.value, "investor");
-              }
-              handleTextFieldChange(event, "investor");
-            }}
-          />
-        </Box>
-
+      <div className="search-and-actions-container">
+        <input
+          type="text"
+          placeholder="Buscar o filtrar resultados..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          inputprops={{
+            endAdornment: search && (
+              <InputAdornment position="end">
+                <IconButton onClick={handleClearSearch}>
+                  <ClearIcon sx={{ color: "#488b8f" }} />
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+          className="search-bar"
+        />
         <Box display="flex" alignSelf="flex-end" ml="auto" mb={1}>
-          <RegisterButton />
+          
+         
+          <Link href="/pre-operations2beta/byOp" underline="none">
+          <button className="button">
+             
+                Ver por Grupos
+              
+
+              
+              </button>
+          </Link>
+          <div>
+          <button className="button" onClick={handleOpenModal}>Valor a Girar</button>
+          <ModalValorAGirar open={openModal} handleClose={handleCloseModal}  />
+          
+        </div>
           <AdvancedDateRangePicker
           onDateRangeChange={(range) => setDateRange(range)}
           className="date-picker"
         />
-       
-          <Link href="/pre-operations2beta/byOp" underline="none">
-            <Button
-              variant="standard"
-              color="primary"
-              size="large"
-              sx={{
-                height: "2.6rem",
-                backgroundColor: "transparent",
-                border: "1.4px solid #63595C",
-                borderRadius: "4px",
-              }}
-            >
-              <Typography
-                letterSpacing={0}
-                fontSize="80%"
-                fontWeight="bold"
-                color="#63595C"
-              >
-                Ver por Grupos
-              </Typography>
-
-              <Typography
-                fontFamily="icomoon"
-                fontSize="1.2rem"
-                color="#63595C"
-                marginLeft="0.9rem"
-              >
-                &#xe927;
-              </Typography>
-            </Button>
-          </Link>
           
+        <RegisterButton />
         </Box>
+        
+        
+       
+      
+        <IconButton onClick={handleMenuClickCSV} className="context-menu">
+          <MoreVertIcon />
+        </IconButton>
+        <Menu anchorEl={anchorElCSV} open={openMenuCSV} onClose={handleCloseMenuCSV}>
+        <MenuItem onClick={handleExportExcel}>
+          Exportar a CSV
+        </MenuItem>
+        </Menu>
+        
+      </div>
+
+        
+        
+
+        
       </Box>
-      <Box display="flex" alignSelf="flex-end" ml="auto" mb={1}>
+      
 
-      <Grid container spacing={2} alignItems="center" sx={{ whiteSpace: "nowrap", overflowX: "auto", p: 1 }}>
-            {[
-              { title: "Comisión", value: calcs?.commission },
-              { title: "IVA", value: calcs?.iva },
-              { title: "Valor inversor", value: calcs?.investorValue },
-              { title: "RETEFUENTE", value: calcs?.rteFte },
-              { title: "FACTURAR NETO", value: calcs?.netFact },
-              { title: "RETEICA", value: calcs?.retIca },
-              { title: "VALOR FUTURO", value: calcs?.futureValue },
-              { title: "RETEIVA", value: calcs?.retIva },
-              { title: "VALOR A GIRAR", value: calcs?.depositValue - other },
-            ].map((item, index) => (
-              <Box key={index} sx={{ display: "flex", flexDirection: "column", alignItems: "center", mx: 2.7 }}>
-                <Typography variant="caption" color="textSecondary">{item.title}</Typography>
-                <Typography variant="body2">{formatNumber(Math.round(item.value))}</Typography>
-              </Box>
-            ))}
+      <Grid container spacing={1.5} sx={{ ...entriesGrid }}>
+        <Grid item xs={2}>
+          <Entry title="Comisión">
+            <ValueFormat value={Math.round(calcs?.commission) || 0} />
+          </Entry>
+        </Grid>
 
-            {/* Campo editable para "Otros" */}
-            <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", mx: 2.7 }}>
-              <Typography variant="caption" color="textSecondary">Otros</Typography>
-              <TextField
-                variant="standard"
-                size="small"
-                type="number"
-                value={other}
-                onChange={(e) => setOther(parseFloat(e.target.value) || 0)}
-                sx={{ width: 90, textAlign: "right", textAlignLast: "right" }}
-              />
-            </Box>
-          </Grid>
+        <Grid item xs={2}>
+          <EditableEntry
+            title="Otros"
+            onChangeMasked={(values) => {
+              setOther(values.floatValue);
+            }}
+          />
+        </Grid>
+
+        <Grid item xs={2}>
+          <Entry title="IVA">
+            <ValueFormat value={Math.round(calcs?.iva) || 0} />
+          </Entry>
+        </Grid>
+
+        <Grid item xs={2}>
+          <Entry title="Valor inversor">
+            <ValueFormat value={Math.round(calcs?.investorValue) || 0} />
+          </Entry>
+        </Grid>
+
+        <Grid item xs={2}>
+          <Entry title="RETEFUENTE">
+            <ValueFormat value={Math.round(calcs?.rteFte) || 0} />
+          </Entry>
+        </Grid>
+
+        <Grid item xs={2}>
+          <Entry title="FACTURAR NETO">
+            <ValueFormat value={Math.round(calcs?.netFact) || 0} />
+          </Entry>
+        </Grid>
+
+        <Grid item xs={2}>
+          <Entry title="RETEICA">
+            <ValueFormat value={Math.round(calcs?.retIca) || 0} />
+          </Entry>
+        </Grid>
+
+        <Grid item xs={2}>
+          <Entry title="VALOR FUTURO">
+            <ValueFormat value={Math.round(calcs?.futureValue) || 0} />
+          </Entry>
+        </Grid>
+
+        <Grid item xs={2}>
+          <Entry title="RETEIVA">
+            <ValueFormat value={Math.round(calcs?.retIva) || 0} />
+          </Entry>
+        </Grid>
+
+        <Grid item xs={2}>
+          <Entry title="VALOR A GIRAR">
+            <ValueFormat value={Math.round(calcs?.depositValue - other) || 0} />
+          </Entry>
+        </Grid>
+      </Grid>
 
 
-      </Box>
-     
+      
 
       <Box sx={{ ...tableWrapperSx }}>
       <CustomDataGrid
@@ -1044,7 +1171,8 @@ export const OperationsComponents = ({
       <TitleModal
         open={open[0]}
         handleClose={handleClose}
-        containerSx={{
+        container
+        Sx={{
           width: "25%",
           height: "30%",
         }}
@@ -1119,6 +1247,45 @@ export const OperationsComponents = ({
           </Box>
         </Box>
       </TitleModal>
+      <Modal open={openDelete[0]} handleClose={handleCloseDelete}>
+        <Box
+          display="flex"
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
+          height="100%"
+          width="100%"
+        >
+          <Typography
+            letterSpacing={0}
+            fontSize="1vw"
+            fontWeight="medium"
+            color="#63595C"
+          >
+            ¿Estás seguro que deseas la operación?
+          </Typography>
+
+          <Box
+            display="flex"
+            flexDirection="row"
+            alignItems="center"
+            justifyContent="center"
+            mt={4}
+          >
+            <GreenButtonModal onClick={handleCloseDelete}>
+              Volver
+            </GreenButtonModal>
+            <RedButtonModal
+              sx={{
+                ml: 2,
+              }}
+              onClick={() => handleDelete(openDelete[1])}
+            >
+              Eliminar
+            </RedButtonModal>
+          </Box>
+        </Box>
+      </Modal>
       {/* Modal de confirmación para actualizar estados*/}
       {/* <Modal open={openDelete[0]} handleClose={handleCloseDelete}>
         <Box
