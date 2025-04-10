@@ -148,7 +148,7 @@ body {
 
 
 
-* Botón */
+/* Botón */
 .button-primary {
   background-color: var(--primary-color);
   color: var(--white-color);
