@@ -29,8 +29,8 @@ export const ManageOperationDetails = ({
   
       // Encontrar el usuario que coincide con dataDetails.user_id
 const usuarioEncontrado = users?.data?.find(user => user.id === dataDetails?.data?.user_created_at);
-
-console.log(usuarioEncontrado)
+const usuarioEncontradoEdit = users?.data?.find(user => user.id === dataDetails?.data?.user_updated_at);
+console.log(usuarioEncontrado,usuarioEncontradoEdit )
 
   // Formatear monto como moneda colombiana
 const formatCurrency = (value) =>
@@ -149,7 +149,36 @@ const formatDate = (date) => {
   const options = { day: "2-digit", month: "short", year: "numeric" };
   return new Date(date).toLocaleDateString("es-ES", options);
 };
-  
+
+const formatDate2 = (dateString) => {
+  if (!dateString) return "-- -- ----";
+
+    let dateObj;
+
+      // Si dateString es un objeto Date, convertirlo a cadena
+      if (dateString instanceof Date) {
+        const year = dateString.getFullYear();
+        const month = String(dateString.getMonth() + 1).padStart(2, "0"); // Meses van de 0 a 11
+        const day = String(dateString.getDate()).padStart(2, "0");
+        dateObj = { year, month, day };
+      }
+      // Si dateString es una cadena en formato "YYYY-MM-DD"
+      else if (typeof dateString === "string" && dateString.includes("-")) {
+        const [year, month, day] = dateString.split("-");
+        dateObj = { year, month, day };
+      }
+      // Si el formato no es válido
+      else {
+        return "-- -- ----";
+      }
+
+      return `${dateObj.day}/${dateObj.month}/${dateObj.year}`; // Formato DD/MM/YYYY
+    };
+const renderNombreUsuario = (usuario) => (
+  <Box component="span" sx={{ color: 'text.primary', fontWeight: 500 }}>
+    {usuario?.social_reason || `${usuario?.first_name} ${usuario?.last_name}`}
+  </Box>
+);
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={esLocale}>
   {/* Para mostrar los toast */}
@@ -166,17 +195,28 @@ const formatDate = (date) => {
             <Typography variant="h4" gutterBottom>
               Ver Operación
             </Typography>
-            <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-              Creado por : 
-        {usuarioEncontrado?.social_reason 
-          ? usuarioEncontrado?.social_reason 
-          : `${usuarioEncontrado?.first_name} ${usuarioEncontrado?.last_name}`}
-      </Typography>
+           {usuarioEncontrado || usuarioEncontradoEdit ? (
+    <Typography variant="subtitle1" sx={{ color: 'text.secondary' }}>
+      {usuarioEncontrado?.id === usuarioEncontradoEdit?.id ? (
+        <>Creado y editado por: {renderNombreUsuario(usuarioEncontrado)}</>
+      ) : (
+        <>
+          {usuarioEncontrado && <>Creado por: {renderNombreUsuario(usuarioEncontrado)}</>}
+          {usuarioEncontrado && usuarioEncontradoEdit && <br />}
+          {usuarioEncontradoEdit && <>Editado por: {renderNombreUsuario(usuarioEncontradoEdit)}</>}
+        </>
+      )}
+    </Typography>
+  ) : (
+    <Typography variant="subtitle1" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
+      Sin información de autoría
+    </Typography>
+  )}
       </Box>
 
     <Grid container spacing={2}>
       {/* Número de Operación */}
-      <Grid item xs={12} md={1.5}>
+      <Grid item xs={12} md={2}>
         <TextField
           label="Número de Operación *"
           fullWidth
@@ -188,7 +228,7 @@ const formatDate = (date) => {
       </Grid>
 
       {/* Fecha de Operación */}
-      <Grid item xs={12} md={1.5}>
+      <Grid item xs={12} md={2}>
         <TextField
           label="Fecha de Operación *"
           fullWidth
@@ -212,7 +252,7 @@ const formatDate = (date) => {
       </Grid>
 
       {/* Emisor */}
-      <Grid item xs={12} md={4}>
+      <Grid item xs={12} md={6}>
         <TextField
           label="Emisor"
           fullWidth
@@ -223,9 +263,19 @@ const formatDate = (date) => {
           disabled
         />
       </Grid>
-
+{/*Selector de Pagadores*/}
+<Grid item xs={12} md={6}>
+                                    <TextField
+                                        label="Nombre Pagador"
+                                        fullWidth
+                                        type="text" // Usamos tipo "text" para manejar el formato
+                                        value={(dataDetails?.data?.payer.first_name && dataDetails?.data?.payer.last_name) ? `${dataDetails.data.payer.first_name} ${dataDetails.data.payer.last_name}` : dataDetails?.data?.payer.social_reason} // Aplicamos el formato solo en la visualización, usando Math.floor para eliminar decimales
+                                        disabled
+                                        InputLabelProps={{ shrink: true }}
+                                      />
+                                    </Grid>
       {/* Corredor Emisor */}
-      <Grid item xs={12} md={3}>
+      <Grid item xs={12} md={6}>
         <TextField
           label="Corredor Emisor"
           fullWidth
@@ -244,23 +294,24 @@ const formatDate = (date) => {
                             {/* Acordeón */}
                             <Grid item xs>
                               
-                                <Grid container alignItems="center" spacing={2}>
+                                <Grid container alignItems="center" spacing={2} sx ={{ mb: 2 }}>
                                 {/* Número de factura de la cabecera del acordeon */}
                                 <Grid item>
                                   <Typography>
                                     {dataDetails?.data?.bill?.billId }
                                   </Typography>
                                 </Grid>
+                                
                                 {/* Fecha de emisión y vencimiento de la cabecera del acordeon*/}
                                 <Grid item>
                                   <Typography variant="body2" color="textSecondary">
-                                    Emisión: {dataDetails?.data?.bill?.dateBill ? formatDate(dataDetails?.data?.bill?.dateBill) : "-- -- ----"} | 
-                                    Vencimiento: {dataDetails?.data?.bill?.expirationDate ? formatDate(dataDetails?.data?.bill?.expirationDate) : "-- -- ----"}
+                                    Emisión: {dataDetails?.data?.bill?.dateBill ? formatDate2(dataDetails?.data?.bill?.dateBill) : "-- -- ----"} | 
+                                    Vencimiento: {dataDetails?.data?.bill?.expirationDate ? formatDate2(dataDetails?.data?.bill?.expirationDate) : "-- -- ----"}
                                   </Typography>
                                 </Grid>
                               </Grid>
                                
-                                  <Grid container spacing={3}>
+                                  <Grid container spacing={4}>
                                     <Grid item xs={12} md={2}>
                                     <TextField
                                         label="Número de Factura *"
@@ -298,7 +349,7 @@ const formatDate = (date) => {
                                        <TextField
                                           label="Fecha Probable"
                                           fullWidth
-                                          value={dataDetails?.data?.probableDate || 0}
+                                          value={ formatDate2 (dataDetails?.data?.probableDate) || 0}
                                           disabled
                                         />
                                       </Grid> 
@@ -337,17 +388,7 @@ const formatDate = (date) => {
                                           disabled // Deshabilita la edición manual
                                         />
                                       </Grid>
-                                    {/*Selector de Pagadores*/}
-                                    <Grid item xs={12} md={6}>
-                                    <TextField
-                                        label="Nombre Pagador"
-                                        fullWidth
-                                        type="text" // Usamos tipo "text" para manejar el formato
-                                        value={(dataDetails?.data?.payer.first_name && dataDetails?.data?.payer.last_name) ? `${dataDetails.data.payer.first_name} ${dataDetails.data.payer.last_name}` : dataDetails?.data?.payer.social_reason} // Aplicamos el formato solo en la visualización, usando Math.floor para eliminar decimales
-                                        disabled
-                                        InputLabelProps={{ shrink: true }}
-                                      />
-                                    </Grid>
+                                    
                                     {/* Valor Futuro */}
                                     <Grid item xs={12} md={3} style={{ position: 'relative' }}>
                                       <TextField
@@ -392,7 +433,7 @@ const formatDate = (date) => {
                                       </Tooltip>
                                     </Grid>
                                     {/* Campo de porcentaje de descuento */}
-                                    <Grid item xs={12} md={1} style={{ position: 'relative' }}>
+                                    <Grid item xs={12} md={1.5} style={{ position: 'relative' }}>
                                       <TextField
                                         label="% Descuento"
                                         fullWidth
@@ -436,7 +477,7 @@ const formatDate = (date) => {
                                     </Grid>
 
                                     {/*Tasa Descuento */}
-                                     <Grid item xs={12} md={1} style={{ position: 'relative' }}>
+                                     <Grid item xs={12} md={1.5} style={{ position: 'relative' }}>
                                       <TextField
                                         label="Tasa Descuento"
                                         fullWidth
@@ -474,7 +515,7 @@ const formatDate = (date) => {
                                         InputLabelProps={{ shrink: true }}
                                       />
                                     </Grid>
-                                    <Grid item xs={12} md={1.5}>
+                                    <Grid item xs={12} md={2}>
                                       <DatePicker
                                         label="Fecha Fin"
                                         value={dataDetails?.data?.opExpiration }
@@ -482,7 +523,7 @@ const formatDate = (date) => {
                                         renderInput={(params) => <TextField {...params} fullWidth />}
                                       />
                                     </Grid>
-                                    <Grid item xs={12} md={1}>
+                                    <Grid item xs={12} md={2}>
                                       <TextField
                                         label="Días Operación"
                                         fullWidth
@@ -493,7 +534,7 @@ const formatDate = (date) => {
                                       />
                                     </Grid>
                                     {/* Campo Utilidad Inversión*/ }
-                                    <Grid item xs={12} md={3}>
+                                    <Grid item xs={12} md={3.5}>
                                       <TextField
                                         label="Utilidad Inversión"
                                         fullWidth
@@ -559,24 +600,48 @@ const formatDate = (date) => {
                                         
                                       />
                                     </Grid>
-                                    {/* Gasto de Mantenimiento */}
-                                    <Grid item xs={12} md={4}>
-                                      <div className="flex flex-row gap-2 items-center p-2 border rounded-lg shadow-md">
-                                        <label className="text-lg font-medium flex-shrink-0">Gasto de Mantenimiento (GM)</label>
-                                        
-                                        <TextField
-                                          type="text"
-                                          placeholder="$ 0,00"
-                                          value={dataDetails?.data?.GM || 0}
-                                          
-                                          disabled    
-
-                                          fullWidth
-                                          variant="outlined"
-                                          className={`"bg-gray-200 text-gray-500"}`}
-                                        />
-                                      </div>
-                                    </Grid>
+                                  {/* Gasto de Mantenimiento */}
+<Grid item xs={12} md={8}>
+  <Box 
+    sx={{
+      display: 'flex',
+      alignItems: 'center',
+      height: '56%',
+      width:'870px',
+      gap: 1,
+      p: 1,
+      border: '1px solid',
+      borderColor: 'rgba(0, 0, 0, 0.23)',
+      borderRadius: 1,
+      boxShadow: 0,
+      
+    }}
+  >
+    <Typography 
+      variant="subtitle1" 
+      sx={{ 
+        fontWeight: 'medium',
+        minWidth: { sm: '180px' },
+        color: 'text.secondary'
+      }}
+    >
+      Gasto de Mantenimiento (GM)
+    </Typography>
+    
+    <TextField
+      value={dataDetails?.data?.GM ? `$ ${dataDetails.data.GM}` : "$ 0.00"}
+      disabled
+      size="small"  // <-- Esto reduce la altura
+                                                
+      thousandSeparator="."
+      decimalSeparator=","
+      decimalScale={0}
+      allowNegative={false}
+      fullWidth
+      variant="outlined"
+    />
+  </Box>
+</Grid>
                                   </Grid>
                                
                             </Grid>

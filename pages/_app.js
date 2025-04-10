@@ -22,6 +22,8 @@ const pathsWithoutDefaultLayout = [
   "/auth/resetPassword",
   "/auth/forgotPassword",
   "/pre-operations2beta/manage",
+  "/pre-operations2beta/detailPreOp",
+  "/pre-operations2beta/editPreOp",
 ];
 
 function MyApp({ Component, pageProps }) {

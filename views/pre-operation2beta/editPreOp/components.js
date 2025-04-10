@@ -49,7 +49,8 @@ users,
   // Encontrar el usuario que coincide con dataDetails.user_id
 const usuarioEncontrado = users?.data?.find(user => user.id === dataDetails?.data?.user_created_at);
 
-console.log(usuarioEncontrado)
+const usuarioEncontradoEdit = users?.data?.find(user => user.id === dataDetails?.data?.user_updated_at);
+console.log(usuarioEncontrado,usuarioEncontradoEdit)
   // Simulación de correlativo (luego se obtendrá del backend)
   const getNextOperationNumber = () => opId; // Ejemplo: siempre empieza en 1001
   
@@ -613,187 +614,203 @@ const handleSubmit = async (values, actions) => {
   }
 };
 
-
-  return (
-    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={esLocale}>
-      {/* Para mostrar los toast */}
-      <ToastContainer position="top-right" autoClose={5000} />
-      <Box sx={{ padding: 3 }}>
-      <Box 
-  sx={{ 
-    display: "flex", 
-    justifyContent: "space-between", 
-    alignItems: "center", 
-    marginBottom: 3 
-  }}
->
-        <Typography variant="h4" gutterBottom>
-          Editar Operación
-        </Typography>
-        <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-    {usuarioEncontrado?.social_reason 
-      ? usuarioEncontrado?.social_reason 
-      : `${usuarioEncontrado?.first_name} ${usuarioEncontrado?.last_name}`}
-  </Typography>
+const renderNombreUsuario = (usuario) => (
+  <Box component="span" sx={{ color: 'text.primary', fontWeight: 500 }}>
+    {usuario?.social_reason || `${usuario?.first_name} ${usuario?.last_name}`}
   </Box>
-        <Formik 
-        initialValues={initialValues2}
-        validationSchema={validationSchema}
-        onSubmit={handleConfirm}
-        enableReinitialize={true} >
-          {/* {({ values, setFieldValue, touched, errors, handleBlur }) => ( */}
-          {({ values, setFieldValue, touched, errors, handleBlur,setTouched ,setFieldTouched,setFieldError}) => (
-            <Form>
-             <Grid container spacing={2}>
-               {/* Primera fila: Número de Operación, Fecha de Operación y Tipo de Operación */}
-               <Grid item xs={12} md={1.5}>
-                                 <TextField
-                                   label="Número de Operación *"
-                                   fullWidth
-                                   type="number"
-                                   value={values?.opId}
-                                   name="opId"
-                                   InputLabelProps={{
-                                    shrink: true, // Esto fuerza al label a permanecer arriba
-                                  }}
-                                   onChange={(e) => {
-                                     const value = e.target.value;
-                                     setFieldValue('opId', value);
-                                     setIsRecompra(checkRecompra(value)); // Verifica si es recompra
-                                   }}
-                                   onBlur={handleBlur}
-                                   error={touched.opId && Boolean(errors.opId)}
-                                   helperText={touched.opId && errors.opId}
-                                   inputProps={{ min: 0 }} // Asegura que no se ingresen números negativos
-                                   disabled
-                                 />
-                                 {/* Aviso de Recompra */}
-                                 {isRecompra && (
-                                   <Typography variant="body2" color="warning.main" sx={{ mt: 0.5 }}>
-                                     Operación de Recompra
-                                   </Typography>
-                                 )}
-                               </Grid>
-                               <Grid item xs={12} md={1.5}>
-                                 <DatePicker
-                                   label="Fecha de Operación *"
-                                   value={dataDetails?.data?.opDate}
-                                   name="opDate"
-                                   onChange={(newValue) => setFieldValue('opDate',  parseDateToLocal(newValue))}
-                                   renderInput={(params) => <TextField {...params} fullWidth />}
-                                 />
-                               </Grid>
-                               <Grid item xs={12} md={2}>
-                               <Autocomplete
-                                    options={typeOperation?.data || []}
-                                    getOptionLabel={(option) => option.description || ''}
-                                    value={typeOperation?.data?.find(op => op.description === values?.opTypeInfo?.description) || null}
-                                    onChange={async (event, newValue) => {
-                                      console.log(newValue);
-                                      setFieldValue('opType', newValue?.id || '');  
-                                    }}
-                                    isOptionEqualToValue={(option, value) => option.id === value?.id}
-                                    renderInput={(params) => (
-                                      <TextField 
-                                        {...params} 
-                                        label="Tipo de Operación *" 
-                                        name="opType"
-                                        fullWidth 
-                                        error={touched.opType && Boolean(errors.opType)}
-                                        helperText={touched.opType && errors.opType}
-                                      />
-                                    )}
-                                  />
-                         </Grid>
+);
+  return (
+            <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={esLocale}>
+              {/* Para mostrar los toast */}
+              <ToastContainer position="top-right" autoClose={5000} />
+              <Box sx={{ padding: 3 }}>
+                <Box 
+                      sx={{ 
+                        display: "flex", 
+                        justifyContent: "space-between", 
+                        alignItems: "center", 
+                        marginBottom: 3 
+                      }}
+                    >
+                        <Typography variant="h4" gutterBottom>
+                          Editar Operación
+                        </Typography>
+                        {usuarioEncontrado || usuarioEncontradoEdit ? (
+                            <Typography variant="subtitle1" sx={{ color: 'text.secondary' }}>
+                              {usuarioEncontrado?.id === usuarioEncontradoEdit?.id ? (
+                                <>Creado y editado por: {renderNombreUsuario(usuarioEncontrado)}</>
+                              ) : (
+                                <>
+                                  {usuarioEncontrado && <>Creado por: {renderNombreUsuario(usuarioEncontrado)}</>}
+                                  {usuarioEncontrado && usuarioEncontradoEdit && <br />}
+                                  {usuarioEncontradoEdit && <>Editado por: {renderNombreUsuario(usuarioEncontradoEdit)}</>}
+                                </>
+                              )}
+                            </Typography>
+                          ) : (
+                            <Typography variant="subtitle1" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
+                              Sin información de autoría
+                            </Typography>
+                          )}
+                  </Box>
+                          <Formik 
+                          initialValues={initialValues2}
+                          validationSchema={validationSchema}
+                          onSubmit={handleConfirm}
+                          enableReinitialize={true} >
+                            {/* {({ values, setFieldValue, touched, errors, handleBlur }) => ( */}
+                            {({ values, setFieldValue, touched, errors, handleBlur,setTouched ,setFieldTouched,setFieldError}) => (
+                              <Form>
+                              <Grid container spacing={2}>
+                                {/* Primera fila: Número de Operación, Fecha de Operación y Tipo de Operación */}
+                                <Grid item xs={12} md={2}>
+                                          <TextField
+                                            label="Número de Operación *"
+                                            fullWidth
+                                            type="number"
+                                            value={values?.opId}
+                                            name="opId"
+                                            InputLabelProps={{
+                                              shrink: true, // Esto fuerza al label a permanecer arriba
+                                            }}
+                                            onChange={(e) => {
+                                              const value = e.target.value;
+                                              setFieldValue('opId', value);
+                                              setIsRecompra(checkRecompra(value)); // Verifica si es recompra
+                                            }}
+                                            onBlur={handleBlur}
+                                            error={touched.opId && Boolean(errors.opId)}
+                                            helperText={touched.opId && errors.opId}
+                                            inputProps={{ min: 0 }} // Asegura que no se ingresen números negativos
+                                            disabled
+                                          />
+                                          {/* Aviso de Recompra */}
+                                          {isRecompra && (
+                                            <Typography variant="body2" color="warning.main" sx={{ mt: 0.5 }}>
+                                              Operación de Recompra
+                                            </Typography>
+                                          )}
+                                        </Grid>
+                                        <Grid item xs={12} md={2}>
+                                          <DatePicker
+                                            label="Fecha de Operación *"
+                                            value={dataDetails?.data?.opDate}
+                                            name="opDate"
+                                            onChange={(newValue) => setFieldValue('opDate',  parseDateToLocal(newValue))}
+                                            renderInput={(params) => <TextField {...params} fullWidth />}
+                                          />
+                                        </Grid>
+                                        <Grid item xs={12} md={2}>
+                                        <Autocomplete
+                                              options={typeOperation?.data || []}
+                                              getOptionLabel={(option) => option.description || ''}
+                                              value={typeOperation?.data?.find(op => op.description === values?.opTypeInfo?.description) || null}
+                                              onChange={async (event, newValue) => {
+                                                console.log(newValue);
+                                                setFieldValue('opType', newValue?.id || '');  
+                                              }}
+                                              isOptionEqualToValue={(option, value) => option.id === value?.id}
+                                              renderInput={(params) => (
+                                                <TextField 
+                                                  {...params} 
+                                                  label="Tipo de Operación *" 
+                                                  name="opType"
+                                                  fullWidth 
+                                                  error={touched.opType && Boolean(errors.opType)}
+                                                  helperText={touched.opType && errors.opType}
+                                                />
+                                              )}
+                                            />
+                                  </Grid>
+                        
                
-               
-                              <Grid item xs={12} md={4}>
-                              <Autocomplete
-  options={emisores}
-  isOptionEqualToValue={(option, value) => 
-    option?.data?.id === value?.data?.id
-  }
-  getOptionLabel={(option) => 
-    option?.data?.social_reason || 
-    `${option?.data?.first_name} ${option?.data?.last_name}` || 
-    ''
-  }
-  value={emisores.find(emisor => 
-    emisor?.data?.id === (values?.emitter?.data?.id || values?.emitter)
-  ) || null}
-  onChange={async (event, newValue) => {
-    if (!newValue) {
-      // Limpiar campos
-      setFieldValue('emitter', null);
-      setFieldValue('corredorEmisor', '');
-      setFieldValue('emitterBroker', null);
-      setFieldValue('investorTax', null);
-      setFieldValue('discountTax', null);
-      setFieldValue('filteredPayers', '');
-      setFieldValue('nombrePagador', '');
-      return;
-    }
+                                            <Grid item xs={12} md={6}>
+                                            <Autocomplete
+                                              options={emisores}
+                                              isOptionEqualToValue={(option, value) => 
+                                                option?.data?.id === value?.data?.id
+                                              }
+                                              getOptionLabel={(option) => 
+                                                option?.data?.social_reason || 
+                                                `${option?.data?.first_name} ${option?.data?.last_name}` || 
+                                                ''
+                                              }
+                                              value={emisores.find(emisor => 
+                                                emisor?.data?.id === (values?.emitter?.data?.id || values?.emitter)
+                                              ) || null}
+                                              onChange={async (event, newValue) => {
+                                                if (!newValue) {
+                                                  // Limpiar campos
+                                                  setFieldValue('emitter', null);
+                                                  setFieldValue('corredorEmisor', '');
+                                                  setFieldValue('emitterBroker', null);
+                                                  setFieldValue('investorTax', null);
+                                                  setFieldValue('discountTax', null);
+                                                  setFieldValue('filteredPayers', '');
+                                                  setFieldValue('nombrePagador', '');
+                                                  return;
+                                                }
 
-    // Guardar solo el ID o el objeto completo consistentemente
-    // Opción 1: Guardar solo el ID
-    setFieldValue('emitter', newValue.data.id);
-    
-    // Opción 2: O guardar el objeto completo (elige una)
-    // setFieldValue('emitter', newValue);
+                                                // Guardar solo el ID o el objeto completo consistentemente
+                                                // Opción 1: Guardar solo el ID
+                                                setFieldValue('emitter', newValue.data.id);
+                                                
+                                                // Opción 2: O guardar el objeto completo (elige una)
+                                                // setFieldValue('emitter', newValue);
 
-    const brokerByClientFetch = await fetchBrokerByClient(newValue?.data.id);
-    const fullName = brokerByClientFetch?.data?.social_reason ||
-      `${brokerByClientFetch?.data?.first_name || ''} ${brokerByClientFetch?.data?.last_name || ''}`.trim();
-    
-    setFieldValue('corredorEmisor', fullName);
-    setFieldValue('filtroEmitterPagador.emitter', newValue?.data.id);
-    
-    const tasaDescuento = await cargarTasaDescuento(newValue?.data.id);
-    
-    if (!tasaDescuento) {
-      toast("No se ha encontrado un perfil de riesgo para el cliente", "error");
-      return;
-    }
+                                                const brokerByClientFetch = await fetchBrokerByClient(newValue?.data.id);
+                                                const fullName = brokerByClientFetch?.data?.social_reason ||
+                                                  `${brokerByClientFetch?.data?.first_name || ''} ${brokerByClientFetch?.data?.last_name || ''}`.trim();
+                                                
+                                                setFieldValue('corredorEmisor', fullName);
+                                                setFieldValue('filtroEmitterPagador.emitter', newValue?.data.id);
+                                                
+                                                const tasaDescuento = await cargarTasaDescuento(newValue?.data.id);
+                                                
+                                                if (!tasaDescuento) {
+                                                  toast("No se ha encontrado un perfil de riesgo para el cliente", "error");
+                                                  return;
+                                                }
 
-    setFieldValue('emitterBroker', brokerByClientFetch?.data?.id);
-    const discountRate = parseFloat(tasaDescuento?.data?.discount_rate) || 0;
-    setFieldValue('investorTax', 0);
-    setFieldValue('discountTax', discountRate);
-    setFieldTouched('corredorEmisor', true);
+                                                setFieldValue('emitterBroker', brokerByClientFetch?.data?.id);
+                                                const discountRate = parseFloat(tasaDescuento?.data?.discount_rate) || 0;
+                                                setFieldValue('investorTax', 0);
+                                                setFieldValue('discountTax', discountRate);
+                                                setFieldTouched('corredorEmisor', true);
 
-    if (newValue?.data.id) {
-      const facturasEmisor = await cargarFacturas(newValue?.data.id, values.filtroEmitterPagador.payer);
-      
-      if (facturasEmisor?.data) {
-        const facturasConSaldo = facturasEmisor.data.filter(
-          f => Number(f.currentBalance) > 0
-        );
-        
-        const payerIdsUnicos = [...new Set(
-          facturasConSaldo.map(f => f.payerId).filter(Boolean)
-        )];
-        
-        const pagadoresFiltrados = payers.filter(p => 
-          p?.data?.document_number && 
-          payerIdsUnicos.includes(p.data.document_number)
-        );
-        
-        setFieldValue('arrayPayers', pagadoresFiltrados);
-      }
-    }
-  }}
-  renderInput={(params) => (
-    <TextField
-      {...params}
-      label="Nombre Emisor *"
-      name="emitter"
-      fullWidth
-      
-      error={touched.emitter && Boolean(errors.emitter)}
-      helperText={touched.emitter && errors.emitter}
-    />
-  )}
-/>
+                                                if (newValue?.data.id) {
+                                                  const facturasEmisor = await cargarFacturas(newValue?.data.id, values.filtroEmitterPagador.payer);
+                                                  
+                                                  if (facturasEmisor?.data) {
+                                                    const facturasConSaldo = facturasEmisor.data.filter(
+                                                      f => Number(f.currentBalance) > 0
+                                                    );
+                                                    
+                                                    const payerIdsUnicos = [...new Set(
+                                                      facturasConSaldo.map(f => f.payerId).filter(Boolean)
+                                                    )];
+                                                    
+                                                    const pagadoresFiltrados = payers.filter(p => 
+                                                      p?.data?.document_number && 
+                                                      payerIdsUnicos.includes(p.data.document_number)
+                                                    );
+                                                    
+                                                    setFieldValue('arrayPayers', pagadoresFiltrados);
+                                                  }
+                                                }
+                                              }}
+                                              renderInput={(params) => (
+                                                <TextField
+                                                  {...params}
+                                                  label="Nombre Emisor *"
+                                                  name="emitter"
+                                                  fullWidth
+                                                  
+                                                  error={touched.emitter && Boolean(errors.emitter)}
+                                                  helperText={touched.emitter && errors.emitter}
+                                                />
+                                              )}
+                                            />
                                               </Grid>
                               
                                               {/* Selector de Pagadores */}
@@ -851,7 +868,7 @@ const handleSubmit = async (values, actions) => {
                                                   />
                                                 </Grid>
                                               {/*Selector de Corredor Emisor */}
-                                              <Grid item xs={12} md={3}>
+                                              <Grid item xs={12} md={6}>
                                               
                                           <TextField
                                             label="Corredor Emisor *"
@@ -873,148 +890,149 @@ const handleSubmit = async (values, actions) => {
                               
                                           </Grid>
 
-                {/* Factura */}
-                
-                 <Grid item xs={12}>
-                          {/* Contenedor principal para el botón de eliminar y el acordeón */}
-                          <Grid container alignItems="flex-start" spacing={2}>
-                            
-                            {/* Acordeón */}
-                            <Grid item xs>
-                            
-                              
-                              <Grid container spacing={3}>
-                              <Grid item xs={12} md={2}>
-                              <Autocomplete
-  options={(values?.takedBills || []).map(factura => ({
-    label: `${factura.billId}`,
-    value: factura.billId, // Usamos billId como valor clave
-    rawData: factura
-  }))}
-  getOptionLabel={(option) => (typeof option === 'string' ? option : option?.label) || ''}
-  isOptionEqualToValue={(option, value) => {
-    // Comparación robusta que maneja ambos casos:
-    // - Cuando value es el objeto completo (selección nueva)
-    // - Cuando es solo el billId (valor inicial)
-    return option?.value === (value?.value || value);
-  }}
-  value={
-    // Primero intenta encontrar en options
-    (values?.takedBills || [])
-      .find(f => f.billId === values?.bill)
-      ? {
-          label: `${values?.bill}`,
-          value: values?.bill,
-          rawData: (values?.takedBills || []).find(f => f.billId === values?.bill)
-        }
-      : null
-  }
-  onChange={async (event, newValue) => {
-    console.log("Nuevo valor seleccionado:", newValue); // Debug
-    if (!newValue) {
-      await Promise.all([
-        setFieldValue('bill', ''),
-        setFieldValue('billCode', ''),
-        setFieldValue('integrationCode', ''),
-        setFieldValue('isReBuy', false),
-        setFieldValue('DateBill', new Date().toISOString().substring(0, 10)),
-        setFieldValue('DateExpiration', new Date().toISOString().substring(0, 10))
-      ]);
-      return;
-    }
+                                      {/* Factura */}
+                                      
+                              <Grid item xs={12}>
+                                                {/* Contenedor principal para el botón de eliminar y el acordeón */}
+                                <Grid container alignItems="flex-start" spacing={2}>
+                                  
+                                  {/* Acordeón */}
+                                  <Grid item xs>
+                                  
+                                    
+                                    
+                                    <Grid container spacing={3}>
+                                    <Grid item xs={12} md={2}>
+                                    <Autocomplete
+                                      options={(values?.takedBills || []).map(factura => ({
+                                        label: `${factura.billId}`,
+                                        value: factura.billId, // Usamos billId como valor clave
+                                        rawData: factura
+                                      }))}
+                                      getOptionLabel={(option) => (typeof option === 'string' ? option : option?.label) || ''}
+                                      isOptionEqualToValue={(option, value) => {
+                                        // Comparación robusta que maneja ambos casos:
+                                        // - Cuando value es el objeto completo (selección nueva)
+                                        // - Cuando es solo el billId (valor inicial)
+                                        return option?.value === (value?.value || value);
+                                      }}
+                                      value={
+                                        // Primero intenta encontrar en options
+                                        (values?.takedBills || [])
+                                          .find(f => f.billId === values?.bill)
+                                          ? {
+                                              label: `${values?.bill}`,
+                                              value: values?.bill,
+                                              rawData: (values?.takedBills || []).find(f => f.billId === values?.bill)
+                                            }
+                                          : null
+                                      }
+                                      onChange={async (event, newValue) => {
+                                        console.log("Nuevo valor seleccionado:", newValue); // Debug
+                                        if (!newValue) {
+                                          await Promise.all([
+                                            setFieldValue('bill', ''),
+                                            setFieldValue('billCode', ''),
+                                            setFieldValue('integrationCode', ''),
+                                            setFieldValue('isReBuy', false),
+                                            setFieldValue('DateBill', new Date().toISOString().substring(0, 10)),
+                                            setFieldValue('DateExpiration', new Date().toISOString().substring(0, 10))
+                                          ]);
+                                          return;
+                                        }
 
-    const selectedFactura = newValue.rawData;
-    console.log("Datos completos de la factura:", selectedFactura); // Debug
-    
-    try {
-      if (values.integrationCode && values.integrationCode !== selectedFactura?.integrationCode) {
-        toast.error("El código de integración debe coincidir con el de la factura previa");
-        return;
-      }
-      const billId = newValue?.value || null;
-      setFieldValue('bill', billId);
-      // Actualización atómica de todos los campos
-      const fractionBill = await cargarFraccionFactura(selectedFactura.id);
-      console.log(fractionBill)
-      let fraccion = fractionBill?.data?.fraction || 1;
-      await Promise.all([
-        setFieldValue('billFraction', fraccion ),
-        
-        setFieldValue('billBack', selectedFactura.id),
-        setFieldValue('billsComplete', selectedFactura),
-        setFieldValue('billCode', selectedFactura.billId),
-        setFieldValue('integrationCode', selectedFactura.integrationCode || ""),
-        setFieldValue('isReBuy', selectedFactura.reBuyAvailable || false),
-        setFieldValue('DateBill', selectedFactura.dateBill),
-        setFieldValue('DateExpiration', selectedFactura.expirationDate),
-        
-        // Actualizaciones financieras
-        (async () => {
-          const valorFuturoCalculado = selectedFactura.currentBalance;
-          const presentValueInvestor = Math.round(
-            PV(values.investorTax / 100, values.operationDays / 365, 0, valorFuturoCalculado, 0) * -1
-          );
-          const presentValueSF = Math.round(
-            PV(values.discountTax / 100, values.operationDays / 365, 0, valorFuturoCalculado, 0) * -1
-          );
-          
-          await Promise.all([
-            setFieldValue('amount', selectedFactura.currentBalance),
-            setFieldValue('payedAmount', selectedFactura.currentBalance),
-            setFieldValue('presentValueInvestor', presentValueInvestor),
-            setFieldValue('presentValueSF', presentValueSF),
-            setFieldValue('saldoDisponible',0),
-            setFieldValue('montoDisponibleCuenta',values?.investorAccountInfo?.investorAccountMonto- presentValueInvestor-values?.GM),
-            setFieldValue('commissionSF', presentValueInvestor - presentValueSF),
-            setFieldValue('investorProfit', selectedFactura.currentBalance- presentValueInvestor )
-          ]);
+                                        const selectedFactura = newValue.rawData;
+                                        console.log("Datos completos de la factura:", selectedFactura); // Debug
+                                        
+                                        try {
+                                          if (values.integrationCode && values.integrationCode !== selectedFactura?.integrationCode) {
+                                            toast.error("El código de integración debe coincidir con el de la factura previa");
+                                            return;
+                                          }
+                                          const billId = newValue?.value || null;
+                                          setFieldValue('bill', billId);
+                                          // Actualización atómica de todos los campos
+                                          const fractionBill = await cargarFraccionFactura(selectedFactura.id);
+                                          console.log(fractionBill)
+                                          let fraccion = fractionBill?.data?.fraction || 1;
+                                          await Promise.all([
+                                            setFieldValue('billFraction', fraccion ),
+                                            
+                                            setFieldValue('billBack', selectedFactura.id),
+                                            setFieldValue('billsComplete', selectedFactura),
+                                            setFieldValue('billCode', selectedFactura.billId),
+                                            setFieldValue('integrationCode', selectedFactura.integrationCode || ""),
+                                            setFieldValue('isReBuy', selectedFactura.reBuyAvailable || false),
+                                            setFieldValue('DateBill', selectedFactura.dateBill),
+                                            setFieldValue('DateExpiration', selectedFactura.expirationDate),
+                                            
+                                            // Actualizaciones financieras
+                                            (async () => {
+                                              const valorFuturoCalculado = selectedFactura.currentBalance;
+                                              const presentValueInvestor = Math.round(
+                                                PV(values.investorTax / 100, values.operationDays / 365, 0, valorFuturoCalculado, 0) * -1
+                                              );
+                                              const presentValueSF = Math.round(
+                                                PV(values.discountTax / 100, values.operationDays / 365, 0, valorFuturoCalculado, 0) * -1
+                                              );
+                                              
+                                              await Promise.all([
+                                                setFieldValue('amount', selectedFactura.currentBalance),
+                                                setFieldValue('payedAmount', selectedFactura.currentBalance),
+                                                setFieldValue('presentValueInvestor', presentValueInvestor),
+                                                setFieldValue('presentValueSF', presentValueSF),
+                                                setFieldValue('saldoDisponible',0),
+                                                setFieldValue('montoDisponibleCuenta',values?.investorAccountInfo?.investorAccountMonto- presentValueInvestor-values?.GM),
+                                                setFieldValue('commissionSF', presentValueInvestor - presentValueSF),
+                                                setFieldValue('investorProfit', selectedFactura.currentBalance- presentValueInvestor )
+                                              ]);
 
-          const gmValue = presentValueInvestor* 0.002;
-          setFieldValue('GM', gmValue)
-        })()
-      ]);
-      console.log(values)
+                                              const gmValue = presentValueInvestor* 0.002;
+                                              setFieldValue('GM', gmValue)
+                                            })()
+                                          ]);
+                                          console.log(values)
 
-      // Actualización del pagador (si aplica)
-      if (selectedFactura.payerId && values.arrayPayers) {
-        const payerInfo = values.arrayPayers.find(p => 
-          p?.data?.document_number === selectedFactura.payerId
-        );
-        if (payerInfo) {
-          await Promise.all([
-            setFieldValue('filtroEmitterPagador.payer', selectedFactura.payerId),
-            setFieldValue('payer', payerInfo.id)
-          ]);
-        }
-      }
+                                          // Actualización del pagador (si aplica)
+                                          if (selectedFactura.payerId && values.arrayPayers) {
+                                            const payerInfo = values.arrayPayers.find(p => 
+                                              p?.data?.document_number === selectedFactura.payerId
+                                            );
+                                            if (payerInfo) {
+                                              await Promise.all([
+                                                setFieldValue('filtroEmitterPagador.payer', selectedFactura.payerId),
+                                                setFieldValue('payer', payerInfo.id)
+                                              ]);
+                                            }
+                                          }
 
-    } catch (error) {
-      console.error("Error detallado:", error);
-      toast.error(`Error al cargar los datos: ${error.message}`);
-    }
-  }}
-  
-  renderInput={(params) => (
-    <TextField 
-      {...params} 
-      label="Número de Factura *" 
-      fullWidth
-      InputProps={{
-        ...params.InputProps,
-        endAdornment: (
-          <>
-            {!values?.takedBills ? <CircularProgress size={20} /> : null}
-            {params.InputProps.endAdornment}
-          </>
-        )
-      }}
-      error={touched.bill && Boolean(errors.bill)}
-      helperText={touched.bill && errors.bill}
-    />
-  )}
-  noOptionsText="No hay facturas disponibles"
-/>
-</Grid>
+                                        } catch (error) {
+                                          console.error("Error detallado:", error);
+                                          toast.error(`Error al cargar los datos: ${error.message}`);
+                                        }
+                                      }}
+                                      
+                                      renderInput={(params) => (
+                                        <TextField 
+                                          {...params} 
+                                          label="Número de Factura *" 
+                                          fullWidth
+                                          InputProps={{
+                                            ...params.InputProps,
+                                            endAdornment: (
+                                              <>
+                                                {!values?.takedBills ? <CircularProgress size={20} /> : null}
+                                                {params.InputProps.endAdornment}
+                                              </>
+                                            )
+                                          }}
+                                          error={touched.bill && Boolean(errors.bill)}
+                                          helperText={touched.bill && errors.bill}
+                                        />
+                                      )}
+                                      noOptionsText="No hay facturas disponibles"
+                                    />
+                                    </Grid>
 
                                         <Grid item xs={12} md={1}>
                                           <TextField
@@ -1060,322 +1078,322 @@ const handleSubmit = async (values, actions) => {
                                       </Grid> 
 
                                       <Grid item xs={12} md={4.5}>
-  <Autocomplete
-    options={investors || []}
-    value={
-      investors?.find(inv => 
-        inv?.data?.id === values?.investor ||
-        inv?.data?.document_number === values?.investorInfo?.document_number
-      ) || null
-    }
-    getOptionLabel={(option) => {
-      if (!option?.data) return "Desconocido";
-      return option.data.social_reason || 
-        `${option.data.first_name || ''} ${option.data.last_name || ''}`.trim() || 
-        option.data.document_number || 
-        "Desconocido";
-    }}
-    isOptionEqualToValue={(option, value) => 
-      option?.data?.id === value?.data?.id
-    }
-    onChange={async (event, newValue) => {
-      console.log("Nuevo inversionista seleccionado:", newValue);
-      
-      if (newValue) {
-        try {
-          // Cargar datos relacionados con el inversionista
-          const [cuentas, brokerFromInvestor] = await Promise.all([
-            cargarCuentas(newValue.data.id),
-            cargarBrokerFromInvestor(newValue.data.id)
-          ]);
+                                          <Autocomplete
+                                            options={investors || []}
+                                            value={
+                                              investors?.find(inv => 
+                                                inv?.data?.id === values?.investor ||
+                                                inv?.data?.document_number === values?.investorInfo?.document_number
+                                              ) || null
+                                            }
+                                            getOptionLabel={(option) => {
+                                              if (!option?.data) return "Desconocido";
+                                              return option.data.social_reason || 
+                                                `${option.data.first_name || ''} ${option.data.last_name || ''}`.trim() || 
+                                                option.data.document_number || 
+                                                "Desconocido";
+                                            }}
+                                            isOptionEqualToValue={(option, value) => 
+                                              option?.data?.id === value?.data?.id
+                                            }
+                                            onChange={async (event, newValue) => {
+                                              console.log("Nuevo inversionista seleccionado:", newValue);
+                                              
+                                              if (newValue) {
+                                                try {
+                                                  // Cargar datos relacionados con el inversionista
+                                                  const [cuentas, brokerFromInvestor] = await Promise.all([
+                                                    cargarCuentas(newValue.data.id),
+                                                    cargarBrokerFromInvestor(newValue.data.id)
+                                                  ]);
 
-        setFieldValue('accountsInvestorArray', cuentas);
-          console.log("Datos cargados:", {
-            cuentas,
-            brokerFromInvestor
-          });
+                                                setFieldValue('accountsInvestorArray', cuentas);
+                                                  console.log("Datos cargados:", {
+                                                    cuentas,
+                                                    brokerFromInvestor
+                                                  });
 
-          // Actualizar valores del formulario
-          setFieldValue('investor', newValue.data.id);
-          setFieldValue('investorInfo', newValue.data);
-          setFieldValue('cuentaInversionista', cuentas?.data || []);
-          
-          // Actualizar información del broker
-          if (brokerFromInvestor?.data) {
-            setFieldValue('investorBroker', brokerFromInvestor.data.id);
-            setFieldValue('investorBrokerInfo', {
-              investorBrokerid: brokerFromInvestor.data.id,
-              investorBrokerName: brokerFromInvestor.data.social_reason ||
-                `${brokerFromInvestor.data.first_name || ''} ${brokerFromInvestor.data.last_name || ''}`.trim()
-            });
-          }
+                                                  // Actualizar valores del formulario
+                                                  setFieldValue('investor', newValue.data.id);
+                                                  setFieldValue('investorInfo', newValue.data);
+                                                  setFieldValue('cuentaInversionista', cuentas?.data || []);
+                                                  
+                                                  // Actualizar información del broker
+                                                  if (brokerFromInvestor?.data) {
+                                                    setFieldValue('investorBroker', brokerFromInvestor.data.id);
+                                                    setFieldValue('investorBrokerInfo', {
+                                                      investorBrokerid: brokerFromInvestor.data.id,
+                                                      investorBrokerName: brokerFromInvestor.data.social_reason ||
+                                                        `${brokerFromInvestor.data.first_name || ''} ${brokerFromInvestor.data.last_name || ''}`.trim()
+                                                    });
+                                                  }
 
-        } catch (error) {
-          console.error("Error al cargar datos del inversionista:", error);
-          toast.error("Error al cargar información del inversionista");
-        }
-      } else {
-        // Limpiar campos si se deselecciona
-        setFieldValue('investor', '');
-        setFieldValue('investorInfo', null);
-        setFieldValue('cuentaInversionista', []);
-        setFieldValue('investorBroker', '');
-        setFieldValue('investorBrokerInfo', {
-          investorBrokerid: '',
-          investorBrokerName: ''
-        });
-      }
-    }}
-    renderInput={(params) => (
-      <TextField
-        {...params}
-        label="Nombre Inversionista / ID *"
-        fullWidth
-        name="investor"
-        error={touched.investor && Boolean(errors.investor)}
-        helperText={touched.investor && errors.investor}
-        InputProps={{
-          ...params.InputProps,
-          endAdornment: (
-            <>
-              {!investors ? <CircularProgress size={20} /> : null}
-              {params.InputProps.endAdornment}
-            </>
-          )
-        }}
-      />
-    )}
-    noOptionsText="No hay inversionistas disponibles"
-  />
-</Grid>
+                                                } catch (error) {
+                                                  console.error("Error al cargar datos del inversionista:", error);
+                                                  toast.error("Error al cargar información del inversionista");
+                                                }
+                                              } else {
+                                                // Limpiar campos si se deselecciona
+                                                setFieldValue('investor', '');
+                                                setFieldValue('investorInfo', null);
+                                                setFieldValue('cuentaInversionista', []);
+                                                setFieldValue('investorBroker', '');
+                                                setFieldValue('investorBrokerInfo', {
+                                                  investorBrokerid: '',
+                                                  investorBrokerName: ''
+                                                });
+                                              }
+                                            }}
+                                            renderInput={(params) => (
+                                              <TextField
+                                                {...params}
+                                                label="Nombre Inversionista / ID *"
+                                                fullWidth
+                                                name="investor"
+                                                error={touched.investor && Boolean(errors.investor)}
+                                                helperText={touched.investor && errors.investor}
+                                                InputProps={{
+                                                  ...params.InputProps,
+                                                  endAdornment: (
+                                                    <>
+                                                      {!investors ? <CircularProgress size={20} /> : null}
+                                                      {params.InputProps.endAdornment}
+                                                    </>
+                                                  )
+                                                }}
+                                              />
+                                            )}
+                                            noOptionsText="No hay inversionistas disponibles"
+                                          />
+                                        </Grid>
 
-                                 {/* Cuenta de Inversionista */}
-<Grid item xs={12} md={3}>
-  <Autocomplete
-  options={values?.accountsInvestorArray?.data || []}
-  getOptionLabel={(option) => 
-    option?.account_number || 
-    option?.number || 
-    option?.id || 
-    'Sin número de cuenta'
-  }
-  value={
-    // Opción 1: Buscar en el array de cuentas
-    values?.accountsInvestorArray?.data?.find(account => 
-      String(account?.id) === String(values?.clientAccount)
-    ) ?? null
-  }
-  isOptionEqualToValue={(option, value) => 
-    String(option?.id) === String(value?.id)
-  }
-    onChange={(event, newValue) => {
-      // Actualizar campos relacionados con la cuenta
-      console.log(newValue)
-      setFieldValue('clientAccount', newValue?.id );
-      
-      setFieldValue('montoDisponibleCuenta',newValue?.balance -values?.presentValueInvestor -values?.GM)
-      
-      // Actualizar monto disponible
-      const nuevoSaldo = newValue?.balance || 0;
-    
-      setFieldValue('montoDisponibleInfo', nuevoSaldo);
-    }}
-    renderInput={(params) => (
-      <TextField
-        {...params}
-        label="Cuenta Inversionista*"
-        fullWidth
-        variant="outlined"
-        error={touched.investorAccountInfo?.investorAccountid && Boolean(errors.investorAccountInfo?.investorAccountid)}
-        helperText={touched.investorAccountInfo?.investorAccountid && errors.investorAccountInfo?.investorAccountid}
-        InputProps={{
-          ...params.InputProps,
-          endAdornment: (
-            <>
-              {!values?.accountsInvestorArray?.data && <CircularProgress size={20} />}
-              {params.InputProps.endAdornment}
-            </>
-          )
-        }}
-      />
-    )}
-    noOptionsText="No hay cuentas disponibles"
-    disabled={!values.investor} // Deshabilitar si no hay inversionista seleccionado
-  />
-</Grid>
+                                                                        {/* Cuenta de Inversionista */}
+                                        <Grid item xs={12} md={3}>
+                                          <Autocomplete
+                                          options={values?.accountsInvestorArray?.data || []}
+                                          getOptionLabel={(option) => 
+                                            option?.account_number || 
+                                            option?.number || 
+                                            option?.id || 
+                                            'Sin número de cuenta'
+                                          }
+                                          value={
+                                            // Opción 1: Buscar en el array de cuentas
+                                            values?.accountsInvestorArray?.data?.find(account => 
+                                              String(account?.id) === String(values?.clientAccount)
+                                            ) ?? null
+                                          }
+                                          isOptionEqualToValue={(option, value) => 
+                                            String(option?.id) === String(value?.id)
+                                          }
+                                            onChange={(event, newValue) => {
+                                              // Actualizar campos relacionados con la cuenta
+                                              console.log(newValue)
+                                              setFieldValue('clientAccount', newValue?.id );
+                                              
+                                              setFieldValue('montoDisponibleCuenta',newValue?.balance -values?.presentValueInvestor -values?.GM)
+                                              
+                                              // Actualizar monto disponible
+                                              const nuevoSaldo = newValue?.balance || 0;
+                                            
+                                              setFieldValue('montoDisponibleInfo', nuevoSaldo);
+                                            }}
+                                            renderInput={(params) => (
+                                              <TextField
+                                                {...params}
+                                                label="Cuenta Inversionista*"
+                                                fullWidth
+                                                variant="outlined"
+                                                error={touched.investorAccountInfo?.investorAccountid && Boolean(errors.investorAccountInfo?.investorAccountid)}
+                                                helperText={touched.investorAccountInfo?.investorAccountid && errors.investorAccountInfo?.investorAccountid}
+                                                InputProps={{
+                                                  ...params.InputProps,
+                                                  endAdornment: (
+                                                    <>
+                                                      {!values?.accountsInvestorArray?.data && <CircularProgress size={20} />}
+                                                      {params.InputProps.endAdornment}
+                                                    </>
+                                                  )
+                                                }}
+                                              />
+                                            )}
+                                            noOptionsText="No hay cuentas disponibles"
+                                            disabled={!values.investor} // Deshabilitar si no hay inversionista seleccionado
+                                          />
+                                        </Grid>
 
-{/* Monto disponible en cuenta inversionista */}                                    
-<Grid item xs={12} md={3}>
-  <TextField
-    label="Monto Disponible Cuenta Inversionista"
-    fullWidth
-    value={formatCurrency(values?.montoDisponibleCuenta || 0)}
-    disabled
-    InputProps={{
-      endAdornment: (
-        <InputAdornment position="end">
-          <Tooltip title={`Saldo actual: ${formatCurrency(values?.montoDisponibleInfo || 0)}`}>
-            <InfoIcon color="action" fontSize="small" />
-          </Tooltip>
-        </InputAdornment>
-      )
-    }}
-    helperText={
-      `Monto Disponible Inversionista: ${values?.montoDisponibleInfo ? formatNumberWithThousandsSeparator(Math.floor(values?.montoDisponibleInfo)) : 0}`
-    }
-  />
-</Grid>
-                               
-                                    {/* Valor Futuro */}
-<Grid item xs={12} md={3} style={{ position: 'relative' }}>
-  <TextField
-    label="Valor Futuro"
-    fullWidth
-    name="amount"
-    type="text"
-    value={values?.amount ? formatNumberWithThousandsSeparator(Math.floor(values.amount)) : ""}
-    onChange={(e) => {
-      // Eliminar caracteres no numéricos
-      const rawValue = e.target.value.replace(/[^\d]/g, "");
-      const numericValue = rawValue ? parseInt(rawValue, 10) : 0;
+                                        {/* Monto disponible en cuenta inversionista */}                                    
+                                        <Grid item xs={12} md={3}>
+                                          <TextField
+                                            label="Monto Disponible Cuenta Inversionista"
+                                            fullWidth
+                                            value={formatCurrency(values?.montoDisponibleCuenta || 0)}
+                                            disabled
+                                            InputProps={{
+                                              endAdornment: (
+                                                <InputAdornment position="end">
+                                                  <Tooltip title={`Saldo actual: ${formatCurrency(values?.montoDisponibleInfo || 0)}`}>
+                                                    <InfoIcon color="action" fontSize="small" />
+                                                  </Tooltip>
+                                                </InputAdornment>
+                                              )
+                                            }}
+                                            helperText={
+                                              `Monto Disponible Inversionista: ${values?.montoDisponibleInfo ? formatNumberWithThousandsSeparator(Math.floor(values?.montoDisponibleInfo)) : 0}`
+                                            }
+                                          />
+                                        </Grid>
+                                                                      
+                                                                            {/* Valor Futuro */}
+                                        <Grid item xs={12} md={3} style={{ position: 'relative' }}>
+                                          <TextField
+                                            label="Valor Futuro"
+                                            fullWidth
+                                            name="amount"
+                                            type="text"
+                                            value={values?.amount ? formatNumberWithThousandsSeparator(Math.floor(values.amount)) : ""}
+                                            onChange={(e) => {
+                                              // Eliminar caracteres no numéricos
+                                              const rawValue = e.target.value.replace(/[^\d]/g, "");
+                                              const numericValue = rawValue ? parseInt(rawValue, 10) : 0;
 
-      // Actualizar el valor
-      setFieldValue('amount', numericValue);
-      setFieldValue('payedAmount', numericValue); // Asumimos que payedAmount es igual al amount
-      setFieldValue('saldoDisponible',values?.billsComplete?.currentBalance -numericValue)
-      setFieldValue('payedPercent',100)
-      const operationDays = values.operationDays 
-      const presentValueInvestor = operationDays > 0 && numericValue > 0
-      ? Math.round(PV(values?.investorTax / 100,  operationDays / 365, 0, numericValue, 0) * -1)
-      : numericValue;
-      const presentValueSF =  operationDays > 0 && numericValue > 0
-      ? Math.round(PV(values?.discountTax / 100,  operationDays / 365, 0, numericValue, 0) * -1)
-      : numericValue;
-      // Si hay un porcentaje de descuento, calcular el valor nominal
-      if (values?.discountTax) {
-        console.log(values?.montoDisponibleInfo-presentValueInvestor-values?.GM)
-        setFieldValue('presentValueInvestor', presentValueInvestor);
-        setFieldValue('presentValueSF', presentValueSF);
-        setFieldValue('montoDisponibleCuenta',values?.montoDisponibleInfo-presentValueInvestor-values?.GM)
-      
-        const gmValue = (presentValueInvestor || 0) * 0.002 ;
-        setFieldValue('GM', gmValue);}
-    }}
-    onFocus={(e) => {
-      // Mostrar valor sin formato al enfocar
-      e.target.value = values?.amount?.toString() || "";
-    }}
-    onBlur={(e) => {
-      // Aplicar formato al perder el foco
-      const rawValue = e.target.value.replace(/[^\d]/g, "");
-      const numericValue = rawValue ? parseInt(rawValue, 10) : 0;
-      setFieldValue('amount', numericValue);
-    }}
-    placeholder={
-      values?.billFraction && values.billsComplete?.total 
-        ? `Sugerido: ${formatNumberWithThousandsSeparator(
-            Math.floor(values.billsComplete.total / values.billFraction)
-          )}` 
-        : ""
-    }
-    InputProps={{
-      startAdornment: (
-        <InputAdornment position="start">
-          <AttachMoneyIcon style={{ color: 'rgb(94, 163, 163)', fontSize: '1.2rem' }} />
-        </InputAdornment>
-      ),
-      endAdornment: (
-        <Tooltip 
-          title="Valor total de la operación sin incluir descuentos ni comisiones"
-          placement="top-end"
-          arrow
-        >
-          <IconButton size="small" edge="end">
-            <InfoIcon style={{ fontSize: '1rem', color: 'rgb(94, 163, 163)' }} />
-          </IconButton>
-        </Tooltip>
-      )
-    }}
-    error={touched.amount && Boolean(errors.amount)}
-    helperText={touched.amount && errors.amount}
-  />
-</Grid>
-                                   {/* Campo de porcentaje de descuento */}
-<Grid item xs={12} md={1} style={{ position: 'relative' }}>
-  <TextField
-    label="% Descuento"
-    fullWidth
-    name="discountTax"
-    type="number"
-    value={values?.payedPercent ?? 0}
-    sx={{ width: '114px' }} 
-    onChange={(e) => {
-      // Validar y establecer el porcentaje de descuento (0-100)
-      const discountValue = Math.min(Math.max(Number(e.target.value) || 0, 0), 100);
-      setFieldValue('payedPercent', Math.min(Math.max(Number(e.target.value) || 0, 0), 100));
+                                              // Actualizar el valor
+                                              setFieldValue('amount', numericValue);
+                                              setFieldValue('payedAmount', numericValue); // Asumimos que payedAmount es igual al amount
+                                              setFieldValue('saldoDisponible',values?.billsComplete?.currentBalance -numericValue)
+                                              setFieldValue('payedPercent',100)
+                                              const operationDays = values.operationDays 
+                                              const presentValueInvestor = operationDays > 0 && numericValue > 0
+                                              ? Math.round(PV(values?.investorTax / 100,  operationDays / 365, 0, numericValue, 0) * -1)
+                                              : numericValue;
+                                              const presentValueSF =  operationDays > 0 && numericValue > 0
+                                              ? Math.round(PV(values?.discountTax / 100,  operationDays / 365, 0, numericValue, 0) * -1)
+                                              : numericValue;
+                                              // Si hay un porcentaje de descuento, calcular el valor nominal
+                                              if (values?.discountTax) {
+                                                console.log(values?.montoDisponibleInfo-presentValueInvestor-values?.GM)
+                                                setFieldValue('presentValueInvestor', presentValueInvestor);
+                                                setFieldValue('presentValueSF', presentValueSF);
+                                                setFieldValue('montoDisponibleCuenta',values?.montoDisponibleInfo-presentValueInvestor-values?.GM)
+                                              
+                                                const gmValue = (presentValueInvestor || 0) * 0.002 ;
+                                                setFieldValue('GM', gmValue);}
+                                            }}
+                                            onFocus={(e) => {
+                                              // Mostrar valor sin formato al enfocar
+                                              e.target.value = values?.amount?.toString() || "";
+                                            }}
+                                            onBlur={(e) => {
+                                              // Aplicar formato al perder el foco
+                                              const rawValue = e.target.value.replace(/[^\d]/g, "");
+                                              const numericValue = rawValue ? parseInt(rawValue, 10) : 0;
+                                              setFieldValue('amount', numericValue);
+                                            }}
+                                            placeholder={
+                                              values?.billFraction && values.billsComplete?.total 
+                                                ? `Sugerido: ${formatNumberWithThousandsSeparator(
+                                                    Math.floor(values.billsComplete.total / values.billFraction)
+                                                  )}` 
+                                                : ""
+                                            }
+                                            InputProps={{
+                                              startAdornment: (
+                                                <InputAdornment position="start">
+                                                  <AttachMoneyIcon style={{ color: 'rgb(94, 163, 163)', fontSize: '1.2rem' }} />
+                                                </InputAdornment>
+                                              ),
+                                              endAdornment: (
+                                                <Tooltip 
+                                                  title="Valor total de la operación sin incluir descuentos ni comisiones"
+                                                  placement="top-end"
+                                                  arrow
+                                                >
+                                                  <IconButton size="small" edge="end">
+                                                    <InfoIcon style={{ fontSize: '1rem', color: 'rgb(94, 163, 163)' }} />
+                                                  </IconButton>
+                                                </Tooltip>
+                                              )
+                                            }}
+                                            error={touched.amount && Boolean(errors.amount)}
+                                            helperText={touched.amount && errors.amount}
+                                          />
+                                        </Grid>
+                                                                          {/* Campo de porcentaje de descuento */}
+                                        <Grid item xs={12} md={1} style={{ position: 'relative' }}>
+                                          <TextField
+                                            label="% Descuento"
+                                            fullWidth
+                                            name="discountTax"
+                                            type="number"
+                                            value={values?.payedPercent ?? 0}
+                                            sx={{ width: '100px' }} 
+                                            onChange={(e) => {
+                                              // Validar y establecer el porcentaje de descuento (0-100)
+                                              const discountValue = Math.min(Math.max(Number(e.target.value) || 0, 0), 100);
+                                              setFieldValue('payedPercent', Math.min(Math.max(Number(e.target.value) || 0, 0), 100));
 
-      // Calcular valores derivados si amount está definido
-      if (values.amount) {
-        // Calcular valor con descuento
-        const discountedValue = values.amount * (discountValue / 100);
-        
-        // Actualizar valores relacionados
-        setFieldValue('payedAmount', discountedValue);
-        
-        
-        // Calcular comisión si hay días de operación
-        if (values.operationDays) {
-          const presentValueInvestor = Math.round(
-            PV(values.investorTax / 100, values.operationDays / 365, 0, -discountedValue, 0) 
-          );
-          const presentValueSF = Math.round(
-            PV(values.discountTax / 100, values.operationDays / 365, 0, -discountedValue, 0) 
-          );
-          
-          setFieldValue('presentValueInvestor', presentValueInvestor);
-          setFieldValue('presentValueSF', presentValueSF);
-          setFieldValue('commissionSF', presentValueInvestor - presentValueSF);
-          const gmValue = (presentValueInvestor || 0) * 0.002 ;
-          setFieldValue('GM', gmValue);
-        }
-      }
-    }}
-    inputProps={{ 
-      min: 0, 
-      max: 100,
-      step: 0.01 // Permite decimales
-    }}
-    InputProps={{
-      endAdornment: (
-        <InputAdornment position="end">%</InputAdornment>
-      ),
-      
-    }}
-    error={touched.discountTax && Boolean(errors.discountTax)}
-    helperText={touched.discountTax && errors.discountTax}
-  />
-  
-  {/* Tooltip integrado */}
-  <Tooltip 
-    title="Porcentaje de descuento aplicado al valor total de la operación"
-    placement="top-end"
-    arrow
-  >
-    <IconButton
-      size="small"
-      style={{
-        position: 'absolute',
-        top: '50%', 
-        right: 30, // Ajustado para no solapar con el %
-        transform: 'translateY(-50%)',
-        padding: 0.8,
-      }}
-    >
-      <InfoIcon style={{ fontSize: '1rem', color: 'rgb(94, 163, 163)' }} />
-    </IconButton>
-  </Tooltip>
-</Grid>
-                                  {/*Tasa Descuento */}
+                                              // Calcular valores derivados si amount está definido
+                                              if (values.amount) {
+                                                // Calcular valor con descuento
+                                                const discountedValue = values.amount * (discountValue / 100);
+                                                
+                                                // Actualizar valores relacionados
+                                                setFieldValue('payedAmount', discountedValue);
+                                                
+                                                
+                                                // Calcular comisión si hay días de operación
+                                                if (values.operationDays) {
+                                                  const presentValueInvestor = Math.round(
+                                                    PV(values.investorTax / 100, values.operationDays / 365, 0, -discountedValue, 0) 
+                                                  );
+                                                  const presentValueSF = Math.round(
+                                                    PV(values.discountTax / 100, values.operationDays / 365, 0, -discountedValue, 0) 
+                                                  );
+                                                  
+                                                  setFieldValue('presentValueInvestor', presentValueInvestor);
+                                                  setFieldValue('presentValueSF', presentValueSF);
+                                                  setFieldValue('commissionSF', presentValueInvestor - presentValueSF);
+                                                  const gmValue = (presentValueInvestor || 0) * 0.002 ;
+                                                  setFieldValue('GM', gmValue);
+                                                }
+                                              }
+                                            }}
+                                            inputProps={{ 
+                                              min: 0, 
+                                              max: 100,
+                                              step: 0.01 // Permite decimales
+                                            }}
+                                            InputProps={{
+                                              endAdornment: (
+                                                <InputAdornment position="end">%</InputAdornment>
+                                              ),
+                                              
+                                            }}
+                                            error={touched.discountTax && Boolean(errors.discountTax)}
+                                            helperText={touched.discountTax && errors.discountTax}
+                                          />
+                                          
+                                          {/* Tooltip integrado */}
+                                          <Tooltip 
+                                            title="Porcentaje de descuento aplicado al valor total de la operación"
+                                            placement="top-end"
+                                            arrow
+                                          >
+                                            <IconButton
+                                              size="small"
+                                              style={{
+                                                position: 'absolute',
+                                                top: '50%', 
+                                                right: 30, // Ajustado para no solapar con el %
+                                                transform: 'translateY(-50%)',
+                                                padding: 0.8,
+                                              }}
+                                            >
+                                              <InfoIcon style={{ fontSize: '1rem', color: 'rgb(94, 163, 163)' }} />
+                                            </IconButton>
+                                          </Tooltip>
+                                        </Grid>
+                                                                          {/*Tasa Descuento */}
                                   <Grid item xs={12} md={2}>
                                       <TextField
                                         label="Tasa Descuento"
@@ -1416,167 +1434,167 @@ const handleSubmit = async (values, actions) => {
                                       />
                                     </Grid>
 
-                                    {/* Campo de valor nominal */}
-<Grid item xs={12} md={3}>
-  <TextField
-    label="Valor Nominal"
-    fullWidth
-    name="payedAmount"
-    value={values?.payedAmount ? formatNumberWithThousandsSeparator(Math.floor(values.payedAmount)) : ""}
-    onChange={(e) => {
-      // Manejo del valor nominal
-      const rawValue = e.target.value.replace(/[^\d]/g, "");
-      let numericValue = parseFloat(rawValue) || 0;
-      
-      // Validar que no exceda el monto total (amount)
-      if (values.amount && numericValue > values.amount) {
-        numericValue = values.amount;
-        toast.warning("El valor nominal no puede exceder el monto total");
-      }
+                                                                          {/* Campo de valor nominal */}
+                                      <Grid item xs={12} md={3}>
+                                        <TextField
+                                          label="Valor Nominal"
+                                          fullWidth
+                                          name="payedAmount"
+                                          value={values?.payedAmount ? formatNumberWithThousandsSeparator(Math.floor(values.payedAmount)) : ""}
+                                          onChange={(e) => {
+                                            // Manejo del valor nominal
+                                            const rawValue = e.target.value.replace(/[^\d]/g, "");
+                                            let numericValue = parseFloat(rawValue) || 0;
+                                            
+                                            // Validar que no exceda el monto total (amount)
+                                            if (values.amount && numericValue > values.amount) {
+                                              numericValue = values.amount;
+                                              toast.warning("El valor nominal no puede exceder el monto total");
+                                            }
 
-      // Actualizar valor nominal
-      setFieldValue('payedAmount', numericValue);
+                                            // Actualizar valor nominal
+                                            setFieldValue('payedAmount', numericValue);
 
-      if (values.amount && values.amount > 0) {
-        const discountPercentage = (numericValue / values.amount) * 100;
-        const rounded = Math.round(discountPercentage * 100) / 100; // Redondea a 2 decimales
-        setFieldValue('payedPercent', Math.min(Math.max(rounded, 0), 100));
-      }
+                                            if (values.amount && values.amount > 0) {
+                                              const discountPercentage = (numericValue / values.amount) * 100;
+                                              const rounded = Math.round(discountPercentage * 100) / 100; // Redondea a 2 decimales
+                                              setFieldValue('payedPercent', Math.min(Math.max(rounded, 0), 100));
+                                            }
 
-      // Recalcular valores financieros si hay operación activa
-      if (values.opDate && values.operationDays) {
-        const presentValueInvestor = Math.round(
-          PV(values.investorTax / 100, values.operationDays / 365, 0, -numericValue, 0) 
-        );
-        
-        const presentValueSF = Math.round(
-          PV(values.discountTax / 100, values.operationDays / 365, 0, -numericValue, 0) 
-        );
-        
-        // Actualizar valores calculados
-        setFieldValue('presentValueInvestor', presentValueInvestor);
-        setFieldValue('presentValueSF', presentValueSF);
-        setFieldValue('commissionSF', presentValueInvestor - presentValueSF);
-        setFieldValue('investorProfit', numericValue - presentValueSF);
-        setFieldValue('montoDisponibleCuenta',values?.montoDisponibleInfo-presentValueInvestor-values?.GM)
-        const gmValue = (presentValueInvestor || 0) * 0.002 ;
-        setFieldValue('GM', gmValue);
-      }
-    }}
-    onFocus={(e) => {
-      // Mostrar valor sin formato al enfocar
-      e.target.value = values?.payedAmount?.toString() || "";
-    }}
-    onBlur={(e) => {
-      // Aplicar formato al perder el foco
-      const rawValue = e.target.value.replace(/[^\d]/g, "");
-      const numericValue = rawValue ? parseInt(rawValue, 10) : 0;
-      setFieldValue('payedAmount', numericValue);
-    }}
-    InputProps={{
-      startAdornment: (
-        <InputAdornment position="start">
-          <AttachMoneyIcon style={{ color: 'rgb(94, 163, 163)', fontSize: '1.2rem' }} />
-        </InputAdornment>
-      ),
-    }}
-    error={touched.payedAmount && Boolean(errors.payedAmount)}
-    helperText={touched.payedAmount && errors.payedAmount}
-  />
-</Grid>
+                                            // Recalcular valores financieros si hay operación activa
+                                            if (values.opDate && values.operationDays) {
+                                              const presentValueInvestor = Math.round(
+                                                PV(values.investorTax / 100, values.operationDays / 365, 0, -numericValue, 0) 
+                                              );
+                                              
+                                              const presentValueSF = Math.round(
+                                                PV(values.discountTax / 100, values.operationDays / 365, 0, -numericValue, 0) 
+                                              );
+                                              
+                                              // Actualizar valores calculados
+                                              setFieldValue('presentValueInvestor', presentValueInvestor);
+                                              setFieldValue('presentValueSF', presentValueSF);
+                                              setFieldValue('commissionSF', presentValueInvestor - presentValueSF);
+                                              setFieldValue('investorProfit', numericValue - presentValueSF);
+                                              setFieldValue('montoDisponibleCuenta',values?.montoDisponibleInfo-presentValueInvestor-values?.GM)
+                                              const gmValue = (presentValueInvestor || 0) * 0.002 ;
+                                              setFieldValue('GM', gmValue);
+                                            }
+                                          }}
+                                          onFocus={(e) => {
+                                            // Mostrar valor sin formato al enfocar
+                                            e.target.value = values?.payedAmount?.toString() || "";
+                                          }}
+                                          onBlur={(e) => {
+                                            // Aplicar formato al perder el foco
+                                            const rawValue = e.target.value.replace(/[^\d]/g, "");
+                                            const numericValue = rawValue ? parseInt(rawValue, 10) : 0;
+                                            setFieldValue('payedAmount', numericValue);
+                                          }}
+                                          InputProps={{
+                                            startAdornment: (
+                                              <InputAdornment position="start">
+                                                <AttachMoneyIcon style={{ color: 'rgb(94, 163, 163)', fontSize: '1.2rem' }} />
+                                              </InputAdornment>
+                                            ),
+                                          }}
+                                          error={touched.payedAmount && Boolean(errors.payedAmount)}
+                                          helperText={touched.payedAmount && errors.payedAmount}
+                                        />
+                                      </Grid>
 
-                                  {/* Tasa Inversionista */}
-<Grid item xs={12} md={1.5}>
-  <TextField
-    label="Tasa Inversionista (%)"
-    fullWidth
-    name="investorTax"
-    type="number"
-    value={values?.investorTax ?? 0}
-    onChange={(e) => {
-      const newInvestorTax = parseFloat(e.target.value) || 0;
-      const currentDiscountTax = values.discountTax || 0;
+                                                                        {/* Tasa Inversionista */}
+                                      <Grid item xs={12} md={2}>
+                                        <TextField
+                                          label="Tasa Inversionista (%)"
+                                          fullWidth
+                                          name="investorTax"
+                                          type="number"
+                                          value={values?.investorTax ?? 0}
+                                          onChange={(e) => {
+                                            const newInvestorTax = parseFloat(e.target.value) || 0;
+                                            const currentDiscountTax = values.discountTax || 0;
 
-      // Validate that investor tax doesn't exceed discount tax
-      const validatedTax = Math.min(newInvestorTax, currentDiscountTax);
-      setFieldValue('investorTax', validatedTax);
+                                            // Validate that investor tax doesn't exceed discount tax
+                                            const validatedTax = Math.min(newInvestorTax, currentDiscountTax);
+                                            setFieldValue('investorTax', validatedTax);
 
-      // Recalculate financial values if operation data exists
-      if (values.opDate && values.operationDays && values.payedAmount) {
-        const presentValueInvestor = Math.round(
-          PV(validatedTax / 100, values.operationDays / 365, 0, -values.payedAmount, 0) 
-        );
-        
-        const presentValueSF = values.presentValueSF || 0;
-        
-        setFieldValue('presentValueInvestor', presentValueInvestor);
-        setFieldValue('commissionSF', presentValueInvestor - presentValueSF);
-        setFieldValue('montoDisponibleCuenta',values?.montoDisponibleInfo-presentValueInvestor-values?.GM)
-        const gmValue = (presentValueInvestor || 0) * 0.002 ;
-        setFieldValue('GM', gmValue);
-      }
-    }}
-    inputProps={{
-      min: 0,
-      max: values?.discountTax || 100,
-      step: 0.01
-    }}
-    InputProps={{
-      endAdornment: <InputAdornment position="end">%</InputAdornment>,
-    }}
-    error={touched.investorTax && Boolean(errors.investorTax)}
-    helperText={touched.investorTax && errors.investorTax}
-  />
-</Grid>
-<Grid item xs={12} md={1.5}>
-  <DatePicker
-    label="Fecha Fin"
-    value={values?.opExpiration ? new Date(values.opExpiration) : null}
-    onChange={(newValue) => {
-      if (!newValue) return;
+                                            // Recalculate financial values if operation data exists
+                                            if (values.opDate && values.operationDays && values.payedAmount) {
+                                              const presentValueInvestor = Math.round(
+                                                PV(validatedTax / 100, values.operationDays / 365, 0, -values.payedAmount, 0) 
+                                              );
+                                              
+                                              const presentValueSF = values.presentValueSF || 0;
+                                              
+                                              setFieldValue('presentValueInvestor', presentValueInvestor);
+                                              setFieldValue('commissionSF', presentValueInvestor - presentValueSF);
+                                              setFieldValue('montoDisponibleCuenta',values?.montoDisponibleInfo-presentValueInvestor-values?.GM)
+                                              const gmValue = (presentValueInvestor || 0) * 0.002 ;
+                                              setFieldValue('GM', gmValue);
+                                            }
+                                          }}
+                                          inputProps={{
+                                            min: 0,
+                                            max: values?.discountTax || 100,
+                                            step: 0.01
+                                          }}
+                                          InputProps={{
+                                            endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                                          }}
+                                          error={touched.investorTax && Boolean(errors.investorTax)}
+                                          helperText={touched.investorTax && errors.investorTax}
+                                        />
+                                      </Grid>
+                                      <Grid item xs={12} md={2}>
+                                        <DatePicker
+                                          label="Fecha Fin"
+                                          value={values?.opExpiration ? new Date(values.opExpiration) : null}
+                                          onChange={(newValue) => {
+                                            if (!newValue) return;
 
-      const expirationDate = parseDateToLocal(newValue);
-      setFieldValue('opExpiration', expirationDate);
+                                            const expirationDate = parseDateToLocal(newValue);
+                                            setFieldValue('opExpiration', expirationDate);
 
-      // Calculate operation days if opDate exists
-      if (values.opDate) {
-        const startDate = new Date(values.opDate);
-        const endDate = new Date(expirationDate);
-        
-        // Ensure we don't get negative days
-        const operationDays = Math.max(0, differenceInDays(endDate, startDate));
-        setFieldValue('operationDays', operationDays);
+                                            // Calculate operation days if opDate exists
+                                            if (values.opDate) {
+                                              const startDate = new Date(values.opDate);
+                                              const endDate = new Date(expirationDate);
+                                              
+                                              // Ensure we don't get negative days
+                                              const operationDays = Math.max(0, differenceInDays(endDate, startDate));
+                                              setFieldValue('operationDays', operationDays);
 
-        // Recalculate financial values if payedAmount exists
-        if (values.payedAmount) {
-          const presentValueInvestor = Math.round(
-            PV(values.investorTax / 100, operationDays / 365, 0, -values.payedAmount, 0) 
-          );
-          
-          const presentValueSF = Math.round(
-            PV(values.discountTax / 100, operationDays / 365, 0, -values.payedAmount, 0)
-          );
-          
-          setFieldValue('presentValueInvestor', presentValueInvestor);
-          setFieldValue('presentValueSF', presentValueSF);
-          setFieldValue('commissionSF', presentValueInvestor - presentValueSF);
-          setFieldValue('investorProfit', values.payedAmount - presentValueSF);
-          setFieldValue('montoDisponibleCuenta',values?.montoDisponibleInfo-presentValueInvestor-values?.GM)
-        }
-      }
-    }}
-    minDate={values?.opDate ? new Date(values.opDate) : null}
-    renderInput={(params) => (
-      <TextField 
-        {...params} 
-        fullWidth
-        error={touched.opExpiration && Boolean(errors.opExpiration)}
-        helperText={touched.opExpiration && errors.opExpiration}
-      />
-    )}
-  />
-</Grid>
-                                  <Grid item xs={12} md={1}>
+                                              // Recalculate financial values if payedAmount exists
+                                              if (values.payedAmount) {
+                                                const presentValueInvestor = Math.round(
+                                                  PV(values.investorTax / 100, operationDays / 365, 0, -values.payedAmount, 0) 
+                                                );
+                                                
+                                                const presentValueSF = Math.round(
+                                                  PV(values.discountTax / 100, operationDays / 365, 0, -values.payedAmount, 0)
+                                                );
+                                                
+                                                setFieldValue('presentValueInvestor', presentValueInvestor);
+                                                setFieldValue('presentValueSF', presentValueSF);
+                                                setFieldValue('commissionSF', presentValueInvestor - presentValueSF);
+                                                setFieldValue('investorProfit', values.payedAmount - presentValueSF);
+                                                setFieldValue('montoDisponibleCuenta',values?.montoDisponibleInfo-presentValueInvestor-values?.GM)
+                                              }
+                                            }
+                                          }}
+                                          minDate={values?.opDate ? new Date(values.opDate) : null}
+                                          renderInput={(params) => (
+                                            <TextField 
+                                              {...params} 
+                                              fullWidth
+                                              error={touched.opExpiration && Boolean(errors.opExpiration)}
+                                              helperText={touched.opExpiration && errors.opExpiration}
+                                            />
+                                          )}
+                                        />
+                                      </Grid>
+                                                                        <Grid item xs={12} md={2}>
                                     <TextField
                                       label="Días Operación"
                                       fullWidth
@@ -1667,61 +1685,61 @@ const handleSubmit = async (values, actions) => {
                                       />
                                       </Grid>
                                  {/* Gasto de Mantenimiento */}
-<Grid item xs={12} md={4}>
-  <div className="flex flex-row gap-2 items-center p-2 border rounded-lg shadow-md">
-    <label className="text-lg font-medium flex-shrink-0">Gasto de Mantenimiento (GM)</label>
-    <Switch
-      checked={values?.applyGm || false}
-      onChange={(event) => {
-        const isChecked = event.target.checked;
-        const gmValue = isChecked ? (values?.presentValueInvestor || 0) * 0.002 : 0;
-        
-        // Update GM values
-        setFieldValue('applyGm', isChecked);
-        setFieldValue('GM', gmValue);
-        
-        // Update available amount if needed
-        if (values?.montoDisponibleInfo) {
-          const difference = isChecked ? -gmValue : gmValue;
-          const newAvailableAmount = (values.montoDisponibleInfo) + difference;
-          setFieldValue('montoDisponibleCuenta', newAvailableAmount);
-        }
-      }}
-    />
-    <TextField
-      type="text"
-      placeholder="$ 0,00"
-      value={values?.GM ? formatCurrency(values.GM) : "0"}
-      onChange={(e) => {
-        const rawValue = e.target.value.replace(/[^\d]/g, "");
-        const newValue = parseFloat(rawValue) || 0;
-        
-        // Update GM value
-        setFieldValue('GM', newValue);
-        
-        // Calculate difference with previous value
-        const previousValue = values.GM || 0;
-        const difference = newValue - previousValue;
-        
-        // Update available amount if needed
-        if (values?.montoDisponibleInfo) {
-          const newAvailableAmount = (values.montoDisponibleInfo) - previousValue;
-          setFieldValue('montoDisponibleCuenta', newAvailableAmount);
-        }
-      }}
-      disabled={!values?.applyGm}
-      fullWidth
-      variant="outlined"
-      className={`flex-1 ${values?.applyGm ? "bg-white" : "bg-gray-200 text-gray-500"}`}
-      InputProps={{
-        startAdornment: (
-          <InputAdornment position="start">$</InputAdornment>
-        ),
-      }}
-    />
-  </div>
-</Grid>
-                             
+                                      <Grid item xs={12} md={4}>
+                                        <div className="flex flex-row gap-2 items-center p-2 border rounded-lg shadow-md">
+                                          <label className="text-lg font-medium flex-shrink-0">Gasto de Mantenimiento (GM)</label>
+                                          <Switch
+                                            checked={values?.applyGm || false}
+                                            onChange={(event) => {
+                                              const isChecked = event.target.checked;
+                                              const gmValue = isChecked ? (values?.presentValueInvestor || 0) * 0.002 : 0;
+                                              
+                                              // Update GM values
+                                              setFieldValue('applyGm', isChecked);
+                                              setFieldValue('GM', gmValue);
+                                              
+                                              // Update available amount if needed
+                                              if (values?.montoDisponibleInfo) {
+                                                const difference = isChecked ? -gmValue : gmValue;
+                                                const newAvailableAmount = (values.montoDisponibleInfo) + difference;
+                                                setFieldValue('montoDisponibleCuenta', newAvailableAmount);
+                                              }
+                                            }}
+                                          />
+                                          <TextField
+                                            type="text"
+                                            placeholder="$ 0,00"
+                                            value={values?.GM ? formatCurrency(values.GM) : "0"}
+                                            onChange={(e) => {
+                                              const rawValue = e.target.value.replace(/[^\d]/g, "");
+                                              const newValue = parseFloat(rawValue) || 0;
+                                              
+                                              // Update GM value
+                                              setFieldValue('GM', newValue);
+                                              
+                                              // Calculate difference with previous value
+                                              const previousValue = values.GM || 0;
+                                              const difference = newValue - previousValue;
+                                              
+                                              // Update available amount if needed
+                                              if (values?.montoDisponibleInfo) {
+                                                const newAvailableAmount = (values.montoDisponibleInfo) - previousValue;
+                                                setFieldValue('montoDisponibleCuenta', newAvailableAmount);
+                                              }
+                                            }}
+                                            disabled={!values?.applyGm}
+                                            fullWidth
+                                            variant="outlined"
+                                            className={`flex-1 ${values?.applyGm ? "bg-white" : "bg-gray-200 text-gray-500"}`}
+                                            InputProps={{
+                                              startAdornment: (
+                                                <InputAdornment position="start">$</InputAdornment>
+                                              ),
+                                            }}
+                                          />
+                                        </div>
+                                      </Grid>
+                                                                  
                             </Grid>
                             
                             
@@ -1787,27 +1805,27 @@ const handleSubmit = async (values, actions) => {
                     </DialogActions>
                   </Dialog>
               
-                          {/* MODAL DE PROCESO */}
-<Dialog open={isModalOpen} PaperProps={{ sx: { borderRadius: "10px", textAlign: "center", p: 3 } }}>
-  <DialogContent>
-    {success === null ? (
-      <>
-        <CircularProgress size={80} sx={{ color: "#1976D2", mb: 2 }} />
-        <Typography variant="h6">Procesando...</Typography>
-      </>
-    ) : success ? (
-      <>
-        <CheckCircle sx={{ fontSize: 80, color: "green", mb: 2 }} />
-        <Typography variant="h5" color="success.main">¡Registro Exitoso!</Typography>
-      </>
-    ) : (
-      <>
-        <Error sx={{ fontSize: 80, color: "red", mb: 2 }} />
-        <Typography variant="h5" color="error.main">Error al Registrar</Typography>
-      </>
-    )}
-  </DialogContent>
-</Dialog>
+                                            {/* MODAL DE PROCESO */}
+                  <Dialog open={isModalOpen} PaperProps={{ sx: { borderRadius: "10px", textAlign: "center", p: 3 } }}>
+                    <DialogContent>
+                      {success === null ? (
+                        <>
+                          <CircularProgress size={80} sx={{ color: "#1976D2", mb: 2 }} />
+                          <Typography variant="h6">Procesando...</Typography>
+                        </>
+                      ) : success ? (
+                        <>
+                          <CheckCircle sx={{ fontSize: 80, color: "green", mb: 2 }} />
+                          <Typography variant="h5" color="success.main">¡Registro Exitoso!</Typography>
+                        </>
+                      ) : (
+                        <>
+                          <Error sx={{ fontSize: 80, color: "red", mb: 2 }} />
+                          <Typography variant="h5" color="error.main">Error al Registrar</Typography>
+                        </>
+                      )}
+                    </DialogContent>
+                  </Dialog>
              {/* Debug */}
             {process.env.NODE_ENV === 'development' && (
               <div style={{ marginTop: 20 }}>
