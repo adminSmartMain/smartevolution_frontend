@@ -1,10 +1,257 @@
 html,
 
-
+/* Estilos generales */
 body {
-  padding: 0;
+  font-family: 'Roboto', sans-serif;
   margin: 0;
-  background: #ebebeb;
+  padding: 0;
+  background-color: #f5f5f5;
+}
+
+/* Estilos para los contenedores principales */
+.operation-container {
+  background-color: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin: 20px;
+}
+
+/* Estilos para la cabecera */
+.operation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.operation-title {
+  font-size: 24px;
+  font-weight: 500;
+  color: #488B8F
+}
+
+/* Estilos para las secciones */
+.section-title {
+  font-weight: 500;
+  margin-bottom: 15px;
+  color: #488B8F;
+  font-size: 16px;
+}
+
+/* Estilos para los campos de formulario */
+.form-field {
+  margin-bottom: 15px;
+}
+
+.form-field label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+  color: #488B8F;
+}
+
+.form-field input, 
+.form-field select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+/* Estilos para las tablas */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+
+.data-table th, 
+.data-table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.data-table th {
+  background-color: #f5f5f5;
+  font-weight: 500;
+}
+
+/* Estilos para los botones */
+.action-button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+}
+
+.primary-button {
+  background-color: #1976d2;
+  color: white;
+}
+
+.secondary-button {
+  background-color: #f5f5f5;
+  color: #488B8F;
+  border: 1px solid #ddd;
+}
+
+/* Estilos específicos para la factura */
+.invoice-section {
+  background-color: #f9f9f9;
+  padding: 15px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  border: 1px solid #eee;
+}
+
+.invoice-header {
+  font-weight: 500;
+  margin-bottom: 10px;
+  color:#488B8F;
+}
+
+.amount-display {
+  font-size: 18px;
+  font-weight: 500;
+  color: #488B8F;
+  margin-bottom: 15px;
+}
+
+/* Estilos para los campos obligatorios */
+.required-field::after {
+  content: " *";
+  color: red;
+}
+
+/* Estilos para la sección de cuenta inversionista */
+.investor-account {
+  background-color: #f5faff;
+  padding: 15px;
+  border-radius: 4px;
+  margin-top: 20px;
+  border: 1px solid #d0e3ff;
+}
+
+/* Estilos para el botón de agregar factura */
+.add-invoice-button {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Estilos para los tooltips */
+.tooltip-icon {
+  color: #1976d2;
+  cursor: pointer;
+  margin-left: 5px;
+}
+
+/* Estilos para los campos deshabilitados */
+.disabled-field {
+  background-color: #f5f5f5;
+  color: #488B8F;
+  
+}
+
+/* Estilo global para el botón MUI con fondo contenido (contained) */
+.MuiButton-root.MuiButton-contained.MuiButton-containedPrimary {
+  background-color: #488B8F;
+  color: white;
+  border-radius: 4px; /* Si quieres bordes redondeados */
+}
+
+/* Cambio de color cuando el botón está en hover */
+.MuiButton-root.MuiButton-contained.MuiButton-containedPrimary:hover {
+  background-color: #3a7073; /* Versión más oscura de #488B8F */
+}
+
+/* Para cuando el botón esté deshabilitado */
+.MuiButton-root.MuiButton-contained.MuiButton-containedPrimary:disabled {
+  background-color: #b0d4d1; /* Color más suave para deshabilitado */
+  color: #d1d1d1;
+}
+
+
+/* Cambiar el borde de los TextField en estado normal */
+.MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline {
+  border-color: #555555; /* Color del borde */
+  border-width: 1px; /* Grosor del borde */
+  border-radius: 8px; /* Radio de las esquinas */
+  
+}
+
+/* Cambiar el borde de los TextField deshabilitados */
+.MuiOutlinedInput-root.Mui-disabled .MuiOutlinedInput-notchedOutline {
+  border-color: #878787 !important;
+  opacity: 0.5; /* Opcional: ajusta la opacidad si lo prefieres */
+}
+
+/* Cambiar el borde cuando hay error */
+.MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline {
+  border-color: #f44336; /* Color de error */
+}
+
+/* Cambiar el borde al pasar el mouse (hover) */
+.MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: #909090; /* Color al hacer hover */
+}
+
+/* Cambiar el estilo del label */
+.MuiInputLabel-outlined {
+  color: #5f6368; /* Color del label */
+  transform: translate(14px, 14px) scale(1); /* Posición inicial */
+}
+
+/* Label cuando el campo está enfocado */
+.MuiInputLabel-outlined.Mui-focused {
+  color: #1976d2; /* Color del label cuando está enfocado */
+  
+}ç
+
+
+/* Aplica fondo gris siempre */
+.MuiAccordionSummary-root {
+  background-color: #f9f9f9 !important;
+
+  border-bottom: 1px solid #e0e0e0;
+  
+  
+  
+}
+
+/* Opcional: reforzamos que incluso expandido se mantenga igual */
+.MuiAccordionSummary-root.Mui-expanded {
+  background-color: #f9f9f9;
+  
+  
+}
+
+
+.MuiAccordionDetails-root {
+  padding: 16px !important;
+  background-color: #f9f9f9;
+  border-top: 1px solid #e0e0e0;
+  border: 1.4px solid transparent !important;
+  
+  
+}
+.MuiAccordionSummary-root {
+  background-color: #f9f9f9 !important;
+  border-bottom: 1px solid #e0e0e0;
+  
+  /* Borde transparente por defecto */
+}
+
+/* Estilos para los separadores */
+.section-divider {
+  border-top: 1px solid #e0e0e0;
+  margin: 20px 0;
 }
 
 .Toastify__toast--error {
@@ -148,34 +395,7 @@ body {
 
 
 
-/* Botón */
-.button-primary {
-  background-color: var(--primary-color);
-  color: var(--white-color);
-  border: none;
-  padding: 10px 20px;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color var(--transition-duration);
-}
 
-.button-primary:hover {
-  background-color: var(--secondary-color);
-}
-
-/* Botón de icono */
-.icon-button {
-  color: var(--primary-color);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px;
-  transition: color var(--transition-duration);
-}
-
-.icon-button:hover {
-  color: var(--secondary-color);
-}
 
   
   
@@ -213,44 +433,7 @@ body {
     color: var(--white-color);
   }
   
-  /* Botones */
-  .button {
-    padding: 8px 16px;
-    border-radius: 4px;
-    text-transform: none;
-    cursor: pointer;
-    transition: all 0.3s ease;
-  }
   
-  .button-primary {
-    background-color: var(--primary-color);
-    color: var(--white-color);
-  }
-  
-  .button-primary:hover {
-    background-color: var(--secondary-color);
-  }
-  
-  .button-outline {
-    border: 1px solid --primary-color;
-    color: var(--primary-color);
-    background-color: transparent;
-  }
-  
-  .button-outline:hover {
-    color: var(--white-color);
-    background-color: var(--secondary-color);
-    border-color: var(--primary-color);
-  }
-  
-  .icon-button {
-    color: var(--primary-color);
-    padding: 4px;
-  }
-  
-  .icon-button:hover {
-    background-color: transparent;
-  }
   
   /* Input de texto */
   .text-input {

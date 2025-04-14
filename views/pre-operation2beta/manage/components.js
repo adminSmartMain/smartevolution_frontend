@@ -1,5 +1,5 @@
 // components/RegisterOperationForm.js
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { InputAdornment, Box, Modal, Typography, Switch, TextField, Button, Grid, Autocomplete, Accordion, AccordionSummary, AccordionDetails, Tooltip, IconButton } from '@mui/material';
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney"; // Icono del dólar
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
@@ -17,8 +17,8 @@ import {  getOperationsByInvestor,Bills, billById,TypeOperation,CreateOperation,
 import { useFetch } from "@hooks/useFetch";
 import { PV } from "@formulajs/formulajs";
 import { addDays, parseISO, set, isValid } from "date-fns";
-
-
+import authContext from "@context/authContext";
+import { useRouter } from 'next/router';
 import { Toast } from "@components/toast";
 
 import { Dialog,DialogContent, DialogTitle,DialogActions,CircularProgress} from "@mui/material";
@@ -45,9 +45,11 @@ actionsFormik,
   console.log(emitters)
   console.log(typeOperation?.data)
   const emisores = emitters;
-
+const router = useRouter();
+const [clientWithoutBroker, setClientWithoutBroker] = useState(null);
   const [AccountFromClient,setAccountFromClient]=useState()   
-
+  const [openEmitterBrokerModal,setOpenEmitterBrokerModal]=useState(false)
+  const { user, logout } = useContext(authContext);
   // Simulación de correlativo (luego se obtendrá del backend)
   const getNextOperationNumber = () => opId; // Ejemplo: siempre empieza en 1001
   
@@ -330,50 +332,7 @@ const cargarFraccionFactura= async (factura) => {
   };
 
 
-  const cargarPagadoresPorEmisor = async (emisor) => {
-    // Validaciones robustas
-    if (!emisor || !emisor.document_number) {
-      console.error("Emisor no válido o sin document_number");
-      return []; // Retorna array vacío para evitar errores en componentes
-    }
-  
-    if (!Array.isArray(dataBills)) {
-      console.error("dataBills no es un array:", dataBills);
-      return [];
-    }
-  
-    if (!Array.isArray(payers)) {
-      console.error("payers no es un array:", payers);
-      return [];
-    }
-  
-    try {
-      // 1. Filtrar facturas - con chequeo de propiedades
-      const facturasDelEmisor = dataBills.filter(bill => {
-        // Verificar que bill tenga las propiedades necesarias
-        if (!bill || typeof bill !== 'object') return false;
-        return bill.emitterId === emisor.document_number;
-      });
-  
-      // 2. Obtener payerIds únicos con validación
-      const payerIdsUnicos = [...new Set(
-        facturasDelEmisor
-          .map(bill => bill?.payerId)
-          .filter(payerId => payerId !== undefined)
-      )];
-  
-      // 3. Filtrar payers con validación de estructura
-      const pagadoresFiltrados = payers.filter(payer => {
-        if (!payer?.data?.document_number) return false;
-        return payerIdsUnicos.includes(payer.data.document_number);
-      });
-  
-      return pagadoresFiltrados;
-    } catch (error) {
-      console.error("Error en cargarPagadoresPorEmisor:", error);
-      return [];
-    }
-  };
+
 
   const cargarFacturas = async (emisor, pagadorId = null) => {
     if (!emisor) {
@@ -478,17 +437,41 @@ const formatDate2 = (dateString) => {
 
     
 
-
+const renderNombreUsuario = (usuario) => (
+  <Box component="span" sx={{ color: 'text.primary', fontWeight: 500 }}>
+    {usuario?.name}
+  </Box>
+);
 
   
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={esLocale}>
       {/* Para mostrar los toast */}
       <ToastContainer position="top-right" autoClose={5000} />
-      <Box sx={{ padding: 3 }}>
-        <Typography variant="h4" gutterBottom>
-          Registrar Operación
-        </Typography>
+      <Box sx={{ padding: 5, backgroundColor: 'white', borderRadius: 1, boxShadow: 1 }}>
+        
+         <Box sx={{ 
+                                        display: "flex", 
+                                        justifyContent: "space-between", 
+                                        alignItems: "center", 
+                                        marginBottom: 3,
+                                        paddingBottom: 2,
+                                        borderBottom: '1px solid #e0e0e0'
+                                      }}> <Typography variant="h4" gutterBottom>
+                                      Registrar Operación
+                                    </Typography>
+                                    {user ? (
+  <Typography variant="subtitle1" sx={{ color: 'text.secondary' }}>
+    Creado por: {renderNombreUsuario(user)}
+  </Typography>
+) : (
+  <Typography variant="subtitle1" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
+    Sin información de autoría
+  </Typography>
+)}
+
+                                    </Box>
+       
         
         <Formik
           initialValues={initialValues}
@@ -641,7 +624,9 @@ const formatDate2 = (dateString) => {
                                     'investorBroker', 
                                     'investorBrokerName',
                                     'montoDisponibleCuenta', 
-                                    'montoDisponibleInfo'
+                                    'montoDisponibleInfo',
+                                    'probableDate',
+                                    
                                   ].includes(key))
                                   .map(key => [key, 
                                     typeof f[key] === 'number' ? 0 : 
@@ -665,8 +650,12 @@ const formatDate2 = (dateString) => {
                             setFieldValue('nombrePagador', '');
                             setFieldValue('filtroEmitterPagador.payer', '');
                             setFieldValue('takedBills', []);
-                          
+                            setFieldValue('filteredPayers',[]);
+                            setFieldValue('corredorEmisor',0);
+                            setFieldValue('discountTax', 0);
+                            console.log(values)
                             return;
+
                           }
 
 
@@ -700,6 +689,17 @@ const formatDate2 = (dateString) => {
                             
                               return; // Detener la ejecución si tasaDescuento es undefined
                             }
+
+
+                         // VALIDACIÓN DEL CORREDOR CON MODAL
+                                  if (!brokerByClientFetch) {
+                                    // Abre el modal en lugar del toast
+                                    setClientWithoutBroker(newValue?.data.id);
+                                    setOpenEmitterBrokerModal(true); // Abre el modal
+                                    return; // Detiene la ejecución
+                                  }
+
+
                         
                             // Si tasaDescuento no es undefined, continuar con el flujo normal
                             setFieldValue('emitter', newValue);
@@ -762,7 +762,112 @@ const formatDate2 = (dateString) => {
                                         }
                             
                           
-                          }
+                          }else {
+
+                            const brokerByClientFetch = await fetchBrokerByClient(newValue?.data.id);
+                            console.log(brokerByClientFetch);
+                        
+                            const fullName = brokerByClientFetch?.data?.first_name
+                              ? `${brokerByClientFetch.data.first_name} ${brokerByClientFetch.data.last_name}`
+                              : brokerByClientFetch?.data?.social_reason;
+                        
+                            console.log('fullName:', fullName);
+                            setFieldValue('corredorEmisor', fullName);
+                            setFieldValue('filtroEmitterPagador.emitter', newValue?.data.id)
+                            
+                            const tasaDescuento = await cargarTasaDescuento(newValue?.data.id);
+                            console.log(tasaDescuento?.data);
+                        
+                            // Verificar si tasaDescuento es undefined
+                            if (!tasaDescuento) {
+                              // Mostrar el mensaje de error usando Toast
+                               // Mostrar toast/notificación
+                               toast.error("Disculpe, el cliente seleccionado no tiene perfil de riesgo configurado. Por favor, agrege el perfil en el módulo de clientes", {
+                                position: "bottom-right",
+                                autoClose: 5000,
+                                hideProgressBar: false,
+                                closeOnClick: true,
+                                pauseOnHover: true,
+                                draggable: true
+                              });
+                            
+                              return; // Detener la ejecución si tasaDescuento es undefined
+                            }
+
+
+                         // VALIDACIÓN DEL CORREDOR CON MODAL
+                                  if (!brokerByClientFetch) {
+                                    // Abre el modal en lugar del toast
+                                    setClientWithoutBroker(newValue?.data.id);
+                                    setOpenEmitterBrokerModal(true); // Abre el modal
+                                    return; // Detiene la ejecución
+                                  }
+
+
+                        
+                            // Si tasaDescuento no es undefined, continuar con el flujo normal
+                            setFieldValue('emitter', newValue);
+                            console.log(newValue?.data.id);
+                            console.log(dataBrokerByClient);
+                            console.log(brokerByClientFetch);
+                            console.log(brokerByClientFetch?.data?.id);
+                            console.log(brokerByClient);
+                            setFieldValue('emitterBroker', brokerByClientFetch?.data?.id);
+
+                            console.log(dataBills)
+
+
+                        
+                            // Limpiar solo el número de factura sin tocar otros valores
+                            setFieldValue('facturas', values.facturas.map(factura => ({
+                              ...factura,
+                              factura: '', // Se limpia solo este campo
+                            })));
+                        
+                            const discountRate = parseFloat(tasaDescuento?.data?.discount_rate) || 0; // Convierte a número o usa 0 si es inválido
+                          // setFieldValue(`investorTax`, (discountRate * 0.58).toFixed(2));
+                          setFieldValue(`investorTax`, 0);
+                            setFieldValue(`discountTax`, discountRate);
+                            setFieldTouched('corredorEmisor', true);
+
+                            console.log(payers)
+                            console.log(values)
+                            console.log(brokerByClientFetch?.data?.id,values.filtroEmitterPagador.payer)
+                            if (newValue?.data.id ){
+                              
+                              console.log('se puede enviar fatura, estàn los dos')
+                              // Cargar nuevas facturas si se ha seleccionado un nuevo emisor
+                                    if (newValue) {
+                                      console.log(newValue);
+                                      const facturasEmisor= await cargarFacturas(newValue?.data.id,values.filtroEmitterPagador.payer);
+                                      console.log(facturasEmisor)
+                                                                                // Filtrar pagadores con facturas que tienen saldo > 0
+                                      if (facturasEmisor?.data) {
+                                        const facturasConSaldo = facturasEmisor.data.filter(
+                                          f => Number(f.currentBalance) > 0
+                                        );
+                                        
+                                        const payerIdsUnicos = [...new Set(
+                                          facturasConSaldo.map(f => f.payerId).filter(Boolean)
+                                        )];
+                                        
+                                        const pagadoresFiltrados = payers.filter(p => 
+                                          p?.data?.document_number && 
+                                          payerIdsUnicos.includes(p.data.document_number)
+                                        );
+                                        
+                                        console.log('Pagadores filtrados:', pagadoresFiltrados);
+                                        // Aquí puedes actualizar el estado de los payers disponibles
+                                        // setPayersFiltrados(pagadoresFiltrados);
+                                        setFieldValue('filteredPayers',pagadoresFiltrados)
+                                      }
+                                    
+                                        }   
+                                        }
+
+
+
+                           }
                         }}
                         renderInput={(params) => (
                           <TextField
@@ -2463,6 +2568,8 @@ const formatDate2 = (dateString) => {
                                                 }
                                               }}
                                             />
+                                            
+                                   
                                             </Grid>
 
                                             {/* Campo de valor nominal */}
@@ -2584,6 +2691,8 @@ const formatDate2 = (dateString) => {
                                             />
                                             </Grid>
                                             <Grid item xs={12} md={1.5}>
+                                            <Box sx={{ position: 'relative' }}> 
+
                                             <TextField
                                              id="investorTaxname" // Para CSS/JS si es necesario
                                               data-testid="campo-investorTax"
@@ -2647,6 +2756,41 @@ const formatDate2 = (dateString) => {
                                                     : "Valor ingresado manualmente"
                                               }
                                             />
+                                             <Tooltip 
+                                      title="Por defecto, este valor se establece en 0%. Si lo necesitas, puedes modificarlo manualmente en este formulario según las condiciones actuales del mercado.
+                                    Cambiar este valor solo afectará la operación actual, no se actualizará en el perfil de riesgo del cliente."
+                                                placement="top-end" // Cambiar la posición para que esté a la derecha, alineado con el campo
+                                                enterDelay={200} // Retardo para aparecer rápidamente
+                                                leaveDelay={200} // Retardo para desaparecer rápidamente
+                                                arrow
+                                                PopperProps={{
+                                                  modifiers: [
+                                                    {
+                                                      name: 'offset',
+                                                      options: {
+                                                        offset: [0, 5], // Ajusta el desplazamiento del tooltip
+                                                      },
+                                                    },
+                                                  ],
+                                                }}
+                                              >
+                                                <IconButton
+                                                  size="small"
+                                                  style={{
+                                                    position: 'absolute', // Alineado dentro del contenedor
+                                                    top: '40%', 
+                                                    right: 2, // Colocado a la derecha del campo
+                                                    transform: 'translateY(-100%)', // Centrado verticalmente en el campo
+                                                    padding: 0.8,
+                                                    marginLeft: 1,
+                                                  }}
+                                                >
+                                                  <InfoIcon style={{ fontSize: '1rem', color: 'rgb(94, 163, 163)' }} />
+                                                </IconButton>
+                                              </Tooltip>
+                                            </Box>
+                                           
+
                                             </Grid>
                                             <Grid item xs={12} md={2}>
                                             <DatePicker
@@ -2824,7 +2968,7 @@ const formatDate2 = (dateString) => {
                                                   display: 'flex',
                                                   alignItems: 'center',
                                                   height: '69%',
-                                                  width:'842px',
+                                                  width:'913px',
                                                   gap: 1,
                                                   p: 1,
                                                   border: '1px solid',
@@ -2842,7 +2986,7 @@ const formatDate2 = (dateString) => {
                                                 onChange={(event) => {
                                                   const isChecked = event.target.checked;
                                                   const valorGm = factura.presentValueInvestor * 0.002;
-                                                  const diferencia = isChecked ? -valorGm : valorGm;
+                                                  const diferencia = isChecked ? valorGm : -valorGm;
 
                                                   // Actualizar estado del GM para esta factura
                                                   setFieldValue(`facturas[${index}].applyGm`, isChecked);
@@ -2851,7 +2995,7 @@ const formatDate2 = (dateString) => {
                                                   // Calcular nuevo monto disponible SOLO para facturas con el mismo idCuentaInversionista
                                                   const currentAccountId = factura.idCuentaInversionista;
                                                   const montoActual = values.facturas.find(f => f.idCuentaInversionista === currentAccountId)?.montoDisponibleCuenta || factura.montoDisponibleInfo;
-                                                  const nuevoMonto = montoActual + diferencia;
+                                                  const nuevoMonto = montoActual - diferencia;
 
                                                   // Actualizar solo las facturas de la misma cuenta
                                                   values.facturas.forEach((f, i) => {
@@ -2859,6 +3003,14 @@ const formatDate2 = (dateString) => {
                                                       setFieldValue(`facturas[${i}].montoDisponibleCuenta`, nuevoMonto);
                                                     }
                                                   });
+                                                }}
+                                                sx={{
+                                                  '& .MuiSwitch-switchBase.Mui-checked': {
+                                                    color: '#488B8F', // Color cuando está activado
+                                                  },
+                                                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                                    backgroundColor: '#488B8F', // Color del track cuando está activado
+                                                  },
                                                 }}
                                               />
                                               <TextField
@@ -2912,7 +3064,7 @@ const formatDate2 = (dateString) => {
                                 </Grid>
                               ))}
                               <Grid item xs={12}>
-                                <Button variant="contained" onClick={() => push(
+                                <Button variant="contained" sx={{ marginLeft: 'auto' }} onClick={() => push(
           
 
                                       { applyGm: false,
@@ -3015,6 +3167,47 @@ const formatDate2 = (dateString) => {
                                 )}
                               </DialogContent>
                             </Dialog>
+
+                            <Modal open={openEmitterBrokerModal}   onClose={() => setOpenEmitterBrokerModal(false)}>
+                                  <Box sx={{
+                                    position: 'absolute',
+                                    top: '50%',
+                                    left: '50%',
+                                    transform: 'translate(-50%, -50%)',
+                                    width: 400,
+                                    bgcolor: 'background.paper',
+                                    boxShadow: 24,
+                                    p: 4,
+                                    borderRadius: 1
+                                  }}>
+                                    <Typography variant="h6" gutterBottom>
+                                      Corredor no asignado
+                                    </Typography>
+                                    <Typography variant="body1" sx={{ mb: 3 }}>
+                                      El emisor seleccionado no tiene un corredor asignado. Debe asignar un corredor antes de continuar con el registro.
+                                    </Typography>
+                                    
+                                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+                                      <Button 
+                                         onClose={() => setOpenEmitterBrokerModal(false)}
+                                        variant="outlined"
+                                        color="secondary"
+                                      >
+                                        Cancelar
+                                      </Button>
+                                      <Button 
+                                          onClick={() => {
+                                            window.open(`${window.location.origin}/customers?modify=${clientWithoutBroker}`, '_blank');
+                                            setOpenEmitterBrokerModal(false);
+                                          }}
+                                          variant="contained"
+                                          color="primary"
+                                        >
+                                          Asignar Corredor
+                                          </Button>
+                                    </Box>
+                                  </Box>
+                                </Modal>
                             {/* Debug */}
                           {process.env.NODE_ENV === 'development' && (
                             <div style={{ marginTop: 20 }}>

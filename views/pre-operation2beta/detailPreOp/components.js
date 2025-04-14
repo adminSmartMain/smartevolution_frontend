@@ -183,16 +183,16 @@ const renderNombreUsuario = (usuario) => (
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={esLocale}>
   {/* Para mostrar los toast */}
   <ToastContainer position="top-right" autoClose={5000} />
-  <Box sx={{ padding: 3 }}>
-       <Box 
-      sx={{ 
+  <Box sx={{ padding: 9.4, backgroundColor: 'white', borderRadius: 1, boxShadow: 1 }}>
+  <Box sx={{ 
         display: "flex", 
         justifyContent: "space-between", 
         alignItems: "center", 
-        marginBottom: 3 
-      }}
-    >
-            <Typography variant="h4" gutterBottom>
+        marginBottom: 3,
+        paddingBottom: 2,
+        borderBottom: '1px solid #e0e0e0'
+      }}>
+            <Typography variant="h4" gutterBottom sx={{ fontWeight: 'medium' }}>
               Ver Operación
             </Typography>
            {usuarioEncontrado || usuarioEncontradoEdit ? (
@@ -216,6 +216,26 @@ const renderNombreUsuario = (usuario) => (
 
     <Grid container spacing={2}>
       {/* Número de Operación */}
+      <Grid item xs={12} md={3}>
+ 
+  <Box
+    sx={{
+      width: '100%',
+      height: '56px', // Altura estándar de un TextField de Material-UI
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: '4px', // Bordes redondeados como un TextField
+      backgroundColor: dataDetails?.data?.isRebuy ? 'warning.light' : 'success.light',
+      color: 'common.white',
+      fontWeight: 'bold',
+      border: '1px solid',
+      borderColor: dataDetails?.data?.isRebuy ? 'warning.main' : 'success.main',
+    }}
+  >
+    {dataDetails?.data?.isRebuy ? 'Recompra' : 'No recompra'}
+  </Box>
+</Grid>
       <Grid item xs={12} md={2}>
         <TextField
           label="Número de Operación *"
@@ -240,19 +260,20 @@ const renderNombreUsuario = (usuario) => (
       </Grid>
 
       {/* Tipo de Operación */}
-      <Grid item xs={12} md={2}>
+      <Grid item xs={12} md={5}>
         <TextField
           label="Tipo de Operación"
           fullWidth
           type="text"
           value={dataDetails?.data?.opType.description || ""}
           InputProps={{ readOnly: true }}
+          InputLabelProps={{ shrink: true }}
           disabled
         />
       </Grid>
 
       {/* Emisor */}
-      <Grid item xs={12} md={6}>
+      <Grid item xs={12} md={4}>
         <TextField
           label="Emisor"
           fullWidth
@@ -264,7 +285,7 @@ const renderNombreUsuario = (usuario) => (
         />
       </Grid>
 {/*Selector de Pagadores*/}
-<Grid item xs={12} md={6}>
+<Grid item xs={12} md={4}>
                                     <TextField
                                         label="Nombre Pagador"
                                         fullWidth
@@ -275,7 +296,7 @@ const renderNombreUsuario = (usuario) => (
                                       />
                                     </Grid>
       {/* Corredor Emisor */}
-      <Grid item xs={12} md={6}>
+      <Grid item xs={12} md={4}>
         <TextField
           label="Corredor Emisor"
           fullWidth
@@ -607,7 +628,7 @@ const renderNombreUsuario = (usuario) => (
       display: 'flex',
       alignItems: 'center',
       height: '56%',
-      width:'870px',
+      width:'887px',
       gap: 1,
       p: 1,
       border: '1px solid',

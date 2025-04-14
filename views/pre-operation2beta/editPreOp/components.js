@@ -51,9 +51,25 @@ const usuarioEncontrado = users?.data?.find(user => user.id === dataDetails?.dat
 
 const usuarioEncontradoEdit = users?.data?.find(user => user.id === dataDetails?.data?.user_updated_at);
 console.log(usuarioEncontrado,usuarioEncontradoEdit)
-  // Simulación de correlativo (luego se obtendrá del backend)
-  const getNextOperationNumber = () => opId; // Ejemplo: siempre empieza en 1001
-  
+console.log(dataDetails?.data?.created_at, dataDetails?.data?.updated_at);
+
+const createdAt = new Date(dataDetails?.data?.created_at);
+const updatedAt = dataDetails?.data?.updated_at ? new Date(dataDetails?.data?.updated_at) : null;
+
+const opcionesFormato = {
+  dateStyle: 'short',
+  timeStyle: 'medium'
+};
+
+const zonaHoraria = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+const createdAtLocal = createdAt.toLocaleString(undefined, opcionesFormato);
+const updatedAtLocal = updatedAt ? updatedAt.toLocaleString(undefined, opcionesFormato) : null;
+
+const tooltipText = `
+🕒 Creado el: ${createdAtLocal} (${zonaHoraria})
+🛠️ Última actualización: ${updatedAtLocal ? `${updatedAtLocal} (${zonaHoraria})` : 'No ha sido actualizado'}
+`;
   const {
       fetch: fetchBills,
       loading: loadingBills,
@@ -623,36 +639,66 @@ const renderNombreUsuario = (usuario) => (
             <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={esLocale}>
               {/* Para mostrar los toast */}
               <ToastContainer position="top-right" autoClose={5000} />
-              <Box sx={{ padding: 3 }}>
-                <Box 
-                      sx={{ 
-                        display: "flex", 
-                        justifyContent: "space-between", 
-                        alignItems: "center", 
-                        marginBottom: 3 
-                      }}
-                    >
-                        <Typography variant="h4" gutterBottom>
-                          Editar Operación
-                        </Typography>
-                        {usuarioEncontrado || usuarioEncontradoEdit ? (
-                            <Typography variant="subtitle1" sx={{ color: 'text.secondary' }}>
-                              {usuarioEncontrado?.id === usuarioEncontradoEdit?.id ? (
-                                <>Creado y editado por: {renderNombreUsuario(usuarioEncontrado)}</>
-                              ) : (
-                                <>
-                                  {usuarioEncontrado && <>Creado por: {renderNombreUsuario(usuarioEncontrado)}</>}
-                                  {usuarioEncontrado && usuarioEncontradoEdit && <br />}
-                                  {usuarioEncontradoEdit && <>Editado por: {renderNombreUsuario(usuarioEncontradoEdit)}</>}
-                                </>
-                              )}
-                            </Typography>
-                          ) : (
-                            <Typography variant="subtitle1" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
-                              Sin información de autoría
-                            </Typography>
-                          )}
-                  </Box>
+<Box sx={{ padding: 9, backgroundColor: 'white', borderRadius: 1, boxShadow: 1 }}>
+                  
+<Box
+  sx={{
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 3,
+    paddingBottom: 2,
+    borderBottom: '1px solid #e0e0e0',
+  }}
+>
+  <Typography variant="h4" gutterBottom>
+    Editar Operación
+  </Typography>
+
+  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+    {usuarioEncontrado || usuarioEncontradoEdit ? (
+      <Typography variant="subtitle1" sx={{ color: 'text.secondary' }}>
+        {usuarioEncontrado?.id === usuarioEncontradoEdit?.id ? (
+          <>Creado y editado por: {renderNombreUsuario(usuarioEncontrado)}</>
+        ) : (
+          <>
+            {usuarioEncontrado && <>Creado por: {renderNombreUsuario(usuarioEncontrado)}</>}
+            {usuarioEncontrado && usuarioEncontradoEdit && <br />}
+            {usuarioEncontradoEdit && <>Editado por: {renderNombreUsuario(usuarioEncontradoEdit)}</>}
+          </>
+        )}
+      </Typography>
+    ) : (
+      <Typography variant="subtitle1" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
+        Sin información de autoría
+      </Typography>
+    )}
+
+    {/* Tooltip pegado al texto */}
+    {(usuarioEncontrado || usuarioEncontradoEdit) && (
+      <Tooltip
+        title={<span style={{ whiteSpace: 'pre-line' }}>{tooltipText}</span>}
+        arrow
+        placement="top"
+        PopperProps={{
+          modifiers: [
+            {
+              name: 'offset',
+              options: {
+                offset: [0, 4], // un poco de separación vertical
+              },
+            },
+          ],
+        }}
+      >
+        <IconButton size="small" sx={{ ml: 0.5 }}>
+          <InfoIcon fontSize="small" color="action" />
+        </IconButton>
+      </Tooltip>
+    )}
+  </Box>
+</Box>
+
                           <Formik 
                           initialValues={initialValues2}
                           validationSchema={validationSchema}
@@ -662,8 +708,29 @@ const renderNombreUsuario = (usuario) => (
                             {({ values, setFieldValue, touched, errors, handleBlur,setTouched ,setFieldTouched,setFieldError}) => (
                               <Form>
                               <Grid container spacing={2}>
+                              <Grid item xs={12} md={3}>
+         
+                                <Box
+                                  sx={{
+                                    width: '100%',
+                                    height: '52px', // Altura estándar de un TextField de Material-UI
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    borderRadius: '4px', // Bordes redondeados como un TextField
+                                    backgroundColor: dataDetails?.data?.isRebuy ? 'warning.light' : 'success.light',
+                                    color: 'common.white',
+                                    fontWeight: 'bold',
+                                    border: '1px solid',
+                                    borderColor: dataDetails?.data?.isRebuy ? 'warning.main' : 'success.main',
+                                  }}
+                                >
+                                  {dataDetails?.data?.isRebuy ? 'Recompra' : 'No recompra'}
+                                </Box>
+                              </Grid>
                                 {/* Primera fila: Número de Operación, Fecha de Operación y Tipo de Operación */}
                                 <Grid item xs={12} md={2}>
+                                  
                                           <TextField
                                             label="Número de Operación *"
                                             fullWidth
@@ -700,7 +767,7 @@ const renderNombreUsuario = (usuario) => (
                                             renderInput={(params) => <TextField {...params} fullWidth />}
                                           />
                                         </Grid>
-                                        <Grid item xs={12} md={2}>
+                                        <Grid item xs={12} md={5}>
                                         <Autocomplete
                                               options={typeOperation?.data || []}
                                               getOptionLabel={(option) => option.description || ''}
@@ -724,7 +791,7 @@ const renderNombreUsuario = (usuario) => (
                                   </Grid>
                         
                
-                                            <Grid item xs={12} md={6}>
+                                            <Grid item xs={12} md={4}>
                                             <Autocomplete
                                               options={emisores}
                                               isOptionEqualToValue={(option, value) => 
@@ -814,7 +881,7 @@ const renderNombreUsuario = (usuario) => (
                                               </Grid>
                               
                                               {/* Selector de Pagadores */}
-                                                <Grid item xs={12} md={6}>
+                                                <Grid item xs={12} md={4}>
                                                   <Autocomplete
                                                     options={Array.isArray( values?.arrayPayers) ?  values?.arrayPayers : []}
                                                     value={
@@ -868,7 +935,7 @@ const renderNombreUsuario = (usuario) => (
                                                   />
                                                 </Grid>
                                               {/*Selector de Corredor Emisor */}
-                                              <Grid item xs={12} md={6}>
+                                              <Grid item xs={12} md={4}>
                                               
                                           <TextField
                                             label="Corredor Emisor *"
@@ -1684,10 +1751,37 @@ const renderNombreUsuario = (usuario) => (
                                       }}
                                       />
                                       </Grid>
-                                 {/* Gasto de Mantenimiento */}
-                                      <Grid item xs={12} md={4}>
-                                        <div className="flex flex-row gap-2 items-center p-2 border rounded-lg shadow-md">
-                                          <label className="text-lg font-medium flex-shrink-0">Gasto de Mantenimiento (GM)</label>
+
+                                     
+                                        
+                                        {/* Gasto de Mantenimiento */}
+                                     <Grid item xs={12} md={8}>
+                                     <Box 
+                                          sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            height: '55%',
+                                            width:'891px',
+                                            gap: 1,
+                                            p: 1,
+                                            border: '1px solid',
+                                            borderColor: 'rgba(0, 0, 0, 0.23)',
+                                            borderRadius: 1,
+                                            boxShadow: 0,
+                                            
+                                          }}
+                                        > 
+                           
+                                          <Typography 
+                                               variant="subtitle1" 
+                                               sx={{ 
+                                                 fontWeight: 'medium',
+                                                 minWidth: { sm: '180px' },
+                                                 color: 'text.secondary'
+                                               }}
+                                             >
+                                               Gasto de Mantenimiento (GM)
+                                             </Typography>
                                           <Switch
                                             checked={values?.applyGm || false}
                                             onChange={(event) => {
@@ -1709,6 +1803,7 @@ const renderNombreUsuario = (usuario) => (
                                           <TextField
                                             type="text"
                                             placeholder="$ 0,00"
+                                            size="small" 
                                             value={values?.GM ? formatCurrency(values.GM) : "0"}
                                             onChange={(e) => {
                                               const rawValue = e.target.value.replace(/[^\d]/g, "");
@@ -1737,8 +1832,9 @@ const renderNombreUsuario = (usuario) => (
                                               ),
                                             }}
                                           />
-                                        </div>
-                                      </Grid>
+                                     
+                                        </Box></Grid> 
+                                 
                                                                   
                             </Grid>
                             

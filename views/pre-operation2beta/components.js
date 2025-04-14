@@ -417,9 +417,27 @@ const handleCloseMenu = () => {
     return (
       <Typography
         onClick={handleOpenEditPreOperation}
-        sx={{ /* estilos */ }}
+        sx={{
+          color: 'primary.main',
+          cursor: 'pointer',
+          fontWeight: 500,
+          fontSize: '0.875rem',
+          '&:hover': {
+            color: 'primary.dark',
+           
+          },
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '4px',
+          padding: '4px 8px',
+          borderRadius: '4px',
+          transition: 'all 0.2s ease',
+          '&:active': {
+            transform: 'scale(0.98)',
+          }
+        }}
       >
-        &#xe900;
+       Editar
       </Typography>
     );
   };
@@ -448,20 +466,32 @@ const handleCloseMenu = () => {
   
     return (
       <Typography
-        fontFamily="icomoon"
+        
         fontSize="1.9rem"
         color="#999999"
         borderRadius="5px"
         sx={{
-          "&:hover": {
-            backgroundColor: "#B5D1C980",
-            color: "#488B8F",
+          color: 'primary.main',
+          cursor: 'pointer',
+          fontWeight: 500,
+          fontSize: '0.875rem',
+          '&:hover': {
+            color: 'primary.dark',
+            
           },
-          cursor: "pointer",
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '4px',
+          padding: '4px 8px',
+          borderRadius: '4px',
+          transition: 'all 0.2s ease',
+          '&:active': {
+            transform: 'scale(0.98)',
+          }
         }}
         onClick={handleOpenDetailPreOperation}
       >
-        &#xe922;
+        Visualización
       </Typography>
     );
   };
@@ -495,16 +525,28 @@ const handleCloseMenu = () => {
         }}
       >
         <Typography
-          fontFamily="icomoon"
+         
           fontSize="1.9rem"
           color="#999999"
           borderRadius="5px"
           sx={{
-            "&:hover": {
-              backgroundColor: "#B5D1C980",
-              color: "#488B8F",
+            color: 'primary.main',
+            cursor: 'pointer',
+            fontWeight: 500,
+            fontSize: '0.875rem',
+            '&:hover': {
+              color: 'primary.dark',
+              
             },
-            cursor: "pointer",
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '4px',
+            padding: '4px 8px',
+            borderRadius: '4px',
+            transition: 'all 0.2s ease',
+            '&:active': {
+              transform: 'scale(0.98)',
+            }
           }}
           onClick={() => {
             if ( status === 1) {
@@ -517,7 +559,7 @@ const handleCloseMenu = () => {
             }
           }}
         >
-          &#xe901;
+        Eliminar
         </Typography>
       </CustomTooltip>
      
