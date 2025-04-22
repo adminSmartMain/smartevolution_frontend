@@ -1,4 +1,4 @@
-import { useState } from "react";
+import {useEffect, useState } from "react";
 
 import Link from "next/link";
 
@@ -11,6 +11,9 @@ import {
   IconButton,
   TextField,
   Typography,
+  InputAdornment ,
+   Select,
+   Menu, MenuItem,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 
@@ -19,13 +22,22 @@ import ValueFormat from "@formats/ValueFormat";
 import responsiveFontSize from "@lib/responsiveFontSize";
 
 import BackButton from "@styles/buttons/BackButton";
+import MuiButton from "@styles/buttons/button";
+import RedButtonModal from "@styles/buttons/noButtonModal";
+import GreenButtonModal from "@styles/buttons/yesButtonModal";
 import CustomTooltip from "@styles/customTooltip";
 import MuiTextField from "@styles/fields";
 import { StandardTextField } from "@styles/fields/BaseField";
 import InputTitles from "@styles/inputTitles";
+import ClearIcon from "@mui/icons-material/Clear";
+import ModalValorAGirar from "./ModalValorAGirar";
+import AdvancedDateRangePicker from "./AdvancedDateRangePicker";
 import scrollSx from "@styles/scroll";
-import CustomDataGrid from "@styles/tables";
 
+import CustomDataGrid from "@styles/tables";
+import DocumentIcon from '@mui/icons-material/Description';
+import { Tooltip } from "@mui/material";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import moment from "moment";
 
 const sectionTitleContainerSx = {
@@ -244,437 +256,330 @@ export const OperationsComponents = ({
 }) => {
   const [other, setOther] = useState(calcs?.others || 0);
   const [tempFilters, setTempFilters] = useState({ ...filtersHandlers.value });
-
+  const [search, setSearch] = useState("");
+  const [openModal, setOpenModal] = useState(false);
+  const [anchorElCSV, setAnchorElCSV] = useState(null);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const openMenuCSV = Boolean(anchorElCSV);
   const formatOptions = {
     style: "currency",
     currency: "USD",
   };
   const numberFormat = new Intl.NumberFormat("en-US", formatOptions);
+  
+  const [selectedData, setSelectedData] = useState(calcs);
+  console.log(calcs)
+
+  const handleClearSearch = () => {
+    const newFilters = {
+      ...filtersHandlers.value,  // Mantiene todos los filtros actuales
+      opId: "",                  // Limpia solo estos campos
+      billId: "",
+      investor: ""
+    };
+    
+    filtersHandlers.set(newFilters);  // Actualiza el estado conservando las fechas
+    setSearch("");                    // Limpia el estado local de búsqueda si existe
+  };
+  const handleOpenModal = () => {
+    console.log("Datos seleccionados para el modal:", calcs);
+    setOpenModal(true);
+  };
+  const handleMenuClickCSV = (event) => {
+    setAnchorElCSV(event.currentTarget);
+  };
+  const handleCloseMenuCSV = () => {
+    setAnchorElCSV(null);
+  };
+
+  const handleCloseModal = () => {
+    setOpenModal(false);
+  };
+
+
+
+
+
 
   const columns = [
     {
-      field: "opId",
-      headerName: "NRO Operacion",
-      width: 120,
-      valueGetter: (params) => {
-        return params.row?.opId;
-      },
-      renderCell: (params) => {
-        return <InputTitles>{params.value}</InputTitles>;
-      },
-    },
-    {
       field: "status",
       headerName: "Estado",
-      width: 150,
-      valueGetter: (params) => {
-        switch (params.row.status) {
+      width: 160,
+      renderCell: (params) => {
+       
+        let statusText = "";
+        let badgeClass = "";
+        
+        switch (params.value) {
           case 0:
-            return "Por Aprobar";
+            statusText = "Por Aprobar";
+            badgeClass = "badge por-aprobar";
             break;
           case 1:
-            return params.row.isPartiallyPayed ? "Pendiente" : "Vigente";
+            statusText = "Aprobada";
+            badgeClass = "badge aprobado";
             break;
           case 2:
-            return "Rechazada";
+            statusText = "Rechazada";
+            badgeClass = "badge rechazado";
             break;
           case 3:
-            return params.row.isPartiallyPayed ? "Pendiente" : "Vigente";
+            statusText = "Vigente";
+            badgeClass = "badge vigente";
             break;
           case 4:
-            return "Cancelada";
-            break;
-          case 5:
-            return "Vencida";
+            statusText = "Cancelada";
+            badgeClass = "badge cancelada";
             break;
           default:
-            return "Por Aprobar";
-            break;
+            statusText = "Por Aprobar";
+            badgeClass = "badge por-aprobar";
         }
+        
+        return <span className={badgeClass}>{statusText}</span>;
       },
-      renderCell: (params) => {
-        return (
-          <>
+    },
+    
+    { field: "opId", headerName: "ID", width: 80 },
+    {
+      field: "created_at",
+      headerName: "Creado el",
+      width: 110,
+      valueFormatter: (params) => {
+        if (!params.value) return '';
+        // Extrae directamente las partes de la fecha ISO (evita conversión local)
+        const [year, month, day] = params.value.split('T')[0].split('-');
+        return `${day}/${month}/${year}`; // Formato dd/mm/YYYY
+      }
+    },
+    {
+      field: "opDate", 
+      headerName: "Fecha Operación", 
+      width: 110,
+      valueFormatter: (params) => {
+        if (!params.value) return '';
+        const [year, month, day] = params.value.split('T')[0].split('-');
+        return `${day}/${month}/${year}`;
+      }
+    },
+    { field: "billFraction", headerName: "Fracción", width: 90 },
+    { field: "billData", headerName: "# Factura", width: 90 },
+    { field: "emitterName", headerName: "Emisor", width: 200 },
+    { field: "investorName", headerName: "Inversionista", width: 200 },
+    { field: "payerName", headerName: "Pagador", width: 150 },
+    { field: "discountTax", headerName: "Tasa Desc.", width: 90 },
+    { field: "payedPercent", headerName: "% Desc.", width: 90 }, // Nueva columna
+    { field: "investorTax", headerName: "Tasa Inv.", width: 90 },
+    { field: "payedAmount", headerName: "Valor Nominal", width: 110,
+      valueFormatter: ({ value }) => {
+        if (value == null) return "$0.00";
+        return new Intl.NumberFormat("es-CO", {
+          style: "currency",
+          currency: "COP",
+        }).format(value);
+      },
+    },
+    { field: "presentValueInvestor", headerName: "Valor Inversionista", width: 110,
+      valueFormatter: ({ value }) => {
+        if (value == null) return "$0.00";
+        return new Intl.NumberFormat("es-CO", {
+          style: "currency",
+          currency: "COP",
+        }).format(value);
+      },
+    },
+    { field: "probableDate", headerName: "Fecha Probable", width: 110 },
+    { field: "opExpiration", headerName: "Fecha Fin", width: 110 },
+   
+   {
+  field: "Acciones",
+  headerName: "Acciones",
+  width: 100,
+  sortable: false,
+  filterable: false,
+  renderCell: (params) => {
+    return (
+      <div style={{ 
+        display: "flex", 
+        justifyContent: "center", 
+        gap: "8px",
+        width: "100%"
+      }}>
+        {/* Botón Registrar Recaudo */}
+        <Link
+          href={
+            params.row.status === 4
+              ? "#"
+              : `/administration/new-receipt?id=${params.row.id}`
+          }
+          passHref
+          legacyBehavior
+        >
+          <Tooltip 
+            title="Registrar recaudo" 
+            arrow
+            placement="top"
+          >
             <Typography
-              fontSize="80%"
-              width="80%"
-              fontWeight="bold"
-              color="#63595C"
-              textAlign="center"
-              border="1.4px solid #63595C"
-              backgroundColor="transparent"
-              textTransform="uppercase"
-              padding="3% 8%"
-              borderRadius="4px"
+              fontFamily="icomoon"
+              fontSize="1.9rem"
+              color="#488B8F"
+              sx={{
+                cursor: "pointer",
+                "&:hover": {
+                  backgroundColor: "#B5D1C980",
+                  borderRadius: "5px"
+                },
+                padding: "0 4px"
+              }}
             >
-              {params.value}
+              &#xe904;
             </Typography>
-          </>
-        );
-      },
-    },
-    {
-      field: "opType",
-      headerName: "Tipo de Operacion",
-      width: 130,
-      valueGetter: (params) => {
-        return "COMPRA TITULO";
-      },
-      renderCell: (params) => {
-        return <InputTitles>{params.value ? params.value : ""}</InputTitles>;
-      },
-    },
-    {
-      field: "opDate",
-      headerName: "Fecha de Radicado",
-      width: 150,
-      valueGetter: (params) => {
-        return params.row.opDate;
-      },
-      renderCell: (params) => {
-        return (
-          <InputTitles>
-            {params.value ? moment(params.value).format("DD/MM/YYYY") : ""}
-          </InputTitles>
-        );
-      },
-    },
-    {
-      field: "bill",
-      headerName: "Nro Factura",
-      width: 150,
-      valueGetter: (params) => {
-        return params.row?.billData;
-      },
-      renderCell: (params) => {
-        return <InputTitles>{params.value ? params.value : ""}</InputTitles>;
-      },
-    },
-    {
-      field: "emitter",
-      headerName: "Emisor",
-      width: 150,
-      valueGetter: (params) => {
-        return params.row?.emitterName;
-      },
-      renderCell: (params) => {
-        return (
-          <CustomTooltip
-            title={params.value}
+          </Tooltip>
+        </Link>
+
+        {/* Botón Detalles Operación */}
+        <Link 
+          href={`/operations/manage?preview&id=${params.row.id}`}
+          passHref
+          legacyBehavior
+        >
+          <Tooltip 
+            title="Detalles operación" 
             arrow
-            placement="bottom-start"
-            TransitionComponent={Fade}
-            PopperProps={{
-              modifiers: [
-                {
-                  name: "offset",
-                  options: {
-                    offset: [0, 0],
-                  },
+            placement="top"
+          >
+            <Typography
+              fontFamily="icomoon"
+              fontSize="1.9rem"
+              color="#999999"
+              sx={{
+                cursor: "pointer",
+                "&:hover": {
+                  backgroundColor: "#B5D1C980",
+                  color: "#488B8F",
+                  borderRadius: "5px"
                 },
-              ],
-            }}
-          >
-            <InputTitles>{params.value}</InputTitles>
-          </CustomTooltip>
-        );
-      },
-    },
-    {
-      field: "payer",
-      headerName: "Pagador",
-      width: 170,
-      valueGetter: (params) => {
-        return params.row?.payerName;
-      },
-      renderCell: (params) => {
-        return (
-          <CustomTooltip
-            title={params.value}
-            arrow
-            placement="bottom-start"
-            TransitionComponent={Fade}
-            PopperProps={{
-              modifiers: [
-                {
-                  name: "offset",
-                  options: {
-                    offset: [0, 0],
-                  },
-                },
-              ],
-            }}
-          >
-            <InputTitles>{params.value}</InputTitles>
-          </CustomTooltip>
-        );
-      },
-    },
-    {
-      field: "investor",
-      headerName: "Inversionista",
-      width: 170,
-      valueGetter: (params) => {
-        return params.row?.investorName;
-      },
-      renderCell: (params) => {
-        return (
-          <CustomTooltip
-            title={params.value}
-            arrow
-            placement="bottom-start"
-            TransitionComponent={Fade}
-            PopperProps={{
-              modifiers: [
-                {
-                  name: "offset",
-                  options: {
-                    offset: [0, 0],
-                  },
-                },
-              ],
-            }}
-          >
-            <InputTitles>{params.value}</InputTitles>
-          </CustomTooltip>
-        );
-      },
-    },
-    {
-      field: "discountTax",
-      headerName: "Tasa Descuento",
-      width: 150,
-      renderCell: (params) => {
-              return (
-          <CustomTooltip
-            title={numberFormat.format(params.value)}
-            arrow
-            placement="bottom-start"
-            TransitionComponent={Fade}
-            PopperProps={{
-              modifiers: [
-                {
-                  name: "offset",
-                  options: {
-                    offset: [0, 0],
-                  },
-                },
-              ],
-            }}
-          >
-            <InputTitles>{`${(Number(params.value).toFixed(2))}%`}</InputTitles>
-          </CustomTooltip>
-        );
-      },
-    },
-    {
-      field: "investorTax",
-      headerName: "Tasa Inversionista",
-      width: 150,
-      renderCell: (params) => {
-              return (
-          <CustomTooltip
-            title={params.value}
-            arrow
-            placement="bottom-start"
-            TransitionComponent={Fade}
-            PopperProps={{
-              modifiers: [
-                {
-                  name: "offset",
-                  options: {
-                    offset: [0, 0],
-                  },
-                },
-              ],
-            }}
-          >
-            <InputTitles>{`${(Number(params.value).toFixed(2))}%`}</InputTitles>
-          </CustomTooltip>
-        );
-      },
-    },
-    {
-      field: "payedAmount",
-      headerName: "Valor Nominal",
-      width: 150,
-      renderCell: (params) => {
-        return (
-          <CustomTooltip
-            title={numberFormat.format(params.value)}
-            arrow
-            placement="bottom-start"
-            TransitionComponent={Fade}
-            PopperProps={{
-              modifiers: [
-                {
-                  name: "offset",
-                  options: {
-                    offset: [0, 0],
-                  },
-                },
-              ],
-            }}
-          >
-            <InputTitles>{numberFormat.format(params.value)}</InputTitles>
-          </CustomTooltip>
-        );
-      },
-    },
-    {
-      field: "presentValueInvestor",
-      headerName: "Valor Inversionistas",
-      width: 150,
-      renderCell: (params) => {
-        return (
-          <CustomTooltip
-            title={numberFormat.format(params.value)}
-            arrow
-            placement="bottom-start"
-            TransitionComponent={Fade}
-            PopperProps={{
-              modifiers: [
-                {
-                  name: "offset",
-                  options: {
-                    offset: [0, 0],
-                  },
-                },
-              ],
-            }}
-          >
-            <InputTitles>{numberFormat.format(params.value)}</InputTitles>
-          </CustomTooltip>
-        );
-      },
-    },
-    {
-      field: "probableDate",
-      headerName: "Fecha Probable",
-      width: 150,
-      renderCell: (params) => {
-        return (
-          <InputTitles>
-            {params.value ? moment(params.value).format("DD/MM/YYYY") : ""}
-          </InputTitles>
-        );
-      },
-    },
-    {
-      field: "opExpiration",
-      headerName: "Fecha Fin",
-      width: 150,
-      renderCell: (params) => {
-        return (
-          <InputTitles>
-            {params.value ? moment(params.value).format("DD/MM/YYYY") : ""}
-          </InputTitles>
-        );
-      },
-    },
-    {
-      field: "Registrar recaudo",
-      headerName: "",
-      width: 20,
-      sortable: false,
-      filterable: false,
-      renderCell: (params) => {
-        return (
-          <Link
-            href={
-              params.row.status === 4
-                ? "#"
-                : `/administration/new-receipt?id=${params.row.id}`
-            }
-          >
-            <CustomTooltip
-              title="Registrar recaudo"
-              arrow
-              placement="bottom-start"
-              TransitionComponent={Fade}
-              PopperProps={{
-                modifiers: [
-                  {
-                    name: "offset",
-                    options: {
-                      offset: [0, -15],
-                    },
-                  },
-                ],
+                padding: "0 4px"
               }}
             >
-              <Typography
-                fontFamily="icomoon"
-                fontSize="1.9rem"
-                color="#488B8F"
-                borderRadius="5px"
-                sx={{
-                  "&:hover": {
-                    backgroundColor: "#B5D1C980",
-                  },
-                  cursor: "pointer",
-                }}
-              >
-                &#xe904;
-              </Typography>
-            </CustomTooltip>
-          </Link>
-        );
-      },
-    },
-    {
-      field: "Detalles operación",
-      headerName: "",
-      width: 50,
-      sortable: false,
-      filterable: false,
-      renderCell: (params) => {
-        return (
-          <Link href={`/operations/manage?preview&id=${params.row.id}`}>
-            <CustomTooltip
-              title="Ver operación"
-              arrow
-              placement="bottom-start"
-              TransitionComponent={Fade}
-              PopperProps={{
-                modifiers: [
-                  {
-                    name: "offset",
-                    options: {
-                      offset: [0, -15],
-                    },
-                  },
-                ],
-              }}
-            >
-              <Typography
-                fontFamily="icomoon"
-                fontSize="1.9rem"
-                color="#999999"
-                borderRadius="5px"
-                sx={{
-                  "&:hover": {
-                    backgroundColor: "#B5D1C980",
-                    color: "#488B8F",
-                  },
-                  cursor: "pointer",
-                }}
-              >
-                &#xe922;
-              </Typography>
-            </CustomTooltip>
-          </Link>
-        );
-      },
-    },
+              &#xe922;
+            </Typography>
+          </Tooltip>
+        </Link>
+      </div>
+    );
+  }
+},
   ];
 
-  const handleTextFieldChange = async (evt, field) => {
-    setTempFilters({ ...tempFilters, [field]: evt.target.value });
+  const handleTextFieldChange = (evt) => {
+    setSearch(evt.target.value);
   };
 
+  const handleDateRangeApply = (dateRange) => {
+    // Actualiza solo las fechas manteniendo otros filtros
+    console.log(dateRange)
+    filtersHandlers.set({
+      ...filtersHandlers.value,
+      startDate: dateRange.startDate,
+      endDate: dateRange.endDate
+    });
+  };
+  const handleClear = () => {
+    
+    // Limpiar solo fechas en los filtros globales
+    filtersHandlers.set({
+      ...filtersHandlers.value,
+      startDate: "",
+      endDate: ""
+    });
+  };
   const updateFilters = (value, field) => {
-    filtersHandlers.set({ ...tempFilters, [field]: value });
+    if (field !== "multi") {
+      filtersHandlers.set({ 
+        ...tempFilters, 
+        [field]: value,
+        // Mantiene las fechas existentes
+        startDate: tempFilters.startDate,
+        endDate: tempFilters.endDate
+      });
+      return;
+    }
+  
+    const onlyDigits = /^\d{3,4}$/; // Operación: 3-4 dígitos
+    const alphaNumeric = /^[a-zA-Z0-9]{3,10}$/; // Factura: Alfanumérico de 3-10 caracteres
+    const hasLetters = /[a-zA-Z]/.test(value); // Si tiene letras
+    const hasSpaces = /\s/.test(value); // Si tiene espacios
+  
+    // Inicializamos los filtros vacíos
+    const newFilters = { opId: "", billId: "", investor: "", startDate: null, endDate: null };
+  
+    // Clasificación más precisa
+    if (onlyDigits.test(value)) {
+      // Asignamos opId solo si tiene 3-4 dígitos
+      newFilters.opId = value; // Asignar a opId si es una operación
+    } else if (alphaNumeric.test(value) && !hasLetters && value.length >= 3 && value.length <= 10) {
+      // Asignamos billId solo si es alfanumérico de 3-10 caracteres y no tiene letras
+      newFilters.billId = value;
+    } else if (hasLetters || hasSpaces || value.length > 4) {
+      // Si tiene letras o espacios, es un nombre de inversionista
+      newFilters.investor = value;
+    } else {
+      // Por defecto lo tratamos como inversionista
+      newFilters.investor = value;
+    }
+  
+    // Si las fechas no están vacías, las agregamos
+    if (tempFilters.startDate && tempFilters.endDate) {
+      newFilters.startDate = tempFilters.startDate;
+      newFilters.endDate = tempFilters.endDate;
+    }
+    console.log(tempFilters)
+    // Filtramos y actualizamos los filtros
+    filtersHandlers.set({
+      ...tempFilters,
+      ...newFilters,
+      startDate: tempFilters.startDate, // Conserva fechas
+      endDate: tempFilters.endDate
+    });
+  };
+  
+  
+  /* Experimento para exportar los datos del data grid a un archivo csv que pueda ser leido por Excel*/
+  const handleExportExcel = () => {
+    // Obtener los datos de las filas visibles en la página actual del DataGrid
+    const currentRows = rows; // Aquí, rows son los datos actuales de la página.
+  
+    // Generar los encabezados de las columnas
+    const columnHeaders = columns.map(col => col.headerName);
+  
+    // Convertir las filas de datos en formato CSV
+    const csvContent = [
+      columnHeaders.join(","), // Cabecera de las columnas
+      ...currentRows.map(row =>
+        columns.map(col => row[col.field] ? row[col.field] : "").join(",") // Filas de datos
+      ),
+    ].join("\n");
+  
+    // Crear un Blob con el contenido CSV
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  
+    // Crear un enlace de descarga
+    const link = document.createElement("a");
+  
+    // Crear un URL para el Blob
+    const url = URL.createObjectURL(blob);
+    
+    // Configurar el enlace para que descargue el archivo CSV
+    link.setAttribute("href", url);
+    link.setAttribute("download", "datos_exportados.csv"); // Nombre del archivo
+  
+    // Simular un clic en el enlace para iniciar la descarga
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -688,70 +593,99 @@ export const OperationsComponents = ({
           marginBottom="0.7rem"
           color="#5EA3A3"
         >
-          Consulta de Operaciones
+          Operaciones
         </Typography>
+
+        <Box sx={{ ...sectionTitleContainerSx }}>
+        <Link href="/pre-operations2beta" passHref>
+  <button className="button-header-preop-title">
+    Pre-Operaciones
+  </button>
+</Link>
+                      
+                      </Box>
       </Box>
 
-      <Box sx={{ ...filtersContainerSx }}>
-        <Box display="flex" flexDirection="column">
-          <InputTitles sx>Buscar N° Operación</InputTitles>
-          <TextFieldSearch
-            id="searchOperation"
-            placeholder="N° Operación"
-            value={tempFilters.opId}
-            onChange={(evt) => handleTextFieldChange(evt, "opId")}
-            onKeyPress={(event) => {
-              if (event.key === "Enter") {
-                updateFilters(event.target.value, "opId");
-              }
-              handleTextFieldChange(event, "opId");
-            }}
-          />
-        </Box>
-
-        <Box display="flex" flexDirection="column">
-          <InputTitles>Buscar N° Factura</InputTitles>
-          <TextFieldSearch
-            id="searchBill"
-            placeholder="N° Factura"
-            value={tempFilters.billId}
-            onChange={(evt) => handleTextFieldChange(evt, "billId")}
-            onKeyPress={(event) => {
-              if (event.key === "Enter") {
-                updateFilters(event.target.value, "billId");
-              }
-              handleTextFieldChange(event, "billId");
-            }}
-          />
-        </Box>
-
-        <Box display="flex" flexDirection="column">
-          <InputTitles>Buscar nombres</InputTitles>
-          <TextFieldSearch
-            id="searchName"
-            placeholder="Nombre"
-            value={tempFilters.investor}
-            onChange={(evt) => handleTextFieldChange(evt, "investor")}
-            onKeyPress={(event) => {
-              if (event.key === "Enter") {
-                updateFilters(event.target.value, "investor");
-              }
-              handleTextFieldChange(event, "investor");
-            }}
-          />
-        </Box>
-        <Box
-          display="flex"
-          flexDirection="row"
-          alignSelf="flex-end"
-          ml="auto"
-          mb={1}
+      <Box
+  sx={{
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: 2,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    mb: 2
+  }}
+>
+<TextField
+  variant="outlined"
+  id="searchBar"
+  size="small"
+  placeholder="Buscar por Inversionista..."
+  value={search}
+  onChange={(evt) => handleTextFieldChange(evt, "investor")}
+  onKeyPress={(event) => {
+    if (event.key === "Enter") {
+      const valueToSearch = search || ""; // Si está vacío, manda cadena vacía
+      updateFilters(valueToSearch, "multi"); // realiza la búsqueda, incluso si el valor está vacío
+    }
+  }}
+  sx={{
+    flexGrow: 1,
+    minWidth: '250px',
+    maxWidth: '580px',
+    '& .MuiOutlinedInput-root': {
+      height: 35,
+      fontSize: '14px',
+      paddingRight: 0,
+    },
+    '& .MuiInputBase-input': {
+      padding: '6px 8px',
+    },
+  }}
+  InputProps={{
+    endAdornment: search && (
+      <InputAdornment position="end">
+        <IconButton 
+          onClick={handleClearSearch}
+          size="small"
+          edge="end"
         >
-          <NotificationsButton />
-        </Box>
-      </Box>
+          <ClearIcon sx={{ color: "#488b8f", fontSize: '18px' }} />
+        </IconButton>
+      </InputAdornment>
+    ),
+  }}
+/>
 
-      <Grid container spacing={1.5} sx={{ ...entriesGrid }}>
+
+  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+    <Link href="/pre-operations2beta/byOp" underline="none">
+      <button className="button-header-preop">Ver por Grupos</button>
+    </Link>
+
+    <button className="button-header-preop" onClick={handleOpenModal}>Valor a Girar</button>
+    <ModalValorAGirar open={openModal} handleClose={handleCloseModal} data={calcs} />
+
+    <AdvancedDateRangePicker
+      
+      className="date-picker"
+      onApply={handleDateRangeApply}
+      onClean={handleClear}
+      
+    />
+
+    
+
+    <IconButton onClick={handleMenuClickCSV} className="context-menu">
+      <MoreVertIcon />
+    </IconButton>
+    <Menu anchorEl={anchorElCSV} open={openMenuCSV} onClose={handleCloseMenuCSV}>
+      <MenuItem onClick={handleExportExcel}>Exportar a CSV</MenuItem>
+    </Menu>
+  </Box>
+</Box>
+        {/*<Grid container spacing={1.5} sx={{ ...entriesGrid }}>
         <Grid item xs={2}>
           <Entry title="Comisión">
             <ValueFormat value={Math.round(calcs?.commission) || 0} />
@@ -814,7 +748,8 @@ export const OperationsComponents = ({
             <ValueFormat value={Math.round(calcs?.depositValue - other) || 0} />
           </Entry>
         </Grid>
-      </Grid>
+      </Grid> */}
+      
 
       <Box sx={{ ...tableWrapperSx }}>
         <CustomDataGrid
@@ -824,6 +759,33 @@ export const OperationsComponents = ({
           rowsPerPageOptions={[5]}
           disableSelectionOnClick
           disableColumnMenu
+          sx={{
+            border: '1px solid #e0e0e0', // Borde exterior
+            '& .MuiDataGrid-cell': {
+              borderRight: '1px solid #f0f0f0', // Bordes verticales entre celdas
+            },
+            '& .MuiDataGrid-columnHeaders': {
+              backgroundColor: '#f5f5f5', // Fondo del encabezado
+              borderBottom: '2px solid #e0e0e0', // Borde inferior del encabezado
+            },
+            '& .MuiDataGrid-columnHeader': {
+              borderRight: '1px solid #e0e0e0', // Bordes entre columnas
+            },
+            '& .MuiDataGrid-row': {
+              '&:nth-of-type(even)': {
+                backgroundColor: '#fafafa', // Color filas pares
+              },
+              '&:hover': {
+                backgroundColor: '#f0f0f0', // Color al pasar el mouse
+              },
+            },
+            '& .MuiDataGrid-footerContainer': {
+              borderTop: '1px solid #e0e0e0', // Borde superior del footer
+            },
+            '& .MuiDataGrid-virtualScroller': {
+              overflowX: 'auto', // Oculta el scroll horizontal si no es necesario
+            },
+          }}
           components={{
             ColumnSortedAscendingIcon: SortIcon,
             ColumnSortedDescendingIcon: SortIcon,
@@ -836,6 +798,12 @@ export const OperationsComponents = ({
                 display="flex"
                 alignItems="center"
                 justifyContent="center"
+                sx={{
+                  border: '1px dashed #e0e0e0', // Borde para el área vacía
+                  margin: '0 16px 16px 16px',
+                  borderRadius: '4px',
+                  
+                }}
               >
                 No hay operaciones registradas
               </Typography>

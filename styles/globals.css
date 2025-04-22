@@ -1,11 +1,25 @@
 html,
+:root {
+  /* Colores primarios */
+  --primary-color: #488b8f;
+  --secondary-color: #3c7071;
+  --white-color: #ffffff;
+
+  /* Colores adicionales */
+  --text-color: #333;
+  --border-color: #ccc;
+  --focus-shadow: rgba(72, 139, 143, 0.5);
+
+  /* Transiciones */
+  --transition-duration: 0.3s;
+}
 
 /* Estilos generales */
 body {
   font-family: 'Roboto', sans-serif;
   margin: 0;
   padding: 0;
-  background-color: #f5f5f5;
+  background-color: #ffffff;
 }
 
 /* Estilos para los contenedores principales */
@@ -485,7 +499,7 @@ body {
     background-color: #0f58ac; /* Naranja para 'Vigente' */
   }
   
-  .badge.cancelado {
+  .badge.cancelada {
     background-color: #ff0000; /* rojo  para 'Cancelado' */
   }
   
@@ -493,3 +507,198 @@ body {
     background-color: #3f3f3f; /* Gris Naranja para 'Vencido' */
   }
   
+
+  /* global.css o el archivo específico de los estilos del modal */
+
+/* Modal Maximizada */
+.modal-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  width: 400px;
+  z-index: 1300; /* Asegura que esté sobre otros elementos */
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 10px;
+}
+
+.modal-header h2 {
+  font-size: 18px;
+  color: var(--primary-color);
+  margin: 0;
+}
+
+.modal-header h3 {
+  font-size: 18px;
+  color: var(--primary-color); /* Color primario para el texto */
+  margin: 0;
+  display: inline; /* Asegura que el texto y el número de operación estén en la misma línea */
+}
+
+.modal-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.modal-column {
+  flex: 1;
+}
+
+.modal-column p {
+  margin: 5px 0;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.modal-column p strong {
+  color: var(--primary-color);
+}
+
+/* Modal Minimizada */
+.modal-minimized {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #f5f5f5;
+  border-top: 1px solid #ddd;
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 1200; /* Debajo de la modal principal */
+  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.modal-minimized-content {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.modal-minimized-content p {
+  margin: 0;
+  font-size: 14px;
+  color: #333;
+}
+
+.modal-minimized-content p strong {
+  color: var(--secondary-color);
+}
+/*Modal de actualizacion de estado en preoperaciones*/
+
+
+.modal-actions {
+  display: flex;
+  justify-content: center; /* Centra los botones */
+  gap: 16px; /* Establece un margen de 16px entre los botones */
+  margin-top: 20px; /* Agrega un margen superior si es necesario */
+}
+
+.button-update-all,
+.button-outline {
+  padding: 10px 20px;
+  border-radius: 5px;
+}
+.search-and-actions-container {
+  display: flex;
+  align-items: center;  /* Alineación vertical de los elementos */
+  justify-content: space-between;  /* Alineación horizontal: Distribuye los elementos con el máximo espacio posible entre ellos */
+  width: 100%; /* Asegura que el contenedor ocupe todo el ancho disponible */
+  gap: 16px;  /* Espacio entre los elementos */
+  margin-bottom: 10px;  /* Margen inferior */
+  flex-wrap: wrap;  /* Permitir que los elementos se acomoden cuando no haya espacio suficiente */
+}
+
+.date-picker-container {
+  margin-right: 16px;
+}
+
+.button-header-preop {
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'Arial', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid #488B8F; /* Borde azul */
+  background-color: #488B8F;
+  color: white; /* Texto azul */
+  margin-right: 10px; /* Espacio entre botones */
+  transition: background-color 0.3s;
+  margin-left: 10px;
+}
+
+.button-header-preop:hover {
+  background-color: #E3F2FD; /* Azul muy claro al pasar mouse */
+}
+
+/* Estilo para el botón principal */
+.button-header-preop-primary {
+  background-color: #488B8F; /* Azul */
+  color: white;
+}
+
+.button-header-preop-primary:hover {
+  background-color: #488B8F; /* Azul un poco más oscuro */
+}
+
+.button-header-preop-title {
+  padding: 6px 12px;       /* Reducido el padding */
+  border-radius: 4px;      /* Bordes ligeramente menos redondeados */
+  border: 1px solid #488B8F;
+  background-color: transparent;
+  color: #488B8F;
+  font-size: 14px;         /* Tamaño de fuente más pequeño */
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-right: 10px;      /* Menor margen entre botones */
+  height: 32px;            /* Altura fija para consistencia */
+  display: inline-flex;    /* Para mejor alineación */
+  align-items: center;     /* Centra el texto verticalmente */
+  justify-content: center; /* Centra el texto horizontalmente */
+}
+
+/* Efecto hover */
+.button-header-preop-title:hover {
+  color: #488B8F; /* Azul al pasar el mouse */
+}
+
+/* Estilo para el botón activo/seleccionado */
+.button-header-preop-title.active {
+  color: #488B8F; /* Azul para el activo */
+}
+
+/* Subrayado para el activo */
+.button-header-preop-title.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: #488B8F; /* Línea azul inferior */
+  animation: underline 0.3s ease;
+}
+
+@keyframes underline {
+  from { width: 0; }
+  to { width: 100%; }
+}

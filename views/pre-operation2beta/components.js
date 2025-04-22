@@ -21,7 +21,7 @@ import InputTitles from "@styles/inputTitles";
 import ModalValorAGirar from "./ModalValorAGirar";
 import AdvancedDateRangePicker from "./AdvancedDateRangePicker";
 import { DataGrid } from "@mui/x-data-grid";
-
+import ClearIcon from "@mui/icons-material/Clear";
 import scrollSx from "@styles/scroll";
 
 import CustomDataGrid from "@styles/tables";
@@ -31,6 +31,7 @@ import moment from "moment";
 import DocumentIcon from '@mui/icons-material/Description';
 import { Tooltip } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import { T } from "@formulajs/formulajs";
 const sectionTitleContainerSx = {
   display: "flex",
   justifyContent: "space-between",
@@ -39,16 +40,14 @@ const sectionTitleContainerSx = {
 
 const filtersContainerSx = {
   display: "flex",
-  gap: 1,
+  flexWrap: "wrap", // importante si hay poco espacio
+  alignItems: "center", // mantiene alineado verticalmente
+  columnGap: 1.5, // espacio horizontal
+  rowGap: 1, // espacio vertical en pantallas pequeñas
+  width: "100%",
+  maxWidth: "100%", // asegura que no crezca más allá del padre
 };
 
-const entriesGrid = {
-  backgroundColor: "#488B8F",
-  borderRadius: "4px",
-  mt: 1,
-  pb: 1.5,
-  pr: 1.5,
-};
 
 const entryContainerSx = {
   display: "flex",
@@ -109,37 +108,6 @@ const selectSx = {
   },
 };
 
-const TextFieldSearch = (props) => {
-  const { ...rest } = props;
-
-  return (
-    <MuiTextField
-      type="text"
-      variant="standard"
-      margin="normal"
-      Inputprops={{
-        disableUnderline: true,
-        sx: {
-          marginTop: "-5px",
-        },
-        endAdornment: <SearchOutlined sx={{ color: "#5EA3A3" }} />,
-      }}
-      sx={{ m: 0, my: 1 }}
-      {...rest}
-    />
-  );
-};
-
-const Entry = (props) => {
-  const { title, children, sx, ...rest } = props;
-
-  return (
-    <Box sx={{ ...entryContainerSx, ...sx }}>
-      <Typography sx={{ ...titleSx }}>{title}</Typography>
-      <Typography sx={{ ...valueSx }}>{children}</Typography>
-    </Box>
-  );
-};
 
 const SortIcon = () => (
   <Typography fontFamily="icomoon" fontSize="0.7rem">
@@ -173,7 +141,7 @@ const RegisterButton = (props) => {
 };
   return (
     
-      <button className="button"
+    <button className="button-header-preop button-header-preop-primary"
         onClick={handleOpenRegisterOperation}
        
       >
@@ -188,108 +156,14 @@ const RegisterButton = (props) => {
 
 
 
-const EditPreOperation = (props) => {
-  const { ...rest } = props;
- // Función que maneja la apertura de la ventana de registro de operación
 
- const [anchorEl, setAnchorEl] = useState(null); // Estado para controlar el menú
- const openMenu = Boolean(anchorEl); // Determina si el menú está abierto
-
- //Estado de la pestana de registro de operacion
-
- const [openWindow, setOpenWindow] = useState(null); // Estado para almacenar la referencia de la ventana
- const handleOpenEditPreOperation = () => {
-  if (openWindow && !openWindow.closed) {
-    // Si la ventana ya está abierta, solo le damos el foco (la trae al frente)
-    openWindow.focus();
-  } else {
-    // Si la ventana no está abierta, la abrimos y guardamos la referencia
-    const newWindow = window.open("/pre-operations2beta/editPreOp", "_blank", "width=800, height=600");
-    setOpenWindow(newWindow); // Guardamos la referencia de la ventana
-    // Escuchar el evento de cierre de la ventana
-    newWindow.onbeforeunload = () => {
-      setOpenWindow(null); // Restablecer la referencia cuando la ventana se cierre
-    };
-  }
-};
-  return (
-    <MenuItem onClick={() => handleOpenEditPreOperation()}>
-                Editar
-              </MenuItem>
-    
-  );
-};
-
-
-
-
-const EntryField = styled(StandardTextField)(({ theme }) => ({
-  "& label": {
-    color: "#488B8F",
-    fontWeight: 600,
-    top: 10,
-    left: -5,
-  },
-
-  "& .Mui-focused": {
-    color: "#488B8F",
-    fontWeight: 600,
-  },
-
-  "& fieldset": {
-    display: "none",
-  },
-
-  "& .MuiInputBase-root": {
-    height: 35.78,
-    backgroundColor: "#ebfaf6",
-  },
-
-  "& .MuiOutlinedInput-notchedOutline": {
-    borderColor: "#5EA3A380 !important",
-  },
-
-  "& .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline": {
-    borderColor: "#d32f2f !important",
-  },
-
-  "& .MuiOutlinedInput-input": {
-    textAlign: "right",
-    color: "#488B8F",
-    fontWeight: 600,
-    fontSize: 14,
-  },
-
-  "& .MuiInputAdornment-root": {
-    color: "#5EA3A3",
-  },
-}));
-
-const EditableEntry = (props) => {
-  const { title, value, onChangeMasked, ...rest } = props;
-
-  return (
-    <EntryField
-      notched={true}
-      label={title}
-      InputLabelProps={{ shrink: true }}
-      isMasked
-      thousandSeparator="."
-      decimalSeparator=","
-      decimalScale={2}
-      allowNegative={false}
-      value={value}
-      onChangeMasked={onChangeMasked}
-    />
-  );
-};
 
 const SellOrderButton = (props) => {
   const { ...rest } = props;
 
   return (
     <Link href="/operations/electronicSignature" underline="none">
-      <button className="button">
+      <button className="button-header-preop-title">
      
           Notificaciones de Compra
        
@@ -298,7 +172,6 @@ const SellOrderButton = (props) => {
   );
 };
 
-const formatNumber = (value) => new Intl.NumberFormat("es-ES").format(value || 0);
 export const OperationsComponents = ({
   rows,
   filtersHandlers,
@@ -307,6 +180,9 @@ export const OperationsComponents = ({
   setPage,
   dataCount,
 }) => {
+
+
+ 
   const calcs = rows[0]?.calcs;
 
   const [other, setOther] = useState(calcs?.others || 0);
@@ -317,7 +193,8 @@ export const OperationsComponents = ({
   const [pageSize, setPageSize] = useState(10);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
-  const [dateRange, setDateRange] = useState({ start: null, end: null });
+ // Supongamos que `dateRange` es un estado que mantiene el rango de fechas seleccionado
+const [dateRange, setDateRange] = useState({ startDate: null, endDate: null });
   const [anchorElCSV, setAnchorElCSV] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
   const openMenu = Boolean(anchorEl);
@@ -325,6 +202,7 @@ export const OperationsComponents = ({
   const [openWindow, setOpenWindow] = useState(null);
   const [openModal, setOpenModal] = useState(false);
   const [openDelete, setOpenDelete] = useState([false, null]);
+  
   const handleOpenDelete = (id) => setOpenDelete([true, id]);
   const handleCloseDelete = () => setOpenDelete([false, null]);
 
@@ -336,15 +214,6 @@ export const OperationsComponents = ({
     }, 1000);
   };
 
-
-
-
-  const [openUpdateModal, setOpenUpdateModal] = useState(false);
-  const [selectedOperation, setSelectedOperation] = useState(null);
-  const [currentStatus, setCurrentStatus] = useState("");
-  const [operationLabel, setOperationLabel] = useState("");
-  const [operationToDelete, setOperationToDelete] = useState(null);
-  const [openDeleteModal, setOpenDeleteModal] = useState(false);
 
 // En el componente padre que contiene el DataGrid
 const [menuState, setMenuState] = useState({
@@ -365,15 +234,6 @@ const handleMenuClick = (event, rowId, rowStatus) => {
 const handleCloseMenu = () => {
   setMenuState({ anchorEl: null, currentRowId: null, currentStatus: null });
 };
-  const handleActionClick = (action, operation) => {
-    if (action === "Actualizar Estado") {
-      setSelectedOperation(operation.id); // Establecer el ID de la operación
-      setCurrentStatus(operation.estado);  // Establecer el estado actual
-      setOperationLabel(`Factura: ${operation.factura_fraccion}`); // Establecer el número de factura/fracción
-      setOpenUpdateModal(true); // Abrir el modal
-    }
-  };
-  
 
 
 
@@ -418,7 +278,7 @@ const handleCloseMenu = () => {
       <Typography
         onClick={handleOpenEditPreOperation}
         sx={{
-          color: 'primary.main',
+          color:"#488B8F",
           cursor: 'pointer',
           fontWeight: 500,
           fontSize: '0.875rem',
@@ -468,10 +328,10 @@ const handleCloseMenu = () => {
       <Typography
         
         fontSize="1.9rem"
-        color="#999999"
+        color="#488B8F"
         borderRadius="5px"
         sx={{
-          color: 'primary.main',
+          color: "#488B8F",
           cursor: 'pointer',
           fontWeight: 500,
           fontSize: '0.875rem',
@@ -527,10 +387,10 @@ const handleCloseMenu = () => {
         <Typography
          
           fontSize="1.9rem"
-          color="#999999"
+          color="#488B8F"
           borderRadius="5px"
           sx={{
-            color: 'primary.main',
+            color: "#488B8F",
             cursor: 'pointer',
             fontWeight: 500,
             fontSize: '0.875rem',
@@ -574,6 +434,8 @@ const handleCloseMenu = () => {
   
   
     return (
+      <>
+      
       <CustomTooltip
           title="Actualizar estado"
           arrow
@@ -591,21 +453,36 @@ const handleCloseMenu = () => {
           }}
         >
           <IconButton onClick={() => handleOpen(id)}>
-            <i
-              className="fa-regular fa-check"
-              style={{
-                fontSize: "1.3rem",
+            <Typography
+              fontSize="1.9rem"
+              color="#488B8F"
+              borderRadius="5px"
+              sx={{
                 color: "#488B8F",
-                borderRadius: "5px",
-
-                "&:hover": {
-                  backgroundColor: "#B5D1C980",
-                  color: "#488B8F",
+                cursor: 'pointer',
+                fontWeight: 500,
+                fontSize: '0.875rem',
+                '&:hover': {
+                  color: 'primary.dark',
+                  
                 },
-              }}
-            ></i>
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                padding: '2px 8px',
+                borderRadius: '4px',
+                transition: 'all 0.2s ease',
+                '&:active': {
+                  transform: 'scale(0.98)',
+                }
+              }}>
+          Actualizar
+
+              </Typography>
+            
           </IconButton>
-        </CustomTooltip>
+        </CustomTooltip></>
+      
     );
   };
 
@@ -624,8 +501,18 @@ const handleCloseMenu = () => {
   };
 
   const handleClearSearch = () => {
-    setSearch("");
+    const newFilters = {
+      ...filtersHandlers.value,  // Mantiene todos los filtros actuales
+      opId: "",                  // Limpia solo estos campos
+      billId: "",
+      investor: ""
+    };
+    
+    filtersHandlers.set(newFilters);  // Actualiza el estado conservando las fechas
+    setSearch("");                    // Limpia el estado local de búsqueda si existe
   };
+
+
 
   const handleOpenModal = () => {
     console.log("Datos seleccionados para el modal:", selectedData);
@@ -651,6 +538,10 @@ const handleCloseMenu = () => {
   console.log(rows)
 
   console.log(calcs)
+  const mockData =rows[0]?.calcs;
+  console.log(mockData)
+  const [selectedData, setSelectedData] = useState(mockData);
+  console.log(selectedData)
   useEffect(() => {
     if (dataDeleteOperation) {
       Toast("Operación eliminada", "success");
@@ -685,22 +576,8 @@ const handleCloseMenu = () => {
   };
 
 
-  // Función que maneja la acción de eliminar
-  const handleDeleteOperation = (operationId) => {
-    setRows(rows.filter(row => row.id !== operationId)); // Filtrar las filas y eliminar la operación
-  };
 
-  const handleActionClickdelete = (action, operation) => {
-    if (action === "Eliminar") {
-      setOperationToDelete(operation); // Establecemos la operación seleccionada para eliminar
-      setOpenDeleteModal(true); // Abrimos el modal de confirmación
-    }
-  };
-
-  const handleCloseDeleteModal = () => {
-    setOpenDeleteModal(false); // Cerramos el modal sin hacer nada
-    setOperationToDelete(null); // Limpiar la operación seleccionada
-  };
+  
 
 
   const handleUpdateClick = (e) => {
@@ -775,7 +652,7 @@ const handleCloseMenu = () => {
       headerName: "Estado",
       width: 160,
       renderCell: (params) => {
-        console.log(params.row); 
+       
         let statusText = "";
         let badgeClass = "";
         
@@ -810,7 +687,17 @@ const handleCloseMenu = () => {
     },
     
     { field: "opId", headerName: "ID", width: 80 },
-    { field: "opDate", headerName: "Creado el", width: 110 },
+    { field: "created_at", headerName: "Creado el", width: 110,  valueFormatter: (params) => {
+      if (!params.value) return '';
+      // Extrae directamente las partes de la fecha ISO (evita conversión local)
+      const [year, month, day] = params.value.split('T')[0].split('-');
+      return `${day}/${month}/${year}`; // Formato dd/mm/YYYY
+    }},
+    { field: "opDate", headerName: "Fecha Operación", width: 110,valueFormatter: (params) => {
+      if (!params.value) return '';
+      const [year, month, day] = params.value.split('T')[0].split('-');
+      return `${day}/${month}/${year}`;
+    }},
     { field: "billFraction", headerName: "Fracción", width: 90 },
     { field: "billData", headerName: "# Factura", width: 90 },
     { field: "emitterName", headerName: "Emisor", width: 200 },
@@ -846,7 +733,7 @@ const handleCloseMenu = () => {
       width: 90,
       renderCell: (params) => {
         const isOperationApproved = params.row.estado === "Aprobado";
-        
+       
         return (
           <div style={{ display: "flex", justifyContent: "center" }}>
             {/* Botón de Documento */}
@@ -916,16 +803,81 @@ const handleCloseMenu = () => {
     
    
   ];
-
-
-  const handleTextFieldChange = async (evt, field) => {
-    setTempFilters({ ...tempFilters, [field]: evt.target.value });
+  const handleTextFieldChange = (evt) => {
+    setSearch(evt.target.value);
   };
 
+  const handleDateRangeApply = (dateRange) => {
+    // Actualiza solo las fechas manteniendo otros filtros
+    console.log(dateRange)
+    filtersHandlers.set({
+      ...filtersHandlers.value,
+      startDate: dateRange.startDate,
+      endDate: dateRange.endDate
+    });
+  };
+  const handleClear = () => {
+    
+    // Limpiar solo fechas en los filtros globales
+    filtersHandlers.set({
+      ...filtersHandlers.value,
+      startDate: "",
+      endDate: ""
+    });
+  };
   const updateFilters = (value, field) => {
-    filtersHandlers.set({ ...tempFilters, [field]: value });
+    if (field !== "multi") {
+      filtersHandlers.set({ 
+        ...tempFilters, 
+        [field]: value,
+        // Mantiene las fechas existentes
+        startDate: tempFilters.startDate,
+        endDate: tempFilters.endDate
+      });
+      return;
+    }
+  
+    const onlyDigits = /^\d{3,4}$/; // Operación: 3-4 dígitos
+    const alphaNumeric = /^[a-zA-Z0-9]{3,10}$/; // Factura: Alfanumérico de 3-10 caracteres
+    const hasLetters = /[a-zA-Z]/.test(value); // Si tiene letras
+    const hasSpaces = /\s/.test(value); // Si tiene espacios
+  
+    // Inicializamos los filtros vacíos
+    const newFilters = { opId: "", billId: "", investor: "", startDate: null, endDate: null };
+  
+    // Clasificación más precisa
+    if (onlyDigits.test(value)) {
+      // Asignamos opId solo si tiene 3-4 dígitos
+      newFilters.opId = value; // Asignar a opId si es una operación
+    } else if (alphaNumeric.test(value) && !hasLetters && value.length >= 3 && value.length <= 10) {
+      // Asignamos billId solo si es alfanumérico de 3-10 caracteres y no tiene letras
+      newFilters.billId = value;
+    } else if (hasLetters || hasSpaces || value.length > 4) {
+      // Si tiene letras o espacios, es un nombre de inversionista
+      newFilters.investor = value;
+    } else {
+      // Por defecto lo tratamos como inversionista
+      newFilters.investor = value;
+    }
+  
+    // Si las fechas no están vacías, las agregamos
+    if (tempFilters.startDate && tempFilters.endDate) {
+      newFilters.startDate = tempFilters.startDate;
+      newFilters.endDate = tempFilters.endDate;
+    }
+    console.log(tempFilters)
+    // Filtramos y actualizamos los filtros
+    filtersHandlers.set({
+      ...tempFilters,
+      ...newFilters,
+      startDate: tempFilters.startDate, // Conserva fechas
+      endDate: tempFilters.endDate
+    });
   };
-
+  
+  
+  
+  
   /* Experimento para exportar los datos del data grid a un archivo csv que pueda ser leido por Excel*/
   const handleExportExcel = () => {
     // Obtener los datos de las filas visibles en la página actual del DataGrid
@@ -972,149 +924,98 @@ const handleCloseMenu = () => {
           marginBottom="0.7rem"
           color="#5EA3A3"
         >
-          Consulta de Pre-operaciones
+          Pre-operaciones
         </Typography>
         <Box sx={{ ...sectionTitleContainerSx }}>
-        <button className="button">
-               
-                  Operaciones
-                
-                </button>
+        <Link href="/operations" passHref>
+  <button className="button-header-preop-title">
+    Operaciones
+  </button>
+</Link>
               <SellOrderButton /> 
               </Box>
       </Box>
 
-      <Box sx={{ ...filtersContainerSx }}>
-      <div className="search-and-actions-container">
-        <input
-          type="text"
-          placeholder="Buscar o filtrar resultados..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          inputprops={{
-            endAdornment: search && (
-              <InputAdornment position="end">
-                <IconButton onClick={handleClearSearch}>
-                  <ClearIcon sx={{ color: "#488b8f" }} />
-                </IconButton>
-              </InputAdornment>
-            ),
-          }}
-          className="search-bar"
-        />
-        <Box display="flex" alignSelf="flex-end" ml="auto" mb={1}>
-          
-         
-          <Link href="/pre-operations2beta/byOp" underline="none">
-          <button className="button">
-             
-                Ver por Grupos
-              
-
-              
-              </button>
-          </Link>
-          <div>
-          <button className="button" onClick={handleOpenModal}>Valor a Girar</button>
-          <ModalValorAGirar open={openModal} handleClose={handleCloseModal}  />
-          
-        </div>
-          <AdvancedDateRangePicker
-          onDateRangeChange={(range) => setDateRange(range)}
-          className="date-picker"
-        />
-          
-        <RegisterButton />
-        </Box>
-        
-        
-       
-      
-        <IconButton onClick={handleMenuClickCSV} className="context-menu">
-          <MoreVertIcon />
+      <Box
+  sx={{
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: 2,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    mb: 2
+  }}
+>
+<TextField
+  variant="outlined"
+  id="searchBar"
+  size="small"
+  placeholder="Buscar por Inversionista..."
+  value={search}
+  onChange={(evt) => handleTextFieldChange(evt, "investor")}
+  onKeyPress={(event) => {
+    if (event.key === "Enter") {
+      const valueToSearch = search || ""; // Si está vacío, manda cadena vacía
+      updateFilters(valueToSearch, "multi"); // realiza la búsqueda, incluso si el valor está vacío
+    }
+  }}
+  sx={{
+    flexGrow: 1,
+    minWidth: '250px',
+    maxWidth: '580px',
+    '& .MuiOutlinedInput-root': {
+      height: 35,
+      fontSize: '14px',
+      paddingRight: 0,
+    },
+    '& .MuiInputBase-input': {
+      padding: '6px 8px',
+    },
+  }}
+  InputProps={{
+    endAdornment: search && (
+      <InputAdornment position="end">
+        <IconButton 
+          onClick={handleClearSearch}
+          size="small"
+          edge="end"
+        >
+          <ClearIcon sx={{ color: "#488b8f", fontSize: '18px' }} />
         </IconButton>
-        <Menu anchorEl={anchorElCSV} open={openMenuCSV} onClose={handleCloseMenuCSV}>
-        <MenuItem onClick={handleExportExcel}>
-          Exportar a CSV
-        </MenuItem>
-        </Menu>
-        
-      </div>
+      </InputAdornment>
+    ),
+  }}
+/>
 
-        
-        
 
-        
-      </Box>
+  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+    <Link href="/pre-operations2beta/byOp" underline="none">
+      <button className="button-header-preop">Ver por Grupos</button>
+    </Link>
+
+    <button className="button-header-preop" onClick={handleOpenModal}>Valor a Girar</button>
+    <ModalValorAGirar open={openModal} handleClose={handleCloseModal} data={mockData} />
+
+    <AdvancedDateRangePicker
       
-
-      <Grid container spacing={1.5} sx={{ ...entriesGrid }}>
-        <Grid item xs={2}>
-          <Entry title="Comisión">
-            <ValueFormat value={Math.round(calcs?.commission) || 0} />
-          </Entry>
-        </Grid>
-
-        <Grid item xs={2}>
-          <EditableEntry
-            title="Otros"
-            onChangeMasked={(values) => {
-              setOther(values.floatValue);
-            }}
-          />
-        </Grid>
-
-        <Grid item xs={2}>
-          <Entry title="IVA">
-            <ValueFormat value={Math.round(calcs?.iva) || 0} />
-          </Entry>
-        </Grid>
-
-        <Grid item xs={2}>
-          <Entry title="Valor inversor">
-            <ValueFormat value={Math.round(calcs?.investorValue) || 0} />
-          </Entry>
-        </Grid>
-
-        <Grid item xs={2}>
-          <Entry title="RETEFUENTE">
-            <ValueFormat value={Math.round(calcs?.rteFte) || 0} />
-          </Entry>
-        </Grid>
-
-        <Grid item xs={2}>
-          <Entry title="FACTURAR NETO">
-            <ValueFormat value={Math.round(calcs?.netFact) || 0} />
-          </Entry>
-        </Grid>
-
-        <Grid item xs={2}>
-          <Entry title="RETEICA">
-            <ValueFormat value={Math.round(calcs?.retIca) || 0} />
-          </Entry>
-        </Grid>
-
-        <Grid item xs={2}>
-          <Entry title="VALOR FUTURO">
-            <ValueFormat value={Math.round(calcs?.futureValue) || 0} />
-          </Entry>
-        </Grid>
-
-        <Grid item xs={2}>
-          <Entry title="RETEIVA">
-            <ValueFormat value={Math.round(calcs?.retIva) || 0} />
-          </Entry>
-        </Grid>
-
-        <Grid item xs={2}>
-          <Entry title="VALOR A GIRAR">
-            <ValueFormat value={Math.round(calcs?.depositValue - other) || 0} />
-          </Entry>
-        </Grid>
-      </Grid>
-
-
+      className="date-picker"
+      onApply={handleDateRangeApply}
+      onClean={handleClear}
       
+    />
+
+    <RegisterButton />
+
+    <IconButton onClick={handleMenuClickCSV} className="context-menu">
+      <MoreVertIcon />
+    </IconButton>
+    <Menu anchorEl={anchorElCSV} open={openMenuCSV} onClose={handleCloseMenuCSV}>
+      <MenuItem onClick={handleExportExcel}>Exportar a CSV</MenuItem>
+    </Menu>
+  </Box>
+</Box>
+
 
       <Box sx={{ ...tableWrapperSx }}>
       <CustomDataGrid
@@ -1124,6 +1025,34 @@ const handleCloseMenu = () => {
           rowsPerPageOptions={[5]}
           disableSelectionOnClick
           disableColumnMenu
+          
+          sx={{
+            border: '1px solid #e0e0e0', // Borde exterior
+            '& .MuiDataGrid-cell': {
+              borderRight: '1px solid #f0f0f0', // Bordes verticales entre celdas
+            },
+            '& .MuiDataGrid-columnHeaders': {
+              backgroundColor: '#f5f5f5', // Fondo del encabezado
+              borderBottom: '2px solid #e0e0e0', // Borde inferior del encabezado
+            },
+            '& .MuiDataGrid-columnHeader': {
+              borderRight: '1px solid #e0e0e0', // Bordes entre columnas
+            },
+            '& .MuiDataGrid-row': {
+              '&:nth-of-type(even)': {
+                backgroundColor: '#fafafa', // Color filas pares
+              },
+              '&:hover': {
+                backgroundColor: '#f0f0f0', // Color al pasar el mouse
+              },
+            },
+            '& .MuiDataGrid-footerContainer': {
+              borderTop: '1px solid #e0e0e0', // Borde superior del footer
+            },
+            '& .MuiDataGrid-virtualScroller': {
+              overflowX: 'auto', // Oculta el scroll horizontal si no es necesario
+            },
+          }}
           components={{
             ColumnSortedAscendingIcon: SortIcon,
             ColumnSortedDescendingIcon: SortIcon,
@@ -1136,6 +1065,12 @@ const handleCloseMenu = () => {
                 display="flex"
                 alignItems="center"
                 justifyContent="center"
+                sx={{
+                  border: '1px dashed #e0e0e0', // Borde para el área vacía
+                  margin: '0 16px 16px 16px',
+                  borderRadius: '4px',
+                  
+                }}
               >
                 No hay pre-operaciones registradas
               </Typography>
@@ -1328,46 +1263,7 @@ const handleCloseMenu = () => {
           </Box>
         </Box>
       </Modal>
-      {/* Modal de confirmación para actualizar estados*/}
-      {/* <Modal open={openDelete[0]} handleClose={handleCloseDelete}>
-        <Box
-          display="flex"
-          flexDirection="column"
-          alignItems="center"
-          justifyContent="center"
-          height="100%"
-          width="100%"
-        >
-          <Typography
-            letterSpacing={0}
-            fontSize="1vw"
-            fontWeight="medium"
-            color="#63595C"
-          >
-            ¿Estás seguro que deseas la operación?
-          </Typography>
-
-          <Box
-            display="flex"
-            flexDirection="row"
-            alignItems="center"
-            justifyContent="center"
-            mt={4}
-          >
-            <GreenButtonModal onClick={handleCloseDelete}>
-              Volver
-            </GreenButtonModal>
-            <RedButtonModal
-              sx={{
-                ml: 2,
-              }}
-              onClick={() => handleDelete(openDelete[1])}
-            >
-              Eliminar
-            </RedButtonModal>
-          </Box>
-        </Box>
-      </Modal> */}
+      
       <ToastContainer
         position="top-right"
         autoClose={50000}

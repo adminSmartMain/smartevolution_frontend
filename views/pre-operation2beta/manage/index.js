@@ -23,6 +23,7 @@ import {
   GetRiskProfile,
   UpdateOperation,
   Clients,
+  getOperationsVersionTwo,
 } from "./queries";
 import { Bills, billById, payerByBill } from "./queries";
 // Utils
@@ -46,17 +47,20 @@ export const ManageOperationV = () => {
   
   const [pendingSubmit, setPendingSubmit] = useState(false);
   const [submitValues, setSubmitValues] = useState(null);
+  
   // Router
   const router = useRouter();
 
   // Queries
 
-    const {
-      fetch: fetch,
-      loading: loading,
-      error: error,
-      data: data,
-    } = useFetch({ service: Clients, init: true });
+
+
+  const {
+    fetch: fetch,
+    loading: loading,
+    error: error,
+    data: data,
+  } = useFetch({ service: Clients, init: true });
 
   const {
       fetch: fetchBills,
@@ -131,7 +135,15 @@ export const ManageOperationV = () => {
     data: dataUpdateOperation,
   } = useFetch({ service: UpdateOperation, init: false });
 
-
+  const {
+    fetch: getOperationsFetch,
+    loading: loadingGetOperations,
+    error: errorGetOperations,
+    data: dataGetOperations,
+  } = useFetch({
+    service: () => getOperationsVersionTwo({ ...filters, page }),
+    init: true,
+  });
 
     // Hooks
     const {
@@ -212,6 +224,10 @@ useEffect(() => {
 
   setPayer(processPayers(data.data));
 }, [data, loading, error]);
+
+
+
+
 const validationSchema = Yup.object({
   opId: Yup.number()
     .required('Este campo es obligatorio')
@@ -394,6 +410,7 @@ return (
               handleConfirm={handleConfirm}
               setShowConfirmationModal={setShowConfirmationModal}
               actionsFormik={actions}
+              operations={operations}
                />}
 
   </>

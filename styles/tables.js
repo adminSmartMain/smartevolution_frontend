@@ -31,7 +31,7 @@ const CustomDataGrid = styled(DataGrid)({
     backgroundColor: "transparent",
     color: "#000000",
     fontSize: "0.8rem",
-    fontWeight: "bold",
+    fontWeight: "normal",
     "&:hover": {
       backgroundColor: "#F5F5F5",
     },
@@ -73,14 +73,14 @@ const CustomDataGrid = styled(DataGrid)({
     color: "#000000",
 
     fontSize: "0.8rem",
-    fontWeight: "bold",
+    fontWeight: "normal",
   },
   "& .MuiDataGrid-columnsContainerSeparator": {
     display: "none",
   },
 
   "& .MuiDataGrid-columnHeaderTitle": {
-    fontWeight: "bold",
+    fontWeight: "normal",
     fontSize: "0.7rem",
     color: "#8C7E82",
     letterSpacing: "0px",
@@ -129,6 +129,7 @@ const CustomDataGrid = styled(DataGrid)({
   "& .MuiDataGrid-menuIcon": {
     display: "none",
   },
+  
 });
 
 export default CustomDataGrid;

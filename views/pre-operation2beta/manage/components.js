@@ -13,7 +13,7 @@ import AddIcon from "@mui/icons-material/Add";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import InfoIcon from '@mui/icons-material/Info';
-import {  getOperationsByInvestor,Bills, billById,TypeOperation,CreateOperation, GetOperationById,GetBillFraction,GetRiskProfile, payerByBill,BrokerByClient,AccountsFromClient } from "./queries";
+import {  getOperationsByInvestor,Bills, billById,TypeOperation,CreateOperation, GetOperationById,GetBillFraction,GetRiskProfile, payerByBill,BrokerByClient,AccountsFromClient ,getOperationsVersionTwo} from "./queries";
 import { useFetch } from "@hooks/useFetch";
 import { PV } from "@formulajs/formulajs";
 import { addDays, parseISO, set, isValid } from "date-fns";
@@ -41,6 +41,7 @@ export const ManageOperationC = ({
   handleConfirm,
   setShowConfirmationModal,
 actionsFormik,
+operations,
 }) => {
   console.log(emitters)
   console.log(typeOperation?.data)
@@ -137,6 +138,7 @@ const [clientWithoutBroker, setClientWithoutBroker] = useState(null);
         data: dataTypeIdSelect,
       } = useFetch({ service: TypeOperation, init: true });
 
+
   // Formatear monto como moneda colombiana
 const formatCurrency = (value) =>
   new Intl.NumberFormat('es-CO', {
@@ -174,7 +176,7 @@ const parseDateToLocal = (dateString) => {
 
 
   const initialValues = {
-    opId: getNextOperationNumber(), // Valor por defecto (correlativo)
+    opId: opId,
     opDate: new Date(), // Fecha actual por defecto
    // opType: 'Compra Titulo', // Valor por defecto
     emitter: '',
@@ -201,6 +203,7 @@ const parseDateToLocal = (dateString) => {
         investorBroker: "",
         investorBrokerName:"",
         tasaInversionistaPR:0,
+        tasaDescuentoPR:0,
         factura: '',
         fraccion: 1,
         valorFuturo: '',
@@ -231,7 +234,7 @@ const parseDateToLocal = (dateString) => {
  
 
 
-  const [isRecompra, setIsRecompra] = useState(false); // Estado para el aviso de Recompra
+  
   const [facturasFiltradas, setFacturasFiltradas] = useState([]); // Facturas filtradas por emisor
 
 // Función para cargar cuentas cuando se selecciona un inversionista
@@ -322,18 +325,7 @@ const cargarFraccionFactura= async (factura) => {
     return null; // Retorna null en caso de error
   }
 };
-
-
-
-  // Función para verificar si es una recompra
-  const checkRecompra = (numeroOperacion) => {
-    // Simulación: Si el número de operación es par, es una recompra
-    return numeroOperacion % 2 === 0;
-  };
-
-
-
-
+  
   const cargarFacturas = async (emisor, pagadorId = null) => {
     if (!emisor) {
       setFacturasFiltradas([]);
@@ -508,24 +500,21 @@ const renderNombreUsuario = (usuario) => (
                         label="Número de Operación *"
                         fullWidth
                         type="number"
-                        value={opId}
+                        value={values.opId}
                         name="opId"
-                        onChange={(e) => {
+                        onChange={async (e) => {
                           const value = e.target.value;
-                          setFieldValue('opId', value);
-                          setIsRecompra(checkRecompra(value)); // Verifica si es recompra
+                          console.log('Nuevo valor:', value);
+                          setFieldValue('opId', value); // Actualiza el valor en el formulario
+                          
+                          
                         }}
                         onBlur={handleBlur}
                         error={touched.opId && Boolean(errors.opId)}
                         helperText={touched.opId && errors.opId}
                         inputProps={{ min: 0 }} // Asegura que no se ingresen números negativos
                       />
-                          {/* Aviso de Recompra */}
-                          {isRecompra && (
-                            <Typography variant="body2" color="warning.main" sx={{ mt: 0.5 }}>
-                              Operación de Recompra
-                            </Typography>
-                          )}
+                          
                         </Grid>
                         <Grid item xs={12} md={2}>
                           <DatePicker
@@ -534,8 +523,65 @@ const renderNombreUsuario = (usuario) => (
                             label="Fecha de Operación *"
                             value={values.opDate}
                             name="opDate"
-                            onChange={(newValue) => setFieldValue('opDate',  parseDateToLocal(newValue))}
-                            renderInput={(params) => <TextField {...params} fullWidth />}
+                            onChange={(newValue) => {
+                              const parsedDate = newValue ? new Date(newValue) : null;
+                                  if (!parsedDate) return;
+
+                                  setFieldValue('opDate', parsedDate);
+                            
+                              values.facturas.forEach((factura, index) => {
+                                if (!factura.fechaFin) return;
+                                console.log(factura.fechaFin)
+                            
+                                // 1. Calcula operationDays (como ya lo hacías)
+                                const operationDays = Math.max(0, differenceInDays(
+                                  startOfDay(parseDateToLocal(factura.fechaFin)),
+                                  startOfDay(parsedDate)
+                                ));
+                                setFieldValue(`facturas[${index}].operationDays`, operationDays);
+                            
+                                // 2. Recalcula los valores presentes y comisiones SOLO si hay días y valor futuro
+                                if (operationDays > 0 && factura.valorFuturo > 0) {
+                                  const presentValueInvestor = Math.round(
+                                    PV(factura.investorTax / 100, operationDays / 365, 0, factura.valorFuturo, 0) * -1
+                                  );
+                                  const presentValueSF = Math.round(
+                                    PV(values.discountTax / 100, operationDays / 365, 0, factura.valorFuturo, 0) * -1
+                                  );
+                            
+                                  setFieldValue(`facturas[${index}].presentValueInvestor`, presentValueInvestor || 0);
+                                  setFieldValue(`facturas[${index}].presentValueSF`, presentValueSF  || 0);
+                                  setFieldValue(`facturas[${index}].comisionSF`, presentValueInvestor - presentValueSF  || 0);
+                                  setFieldValue(`facturas[${index}].investorProfit`, presentValueInvestor - factura.valorNominal  || 0);
+                                } else {
+                                  // Resetea a valores por defecto si no hay días o valor futuro
+                                  setFieldValue(`facturas[${index}].presentValueInvestor`, factura.currentBalance  || 0);
+                                  setFieldValue(`facturas[${index}].presentValueSF`, factura.currentBalance  || 0);
+                                  setFieldValue(`facturas[${index}].comisionSF`, 0);
+                                  setFieldValue(`facturas[${index}].investorProfit`, 0);
+                                }
+                              });
+                            }}
+                            inputFormat="dd/MM/yyyy"
+                            mask="__/__/____"
+                            disableMaskedInput={false}
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                fullWidth
+                                error={!!errors.opDate}
+                                helperText={errors.opDate}
+                                onKeyDown={(e) => {
+                                  // Permite solo números y barras
+                                  if (!/[0-9/]/.test(e.key) && e.key !== 'Backspace' && e.key !== 'Delete') {
+                                    e.preventDefault();
+                                  }
+                                }}
+                              />
+                            )}
+                            PopperProps={{
+                              placement: 'bottom-start',
+                            }}
                           />
                         </Grid>
                           <Grid item xs={12} md={2}>
@@ -867,20 +913,20 @@ const renderNombreUsuario = (usuario) => (
 
 
 
-                           }
-                        }}
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            label="Nombre Emisor *"
-                            name="emitter"
-                            fullWidth
-                            error={touched.emitter && Boolean(errors.emitter)}
-                            helperText={touched.emitter&& errors.emitter}
-                          />
-                        )}
-                      />
-                    </Grid>
+                                        }
+                                      }}
+                                      renderInput={(params) => (
+                                        <TextField
+                                          {...params}
+                                          label="Nombre Emisor *"
+                                          name="emitter"
+                                          fullWidth
+                                          error={touched.emitter && Boolean(errors.emitter)}
+                                          helperText={touched.emitter&& errors.emitter}
+                                        />
+                                      )}
+                                    />
+                                  </Grid>
 
                                   {/*Selector de Pagadores*/}
                                   <Grid item xs={12} md={6}>
@@ -902,7 +948,7 @@ const renderNombreUsuario = (usuario) => (
                                                   acc[cuentaId] = [];
                                                 }
                                                 acc[cuentaId].push(factura);
-                                                return acc;
+                                                return acc; 
                                               }, {});
                                               console.log('Facturas agrupadas por cuenta:', facturasPorCuenta);
                                               // 2. Para cada grupo de facturas con misma cuenta, calculamos el total a restituir
@@ -965,79 +1011,79 @@ const renderNombreUsuario = (usuario) => (
                                             
                                               return;
                                             }
-                                           // Limpiar cuando:
-    // 1. Se selecciona un pagador diferente al actual
-    // 2. Se borra manualmente (newValue === null)
-    const shouldReset = !newValue || (values.nombrePagador && newValue.id !== values.nombrePagador);
-    
-    if (shouldReset) {
-      // 1. Agrupar facturas por idCuentaInversionista
-      const facturasPorCuenta = values.facturas.reduce((acc, factura) => {
-        const cuentaId = factura.idCuentaInversionista;
-        if (!acc[cuentaId]) {
-          acc[cuentaId] = [];
-        }
-        acc[cuentaId].push(factura);
-        return acc;
-      }, {});
+                                                                                    // Limpiar cuando:
+                                              // 1. Se selecciona un pagador diferente al actual
+                                              // 2. Se borra manualmente (newValue === null)
+                                              const shouldReset = !newValue || (values.nombrePagador && newValue.id !== values.nombrePagador);
+                                              
+                                              if (shouldReset) {
+                                                // 1. Agrupar facturas por idCuentaInversionista
+                                                const facturasPorCuenta = values.facturas.reduce((acc, factura) => {
+                                                  const cuentaId = factura.idCuentaInversionista;
+                                                  if (!acc[cuentaId]) {
+                                                    acc[cuentaId] = [];
+                                                  }
+                                                  acc[cuentaId].push(factura);
+                                                  return acc;
+                                                }, {});
 
-      // 2. Calcular total a restituir para cuentas con múltiples facturas
-      Object.entries(facturasPorCuenta).forEach(([cuentaId, facturas]) => {
-        if (facturas.length > 1) {
-          const totalRestituir = facturas.reduce(
-            (sum, f) => sum + f.gastoMantenimiento + f.presentValueInvestor, 
-            0
-          );
-          
-          // 3. Actualizar montos disponibles
-          values.facturas.forEach((f, index) => {
-            if (f.idCuentaInversionista === cuentaId) {
-              setFieldValue(`facturas[${index}].montoDisponibleCuenta`, 
-                f.montoDisponibleInfo
-              );
-            }
-          });
-        }
-      });
-      
-      // 4. Resetear facturas manteniendo campos del inversionista
-      setFieldValue('facturas', values.facturas.map(f => ({
-        // Reset general
-        ...Object.fromEntries(
-          Object.keys(f)
-            .filter(key => ![
-              'nombreInversionista', 
-              'numbercuentaInversionista',
-              'cuentaInversionista', 
-              'idCuentaInversionista',
-              'investorBroker', 
-              'investorBrokerName',
-              'montoDisponibleCuenta', 
-              'montoDisponibleInfo'
-            ].includes(key))
-            .map(key => [key, 
-              typeof f[key] === 'number' ? 0 : 
-              key.includes('Date') || key.includes('fecha') ? new Date().toISOString().substring(0, 10) : 
-              ''
-            ])
-        ),
-        // Mantener campos del inversionista
-        nombreInversionista: f.nombreInversionista || '',
-        numbercuentaInversionista: f.numbercuentaInversionista || '',
-        cuentaInversionista: f.cuentaInversionista || '',
-        idCuentaInversionista: f.idCuentaInversionista || '',
-        investorBroker: f.investorBroker || "",
-        investorBrokerName: f.investorBrokerName || "",
-        montoDisponibleCuenta: f.montoDisponibleInfo || 0,
-        montoDisponibleInfo: f.montoDisponibleInfo || 0
-      })));
+                                                // 2. Calcular total a restituir para cuentas con múltiples facturas
+                                                Object.entries(facturasPorCuenta).forEach(([cuentaId, facturas]) => {
+                                                  if (facturas.length > 1) {
+                                                    const totalRestituir = facturas.reduce(
+                                                      (sum, f) => sum + f.gastoMantenimiento + f.presentValueInvestor, 
+                                                      0
+                                                    );
+                                                    
+                                                    // 3. Actualizar montos disponibles
+                                                    values.facturas.forEach((f, index) => {
+                                                      if (f.idCuentaInversionista === cuentaId) {
+                                                        setFieldValue(`facturas[${index}].montoDisponibleCuenta`, 
+                                                          f.montoDisponibleInfo
+                                                        );
+                                                      }
+                                                    });
+                                                  }
+                                                });
+                                                
+                                                // 4. Resetear facturas manteniendo campos del inversionista
+                                                setFieldValue('facturas', values.facturas.map(f => ({
+                                                  // Reset general
+                                                  ...Object.fromEntries(
+                                                    Object.keys(f)
+                                                      .filter(key => ![
+                                                        'nombreInversionista', 
+                                                        'numbercuentaInversionista',
+                                                        'cuentaInversionista', 
+                                                        'idCuentaInversionista',
+                                                        'investorBroker', 
+                                                        'investorBrokerName',
+                                                        'montoDisponibleCuenta', 
+                                                        'montoDisponibleInfo'
+                                                      ].includes(key))
+                                                      .map(key => [key, 
+                                                        typeof f[key] === 'number' ? 0 : 
+                                                        key.includes('Date') || key.includes('fecha') ? new Date().toISOString().substring(0, 10) : 
+                                                        ''
+                                                      ])
+                                                  ),
+                                                  // Mantener campos del inversionista
+                                                  nombreInversionista: f.nombreInversionista || '',
+                                                  numbercuentaInversionista: f.numbercuentaInversionista || '',
+                                                  cuentaInversionista: f.cuentaInversionista || '',
+                                                  idCuentaInversionista: f.idCuentaInversionista || '',
+                                                  investorBroker: f.investorBroker || "",
+                                                  investorBrokerName: f.investorBrokerName || "",
+                                                  montoDisponibleCuenta: f.montoDisponibleInfo || 0,
+                                                  montoDisponibleInfo: f.montoDisponibleInfo || 0
+                                                })));
 
-      // 5. Limpiar campos adicionales
-      setFieldValue('nombrePagador', '');
-      setFieldValue('filtroEmitterPagador.payer', '');
-      setFieldValue('takedBills', []);
-    }
-                                            // 1. Actualizar valores del formulario
+                                                // 5. Limpiar campos adicionales
+                                                setFieldValue('nombrePagador', '');
+                                                setFieldValue('filtroEmitterPagador.payer', '');
+                                                setFieldValue('takedBills', []);
+                                              }
+                                                                                      // 1. Actualizar valores del formulario
                                             setFieldValue('nombrePagador', newValue?.id || '');
                                             setFieldValue('filtroEmitterPagador.payer', newValue?.data?.document_number || '');
                                           
@@ -1451,7 +1497,7 @@ const renderNombreUsuario = (usuario) => (
                                                     comisionSF,
                                                     investorProfit: investorProfit,
                                                     integrationCode: selectedFactura?.integrationCode ? selectedFactura?.integrationCode : "",
-                                                    isReBuy: selectedFactura?.data?.bill?.reBuyAvailable ?? false,
+                                                    isReBuy: selectedFactura?.reBuyAvailable ?? 0,
                                                     gastoMantenimiento: 0,
                                                     operationDays: 0,
                                                     investorTax: values.investorTax,
@@ -1460,6 +1506,7 @@ const renderNombreUsuario = (usuario) => (
                                                   
                                                         
                                                       } 
+                                                      console.log(selectedFactura?.reBuyAvailable)
                                                       
                                                       const fractionBill = await cargarFraccionFactura(selectedFactura.id);
                                                       console.log("Fracción de factura:", fractionBill);
@@ -1600,7 +1647,7 @@ const renderNombreUsuario = (usuario) => (
                                                             comisionSF,
                                                             investorProfit: investorProfit,
                                                             integrationCode: selectedFactura?.integrationCode ? selectedFactura?.integrationCode : "",
-                                                            isReBuy: selectedFactura?.data?.bill?.reBuyAvailable ?? false,
+                                                            isReBuy: selectedFactura?.reBuyAvailable ?? 0,
                                                             gastoMantenimiento: 0,
                                                             operationDays: 0,
                                                             investorTax: values.investorTax,
@@ -1637,7 +1684,7 @@ const renderNombreUsuario = (usuario) => (
                                                             comisionSF,
                                                             investorProfit: investorProfit,
                                                             integrationCode: selectedFactura?.integrationCode ? selectedFactura?.integrationCode : "",
-                                                            isReBuy: selectedFactura?.data?.bill?.reBuyAvailable ?? false,
+                                                            isReBuy: selectedFactura?.reBuyAvailable ?? 0,
                                                             gastoMantenimiento: 0,
                                                             operationDays: 0,
                                                             investorTax: values.investorTax,
@@ -1683,7 +1730,7 @@ const renderNombreUsuario = (usuario) => (
                                                         comisionSF,
                                                         investorProfit: investorProfit,
                                                         integrationCode: selectedFactura?.integrationCode ? selectedFactura?.integrationCode : "",
-                                                        isReBuy: selectedFactura?.data?.bill?.reBuyAvailable ?? false,
+                                                        isReBuy: selectedFactura?.reBuyAvailable ?? 0,
                                                         gastoMantenimiento: 0,
                                                         operationDays: 0,
                                                         investorTax: values.investorTax,
@@ -1692,8 +1739,9 @@ const renderNombreUsuario = (usuario) => (
                                                       }
                                                 
                                                     
-                                                
+                                                      console.log(selectedFactura?.reBuyAvailable)
                                                       console.log(values);
+                                                     
                                                     }
                                                   } catch (error) {
                                                     console.error("Error al cargar los datos:", error);
@@ -1706,7 +1754,9 @@ const renderNombreUsuario = (usuario) => (
                                                     fullWidth
                                                     name="billId"
                                                     error={touched.facturas?.[index]?.billId && Boolean(errors.facturas?.[index]?.billId)}
-                                                    helperText={touched.facturas?.[index]?.billId && errors.facturas?.[index]?.billId}
+                                                    helperText={
+                                                      ` ${factura.isReBuy ? "Disponible Recompra" : "No disponible Recompra"}`
+                                                    }
                                                   />
                                                 )}
                                                 
@@ -1771,14 +1821,25 @@ const renderNombreUsuario = (usuario) => (
                                               </Grid>
                                               {/* Fecha Probable*/}
                                               <Grid item xs={12} md={1.5}>
-                                                <DatePicker
-                                                id="probDate-name" // Para CSS/JS si es necesario
-                                                  data-testid="campo-fechaProbable"
-                                                  label="Fecha probable"
-                                                  value={factura.probableDate}
-                                                  onChange={(newValue) => setFieldValue(`facturas[${index}].probableDate`, newValue)}
-                                                  renderInput={(params) => <TextField {...params} fullWidth />}
-                                                />
+                                              <DatePicker
+                                    id="probDate-name"
+                                    data-testid="campo-fechaProbable"
+                                    label="Fecha probable"
+                                    value={factura.probableDate}
+                                    onChange={(newValue) => setFieldValue(`facturas[${index}].probableDate`, newValue)}
+                                    inputFormat="dd/MM/yyyy" // Formato de visualización
+                                    mask="__/__/____" // Máscara de entrada (guiones bajos son placeholders)
+                                    renderInput={(params) => (
+                                      <TextField 
+                                        {...params} 
+                                        fullWidth
+                                        onKeyDown={(e) => e.stopPropagation()} // Evita conflicto con atajos de teclado
+                                      />
+                                    )}
+                                    disableMaskedInput={false} // Habilita la máscara de entrada
+                                    allowSameDateSelection // Permite seleccionar la fecha actual
+                                    openTo="day" // Comienza la selección por el día (opcional)
+                                  />
                                               </Grid> 
                                               {/* Fecha de Vencimiento */}
                                               {/* <Grid item xs={12} md={2}>
@@ -1959,6 +2020,9 @@ const renderNombreUsuario = (usuario) => (
                                                             setFieldValue(`facturas[${index}].investorBroker`, brokerFromInvestor?.data.id || "");
                                                             setFieldValue( `facturas[${index}].tasaInversionistaPR`,tasaDescuento?.data?.discount_rate_investor
                                                               ||0)
+                                                          setFieldValue( `facturas[${index}].tasaDescuentoPR`,tasaDescuento?.data?.discount_rate
+                                                                ||0)
+                                                          setFieldValue( `facturas[${index}].tasaDescuentoPR`,tasaDescuento?.data?.discount_rate  ||0)
                                                             setFieldValue(
                                                               `facturas[${index}].investorBrokerName`,
                                                               brokerFromInvestor?.data?.first_name && brokerFromInvestor?.data?.last_name
@@ -1973,6 +2037,7 @@ const renderNombreUsuario = (usuario) => (
                                                             setFieldValue(`facturas[${index}].investorBroker`, brokerFromInvestor?.data.id || "");
                                                             setFieldValue( `facturas[${index}].tasaInversionistaPR`,tasaDescuento?.data?.discount_rate_investor
                                                               ||0)
+                                                            setFieldValue( `facturas[${index}].tasaDescuentoPR`,tasaDescuento?.data?.discount_rate  ||0)
                                                             setFieldValue(
                                                               `facturas[${index}].investorBrokerName`,
                                                               brokerFromInvestor?.data?.first_name && brokerFromInvestor?.data?.last_name
@@ -2019,6 +2084,7 @@ const renderNombreUsuario = (usuario) => (
                                                         setFieldValue(`facturas[${index}].investorBroker`, brokerFromInvestor?.data.id || "");
                                                         setFieldValue( `facturas[${index}].tasaInversionistaPR`,tasaDescuento?.data?.discount_rate_investor
                                                           ||0)
+                                                        setFieldValue( `facturas[${index}].tasaDescuentoPR`,tasaDescuento?.data?.discount_rate  ||0)
                                                         setFieldValue(
                                                           `facturas[${index}].investorBrokerName`,
                                                           brokerFromInvestor?.data?.first_name && brokerFromInvestor?.data?.last_name
@@ -2037,6 +2103,7 @@ const renderNombreUsuario = (usuario) => (
                                                       setFieldValue(`facturas[${index}].investorBroker`, brokerFromInvestor?.data.id || "");
                                                       setFieldValue( `facturas[${index}].tasaInversionistaPR`,tasaDescuento?.data?.discount_rate_investor
                                                         ||0)
+                                                      setFieldValue( `facturas[${index}].tasaDescuentoPR`,tasaDescuento?.data?.discount_rate  ||0)
                                                       setFieldValue(
                                                         `facturas[${index}].investorBrokerName`,
                                                         brokerFromInvestor?.data?.first_name && brokerFromInvestor?.data?.last_name
@@ -2053,6 +2120,7 @@ const renderNombreUsuario = (usuario) => (
                                                       setFieldValue(`facturas[${index}].investorBroker`, brokerFromInvestor?.data.id || "");
                                                       setFieldValue( `facturas[${index}].tasaInversionistaPR`,tasaDescuento?.data?.discount_rate_investor
                                                         ||0)
+                                                      setFieldValue( `facturas[${index}].tasaDescuentoPR`,tasaDescuento?.data?.discount_rate  ||0)
                                                       setFieldValue(
                                                         `facturas[${index}].investorBrokerName`,
                                                         brokerFromInvestor?.data?.first_name && brokerFromInvestor?.data?.last_name
@@ -2453,16 +2521,16 @@ const renderNombreUsuario = (usuario) => (
                                                 if (values.opDate && factura.operationDays) {
                                                   // Calcular nuevos valores presentes
                                                   const presentValueInvestor = factura.operationDays > 0 && nuevoValorNominal > 0
-                                                    ? Math.round(PV(values.investorTax / 100, factura.operationDays / 365, 0, -nuevoValorNominal, 0) * -1)
+                                                    ? Math.round(PV(values.investorTax / 100, factura.operationDays / 365, 0, nuevoValorNominal, 0) * -1)
                                                     : valorFuturo;
 
                                                   const presentValueSF = factura.operationDays > 0 && nuevoValorNominal > 0
-                                                    ? Math.round(PV(values.discountTax / 100, factura.operationDays / 365, 0,-nuevoValorNominal, 0) * -1)
+                                                    ? Math.round(PV(values.discountTax / 100, factura.operationDays / 365, 0,nuevoValorNominal, 0) * -1)
                                                     : valorFuturo;
 
                                                   // Actualizar valores en la factura actual
                                                   setFieldValue(`facturas[${index}].presentValueInvestor`, presentValueInvestor);
-                                                  setFieldValue(`facturas[${index}].presentValueSF`, -presentValueSF);
+                                                  setFieldValue(`facturas[${index}].presentValueSF`, presentValueSF);
                                                   setFieldValue(`facturas[${index}].comisionSF`, presentValueInvestor + presentValueSF || 0 );
 
                                                   // Calcular totales globales
@@ -2558,9 +2626,17 @@ const renderNombreUsuario = (usuario) => (
                                                       const comisionSF = f.presentValueInvestor - presentValueSF;
                                                       setFieldValue(`facturas[${i}].comisionSF`, comisionSF  || 0);
                                                     }
+                                                    console.log(factura.tasaDescuentoPR)
                                                   });
                                                 }
                                               }}
+                                              helperText={
+                                                !factura.valorNominalManual
+                                                  ? `Tasa Descuento sugerida: ${factura.tasaDescuentoPR || 0}%` 
+                                                  : values.investorTax > values.discountTax
+                                                    ? "La tasa inversionista no puede ser mayor que la tasa de descuento."
+                                                    : "Valor ingresado manualmente"
+                                              }
                                               onBlur={(e) => {
                                                 // Validaciones adicionales si son necesarias
                                                 if (e.target.value < 0) {
@@ -2674,11 +2750,12 @@ const renderNombreUsuario = (usuario) => (
                                                 setFieldValue(`facturas[${index}].payedAmount`, valorNominal);
                                               }}
                                               placeholder={`Sugerido: ${factura.valorFuturo && factura.porcentajeDescuento !== undefined ? formatNumberWithThousandsSeparator(Math.floor(factura.valorFuturo * (1 - (factura.porcentajeDescuento / 100)))) : ""}`} // Aquí se calcula el valor nominal sugerido
+                                              
                                               helperText={
                                                 !factura.valorNominalManual
                                                   ? `Valor sugerido: ${factura.valorFuturo && factura.porcentajeDescuento !== undefined ? formatNumberWithThousandsSeparator(Math.floor(factura.valorFuturo * (1 - (factura.porcentajeDescuento / 100)))) : ""}`
                                                   : "Valor ingresado manualmente"
-                                              }
+                                              } //QUITAR
                                               InputProps={{
                                                 startAdornment: (
                                                   <InputAdornment position="start">
@@ -2794,14 +2871,21 @@ const renderNombreUsuario = (usuario) => (
                                             </Grid>
                                             <Grid item xs={12} md={2}>
                                             <DatePicker
-                                             id="endDatename" // Para CSS/JS si es necesario
-                                              data-testid="campo-fechaFin"
-                                              label="Fecha Fin"
-                                              value={factura.fechaFin}
-                                              onChange={(newValue) => {
-                                                // Actualizar la fecha fin
-                                                console.log(newValue);
-                                                setFieldValue(`facturas[${index}].fechaFin`, parseDateToLocal(newValue));
+                                                id="endDatename"
+                                                data-testid="campo-fechaFin"
+                                                label="Fecha Fin"
+                                                value={factura.fechaFin}
+                                                inputFormat="dd/MM/yyyy"
+                                                mask="__/__/____"
+                                                disableMaskedInput={false}
+                                                onChange={(newValue) => {
+                                                  // Tu lógica existente de onChange aquí...
+                                                  const parsedDate = newValue ? new Date(newValue) : null;
+                                                  if (!parsedDate) return;
+                                                  
+                                                  console.log('Fecha seleccionada:', parsedDate);
+                                                  setFieldValue(`facturas[${index}].fechaFin`, parsedDate);
+      
                                                 console.log(startOfDay(newValue), startOfDay(values.opDate));
                                                 
                                                 // Calcular operationDays si opDate está definido
@@ -2819,11 +2903,11 @@ const renderNombreUsuario = (usuario) => (
                                                     : factura.currentBalance;
                                                   
                                                   console.log("DIAS en fecha FIN", operationDays, presentValueInvestor, presentValueSF);
-                                                  setFieldValue(`facturas[${index}].presentValueInvestor`, presentValueInvestor);
-                                                  setFieldValue(`facturas[${index}].presentValueSF`, presentValueSF);
+                                                  setFieldValue(`facturas[${index}].presentValueInvestor`, presentValueInvestor || 0);
+                                                  setFieldValue(`facturas[${index}].presentValueSF`, presentValueSF || 0);
                                                   setFieldValue(`facturas[${index}].comisionSF`, presentValueInvestor- presentValueSF || 0);
                                                   console.log(factura.valorNominal- presentValueSF)
-                                                  setFieldValue(`facturas[${index}].investorProfit`,factura.valorNominal- presentValueSF);
+                                                  setFieldValue(`facturas[${index}].investorProfit`,factura.valorNominal- presentValueSF || 0);
 
 
 
@@ -2851,7 +2935,28 @@ const renderNombreUsuario = (usuario) => (
                                                     });
                                                   }
                                               }}
-                                              renderInput={(params) => <TextField {...params} fullWidth />}
+                                              renderInput={(params) => (
+                                                <TextField
+                                                  {...params}
+                                                  fullWidth
+                                                  onKeyDown={(e) => {
+                                                    // Permite solo números, barras y teclas de control
+                                                    if (!/[0-9/]/.test(e.key) && 
+                                                        !['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                                                      e.preventDefault();
+                                                    }
+                                                  }}
+                                                />
+                                              )}
+                                              OpenPickerButtonProps={{
+                                                'aria-label': 'Seleccionar fecha',
+                                              }}
+                                              componentsProps={{
+                                                actionBar: {
+                                                  actions: ['clear', 'accept'],
+                                                },
+                                              }}
+                                              
                                             />
                   
                                             </Grid>

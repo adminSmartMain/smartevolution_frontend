@@ -710,29 +710,11 @@ export const OperationsComponents = ({
         >
           Consulta de Pre-operaciones
         </Typography>
-        <Button
-                variant="standard"
-                color="primary"
-                size="large"
-                
-                sx={{
-                  height: "2.6rem",
-                  backgroundColor: "transparent",
-                  border: "1.4px solid #63595C",
-                  borderRadius: "4px",
-                }}
-              >
-                <Typography
-                  letterSpacing={0}
-                  fontSize="80%"
-                  fontWeight="bold"
-                  color="#63595C"
-                >
-                  Operaciones
-                </Typography>
-        
-               
-              </Button>
+        <Link href="/operations" passHref>
+  <button className="button-header-preop-title">
+    Operaciones
+  </button>
+</Link>
       </Box>
 
       <Box sx={{ ...filtersContainerSx }}>

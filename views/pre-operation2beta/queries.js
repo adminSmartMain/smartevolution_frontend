@@ -6,7 +6,7 @@ export const getOperationsVersionTwo = async (params = {}) => {
   const res = await Axios.get(
     `${API_URL}/preOperation/params?opId=${params.opId || ""}&billId=${
       params.billId || ""
-    }&investor=${params.investor || ""}&page=${params.page || 1}`,
+    }&investor=${params.investor || ""}&startDate=${params.startDate || ""}&endDate=${params.endDate || ""}&page=${params.page || 1}`,
     {
       headers: {
         authorization: "Bearer " + localStorage.getItem("access-token"),

@@ -7,7 +7,7 @@ import FullscreenIcon from '@mui/icons-material/Fullscreen'; // Ícono para maxi
 
 const ModalValorAGirar = ({ open, handleClose, data }) => {
   const [isMinimized, setIsMinimized] = useState(false); // Estado para minimizar
-  console.log(data)
+
   const handleMinimize = () => {
     setIsMinimized(!isMinimized);
   };

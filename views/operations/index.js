@@ -50,7 +50,7 @@ export default function Operations() {
 
   useEffect(() => {
     getOperationsFetch();
-  }, [filters.opId, filters.billId, filters.investor, page]);
+  }, [filters.opId, filters.billId, filters.investor,filters.startDate, filters.endDate, page]);
   
   useEffect(() => {
     if (dataGetOperations) {
@@ -82,10 +82,11 @@ export default function Operations() {
         (x) => x.status >= 3 || x.status == 1
       );
       setData(preOperations);
+      
       setCalcs(dataGetOperations?.results[0]?.calcs);
     }
   }, [dataGetOperations, loadingGetOperations, errorGetOperations]);
-
+  console.log("dataGetOperations",dataGetOperations?.results[0]?.calcs);
   return (
     <>
       <Head>

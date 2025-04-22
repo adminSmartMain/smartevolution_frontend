@@ -196,3 +196,4 @@ export const TypeOperation = async (data) => {
   });
   return res.data;
 };
+

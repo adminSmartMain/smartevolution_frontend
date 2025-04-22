@@ -31,10 +31,7 @@ export default function Operations() {
 
 
   let dataCount = dataGetOperations?.count || 0;
-  console.log(data)
-  console.log(filteredData)
-  console.log(dataGetOperations)
-  console.log(page)
+
 
 
   const filtersHandlers = {
@@ -45,10 +42,10 @@ export default function Operations() {
     error: errorGetOperations,
     data: dataGetOperations?.results || {},
   };
-
+  console.log(filters)
   useEffect(() => {
     getOperationsFetch();
-  }, [filters.opId, filters.billId, filters.investor, page]);
+  }, [filters.opId, filters.billId, filters.investor,filters.startDate, filters.endDate, page]);
 
   useEffect(() => {
     if (dataGetOperations) {
