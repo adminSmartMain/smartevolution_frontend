@@ -60,17 +60,20 @@ depositValue}</p>
       {open && isMinimized && (
         <Box className="modal-minimized">
           <div className="modal-minimized-content">
-            <p><strong>Comisión:</strong> {effectiveData.comision}</p>
-            <p><strong>IVA:</strong> {effectiveData.iva}</p>
-            <p><strong>Retefuente:</strong> {effectiveData.retefuente}</p>
-            <p><strong>Reteica:</strong> {effectiveData.reteica}</p>
-            <p><strong>Valor a Girar:</strong> {effectiveData.valorAGirar}</p>
-            <p><strong>ReteIVA:</strong> {effectiveData.reteIva}</p>
-            <p><strong>Otros:</strong> {effectiveData.otros}</p>
-            <p><strong>Valor Inversor:</strong> {effectiveData.valorInversor}</p>
-            <p><strong>Facturar Neto:</strong> {effectiveData.facturarNeto}</p>
-            <p><strong>Valor Futuro:</strong> {effectiveData.valorFuturo}</p>
-
+          <p><strong>Comisión:</strong> {effectiveData.commission}</p>
+                <p><strong>IVA:</strong> {effectiveData.iva}</p>
+                <p><strong>Retefuente:</strong> {effectiveData.rteFte                }</p>
+                <p><strong>Reteica:</strong> {effectiveData.retIca}</p>
+                <p><strong>ReteIVA:</strong> {effectiveData.retIva
+                }</p>
+            <p><strong>Otros:</strong> {effectiveData.others}</p>
+                <p><strong>Valor Inversor:</strong> {effectiveData.investorValue
+                }</p>
+                <p><strong>Facturar Neto:</strong> {effectiveData.netFact
+                }</p>
+                <p><strong>Valor Futuro:</strong> {effectiveData.futureValue}</p>
+                <p><strong>Valor a Girar:</strong> {effectiveData.
+depositValue}</p>
             <IconButton onClick={handleMinimize}>
               <FullscreenIcon /> {/* Ícono para maximizar */}
             </IconButton>
