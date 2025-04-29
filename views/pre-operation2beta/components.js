@@ -650,7 +650,7 @@ const handleCloseMenu = () => {
     {
       field: "status",
       headerName: "Estado",
-      width: 160,
+      width: 147,
       renderCell: (params) => {
        
         let statusText = "";
@@ -686,26 +686,26 @@ const handleCloseMenu = () => {
       },
     },
     
-    { field: "opId", headerName: "ID", width: 80 },
-    { field: "created_at", headerName: "Creado el", width: 110,  valueFormatter: (params) => {
+    { field: "opId", headerName: "ID", width: 40 },
+    { field: "created_at", headerName: "Creado el", width: 93,  valueFormatter: (params) => {
       if (!params.value) return '';
       // Extrae directamente las partes de la fecha ISO (evita conversión local)
       const [year, month, day] = params.value.split('T')[0].split('-');
       return `${day}/${month}/${year}`; // Formato dd/mm/YYYY
     }},
-    { field: "opDate", headerName: "Fecha Operación", width: 110,valueFormatter: (params) => {
+    { field: "opDate", headerName: "Fecha Op", width: 93,valueFormatter: (params) => {
       if (!params.value) return '';
       const [year, month, day] = params.value.split('T')[0].split('-');
       return `${day}/${month}/${year}`;
     }},
-    { field: "billFraction", headerName: "Fracción", width: 90 },
-    { field: "billData", headerName: "# Factura", width: 90 },
-    { field: "emitterName", headerName: "Emisor", width: 200 },
+    { field: "billFraction", headerName: "Fracción", width: 60},
+    { field: "billData", headerName: "# Factura", width: 100 },
+    { field: "emitterName", headerName: "Emisor", width: 230 },
     { field: "investorName", headerName: "Inversionista", width: 200 },
     { field: "payerName", headerName: "Pagador", width: 150 },
-    { field: "discountTax", headerName: "Tasa Desc.", width: 90 },
-    { field: "payedPercent", headerName: "% Desc.", width: 90 }, // Nueva columna
-    { field: "investorTax", headerName: "Tasa Inv.", width: 90 },
+    { field: "discountTax", headerName: "Tasa Desc", width: 60 },
+    { field: "payedPercent", headerName: "% Desc", width: 40}, // Nueva columna
+    { field: "investorTax", headerName: "Tasa Inv", width: 40 },
     { field: "payedAmount", headerName: "Valor Nominal", width: 110,
       valueFormatter: ({ value }) => {
         if (value == null) return "$0.00";
@@ -724,8 +724,18 @@ const handleCloseMenu = () => {
         }).format(value);
       },
     },
-    { field: "probableDate", headerName: "Fecha Probable", width: 110 },
-    { field: "opExpiration", headerName: "Fecha Fin", width: 110 },
+    { field: "probableDate", headerName: "Fecha Probable", width: 93 ,  valueFormatter: (params) => {
+      if (!params.value) return '';
+      // Extrae directamente las partes de la fecha ISO (evita conversión local)
+      const [year, month, day] = params.value.split('T')[0].split('-');
+      return `${day}/${month}/${year}`; // Formato dd/mm/YYYY
+    }},
+    { field: "opExpiration", headerName: "Fecha Fin", width: 94 ,  valueFormatter: (params) => {
+      if (!params.value) return '';
+      // Extrae directamente las partes de la fecha ISO (evita conversión local)
+      const [year, month, day] = params.value.split('T')[0].split('-');
+      return `${day}/${month}/${year}`; // Formato dd/mm/YYYY
+    }},
    
     {
       field: "Acciones",
@@ -990,9 +1000,7 @@ const handleCloseMenu = () => {
 
 
   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
-    <Link href="/pre-operations2beta/byOp" underline="none">
-      <button className="button-header-preop">Ver por Grupos</button>
-    </Link>
+  
 
     <button className="button-header-preop" onClick={handleOpenModal}>Valor a Girar</button>
     <ModalValorAGirar open={openModal} handleClose={handleCloseModal} data={mockData} />

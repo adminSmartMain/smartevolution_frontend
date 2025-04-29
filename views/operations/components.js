@@ -305,7 +305,7 @@ export const OperationsComponents = ({
     {
       field: "status",
       headerName: "Estado",
-      width: 160,
+      width: 147,
       renderCell: (params) => {
        
         let statusText = "";
@@ -341,11 +341,11 @@ export const OperationsComponents = ({
       },
     },
     
-    { field: "opId", headerName: "ID", width: 80 },
+    { field: "opId", headerName: "ID", width: 40 },
     {
       field: "created_at",
       headerName: "Creado el",
-      width: 110,
+      width: 93,
       valueFormatter: (params) => {
         if (!params.value) return '';
         // Extrae directamente las partes de la fecha ISO (evita conversión local)
@@ -355,22 +355,22 @@ export const OperationsComponents = ({
     },
     {
       field: "opDate", 
-      headerName: "Fecha Operación", 
-      width: 110,
+      headerName: "Fecha Op", 
+      width:93,
       valueFormatter: (params) => {
         if (!params.value) return '';
         const [year, month, day] = params.value.split('T')[0].split('-');
         return `${day}/${month}/${year}`;
       }
     },
-    { field: "billFraction", headerName: "Fracción", width: 90 },
-    { field: "billData", headerName: "# Factura", width: 90 },
-    { field: "emitterName", headerName: "Emisor", width: 200 },
+    { field: "billFraction", headerName: "Fracción", width: 60 },
+    { field: "billData", headerName: "# Factura", width: 100},
+    { field: "emitterName", headerName: "Emisor", width: 230 },
     { field: "investorName", headerName: "Inversionista", width: 200 },
     { field: "payerName", headerName: "Pagador", width: 150 },
-    { field: "discountTax", headerName: "Tasa Desc.", width: 90 },
-    { field: "payedPercent", headerName: "% Desc.", width: 90 }, // Nueva columna
-    { field: "investorTax", headerName: "Tasa Inv.", width: 90 },
+    { field: "discountTax", headerName: "Tasa Desc.", width: 60 },
+    { field: "payedPercent", headerName: "% Desc.", width: 40 }, // Nueva columna
+    { field: "investorTax", headerName: "Tasa Inv.", width:  40},
     { field: "payedAmount", headerName: "Valor Nominal", width: 110,
       valueFormatter: ({ value }) => {
         if (value == null) return "$0.00";
@@ -389,8 +389,20 @@ export const OperationsComponents = ({
         }).format(value);
       },
     },
-    { field: "probableDate", headerName: "Fecha Probable", width: 110 },
-    { field: "opExpiration", headerName: "Fecha Fin", width: 110 },
+    { field: "probableDate", headerName: "Fecha Probable", width: 93,
+      valueFormatter: (params) => {
+        if (!params.value) return '';
+        const [year, month, day] = params.value.split('T')[0].split('-');
+        return `${day}/${month}/${year}`;
+      }
+    }, 
+    { field: "opExpiration", headerName: "Fecha Fin", width: 93 ,
+      valueFormatter: (params) => {
+        if (!params.value) return '';
+        const [year, month, day] = params.value.split('T')[0].split('-');
+        return `${day}/${month}/${year}`;
+      }
+    }, 
    
    {
   field: "Acciones",

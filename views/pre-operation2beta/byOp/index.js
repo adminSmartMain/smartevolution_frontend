@@ -6,7 +6,7 @@ import { useFetch } from "@hooks/useFetch";
 
 import { OperationsComponents } from "./components";
 // queries
-import { getOperationsVersionTwo } from "./queries";
+import { getOperationsVersionTwo ,TypeOperation,} from "./queries";
 
 export default function Operations() {
   const [data, setData] = useState([]);
@@ -16,9 +16,11 @@ export default function Operations() {
     billId: "",
     investor: "",
   });
+  const [typeOp, setTypeOp] = useState([]);
 
   const [commission, setCommission] = useState(0);
   const [page, setPage] = useState(1);
+  const [calcs, setCalcs] = useState({});
   const {
     fetch: getOperationsFetch,
     loading: loadingGetOperations,
@@ -35,7 +37,16 @@ export default function Operations() {
   console.log(filteredData)
   console.log(dataGetOperations)
   console.log(page)
+ // Hooks
+    const {
+      fetch: fetchTypeIdSelect,
+      loading: loadingTypeIdSelect,
+      error: errorTypeIdSelect,
+      data: dataTypeIdSelect,
+    } =  useFetch({ service: TypeOperation, init: true });
+        
 
+    
 
   const filtersHandlers = {
     value: filters,
@@ -45,6 +56,19 @@ export default function Operations() {
     error: errorGetOperations,
     data: dataGetOperations?.results || {},
   };
+//GET TYPE OPERATION
+
+useEffect(() => {
+  if (dataTypeIdSelect) {
+    console.log(dataTypeIdSelect)
+    var typesID = [];
+    dataTypeIdSelect.data.map((typeID) => {
+      typesID.push({ label: typeID.description, value: typeID.id });
+    });
+
+    setTypeOp(typesID);
+  }
+}, [dataTypeIdSelect, loadingTypeIdSelect, errorTypeIdSelect]);
 
   useEffect(() => {
     getOperationsFetch();
@@ -52,25 +76,39 @@ export default function Operations() {
 
   useEffect(() => {
     if (dataGetOperations) {
-
       dataCount = dataGetOperations?.count || 0;
-      
+      const preOperations = dataGetOperations.results.filter(
+        (x) => x.status >= 3 || x.status == 1
+      );
 
-      setFilteredData(dataGetOperations.results);
+      setFilteredData(preOperations);
 
-      if (dataGetOperations.results?.length == 0) filtersHandlers.data.calcs = {};
+      if (preOperations?.length == 0) filtersHandlers.data.calcs = {};
     }
-    console.log('c')
   }, [dataGetOperations]);
 
   useEffect(() => {
     if (dataGetOperations) {
-     
-      console.log(dataGetOperations.results)
-      setData(dataGetOperations.results);
+      const checkOperations = dataGetOperations?.results.map(row => {
+        const opExpiration = new Date(row.opExpiration + " " + "00:00:00");
+        const today = new Date();
+        if (opExpiration < today && row.status != 4) {
+          return {
+            ...row,
+            status:5
+          }
+        }
+        return row
+      });
+      const preOperations = checkOperations.filter(
+        (x) => x.status >= 3 || x.status == 1
+      );
+      setData(preOperations);
+      
+      setCalcs(dataGetOperations?.results[0]?.calcs);
     }
-    console.log('d')
   }, [dataGetOperations, loadingGetOperations, errorGetOperations]);
+  console.log("dataGetOperations",dataGetOperations?.results[0]?.calcs);
 
   return (
     <>
@@ -81,9 +119,10 @@ export default function Operations() {
 
       <OperationsComponents
         rows2={data}
+        typeOperation={dataTypeIdSelect}
         filtersHandlers={filtersHandlers}
         getOperationsFetch={getOperationsFetch}
-        
+        calcs={calcs}
         loadingGetOperations={loadingGetOperations}
         page={page}
         setPage={setPage}

@@ -108,12 +108,13 @@ export const SignUpClient = ({
       setSteps(steps);
     }
   }, [formik.values.type_client]);
-
+  console.log(formik.values)
   useEffect(() => {
     if (
       formik.errors &&
       Object.keys(formik.errors).length !== 0 &&
       formik.isSubmitting
+      
     ) {
       Toast("Faltan campos", "error");
     }

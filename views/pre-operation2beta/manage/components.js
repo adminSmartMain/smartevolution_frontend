@@ -25,7 +25,7 @@ import { Dialog,DialogContent, DialogTitle,DialogActions,CircularProgress} from 
 import { CheckCircle, Error } from "@mui/icons-material";
 import { differenceInDays, startOfDay } from "date-fns";
 
-
+import ErrorIcon from '@mui/icons-material/Error'; // o cualquier otro ícono de error
 export const ManageOperationC = ({
   opId,
   emitters,
@@ -468,25 +468,31 @@ const renderNombreUsuario = (usuario) => (
         <Formik
           initialValues={initialValues}
           validationSchema= {validationSchema}
-          onSubmit={handleConfirm}  
+          onSubmit={handleConfirm}
+          
         >
           {/* {({ values, setFieldValue, touched, errors, handleBlur }) => ( */}
-          {({ values, setFieldValue, touched, errors, handleBlur,setTouched ,setFieldTouched,setFieldError,formikBag,dirty}) => {
-                // 🔴 Efecto para el mensaje de confirmación al cerrar la ventana
-          useEffect(() => {
-            const handleBeforeUnload = (e) => {
-              if (dirty) {
-                e.preventDefault();
-                e.returnValue = '';
-              }
-            };
+          {({ values, setFieldValue, touched, errors, handleBlur,setTouched ,setFieldTouched,setFieldError,formikBag,dirty, isSubmitting }) => {
 
-            window.addEventListener('beforeunload', handleBeforeUnload);
-            
-            return () => {
-              window.removeEventListener('beforeunload', handleBeforeUnload);
-            };
-          }, [dirty]); // Dependencia del efecto
+
+            // 🔴 Debug: muestra el estado de dirty en consola
+            useEffect(() => {
+              console.log('Dirty state:', dirty);
+            }, [dirty]);
+
+         // 🔴 Efecto para beforeunload
+         useEffect(() => {
+          const handleBeforeUnload = (e) => {
+            if (dirty && !isSubmitting) {
+              e.preventDefault();
+              e.returnValue = '¿Estás seguro que deseas salir? Los cambios no guardados se perderán.';
+              return e.returnValue;
+            }
+          };
+
+          window.addEventListener('beforeunload', handleBeforeUnload);
+          return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+        }, [dirty, isSubmitting]);
 
           return (
             <Form>
@@ -724,14 +730,23 @@ const renderNombreUsuario = (usuario) => (
                             if (!tasaDescuento) {
                               // Mostrar el mensaje de error usando Toast
                                // Mostrar toast/notificación
-                               toast.error("Disculpe, el cliente seleccionado no tiene perfil de riesgo configurado. Por favor, agrege el perfil en el módulo de clientes", {
-                                position: "bottom-right",
-                                autoClose: 5000,
-                                hideProgressBar: false,
-                                closeOnClick: true,
-                                pauseOnHover: true,
-                                draggable: true
-                              });
+   
+
+toast(
+  <div style={{ display: 'flex', alignItems: 'center' }}>
+    <ErrorIcon style={{ marginRight: '10px', color: '#d32f2f' }} />
+    <span>Disculpe, el cliente seleccionado no tiene perfil de riesgo configurado. Por favor, agrege el perfil en el módulo de clientes</span>
+  </div>,
+  {
+    position: "top-right",
+    autoClose: 5000,
+    hideProgressBar: false,
+    closeOnClick: true,
+    pauseOnHover: true,
+    draggable: true,
+    progress: undefined,
+  }
+);
                             
                               return; // Detener la ejecución si tasaDescuento es undefined
                             }
@@ -828,7 +843,10 @@ const renderNombreUsuario = (usuario) => (
                             if (!tasaDescuento) {
                               // Mostrar el mensaje de error usando Toast
                                // Mostrar toast/notificación
-                               toast.error("Disculpe, el cliente seleccionado no tiene perfil de riesgo configurado. Por favor, agrege el perfil en el módulo de clientes", {
+                               toast(<div style={{ display: 'flex', alignItems: 'center' }}>
+                                <ErrorIcon style={{ marginRight: '10px', color: '#d32f2f' }} />
+                                <span>Disculpe, el cliente seleccionado no tiene perfil de riesgo configurado. Por favor, agrege el perfil en el módulo de clientes</span>
+                              </div>, {
                                 position: "bottom-right",
                                 autoClose: 5000,
                                 hideProgressBar: false,
@@ -1153,22 +1171,24 @@ const renderNombreUsuario = (usuario) => (
                                       expanded={expanded === index} 
                                       onChange={handleChange(index)}>
                                         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                                        <Grid container alignItems="center" spacing={2}>
+                                        <Grid container alignItems="center" spacing={1} style={{ width: '100%' }}>
                                         {/* Número de factura de la cabecera del acordeon */}
+                                        <Grid item xs={10} container alignItems="center" wrap="nowrap" spacing={1}>
                                         <Grid item>
                                           <Typography>
                                             {factura.billId|| `Factura ${index + 1}`}
                                           </Typography>
                                         </Grid>
                                         {/* Fecha de emisión y vencimiento de la cabecera del acordeon*/}
-                                        <Grid item>
+                                        <Grid item >
                                         <Typography variant="body2" color="textSecondary">
                                           Emisión: {factura.fechaEmision ? formatDate2(factura.fechaEmision) : "-- -- ----"} | 
                                           Vencimiento: {factura.expirationDate ? formatDate2(factura.expirationDate) : "-- -- ----"}
                                         </Typography>
                                       </Grid>
+                                      </Grid>
                                       {/* Botón de eliminar */}
-                                      <Grid item xs="auto" sx={{ marginLeft: '790px' }}>
+                                      <Grid item xs={2} container justifyContent="flex-end">
                                       <IconButton onClick={() => {
                                           // 1. Obtener valores clave de la factura a eliminar
                                           const billIdEliminada = factura.billId;
@@ -1403,7 +1423,10 @@ const renderNombreUsuario = (usuario) => (
                                                     );
                                                     
                                                     // Mostrar toast/notificación
-                                                    toast.error('No puede asignar el mismo inversionista a facturas agrupadas', {
+                                                    toast(<div style={{ display: 'flex', alignItems: 'center' }}>
+                                                      <ErrorIcon style={{ marginRight: '10px', color: '#d32f2f' }} />
+                                                      <span>No puede asignar el mismo inversionista a facturas agrupadas</span>
+                                                    </div>, {
                                                       position: "top-right",
                                                       autoClose: 5000,
                                                       hideProgressBar: false,
@@ -1422,7 +1445,10 @@ const renderNombreUsuario = (usuario) => (
                                                   try {
                                                     
                                                       if (values.integrationCode != selectedFactura?.integrationCode && values.integrationCode != "") {
-                                                      Toast("El código de integración debe coincidir con el de la factura previa", "error");
+                                                     toast(<div style={{ display: 'flex', alignItems: 'center' }}>
+                                                      <ErrorIcon style={{ marginRight: '10px', color: '#d32f2f' }} />
+                                                      <span>El código de integración debe coincidir con el de la factura previa</span>
+                                                    </div>);
                                                       setFieldValue(`facturas[${index}].factura`, null);
                                                     } else {
 
@@ -1529,7 +1555,7 @@ const renderNombreUsuario = (usuario) => (
                                                 
                                                       // [MANTENIDO] Lógica de fracciones
                                                       const facturaActual = newValue.id;
-                                                      let fraccion = fractionBill?.data?.fraction || 1;
+                                                      let fraccion = fractionBill?.data?.fraction+ 1 || 1;
                                                       const facturasAnteriores = values.facturas.slice(0, index).filter((f) => f.factura === facturaActual);
                                                 
                                                       if (facturasAnteriores.length > 0) {
@@ -1774,7 +1800,7 @@ const renderNombreUsuario = (usuario) => (
                                                   fullWidth
                                                   type="number"
                                                   name="fraccion"
-                                                  value={factura.fraccion ?? 1} // Valor por defecto si no existe fracción
+                                                  value={factura.fraccion  ?? 1} // Valor por defecto si no existe fracción
                                                   onChange={(e) => {
                                                     const fraccion = parseFloat(e.target.value) || 1; // Evitar valores inválidos
 
@@ -1814,6 +1840,9 @@ const renderNombreUsuario = (usuario) => (
                                                   fullWidth
                                                   value={formatCurrency(values.facturas[index]?.saldoDisponible || 0)}
                                                   disabled
+                                                  inputProps={{
+                                                    min: 0,
+                                                  }}
                                                   helperText={
                                                     `Saldo actual factura: ${factura.saldoDisponibleInfo ? formatNumberWithThousandsSeparator(Math.floor(factura.saldoDisponibleInfo)) : 0}`
                                                   }
@@ -2061,7 +2090,10 @@ const renderNombreUsuario = (usuario) => (
                                                           );
                                                           
                                                           // Mostrar toast/notificación
-                                                          toast.error('No puede asignar el mismo inversionista a facturas agrupadas', {
+                                                          toast(<div style={{ display: 'flex', alignItems: 'center' }}>
+                                                            <ErrorIcon style={{ marginRight: '10px', color: '#d32f2f' }} />
+                                                            <span>No puede asignar el mismo inversionista a facturas agrupadas</span>
+                                                          </div>, {
                                                             position: "bottom-right",
                                                             autoClose: 5000,
                                                             hideProgressBar: false,
@@ -2365,6 +2397,9 @@ const renderNombreUsuario = (usuario) => (
                                                     const presentValueInvestor = operationDays > 0 && valorNominal > 0
                                                     ? Math.round(PV(values.investorTax / 100,  operationDays / 365, 0, valorNominal, 0) * -1)
                                                     : valorFuturoManual;
+
+                                                    const nuevoInvestorProfit =  valorNominal -presentValueInvestor;
+                                                   setFieldValue(`facturas[${index}].investorProfit`, nuevoInvestorProfit);
                                                     // 2. Calcular el total acumulado de presentValueInvestor para el mismo inversionista
                                                     setFieldValue(`facturas[${index}].montoDisponibleCuenta`, factura.montoDisponibleInfo-presentValueInvestor, 0);
                                                     const presentValueInvesTotal = values.facturas
@@ -2444,7 +2479,9 @@ const renderNombreUsuario = (usuario) => (
                                                     : "Valor ingresado manualmente"
                                                 }
                                                 error={touched.facturas?.[index]?.valorFuturo && Boolean(errors.facturas?.[index]?.valorFuturo)}
+                                            
                                                 InputProps={{
+                                                  min: 0,
                                                   startAdornment: (
                                                     <InputAdornment position="start">
                                                       <AttachMoneyIcon style={{ color: 'rgb(94, 163, 163)', fontSize: '1.2rem' }} />
@@ -2516,7 +2553,7 @@ const renderNombreUsuario = (usuario) => (
                                                 setFieldValue(`facturas[${index}].valorNominal`, nuevoValorNominal);
                                                 setFieldValue(`facturas[${index}].payedAmount`, nuevoValorNominal);
                                                 setFieldValue(`facturas[${index}].valorNominalManual`, false);
-
+                                                
                                                 // Recalcular valores presentes si hay fecha de operación
                                                 if (values.opDate && factura.operationDays) {
                                                   // Calcular nuevos valores presentes
@@ -2823,7 +2860,7 @@ const renderNombreUsuario = (usuario) => (
                                                                         
                                                   
                                               }}
-                                              InputLabelProps={{ shrink: true,min: 0, max: 100  }}
+                                              inputProps={{ min: 0, max: 100 }}
                                               error={values.investorTax > values.discountTax} // Mostrar error si es mayor
                                               helperText={
                                                 !factura.valorNominalManual
@@ -3252,7 +3289,7 @@ const renderNombreUsuario = (usuario) => (
                   </Dialog>
 
                           {/* MODAL DE PROCESO */}
-                            <Dialog  open={isModalOpen} PaperProps={{ sx: { borderRadius: "10px", textAlign: "center", p: 3 } }}>
+                            <Dialog  open={false} PaperProps={{ sx: { borderRadius: "10px", textAlign: "center", p: 3 } }}>
                               <DialogContent>
                                 {success === null ? (
                                   <>
@@ -3294,7 +3331,7 @@ const renderNombreUsuario = (usuario) => (
                                     
                                     <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
                                       <Button 
-                                         onClose={() => setOpenEmitterBrokerModal(false)}
+                                          onClick={() => setOpenEmitterBrokerModal(false)}
                                         variant="outlined"
                                         color="secondary"
                                       >

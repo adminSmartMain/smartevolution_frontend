@@ -6,7 +6,7 @@ export const getOperationsVersionTwo = async (params = {}) => {
   const res = await Axios.get(
     `${API_URL}/preOperation/params?opId=${params.opId || ""}&billId=${
       params.billId || ""
-    }&investor=${params.investor || ""}&page=${params.page || 1}`,
+    }&investor=${params.investor || ""}&startDate=${params.startDate || ""}&endDate=${params.endDate || ""}&page=${params.page || 1}`,
     {
       headers: {
         authorization: "Bearer " + localStorage.getItem("access-token"),
@@ -15,7 +15,6 @@ export const getOperationsVersionTwo = async (params = {}) => {
   );
   return res.data;
 };
-
 export const UpdateOperation = async (item) => {
   const res = await Axios.patch(
     `${API_URL}/preOperation/${item.id}`,
@@ -49,3 +48,13 @@ export const DeleteOperation = async (item) => {
   });
   return res.data;
 };
+
+export const TypeOperation = async (data) => {
+  const res = await Axios.get(`${API_URL}/type_operation`, {
+    headers: {
+      authorization: "Bearer " + localStorage.getItem("access-token"),
+    },
+  });
+  return res.data;
+};
+

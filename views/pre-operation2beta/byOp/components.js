@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { ToastContainer } from "react-toastify";
 import Link from "next/link";
 import { SearchOutlined } from "@mui/icons-material";
-import { Box, Button, Fade, FormControl, Grid, IconButton, InputLabel, MenuItem, Select, TextField, Typography } from "@mui/material";
+import { Box, Button, Fade, FormControl, Grid, IconButton, InputLabel, MenuItem, Select, TextField, Typography, Menu, InputAdornment, Paper } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import Modal from "@components/modals/modal";
 import TitleModal from "@components/modals/titleModal";
@@ -20,265 +20,336 @@ import { StandardTextField } from "@styles/fields/BaseField";
 import InputTitles from "@styles/inputTitles";
 import scrollSx from "@styles/scroll";
 import CustomDataGrid from "@styles/tables";
-import { DeleteOperation, MassiveUpdateOperation, UpdateOperation } from "./queries";
+import { DeleteOperation, MassiveUpdateOperation, UpdateOperation,TypeOperation, } from "./queries";
 import { id } from "date-fns/locale";
 import moment from "moment";
 import { ExpandMore, ExpandLess } from '@mui/icons-material';
 import * as React from 'react';
 import PropTypes from 'prop-types';
-
+import ClearIcon from "@mui/icons-material/Clear";
 import Collapse from '@mui/material/Collapse';
-
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
-
-import Paper from '@mui/material/Paper';
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import ModalValorAGirar from "../ModalValorAGirar";
+import AdvancedDateRangePicker from "../AdvancedDateRangePicker";
 
-
+// Estilos
 const sectionTitleContainerSx = {
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
+  mb: 1
 };
-
-const filtersContainerSx = {
-  display: "flex",
-  gap: 1,
-};
-
-const entriesGrid = {
-  backgroundColor: "#488B8F",
-  borderRadius: "4px",
-  mt: 1,
-  pb: 1.5,
-  pr: 1.5,
-};
-
-const entryContainerSx = {
-  display: "flex",
-  justifyContent: "flex-end",
-  alignItems: "center",
-
-  position: "relative",
-};
-
-const titleSx = {
-  letterSpacing: 0,
-  fontSize: 10,
+const tableHeaderCellSx = {
+  backgroundColor: "#F5F5F5",
+  color: "#8C7E82",
   fontWeight: "bold",
-  color: "#488B8F",
-  textTransform: "uppercase",
-  textAlign: "right",
-
-  position: "absolute",
-  left: 8,
-  top: 3,
+  fontSize: "0.8rem",
+  letterSpacing: "0px",
+  textTransform: "none",
+  padding: "8px 12px",  // Reducir el padding vertical
+  lineHeight: "1.2",    // Ajustar el interlineado
+  minHeight: "32px",    // Altura mínima reducida
+  height: "32px"        // Altura fija
 };
 
-const valueSx = {
-  letterSpacing: 0,
-  color: "#488B8F",
-  fontSize: 14,
-  fontWeight: 600,
-  textAlign: "right",
+const tableCellSx = {
+  color: "#000000",
+  fontSize: "0.8rem",
+  fontWeight: "normal",
+  borderBottom: "1px solid #E0E0E0"
+};
 
-  border: "1px solid #C7C7C780",
+const actionButtonSx = {
+  "&:hover": { 
+    backgroundColor: "#B5D1C980",
+    color: "#488B8F" 
+  },
+  cursor: "pointer",
+  color: "#999999",
+  fontSize: "1.9rem"
+};
+
+const buttonHeaderPreop = {
+  padding: "8px 16px",
   borderRadius: "4px",
-
-  backgroundColor: "#ebfaf6",
-  width: "100%",
-  padding: "0.35rem",
-  pt: "0.7rem",
-  pb: "0.1rem",
-};
-
-const tableWrapperSx = {
-  marginTop: 2,
-  display: "flex",
-  flexDirection: "column",
-  width: "100%",
-  height: "100%",
-};
-
-const selectSx = {
-  color: "#333333",
-  "&:before": {
-    borderBottom: "1px solid #333333",
-  },
-  "&:after": {
-    borderBottom: "2px solid #488B8F",
-  },
-  "&:hover:not(.Mui-disabled):before": {
-    borderBottom: "2px solid #488B8F",
-  },
-};
-
-const TextFieldSearch = (props) => {
-  const { ...rest } = props;
-
-  return (
-    <MuiTextField
-      type="text"
-      variant="standard"
-      margin="normal"
-      InputProps={{
-        disableUnderline: true,
-        sx: {
-          marginTop: "-5px",
-        },
-        endAdornment: <SearchOutlined sx={{ color: "#5EA3A3" }} />,
-      }}
-      sx={{ m: 0, my: 1 }}
-      {...rest}
-    />
-  );
-};
-
-const Entry = (props) => {
-  const { title, children, sx, ...rest } = props;
-
-  return (
-    <Box sx={{ ...entryContainerSx, ...sx }}>
-      <Typography sx={{ ...titleSx }}>{title}</Typography>
-      <Typography sx={{ ...valueSx }}>{children}</Typography>
-    </Box>
-  );
-};
-
-const SortIcon = () => (
-  <Typography fontFamily="icomoon" fontSize="0.7rem">
-    &#xe908;
-  </Typography>
-);
-
-const RegisterButton = (props) => {
-  const { ...rest } = props;
- // Función que maneja la apertura de la ventana de registro de operación
-
- const [anchorEl, setAnchorEl] = useState(null); // Estado para controlar el menú
- const openMenu = Boolean(anchorEl); // Determina si el menú está abierto
-
- //Estado de la pestana de registro de operacion
-
- const [openWindow, setOpenWindow] = useState(null); // Estado para almacenar la referencia de la ventana
- const handleOpenRegisterOperation = () => {
-  if (openWindow && !openWindow.closed) {
-    // Si la ventana ya está abierta, solo le damos el foco (la trae al frente)
-    openWindow.focus();
-  } else {
-    // Si la ventana no está abierta, la abrimos y guardamos la referencia
-    const newWindow = window.open("/pre-operations2beta/manage", "_blank", "width=800, height=600");
-    setOpenWindow(newWindow); // Guardamos la referencia de la ventana
-    // Escuchar el evento de cierre de la ventana
-    newWindow.onbeforeunload = () => {
-      setOpenWindow(null); // Restablecer la referencia cuando la ventana se cierre
-    };
+  cursor: "pointer",
+  fontFamily: "'Roboto', sans-serif",
+  fontSize: "12px",
+  fontWeight: 500,
+  border: "1px solid #488B8F",
+  backgroundColor: "#488B8F",
+  color: "white",
+  marginRight: "10px",
+  transition: "background-color 0.3s",
+  textTransform: "none", // Esto quita las mayúsculas automáticas
+  "&:hover": {
+    backgroundColor: "#3a7073"
   }
 };
-  return (
+
+const buttonHeaderPreopTitle = {
+  padding: "6px 12px",
+  borderRadius: "4px",
+  border: "1px solid #488B8F",
+  backgroundColor: "transparent",
+  color: "#488B8F",
+  fontSize: "14px",
+  fontWeight: 600,
+  cursor: "pointer",
+  transition: "all 0.3s ease",
+  marginRight: "10px",
+  height: "32px",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  textTransform: "none", // Esto quita las mayúsculas automáticas
+  "&:hover": {
+    color: "#488B8F"
+  }
+};
+
+// Componente de fila expandible
+function Row(props) {
+  const { row } = props;
+  const [open, setOpen] = React.useState(false);
+  const [openDelete, setOpenDelete] = React.useState([false, null]);
+
+  const handleOpenDelete = (id) => setOpenDelete([true, id]);
+  const handleCloseDelete = () => setOpenDelete([false, null]);
+  const getStatusBadge = (status) => {
+    let statusText, badgeClass;
     
-      <Button
-        variant="standard"
-        color="primary"
-        size="large"
-        onClick={handleOpenRegisterOperation}
-        sx={{
-          height: "2.6rem",
-          backgroundColor: "transparent",
-          border: "1.4px solid #63595C",
-          borderRadius: "4px",
+    switch(status) {
+      case 0:
+        statusText = "Por Aprobar";
+        badgeClass = "badge por-aprobar";
+        break;
+      case 1:
+        statusText = "Aprobada";
+        badgeClass = "badge aprobado";
+        break;
+      case 2:
+        statusText = "Rechazada";
+        badgeClass = "badge rechazado";
+        break;
+      case 3:
+        statusText = "Vigente";
+        badgeClass = "badge vigente";
+        break;
+      case 4:
+        statusText = "Cancelada";
+        badgeClass = "badge cancelada";
+        break;
+      default:
+        statusText = "Por Aprobar";
+        badgeClass = "badge";
+    }
+  
+    return { statusText, badgeClass };
+  };
+  return (
+    <React.Fragment>
+      <TableRow sx={{ '& > *': { borderBottom: 'unset' } }}>
+        <TableCell>
+          <IconButton
+            aria-label="expand row"
+            size="small"
+            onClick={() => setOpen(!open)}
+            sx={{ color: "#488B8F" }}
+          >
+            {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+          </IconButton>
+        </TableCell>
+        <TableCell component="th" scope="row" sx={tableCellSx}>
+          {row.emitterName}
+        </TableCell>
+        <TableCell align="right" sx={tableCellSx}>{row.opId}</TableCell>
+        <TableCell align="right" sx={tableCellSx}>{moment(row.opDate).format('DD/MM/YYYY')}</TableCell>
+        <TableCell align="right" sx={tableCellSx}>{row.opType}</TableCell>
+        <TableCell align="right" sx={tableCellSx}>{row.history.length}</TableCell>
+        <TableCell align="right" sx={tableCellSx}>{row.investorName}</TableCell>
+      </TableRow>
+      <TableRow>
+        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={7}>
+          <Collapse in={open} timeout="auto" unmountOnExit>
+            <Box sx={{ margin: 1, backgroundColor: "#F9F9F9", borderRadius: "4px", p: 2 }}>
+              <Typography variant="h6" gutterBottom component="div" sx={{ color: "#488B8F", fontSize: "0.9rem", fontWeight: 600 }}>
+                Detalles de la Operación
+              </Typography>
+              <TableContainer component={Paper} sx={{ boxShadow: "none", border: "1px solid #E0E0E0" }}>
+                <Table size="small" aria-label="purchases">
+                  <TableHead>
+                    <TableRow>
+                    <TableCell sx={tableHeaderCellSx}>Estado</TableCell>
+                      <TableCell sx={tableHeaderCellSx}>Factura</TableCell>
+                      <TableCell sx={tableHeaderCellSx}>Fracción</TableCell>
+                      <TableCell sx={tableHeaderCellSx}>Pagador</TableCell>
+                      <TableCell sx={tableHeaderCellSx}>Inversionista</TableCell>
+                      <TableCell sx={tableHeaderCellSx}>Tasa Desc.</TableCell>
+                      <TableCell sx={tableHeaderCellSx}>Tasa Inver.</TableCell>
+                      <TableCell sx={tableHeaderCellSx}>Valor Inversionista</TableCell>
+                      <TableCell sx={tableHeaderCellSx}>Fecha Probable</TableCell>
+                      <TableCell sx={tableHeaderCellSx}>Fecha Fin</TableCell>
+                      <TableCell align="right" sx={tableHeaderCellSx}>Acciones</TableCell>                    
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {row.history.map((historyRow, index) => (
+                      <TableRow key={index}>
+                        <TableCell sx={tableCellSx}>
+                        <div className={getStatusBadge(historyRow.status).badgeClass}>
+                          {getStatusBadge(historyRow.status).statusText}
+                        </div>
+                      </TableCell>
+                        <TableCell sx={tableCellSx}>{historyRow.billData}</TableCell>
+                        <TableCell sx={tableCellSx}>{historyRow.billFraction}</TableCell>
+                        <TableCell sx={tableCellSx}>{historyRow.payerName}</TableCell>
+                        <TableCell sx={tableCellSx}>{row.investorName}</TableCell>
+                        <TableCell sx={tableCellSx}>{historyRow.discountTax}</TableCell>
+                        <TableCell sx={tableCellSx}>{historyRow.investorTax}</TableCell>
+                        <TableCell sx={tableCellSx}>
+                          <ValueFormat value={historyRow.payedAmount} />
+                        </TableCell>
+                        <TableCell sx={tableCellSx}>
+                          {historyRow.probableDate ? moment(historyRow.probableDate).format('DD/MM/YYYY') : '-'}
+                        </TableCell>
+                        <TableCell sx={tableCellSx}>
+                          {row.opExpiration ? moment(row.opExpiration).format('DD/MM/YYYY') : '-'}
+                        </TableCell>
+                        <TableCell align="right" sx={tableCellSx}>
+  <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>
+    {/* <CustomTooltip
+      title="Editar operación"
+      arrow
+      placement="bottom-start"
+      TransitionComponent={Fade}
+    >
+      <Typography
+        fontFamily="icomoon"
+        sx={actionButtonSx}
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          if (row.status === 0) {
+            window.open(`/pre-operation2beta/editPreOp/?id=${row.id}`, '_blank', 'width=800,height=600');
+          } else if (row.status === 2) {
+            window.open(`/pre-operation2beta/editPreOp/?id=${row.id}&previousDeleted=true`, '_blank', 'width=800,height=600');
+          }
         }}
       >
-        <Typography
-          letterSpacing={0}
-          fontSize="80%"
-          fontWeight="bold"
-          color="#63595C"
-        >
-          Registrar nueva operacion
-        </Typography>
-
-        <Typography
-          fontFamily="icomoon"
-          fontSize="1.2rem"
-          color="#63595C"
-          marginLeft="0.9rem"
-        >
-          &#xe927;
-        </Typography>
-      </Button>
+        &#xe900;
+      </Typography>
+    </CustomTooltip> */}
     
+
+    {/* Ver detalles */}
+    <CustomTooltip
+      title="Ver operación"
+      arrow
+      placement="bottom-start"
+      TransitionComponent={Fade}
+    >
+      <Typography
+        fontFamily="icomoon"
+        sx={actionButtonSx}
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          window.open(`/operations/manage?preview&id=${row.id}`, '_blank', 'width=800,height=600');
+        }}
+      >
+        &#xe922;
+      </Typography>
+    </CustomTooltip>
+
+    {/* Eliminar */}
+    <CustomTooltip
+      title="Eliminar"
+      arrow
+      placement="bottom-start"
+      TransitionComponent={Fade}
+    >
+      <Typography
+        fontFamily="icomoon"
+        sx={actionButtonSx}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (row.status === 1) {
+            Toast("No se puede eliminar una operación aprobada", "error");
+          } else {
+            handleOpenDelete(row.id);
+          }
+        }}
+      >
+        &#xe901;
+      </Typography>
+    </CustomTooltip>
+  </Box>
+</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Box>
+          </Collapse>
+        </TableCell>
+      </TableRow>
+
+      {/* Modal de confirmación para eliminar */}
+      <Modal open={openDelete[0]} handleClose={handleCloseDelete}>
+        <Box
+          display="flex"
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
+          height="100%"
+          width="100%"
+        >
+          <Typography letterSpacing={0} fontSize="1vw" fontWeight="medium" color="#63595C">
+            ¿Estás seguro que deseas eliminar la operación?
+          </Typography>
+
+          <Box display="flex" flexDirection="row" alignItems="center" justifyContent="center" mt={4}>
+            <GreenButtonModal onClick={handleCloseDelete}>Volver</GreenButtonModal>
+            <RedButtonModal sx={{ ml: 2 }} onClick={() => handleDelete(openDelete[1])}>
+              Eliminar
+            </RedButtonModal>
+          </Box>
+        </Box>
+      </Modal>
+    </React.Fragment>
   );
+}
+
+Row.propTypes = {
+  row: PropTypes.shape({
+    opId: PropTypes.string.isRequired,
+    opDate: PropTypes.string.isRequired,
+    emitterName: PropTypes.string.isRequired,
+    investorName: PropTypes.string.isRequired,
+    history: PropTypes.arrayOf(
+      PropTypes.shape({
+        billData: PropTypes.string,
+        billFraction: PropTypes.string,
+        payerName: PropTypes.string,
+        discountTax: PropTypes.number,
+        investorTax: PropTypes.number,
+        payedAmount: PropTypes.number,
+        probableDate: PropTypes.string
+      }),
+    ).isRequired,
+  }).isRequired,
 };
 
-const EntryField = styled(StandardTextField)(({ theme }) => ({
-  "& label": {
-    color: "#488B8F",
-    fontWeight: 600,
-    top: 10,
-    left: -5,
-  },
-
-  "& .Mui-focused": {
-    color: "#488B8F",
-    fontWeight: 600,
-  },
-
-  "& fieldset": {
-    display: "none",
-  },
-
-  "& .MuiInputBase-root": {
-    height: 35.78,
-    backgroundColor: "#ebfaf6",
-  },
-
-  "& .MuiOutlinedInput-notchedOutline": {
-    borderColor: "#5EA3A380 !important",
-  },
-
-  "& .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline": {
-    borderColor: "#d32f2f !important",
-  },
-
-  "& .MuiOutlinedInput-input": {
-    textAlign: "right",
-    color: "#488B8F",
-    fontWeight: 600,
-    fontSize: 14,
-  },
-
-  "& .MuiInputAdornment-root": {
-    color: "#5EA3A3",
-  },
-}));
-
-const EditableEntry = (props) => {
-  const { title, value, onChangeMasked, ...rest } = props;
-
-  return (
-    <EntryField
-      notched={true}
-      label={title}
-      InputLabelProps={{ shrink: true }}
-      isMasked
-      thousandSeparator="."
-      decimalSeparator=","
-      decimalScale={2}
-      allowNegative={false}
-      value={value}
-      onChangeMasked={onChangeMasked}
-    />
-  );
-};
-
-const formatNumber = (value) => new Intl.NumberFormat("es-ES").format(value || 0);
 export const OperationsComponents = ({
   rows2,
   filtersHandlers,
@@ -286,22 +357,103 @@ export const OperationsComponents = ({
   page,
   setPage,
   dataCount,
-}) =>  {
-  const calcs = rows2[0]?.calcs;
-  const [other, setOther] = useState(calcs?.others || 0);
-  const [tempFilters, setTempFilters] = useState({ ...filtersHandlers.value });
-
-
-  const [open, setOpen] = useState([false, ""]);
-  const handleOpen = (id) => {
-    setOpen([true, id]);
-  };
+  typeOperation,
+  calcs,
+}) => {
+  const [search, setSearch] = useState("");
+  const [openModal, setOpenModal] = useState(false);
+  const [anchorElCSV, setAnchorElCSV] = useState(null);
   const [openDelete, setOpenDelete] = useState([false, null]);
+  
+  const handleOpenModal = () => setOpenModal(true);
+  const handleCloseModal = () => setOpenModal(false);
+  const handleMenuClickCSV = (event) => setAnchorElCSV(event.currentTarget);
+  const handleCloseMenuCSV = () => setAnchorElCSV(null);
   const handleOpenDelete = (id) => setOpenDelete([true, id]);
   const handleCloseDelete = () => setOpenDelete([false, null]);
+  const openMenuCSV = Boolean(anchorElCSV);
+  // Hooks
+        const {
+          fetch: fetchTypeIdSelect,
+          loading: loadingTypeIdSelect,
+          error: errorTypeIdSelect,
+          data: dataTypeIdSelect,
+        } = useFetch({ service: TypeOperation, init: true });
+  
+  const handleClearSearch = () => {
+    const newFilters = {
+      ...filtersHandlers.value,
+      opId: "",
+      billId: "",
+      investor: ""
+    };
+    filtersHandlers.set(newFilters);
+    setSearch("");
+  };
 
+  const handleTextFieldChange = (evt) => {
+    setSearch(evt.target.value);
+  };
+
+  const handleDateRangeApply = (dateRange) => {
+    filtersHandlers.set({
+      ...filtersHandlers.value,
+      startDate: dateRange.startDate,
+      endDate: dateRange.endDate
+    });
+  };
+
+  const handleClear = () => {
+    filtersHandlers.set({
+      ...filtersHandlers.value,
+      startDate: "",
+      endDate: ""
+    });
+  };
+
+  const updateFilters = (value, field) => {
+    if (field !== "multi") {
+      filtersHandlers.set({ 
+        ...filtersHandlers.value, 
+        [field]: value,
+        startDate: filtersHandlers.value.startDate,
+        endDate: filtersHandlers.value.endDate
+      });
+      return;
+    }
+  
+    const onlyDigits = /^\d{3,4}$/;
+    const alphaNumeric = /^[a-zA-Z0-9]{3,10}$/;
+    const hasLetters = /[a-zA-Z]/.test(value);
+    const hasSpaces = /\s/.test(value);
+  
+    const newFilters = { opId: "", billId: "", investor: "", startDate: null, endDate: null };
+  
+    if (onlyDigits.test(value)) {
+      newFilters.opId = value;
+    } else if (alphaNumeric.test(value) && !hasLetters && value.length >= 3 && value.length <= 10) {
+      newFilters.billId = value;
+    } else if (hasLetters || hasSpaces || value.length > 4) {
+      newFilters.investor = value;
+    } else {
+      newFilters.investor = value;
+    }
+  
+    if (filtersHandlers.value.startDate && filtersHandlers.value.endDate) {
+      newFilters.startDate = filtersHandlers.value.startDate;
+      newFilters.endDate = filtersHandlers.value.endDate;
+    }
+  
+    filtersHandlers.set({
+      ...filtersHandlers.value,
+      ...newFilters,
+      startDate: filtersHandlers.value.startDate,
+      endDate: filtersHandlers.value.endDate
+    });
+  };
+  
   const handleDelete = (id) => {
-    fetchDeleteOperation(id);
+    DeleteOperation(id);
     setOpenDelete([false, null]);
     setTimeout(() => {
       getOperationsFetch();
@@ -312,546 +464,222 @@ export const OperationsComponents = ({
     const grouped = {};
 
     data.forEach(item => {
-        const opId = item.opId;
-        if (!grouped[opId]) {
-            grouped[opId] = {
-                opId: item.opId,
-                opDate: item.opDate,
-                opExpiration: item.opExpiration,
-                operationDays: item.operationDays,
-                payedPercent: item.payedPercent,
-                payedAmount: item.payedAmount,
-                investorName: item.investorName,
-                investorBroker: item.investorBroker,
-                emitterName: item.emitterName,
-                history: []
-            };
-        }
-        grouped[opId].history?.push({
-            billData: item.billData,
-            billFraction: item.billFraction,
-            payerName: item.payerName,
-            discountTax: item.discountTax,
-            investorTax: item.investorTax,
-            payedAmount: item.payedAmount,
-            investorProfit: item.investorProfit,
-            probableDate: item.probableDate,
-            opExpiration: item.opExpiration
-        });
+      const opId = item.opId;
+      if (!grouped[opId]) {
+        grouped[opId] = {
+          opId: item.opId,
+          opDate: item.opDate,
+          opExpiration: item.opExpiration,
+          operationDays: item.operationDays,
+          payedPercent: item.payedPercent,
+          payedAmount: item.payedAmount,
+          investorName: item.investorName,
+          investorBroker: item.investorBroker,
+          emitterName: item.emitterName,
+          
+          id: item.id,
+          opType:  typeOperation?.data.find(item2 => item2.id === item.opType).description,
+          history: []
+        };
+      }
+      grouped[opId].history?.push({
+        status: item.status,
+        billData: item.billData,
+        billFraction: item.billFraction,
+        payerName: item.payerName,
+        discountTax: item.discountTax,
+        investorTax: item.investorTax,
+        payedAmount: item.payedAmount,
+        investorProfit: item.investorProfit,
+        probableDate: item.probableDate,
+        opExpiration: item.opExpiration
+      });
     });
     
     return Object.values(grouped);
-}
- 
+  }
   
-  function Row(props) {
-    const { row } = props;
-    const [open, setOpen] = React.useState(false);
+  const handleExportExcel = () => {
+    const currentRows = rows; 
+    const columnHeaders = [
+      "ID Operación", 
+      "Fecha", 
+      "Emisor", 
+      "Inversionista", 
+      "N° Facturas", 
+      "Valor Total"
+    ];
   
-    return (
-      
-      <React.Fragment>
-        <TableRow sx={{ '& > *': { borderBottom: 'unset' } }}>
-          <TableCell>
-            <IconButton
-              aria-label="expand row"
-              size="small"
-              onClick={() => setOpen(!open)}
-            >
-              {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
-            </IconButton>
-          </TableCell>
-          <TableCell component="th" scope="row">
-            {row.emitterName}
-          </TableCell>
-          <TableCell align="right">{row.opId}</TableCell>
-          <TableCell align="right">{row.opDate}</TableCell>
-          <TableCell align="right">{row.emitterName}</TableCell>
-          <TableCell align="right">{row.history.length}</TableCell>
-          <TableCell align="right">{row.emitterName}</TableCell>
-          <TableCell align="right">
+    const csvContent = [
+      columnHeaders.join(","),
+      ...currentRows.map(row => [
+        row.opId,
+        moment(row.opDate).format('DD/MM/YYYY'),
+        row.emitterName,
+        row.investorName,
+        row.history.length,
+        row.payedAmount
+      ].join(","))
+    ].join("\n");
   
-
-  {/* Editar operación */}
-  <Link
-    href={
-      row.status == 0
-        ? `/operations/manage/?id=${row.id}`
-        : row.status === 2
-        ? `/operations/manage/?id=${row.id}&previousDeleted=true`
-        : `#`
-    }
-  >
-    <CustomTooltip
-      title="Editar operación"
-      arrow
-      placement="bottom-start"
-      TransitionComponent={Fade}
-      PopperProps={{
-        modifiers: [{ name: "offset", options: { offset: [0, -15] } }],
-      }}
-    >
-      <Typography
-        fontFamily="icomoon"
-        fontSize="1.9rem"
-        color="#999999"
-        borderRadius="5px"
-        sx={{
-          "&:hover": { backgroundColor: "#B5D1C980", color: "#488B8F" },
-          cursor: "pointer",
-        }}
-      >
-        &#xe900;
-      </Typography>
-    </CustomTooltip>
-  </Link>
-
-  {/* Ver detalles */}
-  <Link href={`/operations/manage?preview&id=${row.id}`}>
-    <CustomTooltip
-      title="Ver operación"
-      arrow
-      placement="bottom-start"
-      TransitionComponent={Fade}
-      PopperProps={{
-        modifiers: [{ name: "offset", options: { offset: [0, -15] } }],
-      }}
-    >
-      <Typography
-        fontFamily="icomoon"
-        fontSize="1.9rem"
-        color="#999999"
-        borderRadius="5px"
-        sx={{
-          "&:hover": { backgroundColor: "#B5D1C980", color: "#488B8F" },
-          cursor: "pointer",
-        }}
-      >
-        &#xe922;
-      </Typography>
-    </CustomTooltip>
-  </Link>
-
-  {/* Eliminar */}
-  <CustomTooltip
-    title="Eliminar"
-    arrow
-    placement="bottom-start"
-    TransitionComponent={Fade}
-    PopperProps={{
-      modifiers: [{ name: "offset", options: { offset: [0, -15] } }],
-    }}
-  >
-    <Typography
-      fontFamily="icomoon"
-      fontSize="1.9rem"
-      color="#999999"
-      borderRadius="5px"
-      sx={{
-        "&:hover": { backgroundColor: "#B5D1C980", color: "#488B8F" },
-        cursor: "pointer",
-      }}
-      onClick={() => {
-        if (row.status === 1) {
-          Toast("No se puede eliminar una operación aprobada", "error");
-        } else {
-          handleOpenDelete(row.id);
-        }
-      }}
-    >
-      &#xe901;
-    </Typography>
-  </CustomTooltip>
-
-  {/* Modal de confirmación para eliminar */}
-  <Modal open={openDelete[0]} handleClose={handleCloseDelete}>
-    <Box
-      display="flex"
-      flexDirection="column"
-      alignItems="center"
-      justifyContent="center"
-      height="100%"
-      width="100%"
-    >
-      <Typography letterSpacing={0} fontSize="1vw" fontWeight="medium" color="#63595C">
-        ¿Estás seguro que deseas eliminar la operación?
-      </Typography>
-
-      <Box display="flex" flexDirection="row" alignItems="center" justifyContent="center" mt={4}>
-        <GreenButtonModal onClick={handleCloseDelete}>Volver</GreenButtonModal>
-        <RedButtonModal sx={{ ml: 2 }} onClick={() => handleDelete(openDelete[1])}>
-          Eliminar
-        </RedButtonModal>
-      </Box>
-    </Box>
-  </Modal>
-</TableCell>
-
-        </TableRow>
-        <TableRow>
-          <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
-            <Collapse in={open} timeout="auto" unmountOnExit>
-              <Box sx={{ margin: 1 }}>
-                <Typography variant="h6" gutterBottom component="div">
-                  Detalles
-                </Typography>
-                <TableContainer sx={{ width: "100%", minHeight: "200px" }}>
-                <Table aria-label="purchases">
-                  <TableHead sx={{ width: "100%" }}>
-                    <TableRow>
-                      <TableCell>Factura</TableCell>
-                      <TableCell>Fraccion</TableCell>
-                      <TableCell>Pagador</TableCell>
-                      <TableCell>Inversionista</TableCell>
-                      <TableCell>Tasa Desc.</TableCell>
-                      <TableCell>Tasa Inver.</TableCell>
-                      <TableCell>Valor Inversionista</TableCell>
-                      <TableCell>Fecha Probable</TableCell>
-                      <TableCell>Fecha Fin</TableCell>
-                      
-                      <TableCell align="right">Acciones</TableCell>                    
-                      </TableRow>
-                  </TableHead>
-                  <TableBody sx={{ minWidth: "100%" }}>
-                    {row.history.map((historyRow) => (
-                      <TableRow key={historyRow.date}>
-                        <TableCell component="th" scope="row">
-                          {historyRow.billData}
-                        </TableCell>
-                        <TableCell>{historyRow.billFraction}</TableCell>
-                        <TableCell align="right">{historyRow.payerName}</TableCell>
-                        <TableCell align="right">
-                          {row.investorName}
-                        </TableCell>
-                        <TableCell align="right">
-                          {historyRow.discountTax}
-                        </TableCell>
-                        <TableCell align="right">
-                          {historyRow.investorTax}
-                        </TableCell>
-                        <TableCell align="right">
-                          {historyRow.probableDate}
-                        </TableCell>
-                        <TableCell align="right">
-                          {historyRow.probableDate}
-                        </TableCell>
-                        <TableCell align="right">
-                          {row.opExpiration}
-                        </TableCell>
-                        
-                        <TableCell align="right">
- 
-                {/* Editar operación */}
-                <Link
-                  href={
-                    row.status == 0
-                      ? `/pre-operation2beta/editPreOp/?id=${row.id}`
-                      : row.status === 2
-                      ? `/pre-operation2beta/editPreOp/?id=${row.id}&previousDeleted=true`
-                      : `#`
-                  }
-                >
-                  <CustomTooltip
-                    title="Editar operación"
-                    arrow
-                    placement="bottom-start"
-                    TransitionComponent={Fade}
-                    PopperProps={{
-                      modifiers: [{ name: "offset", options: { offset: [0, -15] } }],
-                    }}
-                  >
-                    <Typography
-                      fontFamily="icomoon"
-                      fontSize="1.9rem"
-                      color="#999999"
-                      borderRadius="5px"
-                      sx={{
-                        "&:hover": { backgroundColor: "#B5D1C980", color: "#488B8F" },
-                        cursor: "pointer",
-                      }}
-                    >
-                      &#xe900;
-                    </Typography>
-                  </CustomTooltip>
-                </Link>
-
-                {/* Ver detalles */}
-                <Link href={`/operations/manage?preview&id=${row.id}`}>
-                  <CustomTooltip
-                    title="Ver operación"
-                    arrow
-                    placement="bottom-start"
-                    TransitionComponent={Fade}
-                    PopperProps={{
-                      modifiers: [{ name: "offset", options: { offset: [0, -15] } }],
-                    }}
-                  >
-                    <Typography
-                      fontFamily="icomoon"
-                      fontSize="1.9rem"
-                      color="#999999"
-                      borderRadius="5px"
-                      sx={{
-                        "&:hover": { backgroundColor: "#B5D1C980", color: "#488B8F" },
-                        cursor: "pointer",
-                      }}
-                    >
-                      &#xe922;
-                    </Typography>
-                  </CustomTooltip>
-                </Link>
-
-                {/* Eliminar */}
-                <CustomTooltip
-                  title="Eliminar"
-                  arrow
-                  placement="bottom-start"
-                  TransitionComponent={Fade}
-                  PopperProps={{
-                    modifiers: [{ name: "offset", options: { offset: [0, -15] } }],
-                  }}
-                >
-                  <Typography
-                    fontFamily="icomoon"
-                    fontSize="1.9rem"
-                    color="#999999"
-                    borderRadius="5px"
-                    sx={{
-                      "&:hover": { backgroundColor: "#B5D1C980", color: "#488B8F" },
-                      cursor: "pointer",
-                    }}
-                    onClick={() => {
-                      if (row.status === 1) {
-                        Toast("No se puede eliminar una operación aprobada", "error");
-                      } else {
-                        handleOpenDelete(row.id);
-                      }
-                    }}
-                  >
-                    &#xe901;
-                  </Typography>
-                </CustomTooltip>
-
-                {/* Modal de confirmación para eliminar */}
-                <Modal open={openDelete[0]} handleClose={handleCloseDelete}>
-                  <Box
-                    display="flex"
-                    flexDirection="column"
-                    alignItems="center"
-                    justifyContent="center"
-                    height="100%"
-                    width="100%"
-                  >
-                    <Typography letterSpacing={0} fontSize="1vw" fontWeight="medium" color="#63595C">
-                      ¿Estás seguro que deseas eliminar la operación?
-                    </Typography>
-
-                    <Box display="flex" flexDirection="row" alignItems="center" justifyContent="center" mt={4}>
-                      <GreenButtonModal onClick={handleCloseDelete}>Volver</GreenButtonModal>
-                      <RedButtonModal sx={{ ml: 2 }} onClick={() => handleDelete(openDelete[1])}>
-                        Eliminar
-                      </RedButtonModal>
-                    </Box>
-                  </Box>
-                </Modal>
-              </TableCell>
-
-                                    </TableRow>
-                                  ))}
-                                </TableBody>
-                              </Table>
-                              </TableContainer>
-                                </Box>
-                              </Collapse>
-                            </TableCell>
-                          </TableRow>
-                        </React.Fragment>
-                      );
-                    }
-  
-  Row.propTypes = {
-    row: PropTypes.shape({
-      calories: PropTypes.number.isRequired,
-      carbs: PropTypes.number.isRequired,
-      fat: PropTypes.number.isRequired,
-      history: PropTypes.arrayOf(
-        PropTypes.shape({
-          amount: PropTypes.number.isRequired,
-          customerId: PropTypes.string.isRequired,
-          date: PropTypes.string.isRequired,
-        }),
-      ).isRequired,
-      name: PropTypes.string.isRequired,
-      price: PropTypes.number.isRequired,
-      protein: PropTypes.number.isRequired,
-    }).isRequired,
-  };
-  
-  const rows =groupByOperation(rows2)
-  console.log(rows)
-  
-  const handleTextFieldChange = async (evt, field) => {
-    setTempFilters({ ...tempFilters, [field]: evt.target.value });
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute("href", url);
+    link.setAttribute("download", "operaciones_por_grupo.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
-  const updateFilters = (value, field) => {
-    filtersHandlers.set({ ...tempFilters, [field]: value });
-  };
+  const rows = groupByOperation(rows2);
+  console.log("rows", rows);
   return (
     <>
-    <BackButton path="/dashboard" />
-      <Box sx={{ ...sectionTitleContainerSx }}>
+      <BackButton path="/dashboard" />
+      
+      {/* Encabezado */}
+      <Box sx={sectionTitleContainerSx}>
         <Typography
           letterSpacing={0}
           fontSize="1.7rem"
           fontWeight="regular"
-          marginBottom="0.7rem"
           color="#5EA3A3"
         >
-          Consulta de Pre-operaciones
+          Operaciones por Grupo
         </Typography>
+            
         <Link href="/operations" passHref>
-  <button className="button-header-preop-title">
-    Operaciones
-  </button>
-</Link>
+          <Button sx={buttonHeaderPreopTitle}>
+            Operaciones
+          </Button>
+        </Link>
       </Box>
 
-      <Box sx={{ ...filtersContainerSx }}>
-        <Box display="flex" flexDirection="column">
-          <InputTitles sx>Buscar N° Operación</InputTitles>
-          <TextFieldSearch
-            id="searchOperation"
-            placeholder="N° Operación"
-            value={tempFilters.opId}
-            onChange={(evt) => handleTextFieldChange(evt, "opId")}
-            onKeyPress={(event) => {
-              if (event.key === "Enter") {
-                updateFilters(event.target.value, "opId");
-              }
-              handleTextFieldChange(event, "opId");
-            }}
-          />
-        </Box>
-
-        <Box display="flex" flexDirection="column">
-          <InputTitles>Buscar N° Factura</InputTitles>
-          <TextFieldSearch
-            id="searchBill"
-            placeholder="N° Factura"
-            value={tempFilters.billId}
-            onChange={(evt) => handleTextFieldChange(evt, "billId")}
-            onKeyPress={(event) => {
-              if (event.key === "Enter") {
-                updateFilters(event.target.value, "billId");
-              }
-              handleTextFieldChange(event, "billId");
-            }}
-          />
-        </Box>
-
-        <Box display="flex" flexDirection="column">
-          <InputTitles>Buscar nombres</InputTitles>
-          <TextFieldSearch
-            id="searchName"
-            placeholder="Nombre"
-            value={tempFilters.investor}
-            onChange={(evt) => handleTextFieldChange(evt, "investor")}
-            onKeyPress={(event) => {
-              if (event.key === "Enter") {
-                updateFilters(event.target.value, "investor");
-              }
-              handleTextFieldChange(event, "investor");
-            }}
-          />
-        </Box>
-
-        <Box display="flex" alignSelf="flex-end" ml="auto" mb={1}>
-        <Button
-                variant="standard"
-                color="primary"
-                size="large"
-                
-                sx={{
-                  height: "2.6rem",
-                  backgroundColor: "transparent",
-                  border: "1.4px solid #63595C",
-                  borderRadius: "4px",
-                }}
-              >
-                <Typography
-                  letterSpacing={0}
-                  fontSize="80%"
-                  fontWeight="bold"
-                  color="#63595C"
+      {/* Barra de búsqueda y filtros */}
+      <Box
+        sx={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 2,
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          width: '100%',
+          mb: 2
+        }}
+      >
+        <TextField
+          variant="outlined"
+          size="small"
+          placeholder="Buscar por Inversionista..."
+          value={search}
+          onChange={(evt) => handleTextFieldChange(evt, "investor")}
+          onKeyPress={(event) => {
+            if (event.key === "Enter") {
+              const valueToSearch = search || "";
+              updateFilters(valueToSearch, "multi");
+            }
+          }}
+          sx={{
+            flexGrow: 1,
+            minWidth: '250px',
+            maxWidth: '580px',
+            '& .MuiOutlinedInput-root': {
+              height: 35,
+              fontSize: '14px',
+              paddingRight: 0,
+            },
+            '& .MuiInputBase-input': {
+              padding: '6px 8px',
+            },
+          }}
+          InputProps={{
+            endAdornment: search && (
+              <InputAdornment position="end">
+                <IconButton 
+                  onClick={handleClearSearch}
+                  size="small"
+                  edge="end"
                 >
-                 ver por factura
-                </Typography>
-        
-              </Button>
-          <RegisterButton />
+                  <ClearIcon sx={{ color: "#488b8f", fontSize: '18px' }} />
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+        />
+
+        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+          <Link href="/pre-operations2beta" underline="none">
+            <Button sx={buttonHeaderPreop}>Ver por facturas</Button>
+          </Link>
+
+          <Button sx={buttonHeaderPreop} onClick={handleOpenModal}>
+            Valor a Girar
+          </Button>
           
+          <ModalValorAGirar open={openModal} handleClose={handleCloseModal} data={calcs} />
+
+          <AdvancedDateRangePicker
+            onApply={handleDateRangeApply}
+            onClean={handleClear}
+          />
+
+          <IconButton onClick={handleMenuClickCSV} sx={{ color: "#488B8F" }}>
+            <MoreVertIcon />
+          </IconButton>
+          
+          <Menu 
+            anchorEl={anchorElCSV} 
+            open={openMenuCSV} 
+            onClose={handleCloseMenuCSV}
+            PaperProps={{
+              style: {
+                boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
+                borderRadius: '4px'
+              }
+            }}
+          >
+            <MenuItem 
+              onClick={handleExportExcel}
+              sx={{ fontSize: '0.8rem', color: '#333' }}
+            >
+              Exportar a CSV
+            </MenuItem>
+          </Menu>
         </Box>
       </Box>
+      
+      {/* Tabla principal */}
+      <TableContainer 
+        component={Paper} 
+        sx={{ 
+          boxShadow: 'none', 
+          border: '1px solid #E0E0E0',
+          borderRadius: '4px'
+        }}
+      >
+        <Table aria-label="collapsible table" size="medium">
+          <TableHead>
+            <TableRow>
+              <TableCell sx={tableHeaderCellSx} width="5%"></TableCell>
+              <TableCell sx={tableHeaderCellSx} width="20%">Emisor</TableCell>
+              <TableCell sx={tableHeaderCellSx} width="10%" align="right"># OP</TableCell>
+              <TableCell sx={tableHeaderCellSx} width="15%" align="right">Creado el</TableCell>
+              <TableCell sx={tableHeaderCellSx} width="15%" align="right">Tipo</TableCell>
+              <TableCell sx={tableHeaderCellSx} width="10%" align="right">Facturas</TableCell>
+              <TableCell sx={tableHeaderCellSx} width="25%" align="right">Inversionista</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {rows.map((row) => (
+              <Row key={`${row.opId}-${row.id}`} row={row} />
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
 
-       <Box display="flex" alignSelf="flex-end" ml="auto" mb={1}>
-      
-            <Grid container spacing={2} alignItems="center" sx={{ whiteSpace: "nowrap", overflowX: "auto", p: 1 }}>
-                  {[
-                    { title: "Comisión", value: calcs?.commission },
-                    { title: "IVA", value: calcs?.iva },
-                    { title: "Valor inversor", value: calcs?.investorValue },
-                    { title: "RETEFUENTE", value: calcs?.rteFte },
-                    { title: "FACTURAR NETO", value: calcs?.netFact },
-                    { title: "RETEICA", value: calcs?.retIca },
-                    { title: "VALOR FUTURO", value: calcs?.futureValue },
-                    { title: "RETEIVA", value: calcs?.retIva },
-                    { title: "VALOR A GIRAR", value: calcs?.depositValue - other },
-                  ].map((item, index) => (
-                    <Box key={index} sx={{ display: "flex", flexDirection: "column", alignItems: "center", mx: 2.7 }}>
-                      <Typography variant="caption" color="textSecondary">{item.title}</Typography>
-                      <Typography variant="body2">{formatNumber(Math.round(item.value))}</Typography>
-                    </Box>
-                  ))}
-      
-                  {/* Campo editable para "Otros" */}
-                  <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", mx: 2.7 }}>
-                    <Typography variant="caption" color="textSecondary">Otros</Typography>
-                    <TextField
-                      variant="standard"
-                      size="small"
-                      type="number"
-                      value={other}
-                      onChange={(e) => setOther(parseFloat(e.target.value) || 0)}
-                      sx={{ width: 90, textAlign: "right", textAlignLast: "right" }}
-                    />
-                  </Box>
-                </Grid>
-      
-      
-            </Box>
-           
-    <TableContainer component={Paper}>
-    <Table aria-label="collapsible table">
-      <TableHead>
-        <TableRow>
-          <TableCell />
-          <TableCell>Estado</TableCell>
-          <TableCell align="right"># OP</TableCell>
-          <TableCell align="right">Creado el</TableCell>
-          <TableCell align="right">Tipo</TableCell>
-          <TableCell align="right">Facturas</TableCell>
-          <TableCell align="right">Emisor</TableCell>
-          <TableCell align="right">Acciones</TableCell>
-        </TableRow>
-      </TableHead>
-      <TableBody>
-        {rows.map((row) => (
-          <Row key={row.name} row={row} />
-        ))}
-      </TableBody>
-    </Table>
-  </TableContainer></>
-    
+      <ToastContainer />
+    </>
   );
-}
+};
