@@ -475,11 +475,12 @@ body {
     border: 1px solid transparent;
     color: white;
     font-weight: 500;
+    
     text-transform: capitalize;
-    font-size: 14px;
+    font-size: 12px;
     margin-bottom: 12px;
     line-height: 1;
-    min-width: 100px;
+    min-width: 50px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
   

@@ -645,12 +645,27 @@ const handleCloseMenu = () => {
     currency: "USD",
   };
   const numberFormat = new Intl.NumberFormat("en-US", formatOptions);
+
+  const handleOpenNegotiationSummary = (id) => {
+    if (openWindow && !openWindow.closed) {
+      // Si la ventana ya está abierta, solo le damos el foco (la trae al frente)
+      openWindow.focus();
+    } else {
+      // Si la ventana no está abierta, la abrimos y guardamos la referencia
+      const newWindow = window.open(`/administration/negotiation-summary?register&id=${id}`, "_blank", "width=800, height=600");
+      setOpenWindow(newWindow); // Guardamos la referencia de la ventana
+      // Escuchar el evento de cierre de la ventana
+      newWindow.onbeforeunload = () => {
+        setOpenWindow(null); // Restablecer la referencia cuando la ventana se cierre
+      };
+    }
+  };
   console.log(page)
   const columns = [
     {
       field: "status",
       headerName: "Estado",
-      width: 147,
+      width: 100,
       renderCell: (params) => {
        
         let statusText = "";
@@ -749,7 +764,7 @@ const handleCloseMenu = () => {
             {/* Botón de Documento */}
             <Tooltip title="Crear o ver resumen de negociación" arrow>
               <IconButton
-                onClick={() => console.log("Redirigiendo a:", params.row.id)}
+                onClick={() => handleOpenNegotiationSummary(params.row.opId) }
                 style={{ marginRight: 10 }}
               >
                 <DocumentIcon />

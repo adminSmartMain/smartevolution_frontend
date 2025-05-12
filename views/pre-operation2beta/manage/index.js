@@ -270,51 +270,81 @@ const validationSchema = Yup.object({
 });
 
 
- // Función para transformar cada factura en la estructura esperada por el backend
- const transformData = (data) => {
-  
-  return data.facturas.map((factura) => ({billId: factura.billId,
+const transformData = (data) => {
+  const usedBillCodes = {};
+  const processedBillIds = {}; // Para rastrear billIds ya procesados
+  console.log(data)
+  return data.facturas.map((factura) => {
+    console.log(factura)
+    const baseStructure = {
+      billId: factura.billId,
+      is_creada: factura.is_creada || false,
+      dataSent: {
+        amount: factura.valorFuturo,
+        applyGm: factura.gastoMantenimiento > 0,
+        bill: factura.factura,
+        billFraction: factura.fraccion,
+        client: factura.nombreInversionista,
+        clientAccount: factura.cuentaInversionista[0]?.id || '',
+        comisionSF: factura.comisionSF,
+        DateBill: factura.fechaEmision || new Date().toISOString().substring(0, 10),
+        DateExpiration: new Date(factura.fechaFin).toISOString().substring(0, 10) || new Date().toISOString().substring(0, 10),
+        discountTax: data.discountTax,
+        emitter: data.emitter.value,
+        emitterBroker: data.emitterBroker,
+        GM: factura.gastoMantenimiento || 0,
+        billCode:"",
+        investor: factura.nombreInversionista,
+        investorBroker: factura.investorBroker,
+        investorProfit: factura.investorProfit,
+        investorTax: factura.investorTax,
+        opDate: data.opDate.toISOString().substring(0, 10),
+        operationDays: factura.operationDays,
+        opExpiration: new Date(factura.fechaFin).toISOString().substring(0, 10) || new Date().toISOString().substring(0, 10),
+        opId: data.opId,
+        opType: data.opType,
+        payedAmount: factura.payedAmount,
+        payedPercent: factura.porcentajeDescuento,
+        payer: data.nombrePagador,
+        presentValueInvestor: factura.presentValueInvestor,
+        presentValueSF: factura.presentValueSF,
+        probableDate: factura.probableDate,
+        status: 0,
+        isReBuy: false,
+        massive: false,
+      }
+    };
 
-    dataSent:{amount: factura.valorFuturo,
-      applyGm: factura.gastoMantenimiento > 0,
-      bill: factura.factura,
-      billFraction: factura.fraccion,
-      client: factura.nombreInversionista,
-      clientAccount: factura.cuentaInversionista[0].id,
-      comisionSF: factura.comisionSF,
-      DateBill: factura.fechaEmision || new Date().toISOString().substring(0, 10),
-      DateExpiration: new Date(factura.fechaFin).toISOString().substring(0, 10) || new Date().toISOString().substring(0, 10),
-      discountTax: data.discountTax,
-      emitter: data.emitter.value,
-      emitterBroker: data.emitterBroker,
-      GM: factura.gastoMantenimiento || 0,
-      id: "",
-      investor: factura.nombreInversionista,
-      investorBroker: factura.investorBroker,
-      investorProfit: factura.investorProfit,
-      investorTax: factura.investorTax,
-      opDate: data.opDate.toISOString().substring(0, 10),
-      operationDays: factura.operationDays,
-      opExpiration: new Date(factura.fechaFin).toISOString().substring(0, 10) || new Date().toISOString().substring(0, 10),
-      opId: data.opId,
-      opType: data.opType,
-      payedAmount: factura.payedAmount,
-      payedPercent:factura.porcentajeDescuento,
-      payer: data.nombrePagador,
-      presentValueInvestor: factura.presentValueInvestor,
-      presentValueSF: factura.presentValueSF,
-      probableDate: factura.probableDate,
-      status: 0,
-      billCode: "",
-      isReBuy: false,
-      massive: false,}
+    if (factura.is_creada) {
+      if (!processedBillIds[factura.billId]) {
+        // Primera factura con este billId
+        processedBillIds[factura.billId] = true;
+        
+        if (factura.billCode && !usedBillCodes[factura.billCode]) {
+          usedBillCodes[factura.billCode] = true;
+          return {
+            ...baseStructure,
+            dataSent: {
+              ...baseStructure.dataSent,
+              billCode: factura.billCode,
+              currentBalance: factura.saldoDisponible,
+            },
+            isFirstOccurrence: true // Marcamos como primera ocurrencia
+          };
+        }
+      }
+      
+      // Facturas subsiguientes con el mismo billId
+      return {
+        ...baseStructure,
+        needsGeneratedBillId: true, // Marcar que necesita obtener el ID generado
+        isFirstOccurrence: false
+      };
+    }
     
-    
-  }));
+    return baseStructure;
+  });
 };
-
-
-
 // Efecto para manejar la alerta de saldo insuficiente
 useEffect(() => {
   if (dataCreateOperation?.data?.insufficientAccountBalance) {
@@ -339,19 +369,30 @@ const onSubmit = async (values, { setSubmitting }) => {
     await validationSchema.validate(values, { abortEarly: false });
     
     const facturasTransformadas = transformData(values);
-    const billIds = [...new Set(facturasTransformadas.map(op => op.billId))];
     
-    // Pasamos facturasTransformadas para validar payedAmount
+    // Validación adicional para facturas creadas
+    const facturasCreadas = facturasTransformadas.filter(f => f.is_creada);
+    const billCodesUnicos = [...new Set(
+      facturasCreadas
+        .map(f => f.dataSent.billCode)
+        .filter(code => code) // Filtramos códigos nulos/undefined
+    )];
+    
+    if (facturasCreadas.length > billCodesUnicos.length) {
+      console.warn("Advertencia: Algunas facturas creadas no tienen billCode o están duplicados");
+    }
+    console.log(facturasCreadas)
+    // Resto de tu lógica de validación...
+    const billIds = [...new Set(facturasTransformadas.map(op => op.billId))];
     const saldoValido = await verificarSaldosFacturas(billIds, facturasTransformadas);
     
-    // REGLA REINA: Si hay al menos una inválida, cancelar todo
     if (!saldoValido.todasValidas) {
       throw new Error(saldoValido.mensajeError || "Una o más facturas no cumplen con las reglas de saldo");
     }
     
-    // Resto del código permanece igual...
+    // Ejecución de operaciones
     const { success, failedOperations } = await executeAtomicOperations(facturasTransformadas);
-    
+    console.log(success)
     if (!success) {
       throw new Error(
         `${failedOperations.length} operaciones fallaron: ${
@@ -365,6 +406,9 @@ const onSubmit = async (values, { setSubmitting }) => {
       <div>
         <strong>¡Operación completada con éxito!</strong>
         <p>Se procesaron {facturasTransformadas.length} facturas correctamente</p>
+        {facturasCreadas.length > 0 && (
+          <p>Incluyendo {facturasCreadas.length} facturas creadas</p>
+        )}
       </div>,
       { autoClose: 7000 }
     );
@@ -373,6 +417,7 @@ const onSubmit = async (values, { setSubmitting }) => {
     setIsModalOpen(false);
     
   } catch (error) {
+    // Manejo de errores permanece igual
     setSuccess(false);
     console.error("Error detallado:", error);
     
@@ -402,16 +447,26 @@ const verificarSaldosFacturas = async (billIds, facturasTransformadas) => {
     if (!Array.isArray(billIds) || billIds.length === 0) {
       throw new Error("No se proporcionaron IDs de facturas válidos");
     }
-
+    console.log(facturasTransformadas)
+    
     // 1. Primero verificamos si hay billIds duplicados
-    const billIdsUnicos = [...new Set(billIds)];
-    const tieneDuplicados = billIdsUnicos.length !== billIds.length;
+    const billIdsConEstado = billIds.map((billId, index) => ({
+      billId,
+      is_creada: facturasTransformadas[index]?.is_creada| false
+    }));
+    
+    // Filtrar para obtener solo los únicos, manteniendo el estado is_creada
+    const billIdsUnicos = Array.from(new Map(
+      billIdsConEstado.map(item => [item.billId, item])
+    ).values());
+    console.log(billIdsUnicos)
 
     // 2. Obtenemos los datos de todas las facturas únicas
     const resultadosUnicos = await Promise.all(
       billIdsUnicos.map(async (billId) => {
-        const billIdStr = String(billId).trim();
-        
+        const billIdStr = String(billId.billId).trim();
+        const is_creada_billId= facturasTransformadas.filter(f => f.billId==billIdStr)
+         console.log(is_creada_billId.is_creada)
         try {
           const response = await Axios.get(
             `${process.env.NEXT_PUBLIC_API_URL}/bill/${billIdStr}`,
@@ -428,23 +483,24 @@ const verificarSaldosFacturas = async (billIds, facturasTransformadas) => {
           }
 
           let factura;
+          console.log(response.data.results,is_creada_billId)
           if (response.data.results && Array.isArray(response.data.results)) {
-            if (response.data.results.length === 0) {
+            if (response.data.results.length === 0 && billIdStr.is_creada==0 ) {
               throw new Error("Factura no encontrada");
             }
-            factura = response.data.results[0];
-          } else if (response.data.id || response.data.uuid) {
+            factura = response.data.results[0] || is_creada_billId[0];
+          } else if (response.data.id || response.data.uuid && billIdStr.is_creada==0 ) {
             factura = response.data;
           } else {
             throw new Error("Formato de respuesta no reconocido");
           }
 
           // Validaciones básicas
-          if (factura.state !== true) {
+          if ( factura.is_creada==0 && factura.state !== true ) {
             throw new Error("Factura no está activa");
           }
 
-          if (typeof factura.currentBalance !== 'number') {
+          if (typeof factura.currentBalance !== 'number' && billIdStr.is_creada==0) {
             throw new Error("Valor de saldo inválido");
           }
 
@@ -600,44 +656,90 @@ const verificarSaldosFacturas = async (billIds, facturasTransformadas) => {
     throw new Error(`Error al verificar saldos: ${error.message}`);
   }
 };
-// Función mejorada para ejecución atómica
-const executeAtomicOperations = async (operations) => {
-  // Mostrar progreso al usuario
-  const progressToast = toast.info(
-    `Procesando 0/${operations.length} operaciones...`,
-    { autoClose: false }
-  );
-  
+
+
+// Función para obtener el ID generado del backend
+const fetchGeneratedBillId = async (billId) => {
   try {
-    const results = await Promise.allSettled(
-      operations.map((factura, index) => 
-        createOperationFetch(factura.dataSent, factura.dataSent.opId)
-          .then(response => {
-            // Actualizar progreso
-            toast.update(progressToast, {
-              render: `Procesando ${index + 1}/${operations.length} operaciones...`
-            });
-            
-            if (!response || response.error) {
-              throw new Error(response?.error || 'Operación inválida');
-            }
-            return response;
-          })
-      )
+    const response = await Axios.get(
+      `${process.env.NEXT_PUBLIC_API_URL}/bill/${billId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("access-token")}`,
+        },
+        timeout: 10000,
+      }
+    );
+    console.log(response)
+    if (response.data?.results?.[0]?.id) {
+      return response.data.results[0].id;
+    }
+    throw new Error("No se encontró el ID generado en la respuesta");
+  } catch (error) {
+    console.error(`Error obteniendo ID generado para factura ${billId}:`, error);
+    throw error;
+  }
+};
+
+
+
+// Función modificada para executeAtomicOperations
+const executeAtomicOperations = async (operations) => {
+  const progressToast = toast.info(`Procesando 0/${operations.length} operaciones...`, { autoClose: false });
+  const generatedBillIds = {}; // Almacena los IDs generados { billIdOriginal: idGenerado }
+  console.log(operations)
+  try {
+    // Primero procesamos las facturas que no necesitan ID generado
+    const initialResults = await Promise.allSettled(
+      operations.map(async (factura) => {
+        if (!factura.needsGeneratedBillId) {
+          const response = await createOperationFetch(factura.dataSent, factura.dataSent.opId);
+          if (factura.isFirstOccurrence && response.data?.billId) {
+            generatedBillIds[factura.billId] = response.data.billId;
+          }
+          return response;
+        }
+        return { skipped: true }; // Saltar temporalmente
+      })
     );
 
-    // Procesar resultados
-    const failedOperations = results
+    // Luego procesamos las facturas que necesitan ID generado
+    const finalResults = await Promise.allSettled(
+      operations.map(async (factura, index) => {
+       
+        if (factura.needsGeneratedBillId) {
+          // Actualizar progreso
+          toast.update(progressToast, {
+            render: `Obteniendo IDs para ${index + 1}/${operations.length} operaciones...`
+          });
+
+          // Obtener el ID generado para esta factura
+          const generatedId = await fetchGeneratedBillId(factura.billId);
+          console.log(generatedId)
+          // Crear payload con el ID generado
+          const payload = {
+            ...factura.dataSent,
+            bill: generatedId,
+            billCode: '' // No enviar billCode para facturas repetidas
+          };
+
+          const response = await createOperationFetch(payload, payload.opId);
+          return response;
+        }
+        return initialResults[index].value; // Usar resultado del primer paso
+      })
+    );
+
+    // Procesar resultados finales
+    const failedOperations = finalResults
       .filter(r => r.status === 'rejected')
       .map(r => ({ error: r.reason?.message || 'Error desconocido' }));
 
-    const allFailed = failedOperations;
-    
     toast.dismiss(progressToast);
     
     return {
-      success: allFailed.length === 0,
-      failedOperations: allFailed,
+      success: failedOperations.length === 0,
+      failedOperations,
       totalOperations: operations.length
     };
     
@@ -646,7 +748,6 @@ const executeAtomicOperations = async (operations) => {
     throw error;
   }
 };
-
 
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [actions,  setActions] = useState('');
@@ -678,6 +779,8 @@ return (
               validationSchema={validationSchema}
               showConfirmationModal={showConfirmationModal}
               handleConfirm={handleConfirm}
+              setIsCreatingBill={setIsCreatingBill}
+              isCreatingBill={isCreatingBill}
               setShowConfirmationModal={setShowConfirmationModal}
               actionsFormik={actions}
               operations={operations}
