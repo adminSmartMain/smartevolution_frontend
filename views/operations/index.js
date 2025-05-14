@@ -1,18 +1,9 @@
 import { useEffect, useState } from "react";
-
-
-
 import Head from "next/head";
-
-
-
 import { useFetch } from "@hooks/useFetch";
-
-
-
 import { OperationsComponents } from "./components";
 // queries
-import { getOperationsVersionTwo } from "./queries";
+import { getOperationsVersionTwo,getOperationsVersionTwo2 } from "./queries";
 
 
 export default function Operations() {
@@ -33,7 +24,7 @@ export default function Operations() {
     error: errorGetOperations,
     data: dataGetOperations,
   } = useFetch({
-    service: () => getOperationsVersionTwo({ ...filters, page }),
+    service: () =>getOperationsVersionTwo({ ...filters, page }),
     init: true,
   });
 
@@ -86,7 +77,7 @@ export default function Operations() {
       setCalcs(dataGetOperations?.results[0]?.calcs);
     }
   }, [dataGetOperations, loadingGetOperations, errorGetOperations]);
-  console.log("dataGetOperations",dataGetOperations?.results[0]?.calcs);
+ 
   return (
     <>
       <Head>
@@ -104,6 +95,7 @@ export default function Operations() {
         page={page}
         setPage={setPage}
         dataCount={dataCount}
+        loading={loadingGetOperations}
       />
     </>
   );

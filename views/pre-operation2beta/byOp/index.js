@@ -1,12 +1,9 @@
 import { useEffect, useState } from "react";
-
 import Head from "next/head";
-
 import { useFetch } from "@hooks/useFetch";
-
 import { OperationsComponents } from "./components";
 // queries
-import { getOperationsVersionTwo ,TypeOperation,} from "./queries";
+import { getOperationsVersionTwo,getOperationsVersionTwo2 ,TypeOperation,} from "./queries";
 
 export default function Operations() {
   const [data, setData] = useState([]);
@@ -27,16 +24,13 @@ export default function Operations() {
     error: errorGetOperations,
     data: dataGetOperations,
   } = useFetch({
-    service: () => getOperationsVersionTwo({ ...filters, page }),
+    service: () =>getOperationsVersionTwo2 ({ ...filters, page }),
     init: true,
   });
 
 
   let dataCount = dataGetOperations?.count || 0;
-  console.log(data)
-  console.log(filteredData)
-  console.log(dataGetOperations)
-  console.log(page)
+
  // Hooks
     const {
       fetch: fetchTypeIdSelect,
@@ -60,7 +54,7 @@ export default function Operations() {
 
 useEffect(() => {
   if (dataTypeIdSelect) {
-    console.log(dataTypeIdSelect)
+
     var typesID = [];
     dataTypeIdSelect.data.map((typeID) => {
       typesID.push({ label: typeID.description, value: typeID.id });
@@ -108,7 +102,7 @@ useEffect(() => {
       setCalcs(dataGetOperations?.results[0]?.calcs);
     }
   }, [dataGetOperations, loadingGetOperations, errorGetOperations]);
-  console.log("dataGetOperations",dataGetOperations?.results[0]?.calcs);
+
 
   return (
     <>
@@ -127,6 +121,7 @@ useEffect(() => {
         page={page}
         setPage={setPage}
         dataCount={dataCount}
+        loading={loadingGetOperations}
       />
     </>
   );

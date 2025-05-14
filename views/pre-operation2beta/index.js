@@ -85,6 +85,7 @@ export default function Operations() {
         page={page}
         setPage={setPage}
         dataCount={dataCount}
+        loading={loadingGetOperations}
       />
     </>
   );

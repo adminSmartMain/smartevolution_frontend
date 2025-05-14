@@ -57,6 +57,7 @@ const [clientWithoutBroker, setClientWithoutBroker] = useState(null);
 const [clientEmitter,setClientEmitter] = useState(null);
 const [clientPagador,setClientPagador] = useState(null);
 const [clientBrokerEmitter,setClientBrokerEmitter]= useState(null);
+const [clientInvestor,setClientInvestor]= useState(null);
   const [AccountFromClient,setAccountFromClient]=useState()   
   const [openEmitterBrokerModal,setOpenEmitterBrokerModal]=useState(false)
   const { user, logout } = useContext(authContext);
@@ -667,7 +668,7 @@ const [billExists, setBillExists] = useState(false);
 
 
                     {/* Campo de Emisor */}
-                    <Grid item xs={12} md={6} style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+                    <Grid item xs={12} md={6} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
                     <div style={{ flex: 1 }}> {/* Este div ocupa el espacio restante */}
                     <Autocomplete
                       id="emitter-name" // Para CSS/JS si es necesario
@@ -1053,19 +1054,23 @@ const [billExists, setBillExists] = useState(false);
                                     />
                                   </div>
                                   {clientEmitter && (
-                                     <IconButton
-                                     color="primary"
-                                     onClick={() => {
+                                    <IconButton
+                                    onClick={() => {
                                       window.open(`${window.location.origin}/customers?modify=${clientEmitter.data.id}`, '_blank');
-                                     }}
-                                     style={{ 
-                                      marginTop: '0px',
-                                       height: '56px', // Para coincidir con la altura del TextField
-                                       width: '56px'
-                                     }}
-                                   >
-                                     <EditIcon />
-                                   </IconButton>
+                                    }}
+                                    sx={{ 
+                                      marginTop: '15px',
+                                      height: '20px',
+                                      width: '20px',
+                                      color: '#488F88', // Aquí sí funciona
+                                      '&:hover': {
+                                        color: '#3a726c', // Color más oscuro para hover
+                                        backgroundColor: 'rgba(72, 143, 136, 0.1)' // Fondo sutil al hacer hover
+                                      }
+                                    }}
+                                  >
+                                    <EditIcon />
+                                  </IconButton>
                                  )}
                                   
                                     
@@ -1171,62 +1176,70 @@ const [billExists, setBillExists] = useState(false);
                                               return;
                                             }
 
-                              // Caso 2: Hay un pagador seleccionado y se selecciona uno diferente
-                              if (values.nombrePagador && newValue.id !== values.nombrePagador) {
-                                const confirmChange = window.confirm(
-                                  "¿Está seguro de cambiar de pagador? Esto reseteará completamente las facturas actuales."
-                                );
-                                
-                                if (!confirmChange) return;
-                                
-                                // 1. Limpiar completamente todas las facturas (incluyendo las en modo creación)
-                                setFieldValue('facturas', [{
-                                  // Campos mínimos iniciales para una nueva factura
-                                  fechaEmision: new Date().toISOString().substring(0, 10),
-                                  expirationDate: '',
-                                  valorFuturo: 0,
-                                  presentValueInvestor: 0,
-                                  gastoMantenimiento: 0,
-                                  is_creada: false,
-                                  // Mantener solo estos campos del inversionista si es necesario
-                                  ...(values.facturas[0] ? {
-                                    nombreInversionista: values.facturas[0].nombreInversionista || '',
-                                    numbercuentaInversionista: values.facturas[0].numbercuentaInversionista || '',
-                                    cuentaInversionista: values.facturas[0].cuentaInversionista || '',
-                                    idCuentaInversionista: values.facturas[0].idCuentaInversionista || '',
-                                    investorBroker: values.facturas[0].investorBroker || "",
-                                    investorBrokerName: values.facturas[0].investorBrokerName || "",
-                                    montoDisponibleCuenta: values.facturas[0].montoDisponibleInfo || 0,
-                                    montoDisponibleInfo: values.facturas[0].montoDisponibleInfo || 0
-                                  } : {})
-                                }]);
-                              
-                                // 2. Resetear el estado de creación
-                                setIsCreatingBill(false);
-                              
-                                
-                                // 3. Establecer el nuevo pagador
-                                setFieldValue('nombrePagador', newValue.id);
-                                setClientPagador(newValue.id);
-                                setFieldValue('filtroEmitterPagador.payer', newValue.data?.document_number || '');
-                                
-                                // 4. Cargar las nuevas facturas del pagador seleccionado
-                                if (newValue.data?.document_number && dataBills?.data) {
-                                  const filteredBills = showAllPayers 
-                                    ? dataBills.data.filter(f => Number(f.currentBalance) > 0)
-                                    : dataBills.data.filter(f => 
-                                        f.payerId === newValue.data.document_number && 
-                                        Number(f.currentBalance) > 0
+                                  // Caso 2: Hay un pagador seleccionado y se selecciona uno diferente
+                                    if (values.nombrePagador && newValue.id !== values.nombrePagador) {
+                                      const confirmChange = window.confirm(
+                                        "¿Está seguro de cambiar de pagador? Esto reseteará las facturas seleccionadas (no las creadas)."
                                       );
-                                  
-                                  setFieldValue('takedBills', filteredBills);
-                                } else {
-                                  setFieldValue('takedBills', []);
-                                }
-                                
-                                return; // Salir temprano para evitar ejecutar el resto del código
-                              }
+                                      
+                                      if (!confirmChange) return;
+                                      
+                                      // 1. Filtrar facturas: mantener solo las creadas (OrchestDisabled.status === true)
+                                      const facturasAConservar = values.facturas.filter((_, index) => {
+                                        const orchestItem = OrchestDisabled.find(item => item.indice === index);
+                                        return orchestItem?.status === true; // Conservar solo las creadas
+                                      });
 
+                                      // 2. Si no hay facturas creadas, agregar una vacía (como en tu código original)
+                                      const nuevasFacturas = facturasAConservar.length > 0 
+                                        ? facturasAConservar
+                                        : [{
+                                            fechaEmision: new Date().toISOString().substring(0, 10),
+                                            expirationDate: '',
+                                            valorFuturo: 0,
+                                            presentValueInvestor: 0,
+                                            gastoMantenimiento: 0,
+                                            is_creada: false,
+                                            ...(values.facturas[0] ? {
+                                              nombreInversionista: values.facturas[0].nombreInversionista || '',
+                                              numbercuentaInversionista: values.facturas[0].numbercuentaInversionista || '',
+                                              cuentaInversionista: values.facturas[0].cuentaInversionista || '',
+                                              idCuentaInversionista: values.facturas[0].idCuentaInversionista || '',
+                                              investorBroker: values.facturas[0].investorBroker || "",
+                                              investorBrokerName: values.facturas[0].investorBrokerName || "",
+                                              montoDisponibleCuenta: values.facturas[0].montoDisponibleInfo || 0,
+                                              montoDisponibleInfo: values.facturas[0].montoDisponibleInfo || 0
+                                            } : {})
+                                          }];
+
+                                      setFieldValue('facturas', nuevasFacturas);
+                                      
+                                      // 3. Resetear el estado de creación solo si no hay facturas creadas
+                                      if (facturasAConservar.length === 0) {
+                                        setIsCreatingBill(false);
+                                      }
+                                      
+                                      // 4. Establecer el nuevo pagador
+                                      setFieldValue('nombrePagador', newValue.id);
+                                      setClientPagador(newValue.id);
+                                      setFieldValue('filtroEmitterPagador.payer', newValue.data?.document_number || '');
+                                      
+                                      // 5. Cargar las nuevas facturas del pagador seleccionado
+                                      if (newValue.data?.document_number && dataBills?.data) {
+                                        const filteredBills = showAllPayers 
+                                          ? dataBills.data.filter(f => Number(f.currentBalance) > 0)
+                                          : dataBills.data.filter(f => 
+                                              f.payerId === newValue.data.document_number && 
+                                              Number(f.currentBalance) > 0
+                                            );
+                                        
+                                        setFieldValue('takedBills', filteredBills);
+                                      } else {
+                                        setFieldValue('takedBills', []);
+                                      }
+                                      
+                                      return; // Salir temprano para evitar ejecutar el resto del código
+                                    }
                                               // Limpiar cuando:
                                               // 1. Se selecciona un pagador diferente al actual
                                               // 2. Se borra manualmente (newValue === null)
@@ -1345,8 +1358,12 @@ const [billExists, setBillExists] = useState(false);
                                             />
                                           )}
                                         />
-                                         {/* Botón para alternar entre todos los payers y los filtrados */}
-                                          <Tooltip title={showAllPayers ? "Mostrar solo pagadores filtrados" : "Mostrar todos los pagadores"}>
+                                       
+                                         </div>
+
+                                       
+                                       {/* Botón para alternar entre todos los payers y los filtrados */}
+                                       <Tooltip title={showAllPayers ? "Mostrar solo pagadores filtrados" : "Mostrar todos los pagadores"}>
                                             <IconButton
                                               size="small"
                                               onClick={() => setShowAllPayers(!showAllPayers)}
@@ -1356,66 +1373,73 @@ const [billExists, setBillExists] = useState(false);
                                               {showAllPayers ? <FilterAltOffIcon /> : <FilterAltIcon />}
                                             </IconButton>
                                           </Tooltip>
-                                         </div>
-
-                                         {clientPagador && (
+                                          {clientPagador && (
                                      <IconButton
                                      color="primary"
                                      onClick={() => {
                                       window.open(`${window.location.origin}/customers?modify=${clientPagador }`, '_blank');
                                      }}
                                      
-                                     style={{ 
-                                       marginTop: '0px',
-                                       height: '56px', // Para coincidir con la altura del TextField
-                                       width: '56px'
-                                     }}
+                                     sx={{ 
+                                      marginTop: '15px',
+                                      height: '20px',
+                                      width: '20px',
+                                      color: '#488F88', // Aquí sí funciona
+                                      '&:hover': {
+                                        color: '#3a726c', // Color más oscuro para hover
+                                        backgroundColor: 'rgba(72, 143, 136, 0.1)' // Fondo sutil al hacer hover
+                                      }
+                                    }}
                                    >
                                      <EditIcon />
                                    </IconButton>
                                  )}
-                                     
                                         </div>
                                     </Grid>
 
                           {/*Selector de Corredor Emisor */}
                           <Grid item xs={12} md={6}>
-                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                              <div style={{ flex: 1 }}> {/* Este div ocupa el espacio restante */}
-                                    <TextField
-                                      id="brokerEmitter-name" // Para CSS/JS si es necesario
-                                      data-testid="corredor-emisor"
-                                      label="Corredor Emisor *"
-                                      fullWidth
-                                      name="corredorEmisor"
-                                      value={values.corredorEmisor || ""} // Usar el valor del campo
-                                      onChange={(event) => {
-                                        setFieldValue('corredorEmisor', event.target.value); // Actualiza el valor
-                                        setFieldTouched('corredorEmisor', true); // Marca el campo como "touched"
-                                        setClientBrokerEmitter(event.target.value)
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                        <div style={{ flex: 1 }}> {/* Este div ocupa el espacio restante */}
+                              <TextField
+                                id="brokerEmitter-name" // Para CSS/JS si es necesario
+                                data-testid="corredor-emisor"
+                                label="Corredor Emisor *"
+                                fullWidth
+                                name="corredorEmisor"
+                                value={values.corredorEmisor || ""} // Usar el valor del campo
+                                onChange={(event) => {
+                                  setFieldValue('corredorEmisor', event.target.value); // Actualiza el valor
+                                  setFieldTouched('corredorEmisor', true); // Marca el campo como "touched"
+                                  setClientBrokerEmitter(event.target.value)
+                                }}
+                                disabled // Deshabilitar edición manual
+                                error={touched.corredorEmisor && Boolean(errors.corredorEmisor)}
+                                helperText={touched.corredorEmisor && errors.corredorEmisor}
+                              />
+                              </div>
+                              {clientBrokerEmitter && (
+                                    <IconButton
+                                      color="primary"
+                                      onClick={() => {
+                                        window.open(`${window.location.origin}/brokers?modify=${clientBrokerEmitter}`, '_blank');
                                       }}
-                                      disabled // Deshabilitar edición manual
-                                      error={touched.corredorEmisor && Boolean(errors.corredorEmisor)}
-                                      helperText={touched.corredorEmisor && errors.corredorEmisor}
-                                    />
-                                    </div>
-                                    {clientBrokerEmitter && (
-                                          <IconButton
-                                            color="primary"
-                                            onClick={() => {
-                                              window.open(`${window.location.origin}/customers?modify=${clientBrokerEmitter}`, '_blank');
-                                            }}
-                                            style={{ 
-                                              marginTop: '0px',
-                                              height: '56px', // Para coincidir con la altura del TextField
-                                              width: '56px'
-                                            }}
-                                          >
-                                            <EditIcon />
-                                          </IconButton>
-                                        )}
-                                         </div>
-                                    </Grid>
+                                      sx={{ 
+                                        marginTop: '15px',
+                                        height: '20px',
+                                        width: '20px',
+                                        color: '#488F88', // Aquí sí funciona
+                                        '&:hover': {
+                                          color: '#3a726c', // Color más oscuro para hover
+                                          backgroundColor: 'rgba(72, 143, 136, 0.1)' // Fondo sutil al hacer hover
+                                        }
+                                      }}
+                                    >
+                                      <EditIcon />
+                                    </IconButton>
+                                  )}
+                                  </div>
+                              </Grid>
                     
                         {/*Array para cada acordeon de facturas de la operacion */}
                         <FieldArray name="facturas">
@@ -1456,81 +1480,81 @@ const [billExists, setBillExists] = useState(false);
                                                 <div style={{ display: 'flex', gap: '8px', flex: 1 }}>
                                                   
                                                   <DatePicker
-  label="Emisión"
-  value={factura.fechaEmision ? parseISO(factura.fechaEmision) : null}
-  onChange={(newValue) => {
-    if (newValue) {
-      const formattedDate = newValue.toISOString().substring(0, 10);
-      setFieldValue(`facturas[${index}].fechaEmision`, formattedDate);
-      
-      if (factura.billId) {
-        values.facturas.forEach((f, i) => {
-          if (f.billId === factura.billId && i !== index) {
-            setFieldValue(`facturas[${i}].fechaEmision`, formattedDate);
-          }
-        });
-      }
-    }
-  }}
-  inputFormat="dd/MM/yyyy"
-  mask="__/__/____"
-  renderInput={(params) => (
-    <TextField 
-      {...params}
-      size="small"
-      fullWidth
-      onKeyDown={(e) => e.stopPropagation()}
-      onClick={(e) => {
-        e.stopPropagation();
-        e.preventDefault(); // Agregado para mayor seguridad
-      }}
-    />
-  )}
-  PopperProps={{
-    onClick: (e) => {
-      e.stopPropagation(); // Previene la propagación en el calendario
-    }
-  }}
-/>
+                                                  label="Emisión"
+                                                  value={factura.fechaEmision ? parseISO(factura.fechaEmision) : null}
+                                                  onChange={(newValue) => {
+                                                    if (newValue) {
+                                                      const formattedDate = newValue.toISOString().substring(0, 10);
+                                                      setFieldValue(`facturas[${index}].fechaEmision`, formattedDate);
+                                                      
+                                                      if (factura.billId) {
+                                                        values.facturas.forEach((f, i) => {
+                                                          if (f.billId === factura.billId && i !== index) {
+                                                            setFieldValue(`facturas[${i}].fechaEmision`, formattedDate);
+                                                          }
+                                                        });
+                                                      }
+                                                    }
+                                                  }}
+                                                  inputFormat="dd/MM/yyyy"
+                                                  mask="__/__/____"
+                                                  renderInput={(params) => (
+                                                    <TextField 
+                                                      {...params}
+                                                      size="small"
+                                                      fullWidth
+                                                      onKeyDown={(e) => e.stopPropagation()}
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        e.preventDefault(); // Agregado para mayor seguridad
+                                                      }}
+                                                    />
+                                                  )}
+                                                  PopperProps={{
+                                                    onClick: (e) => {
+                                                      e.stopPropagation(); // Previene la propagación en el calendario
+                                                    }
+                                                  }}
+                                                />
 
-<DatePicker
-  label="Vencimiento"
-  value={factura.expirationDate ? parseISO(factura.expirationDate) : null}
-  onChange={(newValue) => {
-    if (newValue) {
-      const formattedDate = newValue.toISOString().substring(0, 10);
-      setFieldValue(`facturas[${index}].expirationDate`, formattedDate);
-      
-      if (factura.billId) {
-        values.facturas.forEach((f, i) => {
-          if (f.billId === factura.billId && i !== index) {
-            setFieldValue(`facturas[${i}].expirationDate`, formattedDate);
-          }
-        });
-      }
-    }
-  }}
-  inputFormat="dd/MM/yyyy"
-  mask="__/__/____"
-  renderInput={(params) => (
-    <TextField 
-      {...params}
-      size="small"
-      fullWidth
-      onKeyDown={(e) => e.stopPropagation()}
-      onClick={(e) => {
-        e.stopPropagation();
-        e.preventDefault();
-      }}
-    />
-  )}
-  PopperProps={{
-    onClick: (e) => {
-      e.stopPropagation();
-    }
-  }}
-  onClick={(e) => e.stopPropagation()}
-/>
+                                                <DatePicker
+                                                  label="Vencimiento"
+                                                  value={factura.expirationDate ? parseISO(factura.expirationDate) : null}
+                                                  onChange={(newValue) => {
+                                                    if (newValue) {
+                                                      const formattedDate = newValue.toISOString().substring(0, 10);
+                                                      setFieldValue(`facturas[${index}].expirationDate`, formattedDate);
+                                                      
+                                                      if (factura.billId) {
+                                                        values.facturas.forEach((f, i) => {
+                                                          if (f.billId === factura.billId && i !== index) {
+                                                            setFieldValue(`facturas[${i}].expirationDate`, formattedDate);
+                                                          }
+                                                        });
+                                                      }
+                                                    }
+                                                  }}
+                                                  inputFormat="dd/MM/yyyy"
+                                                  mask="__/__/____"
+                                                  renderInput={(params) => (
+                                                    <TextField 
+                                                      {...params}
+                                                      size="small"
+                                                      fullWidth
+                                                      onKeyDown={(e) => e.stopPropagation()}
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        e.preventDefault();
+                                                      }}
+                                                    />
+                                                  )}
+                                                  PopperProps={{
+                                                    onClick: (e) => {
+                                                      e.stopPropagation();
+                                                    }
+                                                  }}
+                                                  onClick={(e) => e.stopPropagation()}
+                                                />
                                                 </div>
                                               ) : (
                                                 // Modo visualización - Texto
@@ -1671,7 +1695,7 @@ const [billExists, setBillExists] = useState(false);
                                         </AccordionSummary>
                                         <AccordionDetails>
                                           <Grid container spacing={3}>
-                                            <Grid item xs={12} md={2}>
+                                            <Grid item xs={12} md={1.9}>
 
 
                                             {(orchestDisabled.find(item => item.indice === index)?.status) ? (
@@ -2799,19 +2823,23 @@ const [billExists, setBillExists] = useState(false);
                                                 /></div>
                                               )}
                                             
-                                            <Box
+                                           
+                                         </Grid>
+                                              
+                                         <Box
                                             sx={{
                                               color: (orchestDisabled.find(item => item.indice === index))?.status ? "#ffffff" : "#5EA3A3",
                                               backgroundColor: (orchestDisabled.find(item => item.indice === index))?.status ? "#5EA3A3" : "transparent",
                                               border: "1.4px solid #5EA3A3",
-                                              width: "35px",
+                                              width: "25px",
                                               display: "flex",
                                               alignItems: "center",
                                               justifyContent: "center",
                                               borderRadius: "5px",
-                                              marginRight: "2rem",
-                                              height: "33px",
-                                              marginTop: "2px",
+                                              
+                                              height: "25px",
+                                              marginTop: "40px",
+                                              marginLeft:"20px",
                                               cursor: (orchestDisabled.find(item => item.indice === index))?.status || isSelectedPayer ? "default" : "pointer",
                                               '&:hover': {
                                                 backgroundColor: !(orchestDisabled.find(item => item.indice === index)?.status) && !isSelectedPayer ? "#f0f0f0" : undefined,
@@ -2861,11 +2889,8 @@ const [billExists, setBillExists] = useState(false);
                                               ></i>
                                             )}
                                           </Box>
-                                         </Grid>
-                                              
-
                                             {/* Fracción */}
-                                            <Grid item xs={12} md={1}>
+                                            <Grid item xs={12} md={0.7}>
                                                 <TextField
                                                 id="Fraction-name" // Para CSS/JS si es necesario
                                                  data-testid="campo-fraccion"
@@ -2980,24 +3005,24 @@ const [billExists, setBillExists] = useState(false);
                                               {/* Fecha Probable*/}
                                               <Grid item xs={12} md={1.5}>
                                               <DatePicker
-                                    id="probDate-name"
-                                    data-testid="campo-fechaProbable"
-                                    label="Fecha probable"
-                                    value={factura.probableDate}
-                                    onChange={(newValue) => setFieldValue(`facturas[${index}].probableDate`, newValue)}
-                                    inputFormat="dd/MM/yyyy" // Formato de visualización
-                                    mask="__/__/____" // Máscara de entrada (guiones bajos son placeholders)
-                                    renderInput={(params) => (
-                                      <TextField 
-                                        {...params} 
-                                        fullWidth
-                                        onKeyDown={(e) => e.stopPropagation()} // Evita conflicto con atajos de teclado
-                                      />
-                                    )}
-                                    disableMaskedInput={false} // Habilita la máscara de entrada
-                                    allowSameDateSelection // Permite seleccionar la fecha actual
-                                    openTo="day" // Comienza la selección por el día (opcional)
-                                  />
+                                                id="probDate-name"
+                                                data-testid="campo-fechaProbable"
+                                                label="Fecha probable"
+                                                value={factura.probableDate}
+                                                onChange={(newValue) => setFieldValue(`facturas[${index}].probableDate`, newValue)}
+                                                inputFormat="dd/MM/yyyy" // Formato de visualización
+                                                mask="__/__/____" // Máscara de entrada (guiones bajos son placeholders)
+                                                renderInput={(params) => (
+                                                  <TextField 
+                                                    {...params} 
+                                                    fullWidth
+                                                    onKeyDown={(e) => e.stopPropagation()} // Evita conflicto con atajos de teclado
+                                                  />
+                                                )}
+                                                disableMaskedInput={false} // Habilita la máscara de entrada
+                                                allowSameDateSelection // Permite seleccionar la fecha actual
+                                                openTo="day" // Comienza la selección por el día (opcional)
+                                              />
                                               </Grid> 
                                               {/* Fecha de Vencimiento */}
                                               {/* <Grid item xs={12} md={2}>
@@ -3010,6 +3035,8 @@ const [billExists, setBillExists] = useState(false);
                                               {/* </Grid> */} 
                                               {/* Nombre de Inversionista */}
                                               <Grid item xs={12} md={4.5}>
+                                              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                                              <div style={{ flex: 1 }}> {/* Este div ocupa el espacio restante */}
                                               <Autocomplete
                                               id="investor-name" // Para CSS/JS si es necesario
                                               data-testid="campo-inversor"
@@ -3096,7 +3123,7 @@ const [billExists, setBillExists] = useState(false);
                                                     // Cargar cuentas y broker del inversionista seleccionado
                                                     const cuentas = await cargarCuentas(newValue?.data.id);
                                                     
-                                           
+                                                    setClientInvestor(newValue?.data.id)
                                                    
 
                                                     const tasaDescuento = await cargarTasaDescuento(newValue?.data.id);
@@ -3296,10 +3323,29 @@ const [billExists, setBillExists] = useState(false);
                                                   />
                                                 )}
                                               />
-                                                                                    </Grid>
+ {/*  {clientInvestor && (
+                                          <IconButton
+                                            color="primary"
+                                            onClick={() => {
+                                              window.open(`${window.location.origin}/customers?modify=${clientInvestor}`, '_blank');
+                                            }}
+                                            style={{ 
+                                              marginTop: '0px',
+                                              height: '56px', // Para coincidir con la altura del TextField
+                                              width: '56px'
+                                            }}
+                                          >
+                                            <EditIcon />
+                                          </IconButton>
+                                        )}
+ */}
+                                             
+                                          </div>
+                                        </div>
+                                        </Grid>
                                                                                   
 
-                                              {/* Cuenta de Inversionista */}
+                                             
                                               <Grid item xs={12} md={3}>
 
                                                 
@@ -3790,10 +3836,31 @@ const [billExists, setBillExists] = useState(false);
                                               InputLabelProps={{ shrink: true }}
                                               value={values.discountTax}
                                               onChange={(e) => {
-                                                const nuevaTasaDescuento = e.target.value;
+                                               
+                                                const nuevaTasaDescuento = parseFloat(e.target.value) || 0;
+                                                  const nuevoInvestorTax = parseFloat(factura.investorTax) || 0;
+
+                                                  // 2. Validar relación entre tasas
+                                                  if (nuevoInvestorTax > nuevaTasaDescuento) {
+                                                    console.log(nuevoInvestorTax)
+                                                    // Caso inválido: ajustar ambos valores al mayor (investorTax)
+                                                    setFieldValue('discountTax', nuevoInvestorTax);
+                                                    setFieldValue('investorTax', nuevoInvestorTax);
+                                                    
+                                                    // Mostrar feedback al usuario (puedes reemplazar por un Snackbar/toast)
+                                                    setTimeout(() => {
+                                                      alert("La tasa de descuento no puede ser menor que la tasa del inversionista. Ambos valores se ajustaron a " + nuevoInvestorTax + "%");
+                                                    }, 100);
+                                                  } else {
+                                                    // Caso válido: actualizar normalmente
+                                                    setFieldValue('discountTax', nuevaTasaDescuento);
+                                                    
+                                                    // Bonus: Actualizar automáticamente investorTax si es cero
+                                                    if (nuevoInvestorTax === 0) {
+                                                      setFieldValue('investorTax', nuevaTasaDescuento);
+                                                    }
+                                                  }
                                                 
-                                                // 1. Actualizar la tasa de descuento global
-                                                setFieldValue('discountTax', nuevaTasaDescuento);
 
                                                 // 2. Solo proceder si hay fecha de operación
                                                 if (values.opDate) {
@@ -3829,9 +3896,12 @@ const [billExists, setBillExists] = useState(false);
                                                     : "Valor ingresado manualmente"
                                               }
                                               onBlur={(e) => {
-                                                // Validaciones adicionales si son necesarias
-                                                if (e.target.value < 0) {
-                                                  setFieldValue('discountTax', 0);
+                                                // Validación adicional al salir del campo
+                                                const finalValue = parseFloat(e.target.value) || 0;
+                                                if (finalValue < parseFloat(factura.investorTax)) {
+                                                  setFieldError('discountTax', 'Debe ser ≥ Tasa Inversionista');
+                                                } else {
+                                                  setFieldError('discountTax', 0);
                                                 }
                                               }}
                                             />

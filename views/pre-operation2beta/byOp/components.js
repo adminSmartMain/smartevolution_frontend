@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState} from "react";
 import { ToastContainer } from "react-toastify";
 import Link from "next/link";
 import { SearchOutlined } from "@mui/icons-material";
@@ -39,7 +39,9 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import ModalValorAGirar from "../ModalValorAGirar";
 import AdvancedDateRangePicker from "../AdvancedDateRangePicker";
-
+import Pagination from '@mui/material/Pagination';
+import CircularProgress from '@mui/material/CircularProgress';
+import { Tooltip } from "@mui/material";
 // Estilos
 const sectionTitleContainerSx = {
   display: "flex",
@@ -48,17 +50,17 @@ const sectionTitleContainerSx = {
   mb: 1
 };
 const tableHeaderCellSx = {
-  backgroundColor: "#F5F5F5",
-  color: "#8C7E82",
-  fontWeight: "bold",
-  fontSize: "0.8rem",
-  letterSpacing: "0px",
-  textTransform: "none",
-  padding: "8px 12px",  // Reducir el padding vertical
-  lineHeight: "1.2",    // Ajustar el interlineado
-  minHeight: "32px",    // Altura mínima reducida
-  height: "32px"        // Altura fija
-};
+      backgroundColor: "#F5F5F5",
+      color: "#8C7E82",
+      fontWeight: "bold",
+      letterSpacing: "0px",
+      textTransform: "none",
+      padding: { xs: "6px 8px", sm: "8px 12px" }, // Responsivo
+      lineHeight: 1.2,
+      minHeight: { xs: "28px", sm: "32px" },
+      height: { xs: "28px", sm: "32px" },
+      fontSize: { xs: "0.7rem", sm: "0.8rem" } // Tamaño de fuente responsivo
+    };
 
 const tableCellSx = {
   color: "#000000",
@@ -150,7 +152,7 @@ function Row(props) {
         break;
       default:
         statusText = "Por Aprobar";
-        badgeClass = "badge";
+        badgeClass = "badge por-aprobar";
     }
   
     return { statusText, badgeClass };
@@ -225,75 +227,86 @@ function Row(props) {
                           {row.opExpiration ? moment(row.opExpiration).format('DD/MM/YYYY') : '-'}
                         </TableCell>
                         <TableCell align="right" sx={tableCellSx}>
-  <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>
-    {/* <CustomTooltip
-      title="Editar operación"
-      arrow
-      placement="bottom-start"
-      TransitionComponent={Fade}
-    >
-      <Typography
-        fontFamily="icomoon"
-        sx={actionButtonSx}
-        onClick={(e) => {
-          e.stopPropagation();
-          e.preventDefault();
-          if (row.status === 0) {
-            window.open(`/pre-operation2beta/editPreOp/?id=${row.id}`, '_blank', 'width=800,height=600');
-          } else if (row.status === 2) {
-            window.open(`/pre-operation2beta/editPreOp/?id=${row.id}&previousDeleted=true`, '_blank', 'width=800,height=600');
-          }
-        }}
-      >
-        &#xe900;
-      </Typography>
-    </CustomTooltip> */}
-    
+                          <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>
+                          
 
-    {/* Ver detalles */}
-    <CustomTooltip
-      title="Ver operación"
-      arrow
-      placement="bottom-start"
-      TransitionComponent={Fade}
-    >
-      <Typography
-        fontFamily="icomoon"
-        sx={actionButtonSx}
-        onClick={(e) => {
-          e.stopPropagation();
-          e.preventDefault();
-          window.open(`/operations/manage?preview&id=${row.id}`, '_blank', 'width=800,height=600');
-        }}
-      >
-        &#xe922;
-      </Typography>
-    </CustomTooltip>
+                           <div style={{ 
+                            display: "flex", 
+                            justifyContent: "center", 
+                            gap: "8px",
+                            width: "100%"
+                          }}>
+                            {/* Botón Registrar Recaudo */}
+                            <Link
+                                      href={
+                                        row.status === 4
+                                          ? "#"
+                                          : `/administration/new-receipt?id=${row.id}`
+                                      }
+                                      passHref
+                                      legacyBehavior
+                                    >
+                                      <Tooltip 
+                                        title={row.status === 4 ? "Acción no disponible" : "Registrar recaudo"} 
+                                        arrow
+                                        placement="top"
+                                      >
+                                        <Typography
+                                          fontFamily="icomoon"
+                                          fontSize="1.9rem"
+                                          color={row.status === 4 ? "#CCCCCC" : "#488B8F"}
+                                          sx={{
+                                            cursor: row.status === 4 ? "not-allowed" : "pointer",
+                                            "&:hover": {
+                                              backgroundColor: row.status === 4 ? "transparent" : "#B5D1C980",
+                                              borderRadius: "5px"
+                                            },
+                                            padding: "0 4px",
+                                            pointerEvents: row.status === 4 ? "none" : "auto"
+                                          }}
+                                          onClick={e => {
+                                            if (row.status === 4) {
+                                              e.preventDefault();
+                                            }
+                                          }}
+                                        >
+                                          &#xe904;
+                                        </Typography>
+                                      </Tooltip>
+                                    </Link>
 
-    {/* Eliminar */}
-    <CustomTooltip
-      title="Eliminar"
-      arrow
-      placement="bottom-start"
-      TransitionComponent={Fade}
-    >
-      <Typography
-        fontFamily="icomoon"
-        sx={actionButtonSx}
-        onClick={(e) => {
-          e.stopPropagation();
-          if (row.status === 1) {
-            Toast("No se puede eliminar una operación aprobada", "error");
-          } else {
-            handleOpenDelete(row.id);
-          }
-        }}
-      >
-        &#xe901;
-      </Typography>
-    </CustomTooltip>
-  </Box>
-</TableCell>
+                            {/* Botón Detalles Operación */}
+                            <Link 
+                              href={`/operations/manage?preview&id=${row.id}`}
+                              passHref
+                              legacyBehavior
+                            >
+                              <Tooltip 
+                                title="Detalles operación" 
+                                arrow
+                                placement="top"
+                              >
+                                <Typography
+                                  fontFamily="icomoon"
+                                  fontSize="1.9rem"
+                                  color="#999999"
+                                  sx={{
+                                    cursor: "pointer",
+                                    "&:hover": {
+                                      backgroundColor: "#B5D1C980",
+                                      color: "#488B8F",
+                                      borderRadius: "5px"
+                                    },
+                                    padding: "0 4px"
+                                  }}
+                                >
+                                  &#xe922;
+                                </Typography>
+                              </Tooltip>
+                            </Link>
+                          </div>
+                          </Box>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -359,18 +372,26 @@ export const OperationsComponents = ({
   dataCount,
   typeOperation,
   calcs,
+   loading,
 }) => {
   const [search, setSearch] = useState("");
   const [openModal, setOpenModal] = useState(false);
   const [anchorElCSV, setAnchorElCSV] = useState(null);
   const [openDelete, setOpenDelete] = useState([false, null]);
-  
+  // Calcula el total de páginas basado en el conteo de datos
+  const totalPages = Math.ceil(dataCount / 15); // 15 es el tamaño de página por defecto
   const handleOpenModal = () => setOpenModal(true);
   const handleCloseModal = () => setOpenModal(false);
   const handleMenuClickCSV = (event) => setAnchorElCSV(event.currentTarget);
   const handleCloseMenuCSV = () => setAnchorElCSV(null);
   const handleOpenDelete = (id) => setOpenDelete([true, id]);
   const handleCloseDelete = () => setOpenDelete([false, null]);
+
+  // Usa useRef para rastrear si es una actualización inicial
+
+
+
+
   const openMenuCSV = Boolean(anchorElCSV);
   // Hooks
         const {
@@ -534,7 +555,7 @@ export const OperationsComponents = ({
   };
 
   const rows = groupByOperation(rows2);
-  console.log("rows", rows);
+
   return (
     <>
       <BackButton path="/dashboard" />
@@ -651,14 +672,39 @@ export const OperationsComponents = ({
       </Box>
       
       {/* Tabla principal */}
+              {/* Indicador de carga centrado solo en la tabla */}
+  {loading && (
+    <Box
+      sx={{
+        position: 'absolute',
+        top: '60%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        zIndex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 1,
+       
+      }}
+    >
+      <CircularProgress sx={{ color: '#488B8F' }} />
+      <Typography variant="body2" color="#488B8F">
+        Cargando operaciones...
+      </Typography>
+    </Box>
+  )}
       <TableContainer 
         component={Paper} 
         sx={{ 
           boxShadow: 'none', 
           border: '1px solid #E0E0E0',
-          borderRadius: '4px'
+          borderRadius: '4px',
+          filter: loading ? 'blur(2px)' : 'none', // Efecto de desenfoque
+          transition: 'filter 0.3s ease-out' // Transición suave
         }}
       >
+
         <Table aria-label="collapsible table" size="medium">
           <TableHead>
             <TableRow>
@@ -678,7 +724,66 @@ export const OperationsComponents = ({
           </TableBody>
         </Table>
       </TableContainer>
+  {/* Paginación */}
+      {/* Reemplaza el Box de Pagination actual por este: */}
+ <Box
+                container
+                display="flex"
+                flexDirection="row"
+                justifyContent="space-between"
+                alignItems="center"
+              >
+  <Typography fontSize="0.8rem" fontWeight="600" color="#5EA3A3">
+    {page * 15 - 14} - {Math.min(page * 15, dataCount)} de {dataCount}
+  </Typography>
+  
+    <Box
+        container
+        display="flex"
+        flexDirection="row"
+        justifyContent="space-between"
+      >
+    <Typography
+        fontFamily="icomoon"
+        fontSize="1.2rem"
+        marginRight="0.3rem"
+        marginLeft="0.5rem"
+        sx={{ 
+           cursor: "pointer",
+        color: page > 1 ? "#488B8F" : "#CCCCCC",
+        transform: "rotate(180deg)"
+      }}
+      onClick={() => {
+        if (page > 1) {
+          setPage(page - 1);
+          
+        }
+      }}
+     >
+    &#xe91f;
+     </Typography>
+    
+    <Typography
+      fontFamily="icomoon"
+      fontSize="1.2rem"
+      marginRight="0.3rem"
+      marginLeft="0.5rem"
+      sx={{
+        cursor: "pointer",
 
+        color: "#63595C",
+      }}
+      onClick={() => {
+        if (page < Math.ceil(dataCount / 15)) {
+          setPage(page + 1);
+         
+        }
+      }}
+    >
+    &#xe91f;
+  </Typography>
+  </Box>
+</Box>
       <ToastContainer />
     </>
   );

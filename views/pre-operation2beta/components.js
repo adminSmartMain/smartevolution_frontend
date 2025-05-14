@@ -23,7 +23,7 @@ import AdvancedDateRangePicker from "./AdvancedDateRangePicker";
 import { DataGrid } from "@mui/x-data-grid";
 import ClearIcon from "@mui/icons-material/Clear";
 import scrollSx from "@styles/scroll";
-
+import CircularProgress from '@mui/material/CircularProgress';
 import CustomDataGrid from "@styles/tables";
 import { DeleteOperation, MassiveUpdateOperation, UpdateOperation } from "./queries";
 import { id } from "date-fns/locale";
@@ -179,6 +179,7 @@ export const OperationsComponents = ({
   page,
   setPage,
   dataCount,
+ loading
 }) => {
 
 
@@ -191,7 +192,7 @@ export const OperationsComponents = ({
   const [open, setOpen] = useState([false, ""]);
   const [rowCount, setRowCount] = useState(dataCount);
   const [pageSize, setPageSize] = useState(10);
-  const [loading, setLoading] = useState(false);
+  
   const [search, setSearch] = useState("");
  // Supongamos que `dateRange` es un estado que mantiene el rango de fechas seleccionado
 const [dateRange, setDateRange] = useState({ startDate: null, endDate: null });
@@ -1038,7 +1039,28 @@ const handleCloseMenu = () => {
     </Menu>
   </Box>
 </Box>
-
+ {loading && (
+    <Box
+      sx={{
+        position: 'absolute',
+        top: '60%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        zIndex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 1,
+        
+       
+      }}
+    >
+      <CircularProgress sx={{ color: '#488B8F' }} />
+      <Typography variant="body2" color="#488B8F">
+        Cargando operaciones...
+      </Typography>
+    </Box>
+  )}
 
       <Box sx={{ ...tableWrapperSx }}>
       <CustomDataGrid
@@ -1075,6 +1097,8 @@ const handleCloseMenu = () => {
             '& .MuiDataGrid-virtualScroller': {
               overflowX: 'auto', // Oculta el scroll horizontal si no es necesario
             },
+            filter: loading ? 'blur(2px)' : 'none', // Efecto de desenfoque
+          transition: 'filter 0.3s ease-out' // Transición suave
           }}
           components={{
             ColumnSortedAscendingIcon: SortIcon,
