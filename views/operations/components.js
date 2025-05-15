@@ -343,17 +343,17 @@ export const OperationsComponents = ({
     },
     
     { field: "opId", headerName: "ID", width: 40 },
-    {
-      field: "created_at",
-      headerName: "Creado el",
-      width: 93,
-      valueFormatter: (params) => {
-        if (!params.value) return '';
+    //{
+     // field: "created_at",
+     // headerName: "Creado el",
+     // width: 93,
+    //  valueFormatter: (params) => {
+     //   if (!params.value) return '';
         // Extrae directamente las partes de la fecha ISO (evita conversión local)
-        const [year, month, day] = params.value.split('T')[0].split('-');
-        return `${day}/${month}/${year}`; // Formato dd/mm/YYYY
-      }
-    },
+     //   const [year, month, day] = params.value.split('T')[0].split('-');
+     //   return `${day}/${month}/${year}`; // Formato dd/mm/YYYY
+    //  }
+   // },
     {
       field: "opDate", 
       headerName: "Fecha Op", 
@@ -460,7 +460,7 @@ export const OperationsComponents = ({
 
         {/* Botón Detalles Operación */}
         <Link 
-          href={`/operations/manage?preview&id=${params.row.id}`}
+          href={`/pre-operations2beta/detailPreOp?id=${params.row.id}`}
           passHref
           legacyBehavior
         >

@@ -1095,151 +1095,184 @@ const [billExists, setBillExists] = useState(false);
                                                 .map(item => item.indice);
 
                                             setIsSelectedPayer(true)
-                                            if (!newValue) {
-                                              setClientPagador(null)
-                                              setIsSelectedPayer(false)
-                                               // Obtener índices de facturas en modo creación
-                                                
-                                           
-                                                
-                                              // 1. Primero agrupamos las facturas por idCuentaInversionista
+                                           if (!newValue) {
+                                              setClientPagador(null);
+                                              setIsSelectedPayer(false);
+                                              
+                                              // 1. Identificar facturas no creadas por cuenta de inversionista
                                               const facturasPorCuenta = values.facturas.reduce((acc, factura, idx) => {
-                                                if (indicesEnModoCreacion.includes(idx)) return acc;
+                                                const esCreada = orchestDisabled.find(item => item.indice === idx)?.status === true || factura.is_creada;
+                                                if (esCreada) return acc;
+                                                
                                                 const cuentaId = factura.idCuentaInversionista;
                                                 if (!acc[cuentaId]) {
                                                   acc[cuentaId] = [];
                                                 }
-                                                acc[cuentaId].push(factura);
-                                                return acc; 
+                                                acc[cuentaId].push({ factura, index: idx });
+                                                return acc;
                                               }, {});
-                                              
-                                              
-                                              
-                                              // 2. Para cada grupo de facturas con misma cuenta, calculamos el total a restituir
-                                              Object.entries(facturasPorCuenta).forEach(([cuentaId, facturas]) => {
-                                                if (facturas.length > 1) { // Solo si hay más de una factura para esta cuenta
-                                                  const totalRestituir = facturas.reduce(
-                                                    (sum, f) => sum + f.gastoMantenimiento + f.presentValueInvestor , 
+
+                                              // 2. Calcular totales por cuenta para facturas no creadas
+                                              Object.entries(facturasPorCuenta).forEach(([cuentaId, facturasConIdx]) => {
+                                                if (facturasConIdx.length > 1) {
+                                                  const totalRestituir = facturasConIdx.reduce(
+                                                    (sum, { factura }) => sum + factura.gastoMantenimiento + factura.presentValueInvestor, 
                                                     0
                                                   );
-                                           
-                                            
-                                                  // 3. Actualizamos el monto disponible para todas las facturas de esta cuenta
-                                                  values.facturas.forEach((f, index) => {
-                                                    if (!indicesEnModoCreacion.includes(index) && f.idCuentaInversionista === cuentaId) {
-                                                      setFieldValue(`facturas[${index}].montoDisponibleCuenta`, 
-                                                        f.montoDisponibleInfo 
-                                                      );
-                                                    }
+                                                  
+                                                  // Actualizar montos disponibles manteniendo posiciones
+                                                  facturasConIdx.forEach(({ index }) => {
+                                                    setFieldValue(
+                                                      `facturas[${index}].montoDisponibleCuenta`, 
+                                                      values.facturas[index].montoDisponibleInfo
+                                                    );
                                                   });
                                                 }
                                               });
-                                            
-                                              // 4. Resetear todas las facturas manteniendo campos del inversionista
-                                              setFieldValue('facturas', values.facturas.map(f => ({
-                                                // Reset general
-                                                ...Object.fromEntries(
-                                                  Object.keys(f)
-                                                    .filter(key => ![
-                                                      'nombreInversionista', 
-                                                      'numbercuentaInversionista',
-                                                      'cuentaInversionista', 
-                                                      'idCuentaInversionista',
-                                                      'investorBroker', 
-                                                      'investorBrokerName',
-                                                      'montoDisponibleCuenta', 
-                                                      'montoDisponibleInfo'
-                                                    ].includes(key))
-                                                    .map(key => [key, 
-                                                      typeof f[key] === 'number' ? 0 : 
-                                                      key.includes('Date') || key.includes('fecha') ? new Date().toISOString().substring(0, 10) : 
-                                                      ''
-                                                    ])
-                                                ),
-                                                // Mantener campos del inversionista
-                                                nombreInversionista: f.nombreInversionista || '',
-                                                numbercuentaInversionista: f.numbercuentaInversionista || '',
-                                                cuentaInversionista: f.cuentaInversionista || '',
-                                                idCuentaInversionista: f.idCuentaInversionista || '',
-                                                investorBroker: f.investorBroker || "",
-                                                investorBrokerName: f.investorBrokerName || "",
-                                                // Los montos disponibles ya fueron actualizados en el paso 3
-                                                montoDisponibleCuenta:  f.montoDisponibleInfo || 0,
-                                                montoDisponibleInfo: f.montoDisponibleInfo || 0
-                                              })));
-                                            
-                                              // 5. Limpiar campos adicionales
+
+                                              // 3. Resetear solo facturas no creadas manteniendo posición y orden
+                                              const nuevasFacturas = values.facturas.map((f, index) => {
+                                                const esCreada = orchestDisabled.find(item => item.indice === index)?.status === true || f.is_creada;
+                                                
+                                                if (esCreada) {
+                                                  return f; // Mantener factura creada intacta en su posición
+                                                }
+                                                
+                                                // Resetear factura no creada manteniendo posición
+                                                return {
+                                                  ...Object.fromEntries(
+                                                    Object.keys(f)
+                                                      .filter(key => ![
+                                                        'nombreInversionista', 
+                                                        'numbercuentaInversionista',
+                                                        'cuentaInversionista', 
+                                                        'idCuentaInversionista',
+                                                        'investorBroker', 
+                                                        'investorBrokerName',
+                                                        'montoDisponibleCuenta', 
+                                                        'montoDisponibleInfo'
+                                                      ].includes(key))
+                                                      .map(key => [key, 
+                                                        typeof f[key] === 'number' ? 0 : 
+                                                        key.includes('Date') || key.includes('fecha') ? new Date().toISOString().substring(0, 10) : 
+                                                        ''
+                                                      ])
+                                                  ),
+                                                  // Mantener campos del inversionista
+                                                  nombreInversionista: f.nombreInversionista || '',
+                                                  numbercuentaInversionista: f.numbercuentaInversionista || '',
+                                                  cuentaInversionista: f.cuentaInversionista || '',
+                                                  idCuentaInversionista: f.idCuentaInversionista || '',
+                                                  investorBroker: f.investorBroker || "",
+                                                  investorBrokerName: f.investorBrokerName || "",
+                                                  montoDisponibleCuenta: f.montoDisponibleInfo || 0,
+                                                  montoDisponibleInfo: f.montoDisponibleInfo || 0,
+                                                  is_creada: false
+                                                };
+                                              });
+
+                                              setFieldValue('facturas', nuevasFacturas);
                                               setFieldValue('nombrePagador', '');
                                               setFieldValue('filtroEmitterPagador.payer', '');
                                               setFieldValue('takedBills', []);
-                                            
+                                              
                                               return;
                                             }
 
-                                  // Caso 2: Hay un pagador seleccionado y se selecciona uno diferente
-                                    if (values.nombrePagador && newValue.id !== values.nombrePagador) {
-                                      const confirmChange = window.confirm(
-                                        "¿Está seguro de cambiar de pagador? Esto reseteará las facturas seleccionadas (no las creadas)."
-                                      );
-                                      
-                                      if (!confirmChange) return;
-                                      
-                                      // 1. Filtrar facturas: mantener solo las creadas (OrchestDisabled.status === true)
-                                      const facturasAConservar = values.facturas.filter((_, index) => {
-                                        const orchestItem = OrchestDisabled.find(item => item.indice === index);
-                                        return orchestItem?.status === true; // Conservar solo las creadas
-                                      });
+                                            // Caso 2: Cambio de pagador
+                                            if (values.nombrePagador && newValue.id !== values.nombrePagador) {
+                                              const confirmChange = window.confirm(
+                                                "¿Está seguro de cambiar de pagador? Esto reseteará las facturas no creadas."
+                                              );
+                                              
+                                              if (!confirmChange) return;
+                                              
+                                              // 1. Resetear solo facturas no creadas manteniendo posición y orden
+                                              const nuevasFacturas = values.facturas.map((f, index) => {
+                                                const esCreada = orchestDisabled.find(item => item.indice === index)?.status === true || f.is_creada;
+                                                
+                                                if (esCreada) {
+                                                  return f; // Mantener factura creada intacta en su posición
+                                                }
+                                                
+                                                // Resetear factura no creada manteniendo posición
+                                                return {
+                                                  ...Object.fromEntries(
+                                                    Object.keys(f)
+                                                      .filter(key => ![
+                                                        'nombreInversionista', 
+                                                        'numbercuentaInversionista',
+                                                        'cuentaInversionista', 
+                                                        'idCuentaInversionista',
+                                                        'investorBroker', 
+                                                        'investorBrokerName',
+                                                        'montoDisponibleCuenta', 
+                                                        'montoDisponibleInfo'
+                                                      ].includes(key))
+                                                      .map(key => [key, 
+                                                        typeof f[key] === 'number' ? 0 : 
+                                                        key.includes('Date') || key.includes('fecha') ? new Date().toISOString().substring(0, 10) : 
+                                                        ''
+                                                      ])
+                                                  ),
+                                                  // Mantener campos del inversionista
+                                                  nombreInversionista: f.nombreInversionista || '',
+                                                  numbercuentaInversionista: f.numbercuentaInversionista || '',
+                                                  cuentaInversionista: f.cuentaInversionista || '',
+                                                  idCuentaInversionista: f.idCuentaInversionista || '',
+                                                  investorBroker: f.investorBroker || "",
+                                                  investorBrokerName: f.investorBrokerName || "",
+                                                  montoDisponibleCuenta: f.montoDisponibleInfo || 0,
+                                                  montoDisponibleInfo: f.montoDisponibleInfo || 0,
+                                                  is_creada: false
+                                                };
+                                              });
 
-                                      // 2. Si no hay facturas creadas, agregar una vacía (como en tu código original)
-                                      const nuevasFacturas = facturasAConservar.length > 0 
-                                        ? facturasAConservar
-                                        : [{
-                                            fechaEmision: new Date().toISOString().substring(0, 10),
-                                            expirationDate: '',
-                                            valorFuturo: 0,
-                                            presentValueInvestor: 0,
-                                            gastoMantenimiento: 0,
-                                            is_creada: false,
-                                            ...(values.facturas[0] ? {
-                                              nombreInversionista: values.facturas[0].nombreInversionista || '',
-                                              numbercuentaInversionista: values.facturas[0].numbercuentaInversionista || '',
-                                              cuentaInversionista: values.facturas[0].cuentaInversionista || '',
-                                              idCuentaInversionista: values.facturas[0].idCuentaInversionista || '',
-                                              investorBroker: values.facturas[0].investorBroker || "",
-                                              investorBrokerName: values.facturas[0].investorBrokerName || "",
-                                              montoDisponibleCuenta: values.facturas[0].montoDisponibleInfo || 0,
-                                              montoDisponibleInfo: values.facturas[0].montoDisponibleInfo || 0
-                                            } : {})
-                                          }];
+                                              // 2. Agregar factura vacía si no hay ninguna
+                                              if (nuevasFacturas.length === 0) {
+                                                nuevasFacturas.push({
+                                                  fechaEmision: new Date().toISOString().substring(0, 10),
+                                                  expirationDate: '',
+                                                  valorFuturo: 0,
+                                                  presentValueInvestor: 0,
+                                                  gastoMantenimiento: 0,
+                                                  is_creada: false,
+                                                  ...(values.facturas[0] ? {
+                                                    nombreInversionista: values.facturas[0].nombreInversionista || '',
+                                                    numbercuentaInversionista: values.facturas[0].numbercuentaInversionista || '',
+                                                    cuentaInversionista: values.facturas[0].cuentaInversionista || '',
+                                                    idCuentaInversionista: values.facturas[0].idCuentaInversionista || '',
+                                                    investorBroker: values.facturas[0].investorBroker || "",
+                                                    investorBrokerName: values.facturas[0].investorBrokerName || "",
+                                                    montoDisponibleCuenta: values.facturas[0].montoDisponibleInfo || 0,
+                                                    montoDisponibleInfo: values.facturas[0].montoDisponibleInfo || 0
+                                                  } : {})
+                                                });
+                                              }
 
-                                      setFieldValue('facturas', nuevasFacturas);
-                                      
-                                      // 3. Resetear el estado de creación solo si no hay facturas creadas
-                                      if (facturasAConservar.length === 0) {
-                                        setIsCreatingBill(false);
-                                      }
-                                      
-                                      // 4. Establecer el nuevo pagador
-                                      setFieldValue('nombrePagador', newValue.id);
-                                      setClientPagador(newValue.id);
-                                      setFieldValue('filtroEmitterPagador.payer', newValue.data?.document_number || '');
-                                      
-                                      // 5. Cargar las nuevas facturas del pagador seleccionado
-                                      if (newValue.data?.document_number && dataBills?.data) {
-                                        const filteredBills = showAllPayers 
-                                          ? dataBills.data.filter(f => Number(f.currentBalance) > 0)
-                                          : dataBills.data.filter(f => 
-                                              f.payerId === newValue.data.document_number && 
-                                              Number(f.currentBalance) > 0
-                                            );
-                                        
-                                        setFieldValue('takedBills', filteredBills);
-                                      } else {
-                                        setFieldValue('takedBills', []);
-                                      }
-                                      
-                                      return; // Salir temprano para evitar ejecutar el resto del código
-                                    }
+                                              setFieldValue('facturas', nuevasFacturas);
+                                              
+                                              // 3. Establecer nuevo pagador
+                                              setFieldValue('nombrePagador', newValue.id);
+                                              setClientPagador(newValue.id);
+                                              setFieldValue('filtroEmitterPagador.payer', newValue.data?.document_number || '');
+                                              
+                                              // 4. Cargar facturas del nuevo pagador
+                                              if (newValue.data?.document_number && dataBills?.data) {
+                                                const filteredBills = showAllPayers 
+                                                  ? dataBills.data.filter(f => Number(f.currentBalance) > 0)
+                                                  : dataBills.data.filter(f => 
+                                                      f.payerId === newValue.data.document_number && 
+                                                      Number(f.currentBalance) > 0
+                                                    );
+                                                
+                                                setFieldValue('takedBills', filteredBills);
+                                              } else {
+                                                setFieldValue('takedBills', []);
+                                              }
+                                              
+                                              return;
+                                            }
                                               // Limpiar cuando:
                                               // 1. Se selecciona un pagador diferente al actual
                                               // 2. Se borra manualmente (newValue === null)
@@ -3127,7 +3160,7 @@ const [billExists, setBillExists] = useState(false);
                                                    
 
                                                     const tasaDescuento = await cargarTasaDescuento(newValue?.data.id);
-                                                       
+                                                    console.log(tasaDescuento)
                                                     const discountRate = parseFloat(tasaDescuento?.data?.discount_rate) || 0; // Convierte a número o usa 0 si es inválido
                                                       // setFieldValue(`investorTax`, (discountRate * 0.58).toFixed(2));
                                                     
@@ -3750,8 +3783,8 @@ const [billExists, setBillExists] = useState(false);
                                                 // Calcular nuevo valor nominal
                                                 const valorFuturo = factura.valorFuturo || 0;
                                                 const nuevoValorNominal = valorFuturo * ((value / 100));
-                                                setFieldValue(`facturas[${index}].valorNominal`, nuevoValorNominal);
-                                                setFieldValue(`facturas[${index}].payedAmount`, nuevoValorNominal);
+                                               setFieldValue(`facturas[${index}].valorNominal`, Number(nuevoValorNominal.toFixed(2)));
+                                                setFieldValue(`facturas[${index}].valorNominal`, Number(nuevoValorNominal.toFixed(2)));
                                                 setFieldValue(`facturas[${index}].valorNominalManual`, false);
                                                 
                                                 // Recalcular valores presentes si hay fecha de operación

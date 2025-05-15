@@ -277,7 +277,7 @@ function Row(props) {
 
                             {/* Botón Detalles Operación */}
                             <Link 
-                              href={`/operations/manage?preview&id=${row.id}`}
+                              href={`/pre-operations2beta/detailPreOp?id=${row.id}`}
                               passHref
                               legacyBehavior
                             >
@@ -711,7 +711,7 @@ export const OperationsComponents = ({
               <TableCell sx={tableHeaderCellSx} width="5%"></TableCell>
               <TableCell sx={tableHeaderCellSx} width="20%">Emisor</TableCell>
               <TableCell sx={tableHeaderCellSx} width="10%" align="right"># OP</TableCell>
-              <TableCell sx={tableHeaderCellSx} width="15%" align="right">Creado el</TableCell>
+              <TableCell sx={tableHeaderCellSx} width="15%" align="right">Fecha Op</TableCell>
               <TableCell sx={tableHeaderCellSx} width="15%" align="right">Tipo</TableCell>
               <TableCell sx={tableHeaderCellSx} width="10%" align="right">Facturas</TableCell>
               <TableCell sx={tableHeaderCellSx} width="25%" align="right">Inversionista</TableCell>
