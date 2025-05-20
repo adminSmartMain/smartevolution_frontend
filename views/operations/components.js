@@ -1,5 +1,5 @@
 import {useEffect, useState } from "react";
-
+import { useRouter } from 'next/router';
 import Link from "next/link";
 import CircularProgress from '@mui/material/CircularProgress';
 import { SearchOutlined } from "@mui/icons-material";
@@ -270,7 +270,7 @@ export const OperationsComponents = ({
   
   const [selectedData, setSelectedData] = useState(calcs);
 
-
+const router = useRouter();
   const handleClearSearch = () => {
     const newFilters = {
       ...filtersHandlers.value,  // Mantiene todos los filtros actuales
@@ -419,44 +419,33 @@ export const OperationsComponents = ({
         gap: "8px",
         width: "100%"
       }}>
-        {/* Botón Registrar Recaudo */}
-        <Link
-                  href={
-                    params.row.status === 4
-                      ? "#"
-                      : `/administration/new-receipt?id=${params.row.id}`
-                  }
-                  passHref
-                  legacyBehavior
-                >
-                  <Tooltip 
-                    title={params.row.status === 4 ? "Acción no disponible" : "Registrar recaudo"} 
-                    arrow
-                    placement="top"
-                  >
-                    <Typography
-                      fontFamily="icomoon"
-                      fontSize="1.9rem"
-                      color={params.row.status === 4 ? "#CCCCCC" : "#488B8F"}
-                      sx={{
-                        cursor: params.row.status === 4 ? "not-allowed" : "pointer",
-                        "&:hover": {
-                          backgroundColor: params.row.status === 4 ? "transparent" : "#B5D1C980",
-                          borderRadius: "5px"
-                        },
-                        padding: "0 4px",
-                        pointerEvents: params.row.status === 4 ? "none" : "auto"
-                      }}
-                      onClick={e => {
-                        if (params.row.status === 4) {
-                          e.preventDefault();
-                        }
-                      }}
-                    >
-                      &#xe904;
-                    </Typography>
-                  </Tooltip>
-                </Link>
+        {/* Versión alternativa usando useRouter */}
+<Tooltip 
+  title={params.row.status === 4 ? "Acción no disponible" : "Registrar recaudo"} 
+  arrow
+  placement="top"
+>
+  <Typography
+    fontFamily="icomoon"
+    fontSize="1.9rem"
+    color={params.row.status === 4 ? "#CCCCCC" : "#488B8F"}
+    sx={{
+      cursor: params.row.status === 4 ? "not-allowed" : "pointer",
+      "&:hover": {
+        backgroundColor: params.row.status === 4 ? "transparent" : "#B5D1C980",
+        borderRadius: "5px"
+      },
+      padding: "0 4px"
+    }}
+    onClick={() => {
+      if (params.row.status !== 4) {
+        router.push(`/administration/new-receipt?id=${params.row.id}`);
+      }
+    }}
+  >
+    &#xe904;
+  </Typography>
+</Tooltip>
 
         {/* Botón Detalles Operación */}
         <Link 
@@ -640,7 +629,7 @@ export const OperationsComponents = ({
   variant="outlined"
   id="searchBar"
   size="small"
-  placeholder="Buscar por Inversionista..."
+  placeholder="Buscar por Emisor o Inversionista..."
   value={search}
   onChange={(evt) => handleTextFieldChange(evt, "investor")}
   onKeyPress={(event) => {

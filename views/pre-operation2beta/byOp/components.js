@@ -1,5 +1,6 @@
 import { useEffect, useState} from "react";
 import { ToastContainer } from "react-toastify";
+import { useRouter } from 'next/router';
 import Link from "next/link";
 import { SearchOutlined } from "@mui/icons-material";
 import { Box, Button, Fade, FormControl, Grid, IconButton, InputLabel, MenuItem, Select, TextField, Typography, Menu, InputAdornment, Paper } from "@mui/material";
@@ -123,7 +124,7 @@ function Row(props) {
   const { row } = props;
   const [open, setOpen] = React.useState(false);
   const [openDelete, setOpenDelete] = React.useState([false, null]);
-
+  console.log(row)
   const handleOpenDelete = (id) => setOpenDelete([true, id]);
   const handleCloseDelete = () => setOpenDelete([false, null]);
   const getStatusBadge = (status) => {
@@ -236,75 +237,76 @@ function Row(props) {
                             gap: "8px",
                             width: "100%"
                           }}>
-                            {/* Botón Registrar Recaudo */}
-                            <Link
-                                      href={
-                                        row.status === 4
-                                          ? "#"
-                                          : `/administration/new-receipt?id=${row.id}`
-                                      }
-                                      passHref
-                                      legacyBehavior
-                                    >
-                                      <Tooltip 
-                                        title={row.status === 4 ? "Acción no disponible" : "Registrar recaudo"} 
-                                        arrow
-                                        placement="top"
-                                      >
-                                        <Typography
-                                          fontFamily="icomoon"
-                                          fontSize="1.9rem"
-                                          color={row.status === 4 ? "#CCCCCC" : "#488B8F"}
-                                          sx={{
-                                            cursor: row.status === 4 ? "not-allowed" : "pointer",
-                                            "&:hover": {
-                                              backgroundColor: row.status === 4 ? "transparent" : "#B5D1C980",
-                                              borderRadius: "5px"
-                                            },
-                                            padding: "0 4px",
-                                            pointerEvents: row.status === 4 ? "none" : "auto"
-                                          }}
-                                          onClick={e => {
-                                            if (row.status === 4) {
-                                              e.preventDefault();
-                                            }
-                                          }}
-                                        >
-                                          &#xe904;
-                                        </Typography>
-                                      </Tooltip>
-                                    </Link>
-
-                            {/* Botón Detalles Operación */}
-                            <Link 
-                              href={`/pre-operations2beta/detailPreOp?id=${row.id}`}
-                              passHref
-                              legacyBehavior
-                            >
-                              <Tooltip 
-                                title="Detalles operación" 
-                                arrow
-                                placement="top"
+                           {/* Botón Registrar Recaudo */}
+                          <Tooltip 
+                            title={historyRow.status === 4 ? "Acción no disponible" : "Registrar recaudo"} 
+                            arrow
+                            placement="top"
+                          >
+                            <div style={{ display: 'inline-block' }}>
+                              <Link
+                                href={historyRow.status === 4 ? "#" : `/administration/new-receipt?id=${row.id}`}
+                                passHref
+                                legacyBehavior
                               >
-                                <Typography
-                                  fontFamily="icomoon"
-                                  fontSize="1.9rem"
-                                  color="#999999"
-                                  sx={{
-                                    cursor: "pointer",
-                                    "&:hover": {
-                                      backgroundColor: "#B5D1C980",
-                                      color: "#488B8F",
-                                      borderRadius: "5px"
-                                    },
-                                    padding: "0 4px"
-                                  }}
-                                >
-                                  &#xe922;
-                                </Typography>
-                              </Tooltip>
-                            </Link>
-                          </div>
+                                <a style={{ textDecoration: 'none' }}>
+                                  <Typography
+                                    fontFamily="icomoon"
+                                    fontSize="1.9rem"
+                                    color={historyRow.status === 4 ? "#CCCCCC" : "#488B8F"}
+                                    sx={{
+                                      cursor: historyRow.status === 4 ? "not-allowed" : "pointer",
+                                      "&:hover": {
+                                        backgroundColor: historyRow.status === 4 ? "transparent" : "#B5D1C980",
+                                        borderRadius: "5px"
+                                      },
+                                      padding: "0 4px",
+                                      display: 'inline-block'
+                                    }}
+                                    onClick={e => historyRow.status === 4 && e.preventDefault()}
+                                  >
+                                    &#xe904;
+                                  </Typography>
+                                </a>
+                              </Link>
+                            </div>
+                          </Tooltip>
+
+                          {/* Botón Detalles Operación */}
+                          <Tooltip 
+                            title="Detalles operación" 
+                            arrow
+                            placement="top"
+                          >
+                            <div style={{ display: 'inline-block', marginLeft: '8px' }}>
+                              <Link 
+                                href={`/pre-operations2beta/detailPreOp?id=${row.id}`}
+                                passHref
+                                legacyBehavior
+                              >
+                                <a style={{ textDecoration: 'none' }}>
+                                  <Typography
+                                    fontFamily="icomoon"
+                                    fontSize="1.9rem"
+                                    color="#999999"
+                                    sx={{
+                                      cursor: "pointer",
+                                      "&:hover": {
+                                        backgroundColor: "#B5D1C980",
+                                        color: "#488B8F",
+                                        borderRadius: "5px"
+                                      },
+                                      padding: "0 4px",
+                                      display: 'inline-block'
+                                    }}
+                                  >
+                                    &#xe922;
+                                  </Typography>
+                                </a>
+                              </Link>
+                            </div>
+                          </Tooltip>
+                                                    </div>
                           </Box>
                         </TableCell>
                       </TableRow>
@@ -390,6 +392,7 @@ export const OperationsComponents = ({
   // Usa useRef para rastrear si es una actualización inicial
 
 
+const router = useRouter();
 
 
   const openMenuCSV = Boolean(anchorElCSV);

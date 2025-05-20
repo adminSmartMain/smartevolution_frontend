@@ -453,11 +453,12 @@ const handleCloseMenu = () => {
             ],
           }}
         >
-          <IconButton onClick={() => handleOpen(id)}>
+        
             <Typography
               fontSize="1.9rem"
               color="#488B8F"
               borderRadius="5px"
+              onClick={() => handleOpen(id)}
               sx={{
                 color: "#488B8F",
                 cursor: 'pointer',
@@ -481,7 +482,7 @@ const handleCloseMenu = () => {
 
               </Typography>
             
-          </IconButton>
+          
         </CustomTooltip></>
       
     );
@@ -707,8 +708,8 @@ const handleCloseMenu = () => {
       // if (!params.value) return '';
       // Extrae directamente las partes de la fecha ISO (evita conversión local)
      //  const [year, month, day] = params.value.split('T')[0].split('-');
-     //  return `${day}/${month}/${year}`; // Formato dd/mm/YYYY
-    // }},
+    //  return `${day}/${month}/${year}`; // Formato dd/mm/YYYY
+    //}},
     { field: "opDate", headerName: "Fecha Op", width: 93,valueFormatter: (params) => {
       if (!params.value) return '';
       const [year, month, day] = params.value.split('T')[0].split('-');
@@ -977,7 +978,7 @@ const handleCloseMenu = () => {
   variant="outlined"
   id="searchBar"
   size="small"
-  placeholder="Buscar por Inversionista..."
+  placeholder="Buscar por Emisor o Inversionista..."
   value={search}
   onChange={(evt) => handleTextFieldChange(evt, "investor")}
   onKeyPress={(event) => {
