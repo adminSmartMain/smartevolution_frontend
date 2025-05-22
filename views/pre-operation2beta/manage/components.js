@@ -32,6 +32,7 @@ import { differenceInDays, startOfDay } from "date-fns";
 
 import CheckIcon from '@mui/icons-material/Check';
 import ErrorIcon from '@mui/icons-material/Error'; // o cualquier otro ícono de error
+import { is } from "date-fns/locale";
 export const ManageOperationC = ({
   opId,
   emitters,
@@ -299,41 +300,7 @@ const cargarTasaDescuento= async (emisor) => {
   }
 };
 
-
-const cargarOperationFromInvestor = async (investor) => {
-  if (!investor) return null; // Retorna null si no hay inversionista
-
-  try {
-    // Parámetros para la consulta
-    const params = {
-      investor: investor, // Inversionista proporcionado
-      status: 0, // Estado de la operación
-    };
-
-    // Realizar la consulta a la API
-    const response = await getOperationByInvestorFetch(params);
-
-    // Verificar si la respuesta es válida y es un array
-    if (!Array.isArray(response.data)) {
-      console.error("La respuesta no es un array:", response.data);
-      return null;
-    }
-
-    // Extraer y sumar 'presentValueInvestor' y 'GM' de cada objeto
-    const total = response.data.reduce((sum, operation) => {
-      const presentValueInvestor = parseFloat(operation.presentValueInvestor) || 0;
-      const gm = parseFloat(operation.GM) || 0;
-      return sum + presentValueInvestor + gm;
-    }, 0);
-
-    // Devuelve la suma total
-    return total;
-  } catch (error) {
-    console.error("Error al cargar las operaciones del inversionista:", error);
-    return null; // Retorna null en caso de error
-  }
-};
-
+ 
 
 const cargarFraccionFactura= async (factura) => {
   if (!factura) return null; // Retorna null si no hay emisor
@@ -480,8 +447,25 @@ const debouncedCheckBill = debounce(async (billNumber, callback) => {
 // Dentro de tu componente
 const [billExists, setBillExists] = useState(false);
 
+const [isCreatingOp, setIsCreatingOp] = useState(false);
+console.log(isCreatingOp)
+ useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (isCreatingOp) {
+        e.preventDefault();
+        // Para navegadores más antiguos
+        e.returnValue = 'Tienes cambios no guardados. ¿Estás seguro de que quieres salir?';
+        // Para navegadores modernos
+        return 'Tienes cambios no guardados. ¿Estás seguro de que quieres salir?';
+      }
+    };
 
-  
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [isCreatingOp]);
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={esLocale}>
       {/* Para mostrar los toast */}
@@ -519,26 +503,9 @@ const [billExists, setBillExists] = useState(false);
         >
           {/* {({ values, setFieldValue, touched, errors, handleBlur }) => ( */}
           {({ values, setFieldValue, touched, errors, handleBlur,setTouched ,setFieldTouched,setFieldError,formikBag,dirty, isSubmitting }) => {
-
-
-            // 🔴 Debug: muestra el estado de dirty en consola
-            useEffect(() => {
-
-            }, [dirty]);
-
-         // 🔴 Efecto para beforeunload
-         useEffect(() => {
-          const handleBeforeUnload = (e) => {
-            if (dirty && !isSubmitting) {
-              e.preventDefault();
-              e.returnValue = '¿Estás seguro que deseas salir? Los cambios no guardados se perderán.';
-              return e.returnValue;
-            }
-          };
-
-          window.addEventListener('beforeunload', handleBeforeUnload);
-          return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-        }, [dirty, isSubmitting]);
+            setIsCreatingOp(true)
+            
+  
 
           return (
             <Form>
@@ -1488,7 +1455,7 @@ const [billExists, setBillExists] = useState(false);
                                       }}
                                       expanded={expanded === index} 
                                       onChange={handleChange(index)}>
-                                        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                                        <AccordionSummary  expandIcon={<ExpandMoreIcon />}>
                                         <Grid container alignItems="center" spacing={1} style={{ width: '100%' }}>
                                         {/* Número de factura de la cabecera del acordeon */}
                                         <Grid item xs={10} container alignItems="center" wrap="nowrap" spacing={1}>
@@ -1602,7 +1569,7 @@ const [billExists, setBillExists] = useState(false);
                                               </IconButton>
                                             </div>
                                           </Grid>
-                                                                              </Grid>
+                                      </Grid>
                                       {/* Botón de eliminar */}
                                       <Grid item xs={2} container justifyContent="flex-end">
                                         
@@ -1718,1198 +1685,1148 @@ const [billExists, setBillExists] = useState(false);
                                     </Grid>
                                       </Grid>
                                         </AccordionSummary>
-                                                                                      <AccordionDetails>
-                                                                                        <Grid container spacing={3}>
-                                                                                          <Grid item xs={12} md={1.9}>
+                                      <AccordionDetails>
+                                
+                                             <Grid container item xs={12} spacing={2} sx={{ display: 'flex', alignItems: 'stretch' }}>
+
+                                               <Grid container item xs={12} spacing={2}>
+
+                                                <Grid container spacing={2} sx={{ margin: 0, width: '100%' }}>
+<Grid xs={12} md={2} item>
 
 
-                                                                                          {(orchestDisabled.find(item => item.indice === index)?.status) ? (
-                                                                                            <Box>
-
-                                                                                                <TextField
-                                                                                                  id="codigoFactura"
-                                                                                                  label="Código Factura *"
-                                                                                                  fullWidth
-                                                                                                  value={values.facturas[index]?.billId || ''}
-                                                                                                  error={touched.facturas?.[index]?.billId && Boolean(errors.facturas?.[index]?.billId)}
-                                                                                                  helperText={touched.facturas?.[index]?.billId && errors.facturas?.[index]?.billId}
-                                                                                                  InputProps={{
-                                                                                                    disableUnderline: true,
-                                                                                                    sx: { marginTop: "0px" }
-                                                                                                  }}
-                                                                                                
-                                                                                            
-                                                                                                
-                                                                                                  onChange={async (event) => {
-                                                                                                  const newValue = event.target.value
-                                                                                                  const handleBillChange = async (event, index) => {
-                                                                                                    const newValue = event.target.value;
-                                                                                                    
-                                                                                                    // Actualización local inmediata
-                                                                                                    const updatedFacturas = [...values.facturas];
-                                                                                                    updatedFacturas[index] = { ...updatedFacturas[index], billId: newValue };
-                                                                                                    console.log(updatedFacturas)
-                                                                                                    setFieldValue(`facturas[${index}].is_creada`, true);
-                                                                                                    setFieldValue(`facturas[${index}]`, updatedFacturas[index]);
-                                                                                                    
-                                                                                                    // Validación con debounce (solo si tiene longitud válida)
-                                                                                                    if (newValue.length > 3) { // Ajusta este mínimo según necesites
-                                                                                                      debouncedCheckBill(newValue, (exists) => {
-                                                                                                        setBillExists(exists);
-                                                                                                        if (exists) {
-                                                                                                          toast.error(`La factura ${newValue} ya existe`);
-                                                                                                          // Opcional: Limpiar los campos si la factura existe
-                                                                                                          setFieldValue(`facturas[${index}].billId`, '');
-                                                                                                          setFieldValue(`facturas[${index}].billCode`, '');
-                                                                                                          setFieldValue(`facturas[${index}].factura`, '');
-                                                                                                        }
-                                                                                                      });
-                                                                                                    }
-                                                                                                  };
-                                                                                                  handleBillChange(event, index)
-                                                                                                  // Primero actualiza el valor en el formulario para que el usuario pueda escribir
-                                                                                                  setFieldValue(`facturas[${index}].billId`, newValue);
-                                                                                                  setFieldValue(`facturas[${index}].billCode`, newValue);
-                                                                                                  setFieldValue(`facturas[${index}].factura`, newValue);
-                                                                                                
-
-                                                                                                  /////////
-                                                                                                  if (!newValue) {
-                                                                                            
-                                                                                                    // 1. Obtener el billId de la factura que se está deseleccionando
-                                                                                                    const billIdDeseleccionada = factura.billId;
-                                                                                                    
-                                                                                                
-                                                                                                    if(values.facturas[index].is_creada===true){
-                                                                                                      return
-                                                                          
-                                                                                                    }else {
-                                                                                                      setFieldValue(`facturas[${index}].is_creada`,false)
-                                                                                                    }
-                                                                                                    // 4. Buscar todas las facturas que comparten el mismo billId (incluyendo la actual)
-                                                                                                    const facturasCompartidas = values.facturas.filter(
-                                                                                                      f => f.billId === billIdDeseleccionada
-                                                                                                    );
-                                                                                                  
-                                                                                                    // 5. Calcular el saldoDisponible original de la factura
-                                                                                                    const facturaOriginal = dataBills?.data.find(f => f.billId === billIdDeseleccionada);
-                                                                                                    const saldoOriginal = facturaOriginal?.currentBalance || 0;
-                                                                                                  
-                                                                                                    // 6. Calcular el valorFuturo total actual de todas las facturas compartidas (excluyendo la que se deselecciona)
-                                                                                                    const valorFuturoActual = facturasCompartidas
-                                                                                                      .filter((f, i) => i !== index) // Excluir la factura que se está deseleccionando
-                                                                                                      .reduce((sum, f) => sum + (f.valorFuturo), 0);
-                                                                                                  
-                                                                                                    // 7. Calcular el nuevo saldoDisponible global para esta factura
-                                                                                                    const nuevoSaldoGlobal = saldoOriginal - valorFuturoActual;
-                                                                                                  
-                                                                                                    // 8. Actualizar el saldoDisponible en TODAS las facturas compartidas
-                                                                                                    values.facturas.forEach((f, i) => {
-                                                                                                      if (f.billId === billIdDeseleccionada) {
-                                                                                                        setFieldValue(`facturas[${i}].saldoDisponible`, nuevoSaldoGlobal);
-                                                                                                        setFieldValue(`facturas[${i}].saldoDisponibleInfo`, saldoOriginal);
-                                                                                                      }
-                                                                                                    });
-                                                                                                  
-                                                                                                    // 9. Recalcular los montos disponibles para el inversionista (si aplica)
-                                                                                                    if (factura.idCuentaInversionista) {
-                                                                                                      const presentValueTotal = values.facturas
-                                                                                                        .filter(f => 
-                                                                                                          f.idCuentaInversionista === factura.idCuentaInversionista  
-                                                                                                          
-                                                                                                        )
-                                                                                                        .reduce((sum, f) => sum + f.presentValueInvestor , 0);
-                                                                                                        
-                                                                                                      const montoDisponibleActualizado = factura.montoDisponibleCuenta+ factura.presentValueInvestor+factura.gastoMantenimiento ;
-                                                                                                
-                                                                                                  
-                                                                                                      values.facturas.forEach((f, i) => {
-                                                                                                      
-                                                                                                        if (f.idCuentaInversionista=== factura.idCuentaInversionista) {
-                                                                                                      
-                                                                                                          setFieldValue(`facturas[${i}].montoDisponibleCuenta`, 
-                                                                                                            montoDisponibleActualizado
-                                                                                                          );
-                                                                                                          
-                                                                                                        }
-                                                                                                      
-                                                                                                      });
+                                          {(orchestDisabled.find(item => item.indice === index)?.status) ? (
+                                           
+                                                <TextField
+                                                  id="codigoFactura"
+                                                  label="Código Factura *"
+                                                  fullWidth
+                                                  value={values.facturas[index]?.billId || ''}
+                                                  error={touched.facturas?.[index]?.billId && Boolean(errors.facturas?.[index]?.billId)}
+                                                  helperText={touched.facturas?.[index]?.billId && errors.facturas?.[index]?.billId}
+                                                  InputProps={{
+                                                    disableUnderline: true,
+                                                    sx: { marginTop: "0px" }
+                                                  }}
                                                 
-                                                                                                      setFieldValue(`facturas[${index}].montoDisponibleCuenta`, 
-                                                                                                        montoDisponibleActualizado
-                                                                                                    );
-                                                                                                    }
-                                                                                                    setFieldValue(`facturas[${index}].saldoDisponible`, 
-                                                                                                      0
-                                                                                                  );
+                                            
                                                 
-                                                                                                    // 3. Limpiar los valores de esta factura (manteniendo los datos del inversionista)
-                                                                                                    setFieldValue(`facturas[${index}]`, {
-                                                                                                      is_creada:true,
-                                                                                                      billId: '',
-                                                                                                      factura: '',
-                                                                                                      fechaEmision: '',
-                                                                                                      valorNominal: 0,
-                                                                                                      saldoDisponible: 0,
-                                                                                                      valorFuturo: 0,
-                                                                                                      amount: 0,
-                                                                                                      payedAmount: 0,
-                                                                                                      fraccion: 1,
-                                                                                                      porcentajeDescuento: 0,
-                                                                                                      nombrePagador: '',
-                                                                                                      presentValueInvestor: 0,
-                                                                                                      presentValueSF: 0,
-                                                                                                      investorProfit: 0,
-                                                                                                      comisionSF: 0,
-                                                                                                      fechaFin:factura.fechaFin,
-                                                                                                      idCuentaInversionista:factura.idCuentaInversionista,
-                                                                                                      numbercuentaInversionista: factura.numbercuentaInversionista,
-                                                                                                      cuentaInversionista: factura.cuentaInversionista,
-                                                                                                      nombreInversionista: factura.nombreInversionista,
-                                                                                                      investorBroker: factura.investorBroker,
-                                                                                                      investorBrokerName: factura.investorBrokerName,
-                                                                                                      montoDisponibleCuenta:factura.montoDisponibleCuenta+factura.presentValueInvestor+factura.gastoMantenimiento,
-                                                                                                      montoDisponibleInfo: factura.montoDisponibleInfo,
-                                                                                                      gastoMantenimiento: 0,
-                                                                                                      operationDays: 0,
-                                                                                                      expirationDate: "",
-                                                                                                      billCode:""
-                                                                                                    });
-                                                                                                    return;
+                                                  onChange={async (event) => {
+                                                  const newValue = event.target.value
+                                                  const handleBillChange = async (event, index) => {
+                                                    const newValue = event.target.value;
+                                                    
+                                                    // Actualización local inmediata
+                                                    const updatedFacturas = [...values.facturas];
+                                                    updatedFacturas[index] = { ...updatedFacturas[index], billId: newValue };
+                                                    console.log(updatedFacturas)
+                                                    setFieldValue(`facturas[${index}].is_creada`, true);
+                                                    setFieldValue(`facturas[${index}]`, updatedFacturas[index]);
+                                                    
+                                                    // Validación con debounce (solo si tiene longitud válida)
+                                                    if (newValue.length > 3) { // Ajusta este mínimo según necesites
+                                                      debouncedCheckBill(newValue, (exists) => {
+                                                        setBillExists(exists);
+                                                        if (exists) {
+                                                          toast.error(`La factura ${newValue} ya existe`);
+                                                          // Opcional: Limpiar los campos si la factura existe
+                                                          setFieldValue(`facturas[${index}].billId`, '');
+                                                          setFieldValue(`facturas[${index}].billCode`, '');
+                                                          setFieldValue(`facturas[${index}].factura`, '');
+                                                        }
+                                                      });
+                                                    }
+                                                  };
+                                                  handleBillChange(event, index)
+                                                  // Primero actualiza el valor en el formulario para que el usuario pueda escribir
+                                                  setFieldValue(`facturas[${index}].billId`, newValue);
+                                                  setFieldValue(`facturas[${index}].billCode`, newValue);
+                                                  setFieldValue(`facturas[${index}].factura`, newValue);
                                                 
-                                                                                                    
-                                                                                                  }
-                                                                                                ///////////////////////////////////////////////////////////////////////////////////////////////////
-                                                                                                
-                                                                                                
-                                                                                                  const selectedFactura = values.facturas.find(f => f.billId === newValue);
-                                                                                              
-                                                                                                  if (!selectedFactura) return;
-                                                                                                
-                                                                                                
-                                                                                                
 
-                                                                                                  function encontrarFacturasMismoBillIdYInversionista(facturas, billId, inversionistaId) {
-                                                                                                    // Validaciones iniciales
-                                                                                                    
-                                                                                                    
-                                                                                                    if (!Array.isArray(facturas)) {
-                                                                                                      console.warn('El parámetro facturas no es un array');
-                                                                                                      return [];
-                                                                                                    }
-                                                                                                    
-                                                                                                    if (!billId || !inversionistaId) {
-                                                                                                      console.warn(billId ? 'Falta inversionistaId' : 'Falta billId');
-                                                                                                      return [];
-                                                                                                    }
-                                                                                                  
-                                                                                                    return facturas.filter(factura => {
-                                                                                                      if (!factura?.billId || !factura?.nombreInversionista) return false;
-                                                                                                      
-                                                                                                      const esMismoBillId = String(factura.billId) === String(billId);
-                                                                                                      const esMismoInversionista = String(factura.nombreInversionista) === String(inversionistaId);
-                                                                                                      
-                                                                                                  
-                                                                                                      
-                                                                                                      return esMismoBillId && esMismoInversionista;
-                                                                                                    });
-                                                                                                  }
+                                                  /////////
+                                                  if (!newValue) {
+                                            
+                                                    // 1. Obtener el billId de la factura que se está deseleccionando
+                                                    const billIdDeseleccionada = factura.billId;
+                                                    
+                                                
+                                                    if(values.facturas[index].is_creada===true){
+                                                      return
+                          
+                                                    }else {
+                                                      setFieldValue(`facturas[${index}].is_creada`,false)
+                                                    }
+                                                    // 4. Buscar todas las facturas que comparten el mismo billId (incluyendo la actual)
+                                                    const facturasCompartidas = values.facturas.filter(
+                                                      f => f.billId === billIdDeseleccionada
+                                                    );
+                                                  
+                                                    // 5. Calcular el saldoDisponible original de la factura
+                                                    const facturaOriginal = dataBills?.data.find(f => f.billId === billIdDeseleccionada);
+                                                    const saldoOriginal = facturaOriginal?.currentBalance || 0;
+                                                  
+                                                    // 6. Calcular el valorFuturo total actual de todas las facturas compartidas (excluyendo la que se deselecciona)
+                                                    const valorFuturoActual = facturasCompartidas
+                                                      .filter((f, i) => i !== index) // Excluir la factura que se está deseleccionando
+                                                      .reduce((sum, f) => sum + (f.valorFuturo), 0);
+                                                  
+                                                    // 7. Calcular el nuevo saldoDisponible global para esta factura
+                                                    const nuevoSaldoGlobal = saldoOriginal - valorFuturoActual;
+                                                  
+                                                    // 8. Actualizar el saldoDisponible en TODAS las facturas compartidas
+                                                    values.facturas.forEach((f, i) => {
+                                                      if (f.billId === billIdDeseleccionada) {
+                                                        setFieldValue(`facturas[${i}].saldoDisponible`, nuevoSaldoGlobal);
+                                                        setFieldValue(`facturas[${i}].saldoDisponibleInfo`, saldoOriginal);
+                                                      }
+                                                    });
+                                                  
+                                                    // 9. Recalcular los montos disponibles para el inversionista (si aplica)
+                                                    if (factura.idCuentaInversionista) {
+                                                      const presentValueTotal = values.facturas
+                                                        .filter(f => 
+                                                          f.idCuentaInversionista === factura.idCuentaInversionista  
+                                                          
+                                                        )
+                                                        .reduce((sum, f) => sum + f.presentValueInvestor , 0);
+                                                        
+                                                      const montoDisponibleActualizado = factura.montoDisponibleCuenta+ factura.presentValueInvestor+factura.gastoMantenimiento ;
+                                                
+                                                  
+                                                      values.facturas.forEach((f, i) => {
+                                                      
+                                                        if (f.idCuentaInversionista=== factura.idCuentaInversionista) {
+                                                      
+                                                          setFieldValue(`facturas[${i}].montoDisponibleCuenta`, 
+                                                            montoDisponibleActualizado
+                                                          );
+                                                          
+                                                        }
+                                                      
+                                                      });
 
+                                                      setFieldValue(`facturas[${index}].montoDisponibleCuenta`, 
+                                                        montoDisponibleActualizado
+                                                    );
+                                                    }
+                                                    setFieldValue(`facturas[${index}].saldoDisponible`, 
+                                                      0
+                                                  );
+
+                                                    // 3. Limpiar los valores de esta factura (manteniendo los datos del inversionista)
+                                                    setFieldValue(`facturas[${index}]`, {
+                                                      is_creada:true,
+                                                      billId: '',
+                                                      factura: '',
+                                                      fechaEmision: '',
+                                                      valorNominal: 0,
+                                                      saldoDisponible: 0,
+                                                      valorFuturo: 0,
+                                                      amount: 0,
+                                                      payedAmount: 0,
+                                                      fraccion: 1,
+                                                      porcentajeDescuento: 0,
+                                                      nombrePagador: '',
+                                                      presentValueInvestor: 0,
+                                                      presentValueSF: 0,
+                                                      investorProfit: 0,
+                                                      comisionSF: 0,
+                                                      fechaFin:factura.fechaFin,
+                                                      idCuentaInversionista:factura.idCuentaInversionista,
+                                                      numbercuentaInversionista: factura.numbercuentaInversionista,
+                                                      cuentaInversionista: factura.cuentaInversionista,
+                                                      nombreInversionista: factura.nombreInversionista,
+                                                      investorBroker: factura.investorBroker,
+                                                      investorBrokerName: factura.investorBrokerName,
+                                                      montoDisponibleCuenta:factura.montoDisponibleCuenta+factura.presentValueInvestor+factura.gastoMantenimiento,
+                                                      montoDisponibleInfo: factura.montoDisponibleInfo,
+                                                      gastoMantenimiento: 0,
+                                                      operationDays: 0,
+                                                      expirationDate: "",
+                                                      billCode:""
+                                                    });
+                                                    return;
+
+                                                    
+                                                  }
+                                                ///////////////////////////////////////////////////////////////////////////////////////////////////
+                                                
+                                                
+                                                  const selectedFactura = values.facturas.find(f => f.billId === newValue);
+                                              
+                                                  if (!selectedFactura) return;
+                                                
+                                                
+                                                
+
+                                                  function encontrarFacturasMismoBillIdYInversionista(facturas, billId, inversionistaId) {
+                                                    // Validaciones iniciales
+                                                    
+                                                    
+                                                    if (!Array.isArray(facturas)) {
+                                                      console.warn('El parámetro facturas no es un array');
+                                                      return [];
+                                                    }
+                                                    
+                                                    if (!billId || !inversionistaId) {
+                                                      console.warn(billId ? 'Falta inversionistaId' : 'Falta billId');
+                                                      return [];
+                                                    }
+                                                  
+                                                    return facturas.filter(factura => {
+                                                      if (!factura?.billId || !factura?.nombreInversionista) return false;
+                                                      
+                                                      const esMismoBillId = String(factura.billId) === String(billId);
+                                                      const esMismoInversionista = String(factura.nombreInversionista) === String(inversionistaId);
+                                                      
+                                                  
+                                                      
+                                                      return esMismoBillId && esMismoInversionista;
+                                                    });
+                                                  }
 
 
-                                                                                                  const inversionistaSeleccionado = factura.nombreInversionista// ID del inversionista seleccionado
-                                                                                                
-                                                                                                  const facturasDuplicadas = encontrarFacturasMismoBillIdYInversionista(
-                                                                                                    values.facturas, 
-                                                                                                    newValue, // la factura que estás procesando actualmente
-                                                                                                    inversionistaSeleccionado
-                                                                                                  );
-                                                
-                                                                                                
-                                                                                                  if(facturasDuplicadas?.length>=1 ){
-                                                
-                                                                                                  
-                                                                                                    // Mostrar error en el campo
-                                                                                                    setFieldTouched(`facturas[${index}].nombreInversionista`, true, false);
-                                                                                                    setFieldError(
-                                                                                                      `facturas[${index}].nombreInversionista`,
-                                                                                                      "No puede asignar inversionista a facturas con mismo Bill ID"
-                                                                                                    );
-                                                                                                    
-                                                                                                    // Mostrar toast/notificación
-                                                                                                    toast(<div style={{ display: 'flex', alignItems: 'center' }}>
-                                                                                                      <ErrorIcon style={{ marginRight: '10px', color: '#d32f2f' }} />
-                                                                                                      <span>No puede asignar el mismo inversionista a facturas agrupadas</span>
-                                                                                                    </div>, {
-                                                                                                      position: "top-right",
-                                                                                                      autoClose: 5000,
-                                                                                                      hideProgressBar: false,
-                                                                                                      closeOnClick: true,
-                                                                                                      pauseOnHover: true,
-                                                                                                      draggable: true
-                                                                                                    });
-                                                                                              
-                                                                                                    
-                                                                                                    return;
-                                                
-                                                
-                                                                                                  }
-                                                                                                  
-                                                                                                /////////////////////////////////////////////////////////////////
-                                                                                                  try {
-                                                                                                    
-                                                                                                    
-                                                
-                                                                                                      const facturaActual2 = values?.facturas[index-1];
-                                                                                                      
-                                                                                                      const billIdAnterior = facturaActual2?.billId;
-                                                                                                      const valorFuturoAnterior = facturaActual2?.valorFuturo || 0;
-                                                                                                      const nombreInversionistaAnterior = facturaActual2?.nombreInversionista;
-                                                                                                    
-                                                                                                      if(billIdAnterior  && newValue!=billIdAnterior  ){
-                                                
-                                                                                                    
-                                                
-                                                                                                      
-                                                
-                                                                                                        
-                                                                                                        
-                                                                                                      const presentValueInvestorFacturaAnterior=facturaActual2?.presentValueInvestor
-                                                                                                      const montoDisponibleFacturaAnterior=facturaActual2?.montoDisponibleCuenta
-                                                                                                      const saldoDisponibleFacturaAnterior=facturaActual2?.saldoDisponible
 
-                                                                                                      const saldoDisponibleNuevo= saldoDisponibleFacturaAnterior+valorFuturoAnterior   
-                                                                                                      const montoDisponibleNuevo =montoDisponibleFacturaAnterior+presentValueInvestorFacturaAnterior
+                                                  const inversionistaSeleccionado = factura.nombreInversionista// ID del inversionista seleccionado
                                                 
-                                                                                                        // 3. Actualizar todas las facturas con el mismo billId (excepto la actual)
-                                                                                                  values.facturas.forEach((f, i) => {
-                                                                                                    if (f.billId === billIdAnterior && i !== index) {
-                                                                                                      // Actualizar saldo disponible
-                                                                                                      setFieldValue(`facturas[${i}].saldoDisponible`, saldoDisponibleNuevo);
-                                                                                                      
-                                                                                                      setFieldValue(`facturas[${i}].montoDisponibleCuenta`, montoDisponibleNuevo);
-                                                                                                      
-                                                                                                    }
-                                                                                                  });
+                                                  const facturasDuplicadas = encontrarFacturasMismoBillIdYInversionista(
+                                                    values.facturas, 
+                                                    newValue, // la factura que estás procesando actualmente
+                                                    inversionistaSeleccionado
+                                                  );
+
                                                 
-                                                
-                                                                                                  setFieldValue(`facturas[${index}]`, {
-                                                                                                    is_creada:true,
-                                                                                                    billCode: selectedFactura.billId,
-                                                                                                    billId: selectedFactura.billId,
-                                                                                                    idCuentaInversionista: factura.idCuentaInversionista,
-                                                                                                    factura: newValue.id || newValue,
-                                                                                                    fechaEmision: selectedFactura.dateBill,
-                                                                                                    probableDate: selectedFactura.probableDate,
-                                                                                                    amount: selectedFactura.saldoDisponibleInfo,
-                                                                                                    payedAmount: selectedFactura.saldoDisponibleInfo,
-                                                                                                    numbercuentaInversionista: factura.numbercuentaInversionista,
-                                                                                                    cuentaInversionista: factura.cuentaInversionista,
-                                                                                                    nombreInversionista: factura.nombreInversionista,
-                                                                                                    investorBroker: factura.investorBroker,
-                                                                                                    investorBrokerName: factura.investorBrokerName,
-                                                                                                    saldoDisponible: 0,
-                                                                                                    saldoDisponibleInfo: selectedFactura.saldoDisponibleInfo,
-                                                                                                    montoDisponibleCuenta:montoDisponibleFinal, // Usamos el valor calculado
-                                                                                                    fraccion: fraccion,
-                                                                                                    fechaFin: factura.fechaFin,
-                                                                                                    valorNominal: valorNominalFactura,
-                                                                                                    porcentajeDescuento: Math.round((selectedFactura.saldoDisponibleInfo * 100) / selectedFactura.saldoDisponibleInfo) || 0,
-                                                                                                    expirationDate: selectedFactura.expirationDate,
-                                                                                                    valorFuturo: valorFuturoCalculado,
-                                                                                                    presentValueInvestor:valorFuturoCalculado,
-                                                                                                    presentValueSF:valorFuturoCalculado|| 0,
-                                                                                                    comisionSF,
-                                                                                                    investorProfit: investorProfit,
-                                                                                                    integrationCode: selectedFactura?.integrationCode ? selectedFactura?.integrationCode : "",
-                                                                                                    isReBuy: selectedFactura?.reBuyAvailable ?? 0,
-                                                                                                    gastoMantenimiento: 0,
-                                                                                                    operationDays: 0,
-                                                                                                    investorTax: values.investorTax,
-                                                                                                    montoDisponibleInfo: factura.montoDisponibleInfo
-                                                                                                  });
-                                                                                                  
-                                                                                                        
-                                                                                                      } 
-                                                                                                    
-                                                                                                      
-                                                                                                      
-                                                                                                
-                                                                                                      // [MANTENIDO] Cálculo de fechas mejorado
-                                                                                                      const fechaOperacion = new Date(values?.opDate);
-                                                                                                      const parseDate = (dateStr) => {
-                                                                                                        // Intenta varios formatos comunes
-                                                                                                        const parsed = new Date(dateStr);
-                                                                                                        if (!isNaN(parsed.getTime())) return parsed;
-                                                                                                        
-                                                                                                        // Si falla, intenta con parseISO
-                                                                                                        try {
-                                                                                                          const isoParsed = parseISO(dateStr);
-                                                                                                          return !isNaN(isoParsed.getTime()) ? isoParsed : new Date(NaN);
-                                                                                                        } catch {
-                                                                                                          return new Date(NaN);
-                                                                                                        }
-                                                                                                      };
+                                                  if(facturasDuplicadas?.length>=1 ){
 
-                                                                                                      const expirationDate = selectedFactura?.expirationDate 
-                                                                                                        ? parseDate(selectedFactura.expirationDate)
-                                                                                                        : new Date(NaN); // Marcamos explícitamente como inválido si no hay fecha
-
-                                                                                                  
-
-                                                                                                      let substractDays = 0;
-                                                                                                      if (!isNaN(fechaOperacion.getTime()) && !isNaN(expirationDate.getTime())) {
-                                                                                                        substractDays = differenceInDays(expirationDate, fechaOperacion);
-                                                                                      
-                                                                                                      } else {
-                                                                                                        console.error("Error: Una de las fechas no es válida.", {
-                                                                                                          opDate: values?.opDate,
-                                                                                                          expirationDate: selectedFactura?.expirationDate,
-                                                                                                          parsedOperacion: fechaOperacion,
-                                                                                                          parsedExpiration: expirationDate
-                                                                                                        });
-                                                                                                      }
-                                                                                                      
-                                                                                                                                                              
-                                                                                                      // [MANTENIDO] Lógica de fracciones
-                                                                                                      const facturaActual = selectedFactura
-                                                                                                      let fraccion = selectedFactura.fraccion+ 1 || 1;
-                                                                                                      const facturasAnteriores = values.facturas
-                                                                                                      .slice(0, index)
-                                                                                                      .filter((f) => {
-                                                                                                        // Validación para evitar errores si f es null/undefined
-                                                                                                        if (!f || !f.billId) return false;
-                                                                                                        
-                                                                                                        // Comparación segura convirtiendo a string
-                                                                                                        return String(f.billId) === String(facturaActual?.billId);
-                                                                                                      });
-                                                                                                    
-                                                                                                  
-                                                                                                      if (facturasAnteriores.length > 0) {
-                                                                                                        const fraccionMasAlta = Math.max(...facturasAnteriores.map((f) => f.fraccion || 1));
-                                                                                                        fraccion = fraccionMasAlta + 1;
-                                                                                                      }
-                                                                                                
-                                                                                                      // [MANTENIDO] Cálculo de saldo disponible
-                                                                                                      let saldoDisponible = selectedFactura.saldoDisponibleInfo|| 0;
-                                                                                                      const valorFuturoAnteriores = facturasAnteriores.reduce((sum, f) => sum + (f.valorFuturo || 0), selectedFactura.saldoDisponibleInfo);
-                                                                                                      saldoDisponible -= valorFuturoAnteriores;
-                                                                                                
-                                                                                                      // [MANTENIDO] Determinar valor futuro
-                                                                                                      let valorFuturoCalculado;
-                                                                                                      if (facturasAnteriores.length > 0 && saldoDisponible <= 0) {
-                                                                                                        valorFuturoCalculado = 0;
-                                                                                                        saldoDisponible = 0;
-                                                                                                      } else {
-                                                                                                        valorFuturoCalculado = selectedFactura.saldoDisponibleInfo;    ;
-                                                                                                      }
-                                                                                                
-                                                                                                      // [MANTENIDO] Saldo disponible anterior
-                                                                                                      const saldoDisponibleAnterior = facturasAnteriores.find(
-                                                                                                        (f) => f.billId === selectedFactura.billId
-                                                                                                      )?.saldoDisponible || 0;
-                                                                                                      const saldoDisponibleA = saldoDisponibleAnterior;
-                                                                                          
-                                                                                                
-                                                                                                      // [MANTENIDO] Cálculo de valores presentes
-                                                                                                      const presentValueInvestor = factura.operationDays > 0 && factura.valorFuturo > 0
-                                                                                                        ? Math.round(PV(factura.investorTax / 100, factura.operationDays / 365, 0, factura.valorFuturo, 0) * -1)
-                                                                                                        : selectedFactura?.presentValueInvestor;
-                                                                                                
-                                                                                                      const presentValueSF = factura.operationDays > 0 && factura.valorFuturo > 0
-                                                                                                        ? Math.round(PV(values.discountTax / 100, factura.operationDays / 365, 0, factura.valorFuturo, 0) * -1)
-                                                                                                        : selectedFactura.presentValueInvestor;
-                                                                                                
-                                                                                                      // [MANTENIDO] Cálculo de comisiones
-                                                                                                      const comisionSF = presentValueInvestor && presentValueSF
-                                                                                                        ? presentValueInvestor - presentValueSF
-                                                                                                        : 0;
-                                                                                                
-                                                                                                      const investorProfit = presentValueInvestor ?? selectedFactura.saldoDisponibleInfo
-
-                                                                                                        ? presentValueInvestor - selectedFactura.saldoDisponibleInfo
-                                                                                                        : 0;
-                                                                                                
-                                                                                                      // [MANTENIDO] Cálculo de valor nominal
-                                                                                                      let valorNominalFactura;
-                                                                                                      if (facturasAnteriores.length > 0 && saldoDisponible <= 0) {
-                                                                                                        valorNominalFactura = 0;
-                                                                                                      } else {
-                                                                                                        valorNominalFactura = selectedFactura.saldoDisponibleInfo* Math.round((selectedFactura.saldoDisponibleInfo * 100) / selectedFactura.saldoDisponibleInfo) / 100;
-                                                                                                      }
-                                                                                                      
-                                                                                                      // [SOLUCIÓN] Cálculo del monto disponible CONSISTENTE entre facturas con mismo inversionista
-                                                                                                      let montoDisponibleFinal = 0;
+                                                  
+                                                    // Mostrar error en el campo
+                                                    setFieldTouched(`facturas[${index}].nombreInversionista`, true, false);
+                                                    setFieldError(
+                                                      `facturas[${index}].nombreInversionista`,
+                                                      "No puede asignar inversionista a facturas con mismo Bill ID"
+                                                    );
+                                                    
+                                                    // Mostrar toast/notificación
+                                                    toast(<div style={{ display: 'flex', alignItems: 'center' }}>
+                                                      <ErrorIcon style={{ marginRight: '10px', color: '#d32f2f' }} />
+                                                      <span>No puede asignar el mismo inversionista a facturas agrupadas</span>
+                                                    </div>, {
+                                                      position: "top-right",
+                                                      autoClose: 5000,
+                                                      hideProgressBar: false,
+                                                      closeOnClick: true,
+                                                      pauseOnHover: true,
+                                                      draggable: true
+                                                    });
+                                              
+                                                    
+                                                    return;
 
 
-                                                                                                      if (factura.idCuentaInversionista) {
-                                                                                                    
-                                                                                                        // 2. Filtrar facturas con mismo inversionista (incluyendo la actual modificada)
-                                                                                                        const facturasMismoInversionista = values?.facturas.filter(
-                                                                                                          f => f.idCuentaInversionista === factura.idCuentaInversionista
-                                                                                                        );
-                                                                                                        
-                                                                                                        
-                                                                                                      
-                                                                                                                      if( facturasMismoInversionista.length> 1) { // 3. Calcular total de presentValueInvestor
-                                                                                                                        const totalPresentValue = facturasMismoInversionista.reduce((sum, f) => {
-                                                                                                                          const pv = f.presentValueInvestor ;
-                                                                                                                        
-                                                                                                                          return sum + pv;
-                                                                                                                        }, 0);
-                                                                                                                        
-                                                                                                                        
-                                                                                                                        const totalGm = facturasMismoInversionista.reduce((sum, f) => {
-                                                                                                                          return sum + (f.gastoMantenimiento);
-                                                                                                                        }, 0);
-                                                                                                                      
-                                                                                                                        // 4. Calcular monto disponible común
-                                                                                                                        montoDisponibleFinal = 
-                                                                                                                        factura.montoDisponibleInfo  - totalPresentValue - totalGm-presentValueInvestor
-                                                                                                                        
-                                                                                                                        
-                                                                                                                        
-                                                                                                                        // 5. Actualizar TODAS las facturas con mismo inversionista
-                                                                                                            
-                                                                                                                        values.facturas.forEach((f, i) => {
-                                                                                                                          if (f.idCuentaInversionista === factura.idCuentaInversionista) {
-                                                                                                                            setFieldValue(`facturas[${i}].montoDisponibleCuenta`, montoDisponibleFinal);
-                                                                                                                            
-                                                                                                                          }
-                                                                                                                        });
-                                                                                                                    
-                                                                                                                        setFieldValue(`facturas[${index}]`, {
-                                                                                                                          is_creada:true,
-                                                                                                                          billCode: selectedFactura.billId,
-                                                                                                                          billId: selectedFactura.billId,
-                                                                                                                          idCuentaInversionista: factura.idCuentaInversionista,
-                                                                                                                          factura: newValue.id|| newValue,
-                                                                                                                          fechaEmision: selectedFactura.fechaEmision||selectedFactura.dateBill,
-                                                                                                                          probableDate: selectedFactura.probableDate,
-                                                                                                                          amount: selectedFactura.saldoDisponibleInfo,
-                                                                                                                          payedAmount: selectedFactura.saldoDisponibleInfo,
-                                                                                                                          numbercuentaInversionista: factura.numbercuentaInversionista,
-                                                                                                                          cuentaInversionista: factura.cuentaInversionista,
-                                                                                                                          nombreInversionista: factura.nombreInversionista,
-                                                                                                                          investorBroker: factura.investorBroker,
-                                                                                                                          investorBrokerName: factura.investorBrokerName,
-                                                                                                                          saldoDisponible: selectedFactura.saldoDisponibleInfo,
-                                                                                                                          saldoDisponibleInfo: selectedFactura.saldoDisponibleInfo,
-                                                                                                                          montoDisponibleCuenta:montoDisponibleFinal,
-                                                                                                                          fraccion: fraccion,
-                                                                                                                          fechaFin: factura.fechaFin,
-                                                                                                                          valorNominal: valorNominalFactura,
-                                                                                                                          porcentajeDescuento: Math.round((selectedFactura.saldoDisponibleInfo * 100) / selectedFactura.saldoDisponibleInfo) || 0,
-                                                                                                                          expirationDate: selectedFactura.expirationDate,
-                                                                                                                          valorFuturo: valorFuturoCalculado,
-                                                                                                                          presentValueInvestor:valorFuturoCalculado,
-                                                                                                                          presentValueSF:valorFuturoCalculado|| 0,
-                                                                                                                          comisionSF,
-                                                                                                                          investorProfit: investorProfit,
-                                                                                                                          integrationCode: selectedFactura?.integrationCode ? selectedFactura?.integrationCode : "",
-                                                                                                                          isReBuy: selectedFactura?.reBuyAvailable ?? 0,
-                                                                                                                          gastoMantenimiento: 0,
-                                                                                                                          operationDays: 0,
-                                                                                                                          investorTax: values.investorTax,
-                                                                                                                          montoDisponibleInfo: factura.montoDisponibleInfo
-                                                                                                                        })}
-                                                                                                                        
-                                                                                                                        
-                                                                                                                        else{ 
-                                                                                                                          // Caso sin inversionista: cálculo individual
-                                                                                                                          const montoDisponibleFinal = 
-                                                                                                                            factura.montoDisponibleInfo - presentValueInvestor
-                                                                                                                            // [MANTENIDO] Asignación final de valores
-                                                                                                                        setFieldValue(`facturas[${index}]`, {
-                                                                                                                          is_creada:true,
-                                                                                                                          billCode: selectedFactura.billId,
-                                                                                                                          
-                                                                                                                          billId: selectedFactura.billId,
-                                                                                                                          idCuentaInversionista: factura.idCuentaInversionista,
-                                                                                                                          factura: newValue.id || newValue,
-                                                                                                                          fechaEmision: selectedFactura.fechaEmision|| selectedFactura.dateBill,
-                                                                                                                          probableDate: selectedFactura.probableDate,
-                                                                                                                          amount: selectedFactura.saldoDisponibleInfo,
-                                                                                                                          payedAmount: selectedFactura.saldoDisponibleInfo,
-                                                                                                                          numbercuentaInversionista: factura.numbercuentaInversionista,
-                                                                                                                          cuentaInversionista: factura.cuentaInversionista,
-                                                                                                                          nombreInversionista: factura.nombreInversionista,
-                                                                                                                          investorBroker: factura.investorBroker,
-                                                                                                                          investorBrokerName: factura.investorBrokerName,
-                                                                                                                          saldoDisponible: saldoDisponibleA,
-                                                                                                                          saldoDisponibleInfo: selectedFactura.saldoDisponibleInfo,
-                                                                                                                          montoDisponibleCuenta:montoDisponibleFinal, // Usamos el valor calculado
-                                                                                                                          fraccion: fraccion,
-                                                                                                                          fechaFin: factura.fechaFin,
-                                                                                                                          valorNominal: valorNominalFactura,
-                                                                                                                          porcentajeDescuento: Math.round((selectedFactura.saldoDisponibleInfo * 100) / selectedFactura.saldoDisponibleInfo)|| 0,
-                                                                                                                          expirationDate: selectedFactura.expirationDate,
-                                                                                                                          valorFuturo: valorFuturoCalculado,
-                                                                                                                          presentValueInvestor:valorFuturoCalculado,
-                                                                                                                          presentValueSF:valorFuturoCalculado|| 0,
-                                                                                                                          comisionSF,
-                                                                                                                          investorProfit: investorProfit,
-                                                                                                                          integrationCode: selectedFactura?.integrationCode ? selectedFactura?.integrationCode : "",
-                                                                                                                          isReBuy: selectedFactura?.reBuyAvailable ?? 0,
-                                                                                                                          gastoMantenimiento: 0,
-                                                                                                                          operationDays: 0,
-                                                                                                                          investorTax: values.investorTax,
-                                                                                                                          montoDisponibleInfo: factura.montoDisponibleInfo
-                                                                                                                        });
-                                                                                                                        }
-                                                                                                                  
-                                                                                                                      
-                                                                                                                  
-                                                                                                                    
-                                                                                                      } else {
-                                                                                                      
-                                                                                                        // Caso sin inversionista: cálculo individual
-                                                                                                        const montoDisponibleFinal = 
-                                                                                                          factura.montoDisponibleInfo - presentValueInvestor
-                                                                                                      
-                                                                                                          // [MANTENIDO] Asignación final de valores
-                                                                                                      setFieldValue(`facturas[${index}]`, {
-                                                                                                        is_creada:true,
-                                                                                                        billCode: selectedFactura.billId,
-                                                                                                        billId: selectedFactura.billId,
-                                                                                                        idCuentaInversionista: factura.idCuentaInversionista,
-                                                                                                        factura: newValue.id || newValue,
-                                                                                                        fechaEmision: selectedFactura.fechaEmision|| selectedFactura.dateBill,
-                                                                                                        probableDate: selectedFactura.probableDate,
-                                                                                                        amount: selectedFactura.saldoDisponibleInfo,
-                                                                                                        payedAmount: selectedFactura.saldoDisponibleInfo,
-                                                                                                        numbercuentaInversionista: factura.numbercuentaInversionista,
-                                                                                                        cuentaInversionista: factura.cuentaInversionista,
-                                                                                                        nombreInversionista: factura.nombreInversionista,
-                                                                                                        investorBroker: factura.investorBroker,
-                                                                                                        investorBrokerName: factura.investorBrokerName,
-                                                                                                        saldoDisponible:saldoDisponibleA,
-                                                                                                        saldoDisponibleInfo:  selectedFactura.saldoDisponibleInfo,
-                                                                                                        montoDisponibleCuenta:0, // Usamos el valor calculado
-                                                                                                        fraccion: fraccion,
-                                                                                                        fechaFin: factura.fechaFin,
-                                                                                                        valorNominal: valorNominalFactura,
-                                                                                                        porcentajeDescuento: Math.round((selectedFactura.saldoDisponibleInfo * 100) / selectedFactura.saldoDisponibleInfo)|| 0,
-                                                                                                        expirationDate: selectedFactura.expirationDate,
-                                                                                                        valorFuturo: valorFuturoCalculado,
-                                                                                                        presentValueInvestor:valorFuturoCalculado,
-                                                                                                        presentValueSF:valorFuturoCalculado|| 0,
-                                                                                                        comisionSF,
-                                                                                                        investorProfit: investorProfit,
-                                                                                                        integrationCode: selectedFactura?.integrationCode ? selectedFactura?.integrationCode : "",
-                                                                                                        isReBuy: selectedFactura?.reBuyAvailable ?? 0,
-                                                                                                        gastoMantenimiento: 0,
-                                                                                                        operationDays: 0,
-                                                                                                        investorTax: values.investorTax,
-                                                                                                        montoDisponibleInfo: selectedFactura?.montoDisponibleCuenta
-                                                                                                      });
-                                                                                                      }
-                                                                                                
-                                                                                            
-                                                                                                    
-                                                                                                    
-                                                                                                  } catch (error) {
-                                                                                                    console.error("Error al cargar los datos:", error);
-                                                                                                  }
-                                                                                                }}
-                                                                                              
-                                                                                                
-                                                                                              />
-                                                                                            </Box>
-                                                                                              
-                                                                                            ) : (
-                                                                                              <div><Autocomplete
-                                                                                              id="bill-name" // Para CSS/JS si es necesario
-                                                                                              data-testid="campo-factura"
-                                                                                                options={(values?.takedBills || [])
-                                                                                                  .filter((factura) => factura.currentBalance > 0) // Filtrar facturas con balance > 0
-                                                                                                  .map((factura) => ({
-                                                                                                    label: String(factura.billId),
-                                                                                                    value: String(factura.billId),
-                                                                                                    id: String(factura.id),
-                                                                                                    integrationCode: factura.integrationCode ? factura.integrationCode : "",
-                                                                                                  }))
-                                                                                                }
-                                                                                                value={
-                                                                                                  values.facturas[index]?.factura
-                                                                                                    ? String(factura.billId)
-                                                                                                    : null
-                                                                                                }
-                                                                                                isOptionEqualToValue={(option, value) => {
-                                                                                                  return option.value === value;
-                                                                                                }}
-                                                                                                onChange={async (event, newValue) => {
-                                                                                      
-                                                                                                  if (!newValue) {
-                                                                                                    // 1. Obtener el billId de la factura que se está deseleccionando
-                                                                                                    const billIdDeseleccionada = factura.billId;
-                                                                                                    
-                                                                                                    // 2. Calcular el valorFuturo que se está liberando
-                                                                                                    const valorFuturoLiberado = factura.valorFuturo || 0;
-                                                                                                    if(values.facturas[index].is_creada===true){
-                                                                                                      return
-                                                                          
-                                                                                                    }else {
-                                                                                                      setFieldValue(`facturas[${index}].is_creada`,false)
-                                                                                                    }
-                                                                                                  
-                                                                                                  
-                                                                                                    // 4. Buscar todas las facturas que comparten el mismo billId (incluyendo la actual)
-                                                                                                    const facturasCompartidas = values.facturas.filter(
-                                                                                                      f => f.billId === billIdDeseleccionada
-                                                                                                    );
-                                                                                                  
-                                                                                                    // 5. Calcular el saldoDisponible original de la factura
-                                                                                                    const facturaOriginal = dataBills?.data.find(f => f.billId === billIdDeseleccionada);
-                                                                                                    const saldoOriginal = facturaOriginal?.currentBalance || 0;
-                                                                                                  
-                                                                                                    // 6. Calcular el valorFuturo total actual de todas las facturas compartidas (excluyendo la que se deselecciona)
-                                                                                                    const valorFuturoActual = facturasCompartidas
-                                                                                                      .filter((f, i) => i !== index) // Excluir la factura que se está deseleccionando
-                                                                                                      .reduce((sum, f) => sum + (f.valorFuturo), 0);
-                                                                                                  
-                                                                                                    // 7. Calcular el nuevo saldoDisponible global para esta factura
-                                                                                                    const nuevoSaldoGlobal = saldoOriginal - valorFuturoActual;
-                                                                                                  
-                                                                                                    // 8. Actualizar el saldoDisponible en TODAS las facturas compartidas
-                                                                                                    values.facturas.forEach((f, i) => {
-                                                                                                      if (f.billId === billIdDeseleccionada) {
-                                                                                                        setFieldValue(`facturas[${i}].saldoDisponible`, nuevoSaldoGlobal);
-                                                                                                        setFieldValue(`facturas[${i}].saldoDisponibleInfo`, saldoOriginal);
-                                                                                                      }
-                                                                                                    });
-                                                                                                  
-                                                                                                    // 9. Recalcular los montos disponibles para el inversionista (si aplica)
-                                                                                                    if (factura.idCuentaInversionista) {
-                                                                                                      const presentValueTotal = values.facturas
-                                                                                                        .filter(f => 
-                                                                                                          f.idCuentaInversionista === factura.idCuentaInversionista  
-                                                                                                          
-                                                                                                        )
-                                                                                                        .reduce((sum, f) => sum + f.presentValueInvestor , 0);
-                                                                                                        
-                                                                                                      const montoDisponibleActualizado = factura.montoDisponibleCuenta+ factura.presentValueInvestor+factura.gastoMantenimiento ;
-                                                                                                
-                                                                                                  
-                                                                                                      values.facturas.forEach((f, i) => {
-                                                                                                
-                                                                                                        if (f.idCuentaInversionista=== factura.idCuentaInversionista) {
-                                                                                                        
-                                                                                                          setFieldValue(`facturas[${i}].montoDisponibleCuenta`, 
-                                                                                                            montoDisponibleActualizado
-                                                                                                          );
-                                                                                                          
-                                                                                                        }
-                                                                                                      
-                                                                                                      });
-                                                
-                                                                                                      setFieldValue(`facturas[${index}].montoDisponibleCuenta`, 
-                                                                                                        montoDisponibleActualizado
-                                                                                                    );
-                                                                                                    }
-                                                                                                    setFieldValue(`facturas[${index}].saldoDisponible`, 
-                                                                                                      0
-                                                                                                  );
-                                                
-                                                                                                    // 3. Limpiar los valores de esta factura (manteniendo los datos del inversionista)
-                                                                                                    setFieldValue(`facturas[${index}]`, {
-                                                                                                      billId: '',
-                                                                                                      factura: '',
-                                                                                                      fechaEmision: '',
-                                                                                                      valorNominal: 0,
-                                                                                                      saldoDisponible: 0,
-                                                                                                      valorFuturo: 0,
-                                                                                                      amount: 0,
-                                                                                                      payedAmount: 0,
-                                                                                                      fraccion: 1,
-                                                                                                      porcentajeDescuento: 0,
-                                                                                                      nombrePagador: '',
-                                                                                                      presentValueInvestor: 0,
-                                                                                                      presentValueSF: 0,
-                                                                                                      investorProfit: 0,
-                                                                                                      comisionSF: 0,
-                                                                                                      fechaFin:factura.fechaFin,
-                                                                                                      idCuentaInversionista:factura.idCuentaInversionista,
-                                                                                                      numbercuentaInversionista: factura.numbercuentaInversionista,
-                                                                                                      cuentaInversionista: factura.cuentaInversionista,
-                                                                                                      nombreInversionista: factura.nombreInversionista,
-                                                                                                      investorBroker: factura.investorBroker,
-                                                                                                      investorBrokerName: factura.investorBrokerName,
-                                                                                                      montoDisponibleCuenta:factura.montoDisponibleCuenta+factura.presentValueInvestor+factura.gastoMantenimiento,
-                                                                                                      montoDisponibleInfo: factura.montoDisponibleInfo,
-                                                                                                      gastoMantenimiento: 0,
-                                                                                                      operationDays: 0,
-                                                                                                      expirationDate: "",
-                                                                                                    });
-                                                                                                    return;
-                                                
-                                                                                                    
-                                                                                                  }
-                                                                                          
-                                                                                                
-                                                                                                  const selectedFactura = dataBills?.data.find(f => f.billId === newValue.value);
-                                                                                                  if (!selectedFactura) return;
-                                                                                    
-                                                
-                                                                                                  function encontrarFacturasDuplicadas(facturas, billId, inversionistaId) {
-                                                                                                    // Validaciones iniciales
-                                                                                                    if (!Array.isArray(facturas)) return [];
-                                                                                                    if (!billId || !inversionistaId) return [];
-                                                                                                    
-                                                                                                    return facturas.filter(factura => {
-                                                                                                      // Verificar que la factura tenga los campos necesarios
-                                                                                                      if (!factura.billId || !factura.nombreInversionista) return false;
-                                                                                                      
-                                                                                                      // Comparar billId con la factura actual
-                                                                                                      const mismoBillId = factura.factura=== billId;
-                                                                                                    
-                                                                                                      
-                                                                                                      // Comparar inversionista con el seleccionado
-                                                                                                      const mismoInversionista = factura.nombreInversionista === inversionistaId;
-                                                                                                      
-                                                                                                      return mismoBillId && mismoInversionista;
-                                                                                                    });
-                                                                                                  }
-                                                                                                
-                                                                                                  const inversionistaSeleccionado = factura.nombreInversionista// ID del inversionista seleccionado
-                                                                                                  
-                                                                                                  const facturasDuplicadas = encontrarFacturasDuplicadas(
-                                                                                                    values.facturas, 
-                                                                                                    newValue.id, // la factura que estás procesando actualmente
-                                                                                                    inversionistaSeleccionado
-                                                                                                  );
-                                                
-                                                                                                  
-                                                                                                  if(facturasDuplicadas?.length>=1 ){
-                                                
-                                                                                                    // Mostrar error en el campo
-                                                                                                    setFieldTouched(`facturas[${index}].nombreInversionista`, true, false);
-                                                                                                    setFieldError(
-                                                                                                      `facturas[${index}].nombreInversionista`,
-                                                                                                      "No puede asignar inversionista a facturas con mismo Bill ID"
-                                                                                                    );
-                                                                                                    
-                                                                                                    // Mostrar toast/notificación
-                                                                                                    toast(<div style={{ display: 'flex', alignItems: 'center' }}>
-                                                                                                      <ErrorIcon style={{ marginRight: '10px', color: '#d32f2f' }} />
-                                                                                                      <span>No puede asignar el mismo inversionista a facturas agrupadas</span>
-                                                                                                    </div>, {
-                                                                                                      position: "top-right",
-                                                                                                      autoClose: 5000,
-                                                                                                      hideProgressBar: false,
-                                                                                                      closeOnClick: true,
-                                                                                                      pauseOnHover: true,
-                                                                                                      draggable: true
-                                                                                                    });
-                                                                                              
-                                                                                                    
-                                                                                                    return;
-                                                
-                                                
-                                                                                                  }
-                                                                                                  
-                                                                                                
-                                                                                                  try {
-                                                                                                    
-                                                                                                      if (values.integrationCode != selectedFactura?.integrationCode && values.integrationCode != "") {
-                                                                                                    toast(<div style={{ display: 'flex', alignItems: 'center' }}>
-                                                                                                      <ErrorIcon style={{ marginRight: '10px', color: '#d32f2f' }} />
-                                                                                                      <span>El código de integración debe coincidir con el de la factura previa</span>
-                                                                                                    </div>);
-                                                                                                      setFieldValue(`facturas[${index}].factura`, null);
-                                                                                                    } else {
-                                                
-                                                                                                      const facturaActual2 = values?.facturas[index];
-                                                                                                      const billIdAnterior = facturaActual2?.billId;
-                                                                                                      const valorFuturoAnterior = facturaActual2?.valorFuturo || 0;
-                                                                                                      const nombreInversionistaAnterior = facturaActual2?.nombreInversionista;
-                                                                                                    
-                                                                                                      if(billIdAnterior  && newValue.label!=billIdAnterior  ){
-                                                
-                                                                                                      
-                                                
-                                                                                                        // 1. Crear lista temporal que incluye la factura actual con sus nuevos valores
-                                                                                                        const facturasTemporales = values.facturas.map((f, i) => 
-                                                                                                          i === index ? {
-                                                                                                            ...f,
-                                                                                                            billId: factura.billId,
-                                                                                                            saldoDisponible: factura.saldoDisponible,
-                                                                                                            presentValueInvestor: presentValueInvestor,
-                                                                                                            montoDisponibleInfo: factura.montoDisponibleInfo
-                                                                                                          } : f
-                                                                                                        );
-                                                
-                                                                                                        
-                                                                                                        
-                                                                                                      const presentValueInvestorFacturaAnterior=facturaActual2?.presentValueInvestor
-                                                                                                      const montoDisponibleFacturaAnterior=facturaActual2?.montoDisponibleCuenta
-                                                                                                      const saldoDisponibleFacturaAnterior=facturaActual2?.saldoDisponible
+                                                  }
+                                                  
+                                                /////////////////////////////////////////////////////////////////
+                                                  try {
+                                                    
+                                                    
 
-                                                                                                      const saldoDisponibleNuevo= saldoDisponibleFacturaAnterior+valorFuturoAnterior   
-                                                                                                      const montoDisponibleNuevo =montoDisponibleFacturaAnterior+presentValueInvestorFacturaAnterior
+                                                      const facturaActual2 = values?.facturas[index-1];
+                                                      
+                                                      const billIdAnterior = facturaActual2?.billId;
+                                                      const valorFuturoAnterior = facturaActual2?.valorFuturo || 0;
+                                                      const nombreInversionistaAnterior = facturaActual2?.nombreInversionista;
+                                                    
+                                                      if(billIdAnterior  && newValue!=billIdAnterior  ){
+
+                                                    
+
+                                                      
+
+                                                        
+                                                        
+                                                      const presentValueInvestorFacturaAnterior=facturaActual2?.presentValueInvestor
+                                                      const montoDisponibleFacturaAnterior=facturaActual2?.montoDisponibleCuenta
+                                                      const saldoDisponibleFacturaAnterior=facturaActual2?.saldoDisponible
+
+                                                      const saldoDisponibleNuevo= saldoDisponibleFacturaAnterior+valorFuturoAnterior   
+                                                      const montoDisponibleNuevo =montoDisponibleFacturaAnterior+presentValueInvestorFacturaAnterior
+
+                                                        // 3. Actualizar todas las facturas con el mismo billId (excepto la actual)
+                                                  values.facturas.forEach((f, i) => {
+                                                    if (f.billId === billIdAnterior && i !== index) {
+                                                      // Actualizar saldo disponible
+                                                      setFieldValue(`facturas[${i}].saldoDisponible`, saldoDisponibleNuevo);
+                                                      
+                                                      setFieldValue(`facturas[${i}].montoDisponibleCuenta`, montoDisponibleNuevo);
+                                                      
+                                                    }
+                                                  });
+
+
+                                                  setFieldValue(`facturas[${index}]`, {
+                                                    is_creada:true,
+                                                    billCode: selectedFactura.billId,
+                                                    billId: selectedFactura.billId,
+                                                    idCuentaInversionista: factura.idCuentaInversionista,
+                                                    factura: newValue.id || newValue,
+                                                    fechaEmision: selectedFactura.dateBill,
+                                                    probableDate: selectedFactura.probableDate,
+                                                    amount: selectedFactura.saldoDisponibleInfo,
+                                                    payedAmount: selectedFactura.saldoDisponibleInfo,
+                                                    numbercuentaInversionista: factura.numbercuentaInversionista,
+                                                    cuentaInversionista: factura.cuentaInversionista,
+                                                    nombreInversionista: factura.nombreInversionista,
+                                                    investorBroker: factura.investorBroker,
+                                                    investorBrokerName: factura.investorBrokerName,
+                                                    saldoDisponible: 0,
+                                                    saldoDisponibleInfo: selectedFactura.saldoDisponibleInfo,
+                                                    montoDisponibleCuenta:montoDisponibleFinal, // Usamos el valor calculado
+                                                    fraccion: fraccion,
+                                                    fechaFin: factura.fechaFin,
+                                                    valorNominal: valorNominalFactura,
+                                                    porcentajeDescuento: Math.round((selectedFactura.saldoDisponibleInfo * 100) / selectedFactura.saldoDisponibleInfo) || 0,
+                                                    expirationDate: selectedFactura.expirationDate,
+                                                    valorFuturo: valorFuturoCalculado,
+                                                    presentValueInvestor:valorFuturoCalculado,
+                                                    presentValueSF:valorFuturoCalculado|| 0,
+                                                    comisionSF,
+                                                    investorProfit: investorProfit,
+                                                    integrationCode: selectedFactura?.integrationCode ? selectedFactura?.integrationCode : "",
+                                                    isReBuy: selectedFactura?.reBuyAvailable ?? 0,
+                                                    gastoMantenimiento: 0,
+                                                    operationDays: 0,
+                                                    investorTax: values.investorTax,
+                                                    montoDisponibleInfo: factura.montoDisponibleInfo
+                                                  });
+                                                  
+                                                        
+                                                      } 
+                                                    
+                                                      
+                                                      
                                                 
-                                                                                                        // 3. Actualizar todas las facturas con el mismo billId (excepto la actual)
-                                                                                                  values.facturas.forEach((f, i) => {
-                                                                                                    if (f.billId === billIdAnterior && i !== index) {
-                                                                                                      // Actualizar saldo disponible
-                                                                                                      setFieldValue(`facturas[${i}].saldoDisponible`, saldoDisponibleNuevo);
-                                                                                                      
-                                                                                                      setFieldValue(`facturas[${i}].montoDisponibleCuenta`, montoDisponibleNuevo);
-                                                                                                      
-                                                                                                    }
-                                                                                                  });
-                                                
-                                                
-                                                                                                  setFieldValue(`facturas[${index}]`, {
-                                                                                                    billId: selectedFactura.billId,
-                                                                                                    idCuentaInversionista: factura.idCuentaInversionista,
-                                                                                                    factura: newValue.id,
-                                                                                                    fechaEmision: selectedFactura.dateBill,
-                                                                                                    probableDate: selectedFactura.expirationDate,
-                                                                                                    amount: selectedFactura.currentBalance,
-                                                                                                    payedAmount: selectedFactura.currentBalance,
-                                                                                                    numbercuentaInversionista: factura.numbercuentaInversionista,
-                                                                                                    cuentaInversionista: factura.cuentaInversionista,
-                                                                                                    nombreInversionista: factura.nombreInversionista,
-                                                                                                    investorBroker: factura.investorBroker,
-                                                                                                    investorBrokerName: factura.investorBrokerName,
-                                                                                                    saldoDisponible: saldoDisponibleA,
-                                                                                                    saldoDisponibleInfo: selectedFactura.currentBalance,
-                                                                                                    montoDisponibleCuenta:montoDisponibleFinal, // Usamos el valor calculado
-                                                                                                    fraccion: fraccion,
-                                                                                                    fechaFin: factura.fechaFin,
-                                                                                                    valorNominal: valorNominalFactura,
-                                                                                                    porcentajeDescuento: Math.round((selectedFactura.currentBalance * 100) / selectedFactura.currentBalance),
-                                                                                                    expirationDate: selectedFactura.expirationDate,
-                                                                                                    valorFuturo: valorFuturoCalculado,
-                                                                                                    presentValueInvestor:valorFuturoCalculado,
-                                                                                                    presentValueSF:valorFuturoCalculado|| 0,
-                                                                                                    comisionSF,
-                                                                                                    investorProfit: investorProfit,
-                                                                                                    integrationCode: selectedFactura?.integrationCode ? selectedFactura?.integrationCode : "",
-                                                                                                    isReBuy: selectedFactura?.reBuyAvailable ?? 0,
-                                                                                                    gastoMantenimiento: 0,
-                                                                                                    operationDays: 0,
-                                                                                                    investorTax: values.investorTax,
-                                                                                                    montoDisponibleInfo: factura.montoDisponibleInfo
-                                                                                                  });
-                                                                                                  
-                                                                                                        
-                                                                                                      } 
-                                                                                    
-                                                                                                      
-                                                                                                      const fractionBill = await cargarFraccionFactura(selectedFactura.id);
-                                                                                            
-                                                                                                      
-                                                                                                
-                                                                                                      
-                                                                                                    
-                                                                                                
-                                                                                                      // [MANTENIDO] Cálculo de fechas
-                                                                                                      const fechaOperacion = new Date(values?.opDate);
-                                                                                                      const expirationDate = new Date(parseISO(selectedFactura.expirationDate));
-                                                                                                
-                                                                                                      let substractDays = 0;
-                                                                                                      if (isValid(fechaOperacion) && isValid(expirationDate)) {
-                                                                                                        substractDays = differenceInDays(expirationDate, fechaOperacion);
-                                                                                                    
-                                                                                                      } else {
-                                                                                                        console.error("Error: Una de las fechas no es válida.");
-                                                                                                      }
-                                                                                                
-                                                                                                      // [MANTENIDO] Lógica de fracciones
-                                                                                                      const facturaActual = newValue.id;
-                                                                                                      let fraccion = fractionBill?.data?.fraction || 1;
-                                                                                                      const facturasAnteriores = values.facturas.slice(0, index).filter((f) => f.factura === facturaActual);
-                                                                                                
-                                                                                                      if (facturasAnteriores.length > 0) {
-                                                                                                        const fraccionMasAlta = Math.max(...facturasAnteriores.map((f) => f.fraccion || 1));
-                                                                                                        fraccion = fraccionMasAlta + 1;
-                                                                                                      }
-                                                                                                
-                                                                                                      // [MANTENIDO] Cálculo de saldo disponible
-                                                                                                      let saldoDisponible = selectedFactura.currentBalance || 0;
-                                                                                                      const valorFuturoAnteriores = facturasAnteriores.reduce((sum, f) => sum + (f.valorFuturo || 0), selectedFactura.currentBalance);
-                                                                                                      saldoDisponible -= valorFuturoAnteriores;
-                                                                                                
-                                                                                                      // [MANTENIDO] Determinar valor futuro
-                                                                                                      let valorFuturoCalculado;
-                                                                                                      if (facturasAnteriores.length > 0 && saldoDisponible <= 0) {
-                                                                                                        valorFuturoCalculado = 0;
-                                                                                                        saldoDisponible = 0;
-                                                                                                      } else {
-                                                                                                        valorFuturoCalculado = selectedFactura.currentBalance;
-                                                                                                      }
-                                                                                                
-                                                                                                      // [MANTENIDO] Saldo disponible anterior
-                                                                                                      const saldoDisponibleAnterior = facturasAnteriores.find(
-                                                                                                        (f) => f.billId === selectedFactura.billId
-                                                                                                      )?.saldoDisponible || 0;
-                                                                                                      
-                                                                                                      const saldoDisponibleA = saldoDisponibleAnterior;
-                                                                                                
-                                                                                                      // [MANTENIDO] Cálculo de valores presentes
-                                                                                                      const presentValueInvestor = factura.operationDays > 0 && factura.valorFuturo > 0
-                                                                                                        ? Math.round(PV(factura.investorTax / 100, factura.operationDays / 365, 0, factura.valorFuturo, 0) * -1)
-                                                                                                        : selectedFactura.currentBalance;
-                                                                                                
-                                                                                                      const presentValueSF = factura.operationDays > 0 && factura.valorFuturo > 0
-                                                                                                        ? Math.round(PV(values.discountTax / 100, factura.operationDays / 365, 0, factura.valorFuturo, 0) * -1)
-                                                                                                        : selectedFactura.currentBalance;
-                                                                                                
-                                                                                                      // [MANTENIDO] Cálculo de comisiones
-                                                                                                      const comisionSF = presentValueInvestor && presentValueSF
-                                                                                                        ? presentValueInvestor - presentValueSF
-                                                                                                        : 0;
-                                                                                                
-                                                                                                      const investorProfit = presentValueInvestor ?? selectedFactura.currentBalance
-                                                                                                        ? presentValueInvestor - selectedFactura.currentBalance : 0;
-                                                                                                
-                                                                                                      // [MANTENIDO] Cálculo de valor nominal
-                                                                                                      let valorNominalFactura;
-                                                                                                      if (facturasAnteriores.length > 0 && saldoDisponible <= 0) {
-                                                                                                        valorNominalFactura = 0;
-                                                                                                      } else {
-                                                                                                        valorNominalFactura = selectedFactura.currentBalance * Math.round((selectedFactura.currentBalance * 100) / selectedFactura.currentBalance) / 100;
-                                                                                                      }
-                                                                                                      
-                                                                                                      // [SOLUCIÓN] Cálculo del monto disponible CONSISTENTE entre facturas con mismo inversionista
-                                                                                                      let montoDisponibleFinal = 0;
-                                                                                                      if (factura.idCuentaInversionista) {
-                                                                                                    
-                                                                                                        // 2. Filtrar facturas con mismo inversionista (incluyendo la actual modificada)
-                                                                                                        const facturasMismoInversionista = values?.facturas.filter(
-                                                                                                          f => f.idCuentaInversionista === factura.idCuentaInversionista
-                                                                                                        );
-                                                                                                        
-                                                                                                        
-                                                                                                        if( facturasMismoInversionista.length> 1) { // 3. Calcular total de presentValueInvestor
-                                                                                                          const totalPresentValue = facturasMismoInversionista.reduce((sum, f) => {
-                                                                                                            const pv = f.presentValueInvestor ;
-                                                                                                          
-                                                                                                            return sum + pv;
-                                                                                                          }, 0);
-                                                                                                          
-                                                                                                        
-                                                                                                          const totalGm = facturasMismoInversionista.reduce((sum, f) => {
-                                                                                                            return sum + (f.gastoMantenimiento);
-                                                                                                          }, 0);
-                                                                                                        
-                                                                                                          // 4. Calcular monto disponible común
-                                                                                                          montoDisponibleFinal = 
-                                                                                                          factura.montoDisponibleInfo  - totalPresentValue - totalGm-presentValueInvestor
-                                                                                                          
-                                                                                                          
-                                                                                                          
-                                                                                                          // 5. Actualizar TODAS las facturas con mismo inversionista
-                                                                                                      
-                                                                                                          values.facturas.forEach((f, i) => {
-                                                                                                            if (f.idCuentaInversionista === factura.idCuentaInversionista) {
-                                                                                                              setFieldValue(`facturas[${i}].montoDisponibleCuenta`, montoDisponibleFinal);
+                                                      // [MANTENIDO] Cálculo de fechas mejorado
+                                                      const fechaOperacion = new Date(values?.opDate);
+                                                      const parseDate = (dateStr) => {
+                                                        // Intenta varios formatos comunes
+                                                        const parsed = new Date(dateStr);
+                                                        if (!isNaN(parsed.getTime())) return parsed;
+                                                        
+                                                        // Si falla, intenta con parseISO
+                                                        try {
+                                                          const isoParsed = parseISO(dateStr);
+                                                          return !isNaN(isoParsed.getTime()) ? isoParsed : new Date(NaN);
+                                                        } catch {
+                                                          return new Date(NaN);
+                                                        }
+                                                      };
+
+                                                      const expirationDate = selectedFactura?.expirationDate 
+                                                        ? parseDate(selectedFactura.expirationDate)
+                                                        : new Date(NaN); // Marcamos explícitamente como inválido si no hay fecha
+
+                                                  
+
+                                                      let substractDays = 0;
+                                                      if (!isNaN(fechaOperacion.getTime()) && !isNaN(expirationDate.getTime())) {
+                                                        substractDays = differenceInDays(expirationDate, fechaOperacion);
+                                      
+                                                      } else {
+                                                        console.error("Error: Una de las fechas no es válida.", {
+                                                          opDate: values?.opDate,
+                                                          expirationDate: selectedFactura?.expirationDate,
+                                                          parsedOperacion: fechaOperacion,
+                                                          parsedExpiration: expirationDate
+                                                        });
+                                                      }
+                                                      
                                                                                                               
-                                                                                                            }
-                                                                                                          });
-                                                                                                          
-                                                                                                          setFieldValue(`facturas[${index}]`, {
-                                                                                                            billId: selectedFactura.billId,
-                                                                                                            idCuentaInversionista: factura.idCuentaInversionista,
-                                                                                                            factura: newValue.id,
-                                                                                                            fechaEmision: selectedFactura.dateBill,
-                                                                                                            probableDate: selectedFactura.expirationDate,
-                                                                                                            amount: selectedFactura.currentBalance,
-                                                                                                            payedAmount: selectedFactura.currentBalance,
-                                                                                                            numbercuentaInversionista: factura.numbercuentaInversionista,
-                                                                                                            cuentaInversionista: factura.cuentaInversionista,
-                                                                                                            nombreInversionista: factura.nombreInversionista,
-                                                                                                            investorBroker: factura.investorBroker,
-                                                                                                            investorBrokerName: factura.investorBrokerName,
-                                                                                                            saldoDisponible: saldoDisponibleA,
-                                                                                                            saldoDisponibleInfo: selectedFactura.currentBalance,
-                                                                                                            montoDisponibleCuenta:montoDisponibleFinal,
-                                                                                                            fraccion: fraccion,
-                                                                                                            fechaFin: factura.fechaFin,
-                                                                                                            valorNominal: valorNominalFactura,
-                                                                                                            porcentajeDescuento: Math.round((selectedFactura.currentBalance * 100) / selectedFactura.currentBalance),
-                                                                                                            expirationDate: selectedFactura.expirationDate,
-                                                                                                            valorFuturo: valorFuturoCalculado,
-                                                                                                            presentValueInvestor:valorFuturoCalculado,
-                                                                                                            presentValueSF:valorFuturoCalculado|| 0,
-                                                                                                            comisionSF,
-                                                                                                            investorProfit: investorProfit,
-                                                                                                            integrationCode: selectedFactura?.integrationCode ? selectedFactura?.integrationCode : "",
-                                                                                                            isReBuy: selectedFactura?.reBuyAvailable ?? 0,
-                                                                                                            gastoMantenimiento: 0,
-                                                                                                            operationDays: 0,
-                                                                                                            investorTax: values.investorTax,
-                                                                                                            montoDisponibleInfo: factura.montoDisponibleInfo
-                                                                                                          })}else{
-                                                                                                            // Caso sin inversionista: cálculo individual
-                                                                                                            const montoDisponibleFinal = 
-                                                                                                              factura.montoDisponibleInfo - presentValueInvestor
-                                                                                                              // [MANTENIDO] Asignación final de valores
-                                                                                                          setFieldValue(`facturas[${index}]`, {
-                                                                                                            billId: selectedFactura.billId,
-                                                                                                            idCuentaInversionista: factura.idCuentaInversionista,
-                                                                                                            factura: newValue.id,
-                                                                                                            fechaEmision: selectedFactura.dateBill,
-                                                                                                            probableDate: selectedFactura.expirationDate,
-                                                                                                            amount: selectedFactura.currentBalance,
-                                                                                                            payedAmount: selectedFactura.currentBalance,
-                                                                                                            numbercuentaInversionista: factura.numbercuentaInversionista,
-                                                                                                            cuentaInversionista: factura.cuentaInversionista,
-                                                                                                            nombreInversionista: factura.nombreInversionista,
-                                                                                                            investorBroker: factura.investorBroker,
-                                                                                                            investorBrokerName: factura.investorBrokerName,
-                                                                                                            saldoDisponible: saldoDisponibleA,
-                                                                                                            saldoDisponibleInfo: selectedFactura.currentBalance,
-                                                                                                            montoDisponibleCuenta:montoDisponibleFinal, // Usamos el valor calculado
-                                                                                                            fraccion: fraccion,
-                                                                                                            fechaFin: factura.fechaFin,
-                                                                                                            valorNominal: valorNominalFactura,
-                                                                                                            porcentajeDescuento: Math.round((selectedFactura.currentBalance * 100) / selectedFactura.currentBalance),
-                                                                                                            expirationDate: selectedFactura.expirationDate,
-                                                                                                            valorFuturo: valorFuturoCalculado,
-                                                                                                            presentValueInvestor:valorFuturoCalculado,
-                                                                                                            presentValueSF:valorFuturoCalculado|| 0,
-                                                                                                            comisionSF,
-                                                                                                            investorProfit: investorProfit,
-                                                                                                            integrationCode: selectedFactura?.integrationCode ? selectedFactura?.integrationCode : "",
-                                                                                                            isReBuy: selectedFactura?.reBuyAvailable ?? 0,
-                                                                                                            gastoMantenimiento: 0,
-                                                                                                            operationDays: 0,
-                                                                                                            investorTax: values.investorTax,
-                                                                                                            montoDisponibleInfo: factura.montoDisponibleInfo
-                                                                                                          });
-                                                                                                          }
-                                                                                                    
-                                                                                                        
-                                                                                                    
-                                                                                                    
-                                                                                                      
-                                                                                                        
-                                                                                                      } else {
-                                                                                                      
-                                                                                                        // Caso sin inversionista: cálculo individual
-                                                                                                        const montoDisponibleFinal = 
-                                                                                                          factura.montoDisponibleInfo - presentValueInvestor
-                                                                                                          // [MANTENIDO] Asignación final de valores
-                                                                                                      setFieldValue(`facturas[${index}]`, {
-                                                                                                        billId: selectedFactura.billId,
-                                                                                                        idCuentaInversionista: factura.idCuentaInversionista,
-                                                                                                        factura: newValue.id,
-                                                                                                        fechaEmision: selectedFactura.dateBill,
-                                                                                                        probableDate: selectedFactura.expirationDate,
-                                                                                                        amount: selectedFactura.currentBalance,
-                                                                                                        payedAmount: selectedFactura.currentBalance,
-                                                                                                        numbercuentaInversionista: factura.numbercuentaInversionista,
-                                                                                                        cuentaInversionista: factura.cuentaInversionista,
-                                                                                                        nombreInversionista: factura.nombreInversionista,
-                                                                                                        investorBroker: factura.investorBroker,
-                                                                                                        investorBrokerName: factura.investorBrokerName,
-                                                                                                        saldoDisponible: saldoDisponibleA,
-                                                                                                        saldoDisponibleInfo: selectedFactura.currentBalance,
-                                                                                                        montoDisponibleCuenta:montoDisponibleFinal, // Usamos el valor calculado
-                                                                                                        fraccion: fraccion,
-                                                                                                        fechaFin: factura.fechaFin,
-                                                                                                        valorNominal: valorNominalFactura,
-                                                                                                        porcentajeDescuento: Math.round((selectedFactura.currentBalance * 100) / selectedFactura.currentBalance),
-                                                                                                        expirationDate: selectedFactura.expirationDate,
-                                                                                                        valorFuturo: valorFuturoCalculado,
-                                                                                                        presentValueInvestor:valorFuturoCalculado,
-                                                                                                        presentValueSF:valorFuturoCalculado|| 0,
-                                                                                                        comisionSF,
-                                                                                                        investorProfit: investorProfit,
-                                                                                                        integrationCode: selectedFactura?.integrationCode ? selectedFactura?.integrationCode : "",
-                                                                                                        isReBuy: selectedFactura?.reBuyAvailable ?? 0,
-                                                                                                        gastoMantenimiento: 0,
-                                                                                                        operationDays: 0,
-                                                                                                        investorTax: values.investorTax,
-                                                                                                        montoDisponibleInfo: factura.montoDisponibleInfo
-                                                                                                      });
-                                                                                                      }
-                                                                                                
-                                                                                                    
-                                                                                                
-                                                                                                    
-                                                                                                    }
-                                                                                                  } catch (error) {
-                                                                                                    console.error("Error al cargar los datos:", error);
-                                                                                                  }
-                                                                                                }}
-                                                                                                renderInput={(params) => (
-                                                                                                  <TextField
-                                                                                                    {...params}
-                                                                                                    label="Número de Factura *"
-                                                                                                    fullWidth
-                                                                                                    name="billId"
-                                                                                                    error={touched.facturas?.[index]?.billId && Boolean(errors.facturas?.[index]?.billId)}
-                                                                                                    helperText={
-                                                                                                      ` ${factura.isReBuy ? "Disponible Recompra" : "No disponible Recompra"}`
-                                                                                                    }
-                                                                                                  />
-                                                                                                )}
-                                                                                                
-                                                                                              /></div>
-                                                                                            )}
-                                                                                          
-                                                                                        
-                                                                                      </Grid>
-                                                                                            
-                                                                                        <Box
-                                                                                        sx={{
-                                                                                          color: (orchestDisabled.find(item => item.indice === index))?.status ? "#ffffff" : "#5EA3A3",
-                                                                                          backgroundColor: (orchestDisabled.find(item => item.indice === index))?.status ? "#5EA3A3" : "transparent",
-                                                                                          border: "1.4px solid #5EA3A3",
-                                                                                          width: "25px",
-                                                                                          display: "flex",
-                                                                                          alignItems: "center",
-                                                                                          justifyContent: "center",
-                                                                                          borderRadius: "5px",
-                                                                                          height: "25px",
-                                                                                          marginTop: "40px",
-                                                                                          marginLeft: "20px",
-                                                                                          cursor: (orchestDisabled.find(item => item.indice === index))?.status || isSelectedPayer ? "default" : "pointer",
-                                                                                          '&:hover': {
-                                                                                            backgroundColor: !(orchestDisabled.find(item => item.indice === index)?.status) && !isSelectedPayer ? "#f0f0f0" : undefined,
-                                                                                          }
-                                                                                        }}
-                                                                                        onClick={() => {
-                                                                                          if (!isSelectedPayer) {
-                                                                                            toast(<div style={{ display: 'flex', alignItems: 'center' }}>
-                                                                                              <ErrorIcon style={{ marginRight: '10px', color: '#d32f2f' }} />
-                                                                                              <span>Debe seleccionar un pagador antes de crear facturas</span>
-                                                                                            </div>);
-                                                                                            return;
-                                                                                          }
+                                                      // [MANTENIDO] Lógica de fracciones
+                                                      const facturaActual = selectedFactura
+                                                      let fraccion = selectedFactura.fraccion+ 1 || 1;
+                                                      const facturasAnteriores = values.facturas
+                                                      .slice(0, index)
+                                                      .filter((f) => {
+                                                        // Validación para evitar errores si f es null/undefined
+                                                        if (!f || !f.billId) return false;
+                                                        
+                                                        // Comparación segura convirtiendo a string
+                                                        return String(f.billId) === String(facturaActual?.billId);
+                                                      });
+                                                    
+                                                  
+                                                      if (facturasAnteriores.length > 0) {
+                                                        const fraccionMasAlta = Math.max(...facturasAnteriores.map((f) => f.fraccion || 1));
+                                                        fraccion = fraccionMasAlta + 1;
+                                                      }
+                                                
+                                                      // [MANTENIDO] Cálculo de saldo disponible
+                                                      let saldoDisponible = selectedFactura.saldoDisponibleInfo|| 0;
+                                                      const valorFuturoAnteriores = facturasAnteriores.reduce((sum, f) => sum + (f.valorFuturo || 0), selectedFactura.saldoDisponibleInfo);
+                                                      saldoDisponible -= valorFuturoAnteriores;
+                                                
+                                                      // [MANTENIDO] Determinar valor futuro
+                                                      let valorFuturoCalculado;
+                                                      if (facturasAnteriores.length > 0 && saldoDisponible <= 0) {
+                                                        valorFuturoCalculado = 0;
+                                                        saldoDisponible = 0;
+                                                      } else {
+                                                        valorFuturoCalculado = selectedFactura.saldoDisponibleInfo;    ;
+                                                      }
+                                                
+                                                      // [MANTENIDO] Saldo disponible anterior
+                                                      const saldoDisponibleAnterior = facturasAnteriores.find(
+                                                        (f) => f.billId === selectedFactura.billId
+                                                      )?.saldoDisponible || 0;
+                                                      const saldoDisponibleA = saldoDisponibleAnterior;
+                                          
+                                                
+                                                      // [MANTENIDO] Cálculo de valores presentes
+                                                      const presentValueInvestor = factura.operationDays > 0 && factura.valorFuturo > 0
+                                                        ? Math.round(PV(factura.investorTax / 100, factura.operationDays / 365, 0, factura.valorFuturo, 0) * -1)
+                                                        : selectedFactura?.presentValueInvestor;
+                                                
+                                                      const presentValueSF = factura.operationDays > 0 && factura.valorFuturo > 0
+                                                        ? Math.round(PV(values.discountTax / 100, factura.operationDays / 365, 0, factura.valorFuturo, 0) * -1)
+                                                        : selectedFactura.presentValueInvestor;
+                                                
+                                                      // [MANTENIDO] Cálculo de comisiones
+                                                      const comisionSF = presentValueInvestor && presentValueSF
+                                                        ? presentValueInvestor - presentValueSF
+                                                        : 0;
+                                                
+                                                      const investorProfit = presentValueInvestor ?? selectedFactura.saldoDisponibleInfo
 
-                                                                                          const isCurrentlyActive = (orchestDisabled.find(item => item.indice === index))?.status;
-                                                                                          
-                                                                                          if (isCurrentlyActive) {
-                                                                                            setOpenModal(true); // Mostrar modal de confirmación
-                                                                                          } else {
-                                                                                            setFieldValue(`facturas[${index}].is_creada`, true);
-                                                                                            setIsCreatingBill(true);
-                                                                                            setOrchestDisabled(prev => 
-                                                                                              prev.map(item => 
-                                                                                                item.indice === index ? { ...item, status: true } : item
-                                                                                              )
-                                                                                            );
-                                                                                          }
-                                                                                        }}
-                                                                                      >
-                                                                                        {(orchestDisabled.find(item => item.indice === index))?.status ? (
-                                                                                          <i 
-                                                                                            className="fa-solid fa-xmark" 
-                                                                                            style={{ opacity: isSelectedPayer ? 0.5 : 1, pointerEvents: isSelectedPayer ? "none" : "auto" }}
-                                                                                          />
-                                                                                        ) : (
-                                                                                          <i 
-                                                                                            className="fa-solid fa-plus" 
-                                                                                            style={{ opacity: isSelectedPayer ? 0.5 : 1, pointerEvents: isSelectedPayer ? "none" : "auto" }}
-                                                                                          />
-                                                                                        )}
-                                                                                      </Box>
-                                                                                  <Modal
+                                                        ? presentValueInvestor - selectedFactura.saldoDisponibleInfo
+                                                        : 0;
+                                                
+                                                      // [MANTENIDO] Cálculo de valor nominal
+                                                      let valorNominalFactura;
+                                                      if (facturasAnteriores.length > 0 && saldoDisponible <= 0) {
+                                                        valorNominalFactura = 0;
+                                                      } else {
+                                                        valorNominalFactura = selectedFactura.saldoDisponibleInfo* Math.round((selectedFactura.saldoDisponibleInfo * 100) / selectedFactura.saldoDisponibleInfo) / 100;
+                                                      }
+                                                      
+                                                      // [SOLUCIÓN] Cálculo del monto disponible CONSISTENTE entre facturas con mismo inversionista
+                                                      let montoDisponibleFinal = 0;
+
+
+                                                      if (factura.idCuentaInversionista) {
+                                                    
+                                                        // 2. Filtrar facturas con mismo inversionista (incluyendo la actual modificada)
+                                                        const facturasMismoInversionista = values?.facturas.filter(
+                                                          f => f.idCuentaInversionista === factura.idCuentaInversionista
+                                                        );
+                                                        
+                                                        
+                                                      
+                                                                      if( facturasMismoInversionista.length> 1) { // 3. Calcular total de presentValueInvestor
+                                                                        const totalPresentValue = facturasMismoInversionista.reduce((sum, f) => {
+                                                                          const pv = f.presentValueInvestor ;
+                                                                        
+                                                                          return sum + pv;
+                                                                        }, 0);
+                                                                        
+                                                                        
+                                                                        const totalGm = facturasMismoInversionista.reduce((sum, f) => {
+                                                                          return sum + (f.gastoMantenimiento);
+                                                                        }, 0);
+                                                                      
+                                                                        // 4. Calcular monto disponible común
+                                                                        montoDisponibleFinal = 
+                                                                        factura.montoDisponibleInfo  - totalPresentValue - totalGm-presentValueInvestor
+                                                                        
+                                                                        
+                                                                        
+                                                                        // 5. Actualizar TODAS las facturas con mismo inversionista
+                                                            
+                                                                        values.facturas.forEach((f, i) => {
+                                                                          if (f.idCuentaInversionista === factura.idCuentaInversionista) {
+                                                                            setFieldValue(`facturas[${i}].montoDisponibleCuenta`, montoDisponibleFinal);
+                                                                            
+                                                                          }
+                                                                        });
+                                                                    
+                                                                        setFieldValue(`facturas[${index}]`, {
+                                                                          is_creada:true,
+                                                                          billCode: selectedFactura.billId,
+                                                                          billId: selectedFactura.billId,
+                                                                          idCuentaInversionista: factura.idCuentaInversionista,
+                                                                          factura: newValue.id|| newValue,
+                                                                          fechaEmision: selectedFactura.fechaEmision||selectedFactura.dateBill,
+                                                                          probableDate: selectedFactura.probableDate,
+                                                                          amount: selectedFactura.saldoDisponibleInfo,
+                                                                          payedAmount: selectedFactura.saldoDisponibleInfo,
+                                                                          numbercuentaInversionista: factura.numbercuentaInversionista,
+                                                                          cuentaInversionista: factura.cuentaInversionista,
+                                                                          nombreInversionista: factura.nombreInversionista,
+                                                                          investorBroker: factura.investorBroker,
+                                                                          investorBrokerName: factura.investorBrokerName,
+                                                                          saldoDisponible: selectedFactura.saldoDisponibleInfo,
+                                                                          saldoDisponibleInfo: selectedFactura.saldoDisponibleInfo,
+                                                                          montoDisponibleCuenta:montoDisponibleFinal,
+                                                                          fraccion: fraccion,
+                                                                          fechaFin: factura.fechaFin,
+                                                                          valorNominal: valorNominalFactura,
+                                                                          porcentajeDescuento: Math.round((selectedFactura.saldoDisponibleInfo * 100) / selectedFactura.saldoDisponibleInfo) || 0,
+                                                                          expirationDate: selectedFactura.expirationDate,
+                                                                          valorFuturo: valorFuturoCalculado,
+                                                                          presentValueInvestor:valorFuturoCalculado,
+                                                                          presentValueSF:valorFuturoCalculado|| 0,
+                                                                          comisionSF,
+                                                                          investorProfit: investorProfit,
+                                                                          integrationCode: selectedFactura?.integrationCode ? selectedFactura?.integrationCode : "",
+                                                                          isReBuy: selectedFactura?.reBuyAvailable ?? 0,
+                                                                          gastoMantenimiento: 0,
+                                                                          operationDays: 0,
+                                                                          investorTax: values.investorTax,
+                                                                          montoDisponibleInfo: factura.montoDisponibleInfo
+                                                                        })}
+                                                                        
+                                                                        
+                                                                        else{ 
+                                                                          // Caso sin inversionista: cálculo individual
+                                                                          const montoDisponibleFinal = 
+                                                                            factura.montoDisponibleInfo - presentValueInvestor
+                                                                            // [MANTENIDO] Asignación final de valores
+                                                                        setFieldValue(`facturas[${index}]`, {
+                                                                          is_creada:true,
+                                                                          billCode: selectedFactura.billId,
+                                                                          
+                                                                          billId: selectedFactura.billId,
+                                                                          idCuentaInversionista: factura.idCuentaInversionista,
+                                                                          factura: newValue.id || newValue,
+                                                                          fechaEmision: selectedFactura.fechaEmision|| selectedFactura.dateBill,
+                                                                          probableDate: selectedFactura.probableDate,
+                                                                          amount: selectedFactura.saldoDisponibleInfo,
+                                                                          payedAmount: selectedFactura.saldoDisponibleInfo,
+                                                                          numbercuentaInversionista: factura.numbercuentaInversionista,
+                                                                          cuentaInversionista: factura.cuentaInversionista,
+                                                                          nombreInversionista: factura.nombreInversionista,
+                                                                          investorBroker: factura.investorBroker,
+                                                                          investorBrokerName: factura.investorBrokerName,
+                                                                          saldoDisponible: saldoDisponibleA,
+                                                                          saldoDisponibleInfo: selectedFactura.saldoDisponibleInfo,
+                                                                          montoDisponibleCuenta:montoDisponibleFinal, // Usamos el valor calculado
+                                                                          fraccion: fraccion,
+                                                                          fechaFin: factura.fechaFin,
+                                                                          valorNominal: valorNominalFactura,
+                                                                          porcentajeDescuento: Math.round((selectedFactura.saldoDisponibleInfo * 100) / selectedFactura.saldoDisponibleInfo)|| 0,
+                                                                          expirationDate: selectedFactura.expirationDate,
+                                                                          valorFuturo: valorFuturoCalculado,
+                                                                          presentValueInvestor:valorFuturoCalculado,
+                                                                          presentValueSF:valorFuturoCalculado|| 0,
+                                                                          comisionSF,
+                                                                          investorProfit: investorProfit,
+                                                                          integrationCode: selectedFactura?.integrationCode ? selectedFactura?.integrationCode : "",
+                                                                          isReBuy: selectedFactura?.reBuyAvailable ?? 0,
+                                                                          gastoMantenimiento: 0,
+                                                                          operationDays: 0,
+                                                                          investorTax: values.investorTax,
+                                                                          montoDisponibleInfo: factura.montoDisponibleInfo
+                                                                        });
+                                                                        }
+                                                                  
+                                                                      
+                                                                  
+                                                                    
+                                                      } else {
+                                                      
+                                                        // Caso sin inversionista: cálculo individual
+                                                        const montoDisponibleFinal = 
+                                                          factura.montoDisponibleInfo - presentValueInvestor
+                                                      
+                                                          // [MANTENIDO] Asignación final de valores
+                                                      setFieldValue(`facturas[${index}]`, {
+                                                        is_creada:true,
+                                                        billCode: selectedFactura.billId,
+                                                        billId: selectedFactura.billId,
+                                                        idCuentaInversionista: factura.idCuentaInversionista,
+                                                        factura: newValue.id || newValue,
+                                                        fechaEmision: selectedFactura.fechaEmision|| selectedFactura.dateBill,
+                                                        probableDate: selectedFactura.probableDate,
+                                                        amount: selectedFactura.saldoDisponibleInfo,
+                                                        payedAmount: selectedFactura.saldoDisponibleInfo,
+                                                        numbercuentaInversionista: factura.numbercuentaInversionista,
+                                                        cuentaInversionista: factura.cuentaInversionista,
+                                                        nombreInversionista: factura.nombreInversionista,
+                                                        investorBroker: factura.investorBroker,
+                                                        investorBrokerName: factura.investorBrokerName,
+                                                        saldoDisponible:saldoDisponibleA,
+                                                        saldoDisponibleInfo:  selectedFactura.saldoDisponibleInfo,
+                                                        montoDisponibleCuenta:0, // Usamos el valor calculado
+                                                        fraccion: fraccion,
+                                                        fechaFin: factura.fechaFin,
+                                                        valorNominal: valorNominalFactura,
+                                                        porcentajeDescuento: Math.round((selectedFactura.saldoDisponibleInfo * 100) / selectedFactura.saldoDisponibleInfo)|| 0,
+                                                        expirationDate: selectedFactura.expirationDate,
+                                                        valorFuturo: valorFuturoCalculado,
+                                                        presentValueInvestor:valorFuturoCalculado,
+                                                        presentValueSF:valorFuturoCalculado|| 0,
+                                                        comisionSF,
+                                                        investorProfit: investorProfit,
+                                                        integrationCode: selectedFactura?.integrationCode ? selectedFactura?.integrationCode : "",
+                                                        isReBuy: selectedFactura?.reBuyAvailable ?? 0,
+                                                        gastoMantenimiento: 0,
+                                                        operationDays: 0,
+                                                        investorTax: values.investorTax,
+                                                        montoDisponibleInfo: selectedFactura?.montoDisponibleCuenta
+                                                      });
+                                                      }
+                                                
+                                            
+                                                    
+                                                    
+                                                  } catch (error) {
+                                                    console.error("Error al cargar los datos:", error);
+                                                  }
+                                                }}
+                                              
+                                                
+                                              />
+
+                                              
+                                            ) : (
+                                              <Autocomplete
+                                              id="bill-name" // Para CSS/JS si es necesario
+                                              data-testid="campo-factura"
+                                                options={(values?.takedBills || [])
+                                                  .filter((factura) => factura.currentBalance > 0) // Filtrar facturas con balance > 0
+                                                  .map((factura) => ({
+                                                    label: String(factura.billId),
+                                                    value: String(factura.billId),
+                                                    id: String(factura.id),
+                                                    integrationCode: factura.integrationCode ? factura.integrationCode : "",
+                                                  }))
+                                                }
+                                                value={
+                                                  values.facturas[index]?.factura
+                                                    ? String(factura.billId)
+                                                    : null
+                                                }
+                                                isOptionEqualToValue={(option, value) => {
+                                                  return option.value === value;
+                                                }}
+                                                onChange={async (event, newValue) => {
+                                      
+                                                  if (!newValue) {
+                                                    // 1. Obtener el billId de la factura que se está deseleccionando
+                                                    const billIdDeseleccionada = factura.billId;
+                                                    
+                                                    // 2. Calcular el valorFuturo que se está liberando
+                                                    const valorFuturoLiberado = factura.valorFuturo || 0;
+                                                    if(values.facturas[index].is_creada===true){
+                                                      return
+                          
+                                                    }else {
+                                                      setFieldValue(`facturas[${index}].is_creada`,false)
+                                                    }
+                                                  
+                                                  
+                                                    // 4. Buscar todas las facturas que comparten el mismo billId (incluyendo la actual)
+                                                    const facturasCompartidas = values.facturas.filter(
+                                                      f => f.billId === billIdDeseleccionada
+                                                    );
+                                                  
+                                                    // 5. Calcular el saldoDisponible original de la factura
+                                                    const facturaOriginal = dataBills?.data.find(f => f.billId === billIdDeseleccionada);
+                                                    const saldoOriginal = facturaOriginal?.currentBalance || 0;
+                                                  
+                                                    // 6. Calcular el valorFuturo total actual de todas las facturas compartidas (excluyendo la que se deselecciona)
+                                                    const valorFuturoActual = facturasCompartidas
+                                                      .filter((f, i) => i !== index) // Excluir la factura que se está deseleccionando
+                                                      .reduce((sum, f) => sum + (f.valorFuturo), 0);
+                                                  
+                                                    // 7. Calcular el nuevo saldoDisponible global para esta factura
+                                                    const nuevoSaldoGlobal = saldoOriginal - valorFuturoActual;
+                                                  
+                                                    // 8. Actualizar el saldoDisponible en TODAS las facturas compartidas
+                                                    values.facturas.forEach((f, i) => {
+                                                      if (f.billId === billIdDeseleccionada) {
+                                                        setFieldValue(`facturas[${i}].saldoDisponible`, nuevoSaldoGlobal);
+                                                        setFieldValue(`facturas[${i}].saldoDisponibleInfo`, saldoOriginal);
+                                                      }
+                                                    });
+                                                  
+                                                    // 9. Recalcular los montos disponibles para el inversionista (si aplica)
+                                                    if (factura.idCuentaInversionista) {
+                                                      const presentValueTotal = values.facturas
+                                                        .filter(f => 
+                                                          f.idCuentaInversionista === factura.idCuentaInversionista  
+                                                          
+                                                        )
+                                                        .reduce((sum, f) => sum + f.presentValueInvestor , 0);
+                                                        
+                                                      const montoDisponibleActualizado = factura.montoDisponibleCuenta+ factura.presentValueInvestor+factura.gastoMantenimiento ;
+                                                
+                                                  
+                                                      values.facturas.forEach((f, i) => {
+                                                
+                                                        if (f.idCuentaInversionista=== factura.idCuentaInversionista) {
+                                                        
+                                                          setFieldValue(`facturas[${i}].montoDisponibleCuenta`, 
+                                                            montoDisponibleActualizado
+                                                          );
+                                                          
+                                                        }
+                                                      
+                                                      });
+
+                                                      setFieldValue(`facturas[${index}].montoDisponibleCuenta`, 
+                                                        montoDisponibleActualizado
+                                                    );
+                                                    }
+                                                    setFieldValue(`facturas[${index}].saldoDisponible`, 
+                                                      0
+                                                  );
+
+                                                    // 3. Limpiar los valores de esta factura (manteniendo los datos del inversionista)
+                                                    setFieldValue(`facturas[${index}]`, {
+                                                      billId: '',
+                                                      factura: '',
+                                                      fechaEmision: '',
+                                                      valorNominal: 0,
+                                                      saldoDisponible: 0,
+                                                      valorFuturo: 0,
+                                                      amount: 0,
+                                                      payedAmount: 0,
+                                                      fraccion: 1,
+                                                      porcentajeDescuento: 0,
+                                                      nombrePagador: '',
+                                                      presentValueInvestor: 0,
+                                                      presentValueSF: 0,
+                                                      investorProfit: 0,
+                                                      comisionSF: 0,
+                                                      fechaFin:factura.fechaFin,
+                                                      idCuentaInversionista:factura.idCuentaInversionista,
+                                                      numbercuentaInversionista: factura.numbercuentaInversionista,
+                                                      cuentaInversionista: factura.cuentaInversionista,
+                                                      nombreInversionista: factura.nombreInversionista,
+                                                      investorBroker: factura.investorBroker,
+                                                      investorBrokerName: factura.investorBrokerName,
+                                                      montoDisponibleCuenta:factura.montoDisponibleCuenta+factura.presentValueInvestor+factura.gastoMantenimiento,
+                                                      montoDisponibleInfo: factura.montoDisponibleInfo,
+                                                      gastoMantenimiento: 0,
+                                                      operationDays: 0,
+                                                      expirationDate: "",
+                                                    });
+                                                    return;
+
+                                                    
+                                                  }
+                                          
+                                                
+                                                  const selectedFactura = dataBills?.data.find(f => f.billId === newValue.value);
+                                                  if (!selectedFactura) return;
+                                    
+
+                                                  function encontrarFacturasDuplicadas(facturas, billId, inversionistaId) {
+                                                    // Validaciones iniciales
+                                                    if (!Array.isArray(facturas)) return [];
+                                                    if (!billId || !inversionistaId) return [];
+                                                    
+                                                    return facturas.filter(factura => {
+                                                      // Verificar que la factura tenga los campos necesarios
+                                                      if (!factura.billId || !factura.nombreInversionista) return false;
+                                                      
+                                                      // Comparar billId con la factura actual
+                                                      const mismoBillId = factura.factura=== billId;
+                                                    
+                                                      
+                                                      // Comparar inversionista con el seleccionado
+                                                      const mismoInversionista = factura.nombreInversionista === inversionistaId;
+                                                      
+                                                      return mismoBillId && mismoInversionista;
+                                                    });
+                                                  }
+                                                
+                                                  const inversionistaSeleccionado = factura.nombreInversionista// ID del inversionista seleccionado
+                                                  
+                                                  const facturasDuplicadas = encontrarFacturasDuplicadas(
+                                                    values.facturas, 
+                                                    newValue.id, // la factura que estás procesando actualmente
+                                                    inversionistaSeleccionado
+                                                  );
+
+                                                  
+                                                  if(facturasDuplicadas?.length>=1 ){
+
+                                                    // Mostrar error en el campo
+                                                    setFieldTouched(`facturas[${index}].nombreInversionista`, true, false);
+                                                    setFieldError(
+                                                      `facturas[${index}].nombreInversionista`,
+                                                      "No puede asignar inversionista a facturas con mismo Bill ID"
+                                                    );
+                                                    
+                                                    // Mostrar toast/notificación
+                                                    toast(<div style={{ display: 'flex', alignItems: 'center' }}>
+                                                      <ErrorIcon style={{ marginRight: '10px', color: '#d32f2f' }} />
+                                                      <span>No puede asignar el mismo inversionista a facturas agrupadas</span>
+                                                    </div>, {
+                                                      position: "top-right",
+                                                      autoClose: 5000,
+                                                      hideProgressBar: false,
+                                                      closeOnClick: true,
+                                                      pauseOnHover: true,
+                                                      draggable: true
+                                                    });
+                                              
+                                                    
+                                                    return;
+
+
+                                                  }
+                                                  
+                                                
+                                                  try {
+                                                    
+                                                      if (values.integrationCode != selectedFactura?.integrationCode && values.integrationCode != "") {
+                                                    toast(<div style={{ display: 'flex', alignItems: 'center' }}>
+                                                      <ErrorIcon style={{ marginRight: '10px', color: '#d32f2f' }} />
+                                                      <span>El código de integración debe coincidir con el de la factura previa</span>
+                                                    </div>);
+                                                      setFieldValue(`facturas[${index}].factura`, null);
+                                                    } else {
+
+                                                      const facturaActual2 = values?.facturas[index];
+                                                      const billIdAnterior = facturaActual2?.billId;
+                                                      const valorFuturoAnterior = facturaActual2?.valorFuturo || 0;
+                                                      const nombreInversionistaAnterior = facturaActual2?.nombreInversionista;
+                                                    
+                                                      if(billIdAnterior  && newValue.label!=billIdAnterior  ){
+
+                                                      
+
+                                                        // 1. Crear lista temporal que incluye la factura actual con sus nuevos valores
+                                                        const facturasTemporales = values.facturas.map((f, i) => 
+                                                          i === index ? {
+                                                            ...f,
+                                                            billId: factura.billId,
+                                                            saldoDisponible: factura.saldoDisponible,
+                                                            presentValueInvestor: presentValueInvestor,
+                                                            montoDisponibleInfo: factura.montoDisponibleInfo
+                                                          } : f
+                                                        );
+
+                                                        
+                                                        
+                                                      const presentValueInvestorFacturaAnterior=facturaActual2?.presentValueInvestor
+                                                      const montoDisponibleFacturaAnterior=facturaActual2?.montoDisponibleCuenta
+                                                      const saldoDisponibleFacturaAnterior=facturaActual2?.saldoDisponible
+
+                                                      const saldoDisponibleNuevo= saldoDisponibleFacturaAnterior+valorFuturoAnterior   
+                                                      const montoDisponibleNuevo =montoDisponibleFacturaAnterior+presentValueInvestorFacturaAnterior
+
+                                                        // 3. Actualizar todas las facturas con el mismo billId (excepto la actual)
+                                                  values.facturas.forEach((f, i) => {
+                                                    if (f.billId === billIdAnterior && i !== index) {
+                                                      // Actualizar saldo disponible
+                                                      setFieldValue(`facturas[${i}].saldoDisponible`, saldoDisponibleNuevo);
+                                                      
+                                                      setFieldValue(`facturas[${i}].montoDisponibleCuenta`, montoDisponibleNuevo);
+                                                      
+                                                    }
+                                                  });
+
+
+                                                  setFieldValue(`facturas[${index}]`, {
+                                                    billId: selectedFactura.billId,
+                                                    idCuentaInversionista: factura.idCuentaInversionista,
+                                                    factura: newValue.id,
+                                                    fechaEmision: selectedFactura.dateBill,
+                                                    probableDate: selectedFactura.expirationDate,
+                                                    amount: selectedFactura.currentBalance,
+                                                    payedAmount: selectedFactura.currentBalance,
+                                                    numbercuentaInversionista: factura.numbercuentaInversionista,
+                                                    cuentaInversionista: factura.cuentaInversionista,
+                                                    nombreInversionista: factura.nombreInversionista,
+                                                    investorBroker: factura.investorBroker,
+                                                    investorBrokerName: factura.investorBrokerName,
+                                                    saldoDisponible: saldoDisponibleA,
+                                                    saldoDisponibleInfo: selectedFactura.currentBalance,
+                                                    montoDisponibleCuenta:montoDisponibleFinal, // Usamos el valor calculado
+                                                    fraccion: fraccion,
+                                                    fechaFin: factura.fechaFin,
+                                                    valorNominal: valorNominalFactura,
+                                                    porcentajeDescuento: Math.round((selectedFactura.currentBalance * 100) / selectedFactura.currentBalance),
+                                                    expirationDate: selectedFactura.expirationDate,
+                                                    valorFuturo: valorFuturoCalculado,
+                                                    presentValueInvestor:valorFuturoCalculado,
+                                                    presentValueSF:valorFuturoCalculado|| 0,
+                                                    comisionSF,
+                                                    investorProfit: investorProfit,
+                                                    integrationCode: selectedFactura?.integrationCode ? selectedFactura?.integrationCode : "",
+                                                    isReBuy: selectedFactura?.reBuyAvailable ?? 0,
+                                                    gastoMantenimiento: 0,
+                                                    operationDays: 0,
+                                                    investorTax: values.investorTax,
+                                                    montoDisponibleInfo: factura.montoDisponibleInfo
+                                                  });
+                                                  
+                                                        
+                                                      } 
+                                    
+                                                      
+                                                      const fractionBill = await cargarFraccionFactura(selectedFactura.id);
+                                            
+                                                      
+                                                
+                                                      
+                                                    
+                                                
+                                                      // [MANTENIDO] Cálculo de fechas
+                                                      const fechaOperacion = new Date(values?.opDate);
+                                                      const expirationDate = new Date(parseISO(selectedFactura.expirationDate));
+                                                
+                                                      let substractDays = 0;
+                                                      if (isValid(fechaOperacion) && isValid(expirationDate)) {
+                                                        substractDays = differenceInDays(expirationDate, fechaOperacion);
+                                                    
+                                                      } else {
+                                                        console.error("Error: Una de las fechas no es válida.");
+                                                      }
+                                                
+                                                      // [MANTENIDO] Lógica de fracciones
+                                                      const facturaActual = newValue.id;
+                                                      let fraccion = fractionBill?.data?.fraction || 1;
+                                                      const facturasAnteriores = values.facturas.slice(0, index).filter((f) => f.factura === facturaActual);
+                                                
+                                                      if (facturasAnteriores.length > 0) {
+                                                        const fraccionMasAlta = Math.max(...facturasAnteriores.map((f) => f.fraccion || 1));
+                                                        fraccion = fraccionMasAlta + 1;
+                                                      }
+                                                
+                                                      // [MANTENIDO] Cálculo de saldo disponible
+                                                      let saldoDisponible = selectedFactura.currentBalance || 0;
+                                                      const valorFuturoAnteriores = facturasAnteriores.reduce((sum, f) => sum + (f.valorFuturo || 0), selectedFactura.currentBalance);
+                                                      saldoDisponible -= valorFuturoAnteriores;
+                                                
+                                                      // [MANTENIDO] Determinar valor futuro
+                                                      let valorFuturoCalculado;
+                                                      if (facturasAnteriores.length > 0 && saldoDisponible <= 0) {
+                                                        valorFuturoCalculado = 0;
+                                                        saldoDisponible = 0;
+                                                      } else {
+                                                        valorFuturoCalculado = selectedFactura.currentBalance;
+                                                      }
+                                                
+                                                      // [MANTENIDO] Saldo disponible anterior
+                                                      const saldoDisponibleAnterior = facturasAnteriores.find(
+                                                        (f) => f.billId === selectedFactura.billId
+                                                      )?.saldoDisponible || 0;
+                                                      
+                                                      const saldoDisponibleA = saldoDisponibleAnterior;
+                                                
+                                                      // [MANTENIDO] Cálculo de valores presentes
+                                                      const presentValueInvestor = factura.operationDays > 0 && factura.valorFuturo > 0
+                                                        ? Math.round(PV(factura.investorTax / 100, factura.operationDays / 365, 0, factura.valorFuturo, 0) * -1)
+                                                        : selectedFactura.currentBalance;
+                                                
+                                                      const presentValueSF = factura.operationDays > 0 && factura.valorFuturo > 0
+                                                        ? Math.round(PV(values.discountTax / 100, factura.operationDays / 365, 0, factura.valorFuturo, 0) * -1)
+                                                        : selectedFactura.currentBalance;
+                                                
+                                                      // [MANTENIDO] Cálculo de comisiones
+                                                      const comisionSF = presentValueInvestor && presentValueSF
+                                                        ? presentValueInvestor - presentValueSF
+                                                        : 0;
+                                                
+                                                      const investorProfit = presentValueInvestor ?? selectedFactura.currentBalance
+                                                        ? presentValueInvestor - selectedFactura.currentBalance : 0;
+                                                
+                                                      // [MANTENIDO] Cálculo de valor nominal
+                                                      let valorNominalFactura;
+                                                      if (facturasAnteriores.length > 0 && saldoDisponible <= 0) {
+                                                        valorNominalFactura = 0;
+                                                      } else {
+                                                        valorNominalFactura = selectedFactura.currentBalance * Math.round((selectedFactura.currentBalance * 100) / selectedFactura.currentBalance) / 100;
+                                                      }
+                                                      
+                                                      // [SOLUCIÓN] Cálculo del monto disponible CONSISTENTE entre facturas con mismo inversionista
+                                                      let montoDisponibleFinal = 0;
+                                                      if (factura.idCuentaInversionista) {
+                                                    
+                                                        // 2. Filtrar facturas con mismo inversionista (incluyendo la actual modificada)
+                                                        const facturasMismoInversionista = values?.facturas.filter(
+                                                          f => f.idCuentaInversionista === factura.idCuentaInversionista
+                                                        );
+                                                        
+                                                        
+                                                        if( facturasMismoInversionista.length> 1) { // 3. Calcular total de presentValueInvestor
+                                                          const totalPresentValue = facturasMismoInversionista.reduce((sum, f) => {
+                                                            const pv = f.presentValueInvestor ;
+                                                          
+                                                            return sum + pv;
+                                                          }, 0);
+                                                          
+                                                        
+                                                          const totalGm = facturasMismoInversionista.reduce((sum, f) => {
+                                                            return sum + (f.gastoMantenimiento);
+                                                          }, 0);
+                                                        
+                                                          // 4. Calcular monto disponible común
+                                                          montoDisponibleFinal = 
+                                                          factura.montoDisponibleInfo  - totalPresentValue - totalGm-presentValueInvestor
+                                                          
+                                                          
+                                                          
+                                                          // 5. Actualizar TODAS las facturas con mismo inversionista
+                                                      
+                                                          values.facturas.forEach((f, i) => {
+                                                            if (f.idCuentaInversionista === factura.idCuentaInversionista) {
+                                                              setFieldValue(`facturas[${i}].montoDisponibleCuenta`, montoDisponibleFinal);
+                                                              
+                                                            }
+                                                          });
+                                                          
+                                                          setFieldValue(`facturas[${index}]`, {
+                                                            billId: selectedFactura.billId,
+                                                            idCuentaInversionista: factura.idCuentaInversionista,
+                                                            factura: newValue.id,
+                                                            fechaEmision: selectedFactura.dateBill,
+                                                            probableDate: selectedFactura.expirationDate,
+                                                            amount: selectedFactura.currentBalance,
+                                                            payedAmount: selectedFactura.currentBalance,
+                                                            numbercuentaInversionista: factura.numbercuentaInversionista,
+                                                            cuentaInversionista: factura.cuentaInversionista,
+                                                            nombreInversionista: factura.nombreInversionista,
+                                                            investorBroker: factura.investorBroker,
+                                                            investorBrokerName: factura.investorBrokerName,
+                                                            saldoDisponible: saldoDisponibleA,
+                                                            saldoDisponibleInfo: selectedFactura.currentBalance,
+                                                            montoDisponibleCuenta:montoDisponibleFinal,
+                                                            fraccion: fraccion,
+                                                            fechaFin: factura.fechaFin,
+                                                            valorNominal: valorNominalFactura,
+                                                            porcentajeDescuento: Math.round((selectedFactura.currentBalance * 100) / selectedFactura.currentBalance),
+                                                            expirationDate: selectedFactura.expirationDate,
+                                                            valorFuturo: valorFuturoCalculado,
+                                                            presentValueInvestor:valorFuturoCalculado,
+                                                            presentValueSF:valorFuturoCalculado|| 0,
+                                                            comisionSF,
+                                                            investorProfit: investorProfit,
+                                                            integrationCode: selectedFactura?.integrationCode ? selectedFactura?.integrationCode : "",
+                                                            isReBuy: selectedFactura?.reBuyAvailable ?? 0,
+                                                            gastoMantenimiento: 0,
+                                                            operationDays: 0,
+                                                            investorTax: values.investorTax,
+                                                            montoDisponibleInfo: factura.montoDisponibleInfo
+                                                          })}else{
+                                                            // Caso sin inversionista: cálculo individual
+                                                            const montoDisponibleFinal = 
+                                                              factura.montoDisponibleInfo - presentValueInvestor
+                                                              // [MANTENIDO] Asignación final de valores
+                                                          setFieldValue(`facturas[${index}]`, {
+                                                            billId: selectedFactura.billId,
+                                                            idCuentaInversionista: factura.idCuentaInversionista,
+                                                            factura: newValue.id,
+                                                            fechaEmision: selectedFactura.dateBill,
+                                                            probableDate: selectedFactura.expirationDate,
+                                                            amount: selectedFactura.currentBalance,
+                                                            payedAmount: selectedFactura.currentBalance,
+                                                            numbercuentaInversionista: factura.numbercuentaInversionista,
+                                                            cuentaInversionista: factura.cuentaInversionista,
+                                                            nombreInversionista: factura.nombreInversionista,
+                                                            investorBroker: factura.investorBroker,
+                                                            investorBrokerName: factura.investorBrokerName,
+                                                            saldoDisponible: saldoDisponibleA,
+                                                            saldoDisponibleInfo: selectedFactura.currentBalance,
+                                                            montoDisponibleCuenta:montoDisponibleFinal, // Usamos el valor calculado
+                                                            fraccion: fraccion,
+                                                            fechaFin: factura.fechaFin,
+                                                            valorNominal: valorNominalFactura,
+                                                            porcentajeDescuento: Math.round((selectedFactura.currentBalance * 100) / selectedFactura.currentBalance),
+                                                            expirationDate: selectedFactura.expirationDate,
+                                                            valorFuturo: valorFuturoCalculado,
+                                                            presentValueInvestor:valorFuturoCalculado,
+                                                            presentValueSF:valorFuturoCalculado|| 0,
+                                                            comisionSF,
+                                                            investorProfit: investorProfit,
+                                                            integrationCode: selectedFactura?.integrationCode ? selectedFactura?.integrationCode : "",
+                                                            isReBuy: selectedFactura?.reBuyAvailable ?? 0,
+                                                            gastoMantenimiento: 0,
+                                                            operationDays: 0,
+                                                            investorTax: values.investorTax,
+                                                            montoDisponibleInfo: factura.montoDisponibleInfo
+                                                          });
+                                                          }
+                                                    
+                                                        
+                                                    
+                                                    
+                                                      
+                                                        
+                                                      } else {
+                                                      
+                                                        // Caso sin inversionista: cálculo individual
+                                                        const montoDisponibleFinal = 
+                                                          factura.montoDisponibleInfo - presentValueInvestor
+                                                          // [MANTENIDO] Asignación final de valores
+                                                      setFieldValue(`facturas[${index}]`, {
+                                                        billId: selectedFactura.billId,
+                                                        idCuentaInversionista: factura.idCuentaInversionista,
+                                                        factura: newValue.id,
+                                                        fechaEmision: selectedFactura.dateBill,
+                                                        probableDate: selectedFactura.expirationDate,
+                                                        amount: selectedFactura.currentBalance,
+                                                        payedAmount: selectedFactura.currentBalance,
+                                                        numbercuentaInversionista: factura.numbercuentaInversionista,
+                                                        cuentaInversionista: factura.cuentaInversionista,
+                                                        nombreInversionista: factura.nombreInversionista,
+                                                        investorBroker: factura.investorBroker,
+                                                        investorBrokerName: factura.investorBrokerName,
+                                                        saldoDisponible: saldoDisponibleA,
+                                                        saldoDisponibleInfo: selectedFactura.currentBalance,
+                                                        montoDisponibleCuenta:montoDisponibleFinal, // Usamos el valor calculado
+                                                        fraccion: fraccion,
+                                                        fechaFin: factura.fechaFin,
+                                                        valorNominal: valorNominalFactura,
+                                                        porcentajeDescuento: Math.round((selectedFactura.currentBalance * 100) / selectedFactura.currentBalance),
+                                                        expirationDate: selectedFactura.expirationDate,
+                                                        valorFuturo: valorFuturoCalculado,
+                                                        presentValueInvestor:valorFuturoCalculado,
+                                                        presentValueSF:valorFuturoCalculado|| 0,
+                                                        comisionSF,
+                                                        investorProfit: investorProfit,
+                                                        integrationCode: selectedFactura?.integrationCode ? selectedFactura?.integrationCode : "",
+                                                        isReBuy: selectedFactura?.reBuyAvailable ?? 0,
+                                                        gastoMantenimiento: 0,
+                                                        operationDays: 0,
+                                                        investorTax: values.investorTax,
+                                                        montoDisponibleInfo: factura.montoDisponibleInfo
+                                                      });
+                                                      }
+                                                
+                                                    
+                                                
+                                                    
+                                                    }
+                                                  } catch (error) {
+                                                    console.error("Error al cargar los datos:", error);
+                                                  }
+                                                }}
+                                                renderInput={(params) => (
+                                                  <TextField
+                                                    {...params}
+                                                    label="Número de Factura *"
+                                                    fullWidth
+                                                    name="billId"
+                                                    error={touched.facturas?.[index]?.billId && Boolean(errors.facturas?.[index]?.billId)}
+                                                    helperText={
+                                                      ` ${factura.isReBuy ? "Disponible Recompra" : "No disponible Recompra"}`
+                                                    }
+                                                  />
+                                                )}
+                                                
+                                              /> 
+                                      
+                                            )}
+
+                                              
+                                            
+                                         <Modal
                                                 open={openModal}
                                                 onClose={() => setOpenModal(false)}
                                                 aria-labelledby="modal-confirmacion"
@@ -3055,9 +2972,72 @@ const [billExists, setBillExists] = useState(false);
                                                   </Box>
                                                 </Box>
                                               </Modal>
-                                                 {/* Fracción */}
+                                      </Grid>
+                                            
+                                       <Grid item xs={12} md={0.5}>
+                                        <Box
+                                          sx={{
+                                            color: (orchestDisabled.find(item => item.indice === index))?.status ? "#ffffff" : "#5EA3A3",
+                                            backgroundColor: (orchestDisabled.find(item => item.indice === index))?.status ? "#5EA3A3" : "transparent",
+                                            border: "1.4px solid #5EA3A3",
+                                            width: { xs: "22px", sm: "25px" }, // Tamaño responsive
+                                            minWidth: { xs: "22px", sm: "25px" }, // Evita compresión
+                                            display: "flex",
+                                            alignItems: "center",
+                                            marginTop: { xs: "8px", sm: "12px" }, // Ajuste vertical responsive
+                                            justifyContent: "center",
+                                            borderRadius: "5px",
+                                            height: { xs: "22px", sm: "25px" }, // Altura responsive
+                                            cursor: (orchestDisabled.find(item => item.indice === index))?.status || isSelectedPayer ? "default" : "pointer",
+                                            transition: "all 0.3s ease", // Transición suave
+                                            '&:hover': {
+                                              backgroundColor: !(orchestDisabled.find(item => item.indice === index)?.status) && !isSelectedPayer ? "#f0f0f0" : undefined,
+                                              transform: !(orchestDisabled.find(item => item.indice === index)?.status) && !isSelectedPayer ? "scale(1.05)" : undefined // Efecto hover
+                                            },
+                                            '&:active': {
+                                              transform: !(orchestDisabled.find(item => item.indice === index)?.status) && !isSelectedPayer ? "scale(0.95)" : undefined // Efecto click
+                                            }
+                                          }}
+                                                                                        onClick={() => {
+                                                  if (!isSelectedPayer) {
+                                                    toast(<div style={{ display: 'flex', alignItems: 'center' }}>
+                                                      <ErrorIcon style={{ marginRight: '10px', color: '#d32f2f' }} />
+                                                      <span>Debe seleccionar un pagador antes de crear facturas</span>
+                                                    </div>);
+                                                    return;
+                                                  }
+
+                                                  const isCurrentlyActive = (orchestDisabled.find(item => item.indice === index))?.status;
+                                                  
+                                                  if (isCurrentlyActive) {
+                                                    setOpenModal(true); // Mostrar modal de confirmación
+                                                  } else {
+                                                    setFieldValue(`facturas[${index}].is_creada`, true);
+                                                    setIsCreatingBill(true);
+                                                    setOrchestDisabled(prev => 
+                                                      prev.map(item => 
+                                                        item.indice === index ? { ...item, status: true } : item
+                                                      )
+                                                    );
+                                                  }
+                                                }}
+                                              >
+                                                {(orchestDisabled.find(item => item.indice === index))?.status ? (
+                                                  <i 
+                                                    className="fa-solid fa-xmark" 
+                                                    style={{ opacity: isSelectedPayer ? 0.5 : 1, pointerEvents: isSelectedPayer ? "none" : "auto" }}
+                                                  />
+                                                ) : (
+                                                  <i 
+                                                    className="fa-solid fa-plus" 
+                                                    style={{ opacity: isSelectedPayer ? 0.5 : 1, pointerEvents: isSelectedPayer ? "none" : "auto" }}
+                                                  />
+                                                )}
+                                              </Box>
+                                              </Grid>
+                                                 
                                               {/* Fracción */}
-                                            <Grid item xs={12} md={0.7}>
+                                            <Grid item xs={12} md={0.6}>
                                                 <TextField
                                                 id="Fraction-name" // Para CSS/JS si es necesario
                                                  data-testid="campo-fraccion"
@@ -3097,7 +3077,7 @@ const [billExists, setBillExists] = useState(false);
                                               </Grid>
 
                                               {/* Saldo Disponible de la factura */}
-                                              <Grid item xs={12} md={3}>
+                                               <Grid item xs={12} md={2}>
                                               <TextField
                                                   id={`currentBalance-${index}`}
                                                   data-testid="campo-saldoDisponibleFactura"
@@ -3160,7 +3140,7 @@ const [billExists, setBillExists] = useState(false);
                                                 />
                                                 </Grid>
                                               {/* Fecha Probable*/}
-                                              <Grid item xs={12} md={1.5}>
+                                                 <Grid item xs={12} md={1.8}>
                                             
 
                                                         <DatePicker
@@ -3205,9 +3185,9 @@ const [billExists, setBillExists] = useState(false);
                                                 /> */}
                                               {/* </Grid> */} 
                                               {/* Nombre de Inversionista */}
-                                              <Grid item xs={12} md={4.56}>
-                                              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                                              <div style={{ flex: 1 }}> {/* Este div ocupa el espacio restante */}
+                                               <Grid item xs={12} md={5}>
+                                              
+                                             
                                               <Autocomplete
                                               id="investor-name" // Para CSS/JS si es necesario
                                               data-testid="campo-inversor"
@@ -3519,13 +3499,19 @@ const [billExists, setBillExists] = useState(false);
                                         )}
  */}
                                              
-                                          </div>
-                                        </div>
+                                          
+                                        
                                         </Grid>
-                                                                                  
 
-                                             
-                                              <Grid item xs={12} md={3}>
+                                                </Grid>
+                                                  
+                                                           
+
+                                          
+                                               <Grid container spacing={2} sx={{ margin: 0, width: '100%' }}>
+                                                  {/* Campo de monto disponible */}
+                                                
+                                                <Grid item xs={12} sm={5} md={3.8}>
 
                                                 
                                               <Autocomplete
@@ -3673,7 +3659,7 @@ const [billExists, setBillExists] = useState(false);
                                                 />
                                                                                       </Grid>
                                               {/*Monto disponible en cuenta inversionista */}                                    
-                                              <Grid item xs={12} md={3}>
+                                                <Grid item xs={12} md={3}>
                                                 <TextField
                                                    id="investorBalancename" // Para CSS/JS si es necesario
                                                   data-testid="campo-investorBalance"
@@ -3688,7 +3674,7 @@ const [billExists, setBillExists] = useState(false);
                                               </Grid>
                                             
                                             {/* Valor Futuro */}
-                                            <Grid item xs={12} md={3} style={{ position: 'relative' }}>
+                                            <Grid item xs={5} md={3} style={{ position: 'relative'  }}>
                                             <TextField
                                                id="amountname" // Para CSS/JS si es necesario
                                                   data-testid="campo-valorFuturo"
@@ -3903,7 +3889,7 @@ const [billExists, setBillExists] = useState(false);
                                               </Tooltip>
                                             </Grid>
                                             {/* Campo de porcentaje de descuento */}
-                                            <Grid item xs={12} md={1} style={{ position: 'relative' }}>
+                                            <Grid item xs={12} md={1} style={{ position: 'relative',width: { md: '10%' }  }}>
                                           <TextField
                                               id="payedPercentname"
                                               data-testid="campo-payedPercent"
@@ -4020,7 +4006,7 @@ const [billExists, setBillExists] = useState(false);
                                               </Tooltip>
                                             </Grid>
                                             {/*Tasa Descuento */}
-                                            <Grid item xs={12} md={2}>
+                                             <Grid item xs={12} md="auto" sx={{ width: { md: '9%' } }}>
                                             <TextField
                                               id="discountTaxname"
                                               data-testid="campo-discountTax"
@@ -4126,8 +4112,13 @@ const [billExists, setBillExists] = useState(false);
                                               }}
                                               error={!!errors.discountTax}  // Mostrar error si existe
                                             />
-                                                                                        </Grid>
+                                              </Grid>
 
+
+                                              </Grid>                 
+
+                                      
+                                               
                                             {/* Campo de valor nominal */}
                                             <Grid item xs={12} md={3}>
                                             <TextField
@@ -4245,6 +4236,9 @@ const [billExists, setBillExists] = useState(false);
                                               error={touched.facturas?.[index]?.valorNominal && Boolean(errors.facturas?.[index]?.valorNominal)}
                                             />
                                             </Grid>
+
+
+                                            
                                             <Grid item xs={12} md={1.5}>
                                             <Box sx={{ position: 'relative' }}> 
 
@@ -4524,7 +4518,7 @@ const [billExists, setBillExists] = useState(false);
                                               />
                                             </Grid>
                                             {/* Campo Utilidad Inversión*/ }
-                                            <Grid item xs={12} md={3.5}>
+                                            <Grid item xs={12} md={3.4}>
                                               <TextField
                                                id="InvestorProfitname" // Para CSS/JS si es necesario
                                               data-testid="campo-InvestorProfit"
@@ -4566,7 +4560,7 @@ const [billExists, setBillExists] = useState(false);
                                               />
                                             </Grid>
                                             {/* Comisión SF*/ }
-                                            <Grid item xs={12} md={4}>
+                                            <Grid item xs={12} md={3.9}>
                                               <TextField
                                               id="comisionSFname" // Para CSS/JS si es necesario
                                               data-testid="campo-comisionSF"
@@ -4600,22 +4594,22 @@ const [billExists, setBillExists] = useState(false);
                                               />
                                             </Grid>
                                             {/* Gasto de Mantenimiento */}
-                                          <Grid item xs={12} md={6}>
+                                                  <Grid item xs={12} md={7.82}>
                                           <Box 
-                                                sx={{
-                                                  display: 'flex',
-                                                  alignItems: 'center',
-                                                  height: '69%',
-                                                  width:'1170px',
-                                                  gap: 1,
-                                                  p: 1,
-                                                  border: '1px solid',
-                                                  borderColor: 'rgba(0, 0, 0, 0.23)',
-                                                  borderRadius: 1,
-                                                  boxShadow: 0,
-                                                  bgcolor: 'background.paper'
-                                                }}
-                                              >
+                                                                sx={{
+                                                display: 'flex',
+                                                flexDirection: { xs: 'column', sm: 'row' },
+                                                alignItems: 'center',
+                                                gap: 1,
+                                                p: 1,
+                                                border: '1px solid',
+                                                borderColor: 'rgba(0, 0, 0, 0.23)',
+                                                borderRadius: 2,
+                                                boxShadow: 0,
+                                                bgcolor: 'background.paper',
+                                                width: '100%',
+                                              }}
+                                            >
                                               <Typography variant="body1" sx={{ whiteSpace: 'nowrap' }}>
                                                 Gasto de Mantenimiento (GM)
                                                 </Typography>
@@ -4690,6 +4684,10 @@ const [billExists, setBillExists] = useState(false);
                                             </Box>
                                           </Grid>
 
+
+                                                
+                                               </Grid>
+                                              
                                           
                                             
                                           </Grid>
