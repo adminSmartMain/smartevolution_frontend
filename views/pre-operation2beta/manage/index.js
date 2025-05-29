@@ -245,7 +245,7 @@ const validationSchema = Yup.object({
     Yup.object({
       billId: Yup.string().required('Este campo es obligatorio'),
      
-      
+      investorProfit: Yup.number().required('Este campo es obligatorio').typeError('Debe ser un número válido'),
       nombreInversionista: Yup.string().required('Este campo es obligatorio'),
       cuentaInversionista: Yup.string().required('Este campo es obligatorio'),
       factura: Yup.string().required('Este campo es obligatorio'),
@@ -260,7 +260,16 @@ const validationSchema = Yup.object({
       fechaEmision: Yup.date().required('Este campo es obligatorio'),
       valorNominal: Yup.number().required('Este campo es obligatorio').typeError('Debe ser un número válido'),
       
-      fechaFin: Yup.date().required('Este campo es obligatorio'),
+      fechaFin: Yup.date().required('Este campo es obligatorio').when('opDate', (opDate, schema) => {
+          if (!opDate) return schema;
+          return schema.test(
+            'is-after-opdate',
+            'La fecha fin debe ser posterior a la fecha de operación',
+            (fechaFin) => {
+              return fechaFin > opDate;
+            }
+          );
+        }),
       operationDays:Yup.number().required('Este campo es obligatorio'),
       comisionSF: Yup.number().required('Este campo es obligatorio'),
       gastoMantenimiento: Yup.number().required('Este campo es obligatorio'),

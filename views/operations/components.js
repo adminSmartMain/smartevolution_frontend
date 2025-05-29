@@ -30,8 +30,8 @@ import MuiTextField from "@styles/fields";
 import { StandardTextField } from "@styles/fields/BaseField";
 import InputTitles from "@styles/inputTitles";
 import ClearIcon from "@mui/icons-material/Clear";
-import ModalValorAGirar from "./ModalValorAGirar";
-import AdvancedDateRangePicker from "./AdvancedDateRangePicker";
+import ModalValorAGirar from "../../shared/components/ModalValorAGirar";
+import AdvancedDateRangePicker from "../../shared/components/AdvancedDateRangePicker";
 import scrollSx from "@styles/scroll";
 
 import CustomDataGrid from "@styles/tables";
