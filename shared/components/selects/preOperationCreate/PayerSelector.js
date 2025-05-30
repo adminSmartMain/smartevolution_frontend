@@ -104,6 +104,7 @@ export default function PayerSelector( {errors,dataBills,showAllPayers,payers,va
                             is_creada: false
                         };
                         });
+                        console.log("Nuevas facturas después de reset:", nuevasFacturas);
 
                         setFieldValue('facturas', nuevasFacturas);
                         setFieldValue('nombrePagador', '');

@@ -108,7 +108,10 @@ export default function EmitterDeleteModal ({orchestDisabled,isModalEmitterAd,se
                             investorBroker: f.investorBroker || "",
                             investorBrokerName: f.investorBrokerName || "",
                             montoDisponibleCuenta: f.montoDisponibleInfo || 0,
-                            montoDisponibleInfo: f.montoDisponibleInfo || 0
+                            montoDisponibleInfo: f.montoDisponibleInfo || 0,
+                            fechaFin: f.fechaFin,
+                            operationDays:f.operationDays || 1,
+                            diasOperaciones: f.diasOperaciones || 1,
                           };
                         }));
 

@@ -80,7 +80,7 @@ export const ManageOperationC = ({
   const [editMode, setEditMode] = useState({});
   const [isSelectedPayer, setIsSelectedPayer] = useState(false)
   const [isModalEmitterAd, setIsModalEmitterAd] = useState(false)
-  const [brokeDelete, setBrokeDelete] = useState(true)
+  const [brokeDelete, setBrokeDelete] = useState(false)
   const [isCreatingBill, setIsCreatingBill] = useState(false)
   const [emitterSaved, setEmitterSaved] = useState(false)
 
@@ -546,6 +546,9 @@ export const ManageOperationC = ({
                   <Grid item xs={12} md={6} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
                     <div style={{ flex: 1 }}> {/* Este div ocupa el espacio restante */}
                       <EmitterSelector
+                      setClientPagador={setClientPagador}
+                      orchestDisabled={orchestDisabled}
+                       setIsSelectedPayer={ setIsSelectedPayer}
                         setPendingClear={setPendingClear}
                         setFieldValue={setFieldValue}
                         setFieldTouched={setFieldTouched}
@@ -903,6 +906,7 @@ export const ManageOperationC = ({
                                                 } else {
                                                   setFieldValue(`facturas[${index}].is_creada`, true);
                                                   setIsCreatingBill(true);
+                                                  setBrokeDelete(true)
                                                   setOrchestDisabled(prev =>
                                                     prev.map(item =>
                                                       item.indice === index ? { ...item, status: true } : item

@@ -127,9 +127,11 @@ export default function NoEditModal({ openModal,setOpenModal,setEditMode, index,
                       montoDisponibleCuenta: currentBill.montoDisponibleCuenta,
                       montoDisponibleInfo: currentBill.montoDisponibleInfo,
                       gastoMantenimiento: 0,
-                      operationDays: 0,
+                      operationDays: 1,
+                      diasOperaciones:1,
                       expirationDate: "",
-                      billCode: ""
+                      billCode: "",
+                      fechaFin:currentBill.fechaFin,
                     });
                     
                     // Actualizar estados de creación
