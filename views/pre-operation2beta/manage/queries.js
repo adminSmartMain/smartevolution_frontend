@@ -19,7 +19,7 @@ export const CreateOperation = async (values, op) => {
   const res = await Axios.post(
     `${API_URL}/preOperation/`,
     {
-      ...values,
+      values,
       opId: op,
     },
     {

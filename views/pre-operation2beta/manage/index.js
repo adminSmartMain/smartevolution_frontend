@@ -401,16 +401,21 @@ const onSubmit = async (values, { setSubmitting }) => {
     }
     
     // Ejecución de operaciones
-    const { success, failedOperations } = await executeAtomicOperations(facturasTransformadas);
-    console.log(success)
-    if (!success) {
+    const { success, successfulOperations, failedOperations } = await executeAtomicOperations(facturasTransformadas);
+    
+    console.log("Resultado:", {
+      success,
+      successfulCount: successfulOperations?.length || 0,
+      failedCount: failedOperations?.length || 0
+    });
+    if (failedOperations?.length > 0) {
       throw new Error(
         `${failedOperations.length} operaciones fallaron: ${
-          failedOperations.map(op => op.error).join('; ')
+          failedOperations.map(op => op.error?.message || op.error).join('; ')
         }`
       );
     }
-    
+
     setSuccess(true);
     toast.success(
       <div>
@@ -422,7 +427,7 @@ const onSubmit = async (values, { setSubmitting }) => {
       </div>,
       { autoClose: 7000 }
     );
-    
+ 
     await new Promise(resolve => setTimeout(resolve, 5000));
     setIsModalOpen(false);
     
@@ -693,69 +698,44 @@ const fetchGeneratedBillId = async (billId) => {
 
 
 
-// Función modificada para executeAtomicOperations
 const executeAtomicOperations = async (operations) => {
-  const progressToast = toast.info(`Procesando 0/${operations.length} operaciones...`, { autoClose: false });
-  const generatedBillIds = {}; // Almacena los IDs generados { billIdOriginal: idGenerado }
-  console.log(operations)
+  const progressToast = toast.info(`Procesando ${operations.length} operaciones...`, { autoClose: false });
+
   try {
-    // Primero procesamos las facturas que no necesitan ID generado
-    const initialResults = await Promise.allSettled(
-      operations.map(async (factura) => {
-        if (!factura.needsGeneratedBillId) {
-          const response = await createOperationFetch(factura.dataSent, factura.dataSent.opId);
-          if (factura.isFirstOccurrence && response.data?.billId) {
-            generatedBillIds[factura.billId] = response.data.billId;
-          }
-          return response;
-        }
-        return { skipped: true }; // Saltar temporalmente
-      })
-    );
+    // Preparar payload marcando primeras ocurrencias
+    const payload = operations.map((op, index) => ({
+      ...op.dataSent,
+      _isFirstOccurrence: operations.findIndex(
+        o => o.billId === op.billId
+      ) === index
+    }));
 
-    // Luego procesamos las facturas que necesitan ID generado
-    const finalResults = await Promise.allSettled(
-      operations.map(async (factura, index) => {
-       
-        if (factura.needsGeneratedBillId) {
-          // Actualizar progreso
-          toast.update(progressToast, {
-            render: `Obteniendo IDs para ${index + 1}/${operations.length} operaciones...`
-          });
+    const response = await createOperationFetch(payload, payload[0]?.opId);
 
-          // Obtener el ID generado para esta factura
-          const generatedId = await fetchGeneratedBillId(factura.billId);
-          console.log(generatedId)
-          // Crear payload con el ID generado
-          const payload = {
-            ...factura.dataSent,
-            bill: generatedId,
-            billCode: '' // No enviar billCode para facturas repetidas
-          };
-
-          const response = await createOperationFetch(payload, payload.opId);
-          return response;
-        }
-        return initialResults[index].value; // Usar resultado del primer paso
-      })
-    );
-
-    // Procesar resultados finales
-    const failedOperations = finalResults
-      .filter(r => r.status === 'rejected')
-      .map(r => ({ error: r.reason?.message || 'Error desconocido' }));
-
+    // Procesar resultados
+    const failed = response?.data.failed || [];
+    const successful = response?.data.successful || [];
+    console.log(response.data)
+    console.log(failed)
+    // Si hay operaciones fallidas, intentamos obtener los IDs generados
+    console.log(successful)
     toast.dismiss(progressToast);
     
+ 
     return {
-      success: failedOperations.length === 0,
-      failedOperations,
+      success: failed.length === 0, // true solo si no hay fallos
+      successfulOperations: successful,
+      failedOperations: failed,
       totalOperations: operations.length
     };
-    
+
   } catch (error) {
     toast.dismiss(progressToast);
-    throw error;
+    return {
+      success: false,
+      error: error.response?.data?.message || error.message,
+      totalOperations: operations?.length
+    };
   }
 };
 
