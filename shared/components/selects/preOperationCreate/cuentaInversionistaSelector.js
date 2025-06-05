@@ -12,10 +12,10 @@ export default function CuentaInversionistaSelector ({index,factura,values,setFi
                     <Autocomplete
                     id="investorAccountname" // Para CSS/JS si es necesario
                     data-testid="campo-investorAccount"
-                    options={factura.cuentaInversionista || []}
+                    options={factura.cuentasDelInversionistaSelected || []}
                     getOptionLabel={(option) => option?.account_number || option?.number || option?.id || ''}
                     value={
-                    (factura.cuentaInversionista || []).find(
+                    (factura.cuentasDelInversionistaSelected || []).find(
                     account => account?.id === factura.idCuentaInversionista
                     ) || null
                     }
@@ -73,6 +73,7 @@ export default function CuentaInversionistaSelector ({index,factura,values,setFi
                     comisionSF: factura.comisionSF || 0,
                     numbercuentaInversionista: '',
                     cuentaInversionista: '',
+                    cuentasDelInversionistaSelected:factura.cuentasDelInversionistaSelected,
                     nombreInversionista: factura.nombreInversionista,
                     investorBroker: factura.investorBroker,
                     investorBrokerName: factura.investorBrokerName,
@@ -135,6 +136,7 @@ export default function CuentaInversionistaSelector ({index,factura,values,setFi
                     comisionSF: factura.comisionSF || 0,
                     numbercuentaInversionista: '',
                     cuentaInversionista: '',
+                    cuentasDelInversionistaSelected:factura.cuentasDelInversionistaSelected,
                     nombreInversionista: factura.nombreInversionista,
                     investorBroker: factura.investorBroker,
                     investorBrokerName: factura.investorBrokerName,
@@ -198,15 +200,15 @@ export default function CuentaInversionistaSelector ({index,factura,values,setFi
                     label="Cuenta Inversionista*"
                     fullWidth
                     variant="outlined"
-                    error={touched.facturas?.[index]?.cuentaInversionista && 
-                    Boolean(errors.facturas?.[index]?.cuentaInversionista)}
-                    helperText={touched.facturas?.[index]?.cuentaInversionista && 
-                    errors.facturas?.[index]?.cuentaInversionista}
+                    error={touched.facturas?.[index]?.numbercuentaInversionista && 
+                    Boolean(errors.facturas?.[index]?.numbercuentaInversionista)}
+                    helperText={touched.facturas?.[index]?.numbercuentaInversionista && 
+                    errors.facturas?.[index]?.numbercuentaInversionista}
                     />
                     )}
                     isOptionEqualToValue={(option, value) => option.id === value?.id}
                     noOptionsText="No hay cuentas disponibles"
-                    disabled={!factura.cuentaInversionista || factura.cuentaInversionista.length === 0}
+                    disabled={!factura.cuentasDelInversionistaSelected || factura.cuentasDelInversionistaSelected.length === 0}
                     />
                 </>
         

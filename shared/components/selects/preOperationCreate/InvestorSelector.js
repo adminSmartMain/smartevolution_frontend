@@ -80,6 +80,7 @@ export default function InvestorSelector({setFieldTouched,setFieldError,errors, 
                             fechaFin:`${addDays(new Date(),1)}`,
                             numbercuentaInversionista: '',
                             cuentaInversionista:[],
+                            cuentasDelInversionistaSelected:[],
                             nombreInversionista: '',
                             investorBroker: '',
                             expirationDate: factura.expirationDate,
@@ -178,9 +179,11 @@ export default function InvestorSelector({setFieldTouched,setFieldError,errors, 
 
                             if(todasFacturasInversionista.length===1){
                             if(facturasMismoBillId.length>1 ){
+                               
                                 
+                               // setFieldValue(`facturas[${index}].cuentaInversionista`, cuentas?.data || []);
+                                setFieldValue(`facturas[${index}].cuentasDelInversionistaSelected`, cuentas?.data || []);
                                 
-                                setFieldValue(`facturas[${index}].cuentaInversionista`, cuentas?.data || []);
                                 setFieldValue(`facturas[${index}].nombreInversionista`, newValue?.data.id || "");
                                 setFieldValue(`facturas[${index}].investorBroker`, brokerFromInvestor?.data.id || "");
                                 setFieldValue( `facturas[${index}].tasaInversionistaPR`,tasaDescuento?.data?.discount_rate_investor
@@ -195,7 +198,8 @@ export default function InvestorSelector({setFieldTouched,setFieldError,errors, 
 
                             }else if (facturasMismoBillId.length===1 ){
                                 
-                                setFieldValue(`facturas[${index}].cuentaInversionista`, cuentas?.data || []);
+                              //  setFieldValue(`facturas[${index}].cuentaInversionista`, cuentas?.data || []);
+                                setFieldValue(`facturas[${index}].cuentasDelInversionistaSelected`, cuentas?.data || []);
                                 setFieldValue(`facturas[${index}].nombreInversionista`, newValue?.data.id || "");
                                 setFieldValue(`facturas[${index}].investorBroker`, brokerFromInvestor?.data.id || "");
                                 setFieldValue( `facturas[${index}].tasaInversionistaPR`,tasaDescuento?.data?.discount_rate_investor
@@ -240,7 +244,8 @@ export default function InvestorSelector({setFieldTouched,setFieldError,errors, 
 
                             }else if (facturasDuplicadas.length===0 ){
                             
-                            setFieldValue(`facturas[${index}].cuentaInversionista`, cuentas?.data || []);
+                           // setFieldValue(`facturas[${index}].cuentaInversionista`, cuentas?.data || []);
+                            setFieldValue(`facturas[${index}].cuentasDelInversionistaSelected`, cuentas?.data || []);
                             setFieldValue(`facturas[${index}].nombreInversionista`, newValue?.data.id || "");
                             setFieldValue(`facturas[${index}].investorBroker`, brokerFromInvestor?.data.id || "");
                             setFieldValue( `facturas[${index}].tasaInversionistaPR`,tasaDescuento?.data?.discount_rate_investor
@@ -257,7 +262,8 @@ export default function InvestorSelector({setFieldTouched,setFieldError,errors, 
 
                             }else if (facturasDuplicadas.length===0 ){
                             
-                            setFieldValue(`facturas[${index}].cuentaInversionista`, cuentas?.data || []);
+                           // setFieldValue(`facturas[${index}].cuentaInversionista`, cuentas?.data || []);
+                            setFieldValue(`facturas[${index}].cuentasDelInversionistaSelected`, cuentas?.data || []);
                             setFieldValue(`facturas[${index}].nombreInversionista`, newValue?.data.id || "");
                             setFieldValue(`facturas[${index}].investorBroker`, brokerFromInvestor?.data.id || "");
                             setFieldValue( `facturas[${index}].tasaInversionistaPR`,tasaDescuento?.data?.discount_rate_investor
@@ -274,7 +280,8 @@ export default function InvestorSelector({setFieldTouched,setFieldError,errors, 
                         }
                         
                         
-                            setFieldValue(`facturas[${index}].cuentaInversionista`, cuentas?.data || []);
+                           // setFieldValue(`facturas[${index}].cuentaInversionista`, cuentas?.data || []);
+                            setFieldValue(`facturas[${index}].cuentasDelInversionistaSelected`, cuentas?.data || []);
                             setFieldValue(`facturas[${index}].nombreInversionista`, newValue?.data.id || "");
                             setFieldValue(`facturas[${index}].investorBroker`, brokerFromInvestor?.data.id || "");
                             setFieldValue( `facturas[${index}].tasaInversionistaPR`,tasaDescuento?.data?.discount_rate_investor

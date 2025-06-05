@@ -132,6 +132,7 @@ export default function BillSelector ({values, setFieldValue, errors, touched, i
                 numbercuentaInversionista: factura.numbercuentaInversionista,
                 cuentaInversionista: factura.cuentaInversionista,
                 nombreInversionista: factura.nombreInversionista,
+                cuentasDelInversionistaSelected:factura.cuentasDelInversionistaSelected,
                 investorBroker: factura.investorBroker,
                 investorBrokerName: factura.investorBrokerName,
                 montoDisponibleCuenta:factura.montoDisponibleCuenta+factura.presentValueInvestor+factura.gastoMantenimiento,
@@ -292,7 +293,8 @@ export default function BillSelector ({values, setFieldValue, errors, touched, i
                   diasOperaciones: 1,
                 operationDays: 1,
                 investorTax: values.investorTax,
-                montoDisponibleInfo: factura.montoDisponibleInfo
+                montoDisponibleInfo: factura.montoDisponibleInfo,
+                cuentasDelInversionistaSelected:factura.cuentasDelInversionistaSelected,
                 });
 
 
@@ -443,7 +445,8 @@ export default function BillSelector ({values, setFieldValue, errors, touched, i
                   diasOperaciones: 1,
                 operationDays: 1,
                 investorTax: values.investorTax,
-                montoDisponibleInfo: factura.montoDisponibleInfo
+                montoDisponibleInfo: factura.montoDisponibleInfo,
+                cuentasDelInversionistaSelected:factura.cuentasDelInversionistaSelected,
                 })}else{
                 // Caso sin inversionista: cálculo individual
                 const montoDisponibleFinal = 
@@ -481,7 +484,8 @@ export default function BillSelector ({values, setFieldValue, errors, touched, i
                  diasOperaciones: 1,
                 operationDays: 1,
                 investorTax: values.investorTax,
-                montoDisponibleInfo: factura.montoDisponibleInfo
+                montoDisponibleInfo: factura.montoDisponibleInfo,
+                cuentasDelInversionistaSelected:factura.cuentasDelInversionistaSelected,
                 });
                 }
 
@@ -528,7 +532,8 @@ export default function BillSelector ({values, setFieldValue, errors, touched, i
                   diasOperaciones: 1,
                 operationDays: 1,
                 investorTax: values.investorTax,
-                montoDisponibleInfo: factura.montoDisponibleInfo
+                montoDisponibleInfo: factura.montoDisponibleInfo,
+                cuentasDelInversionistaSelected:factura.cuentasDelInversionistaSelected,
                 });
                 }
 

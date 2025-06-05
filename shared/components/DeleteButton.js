@@ -7,7 +7,7 @@ import { Box, Typography, Grid, IconButton } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 
 
-export default function DeleteButton({factura, index, values, setFieldValue, remove, orchestDisabled, setOrchestDisabled, setIsCreatingBill}) {
+export default function DeleteButton({f,factura, index, values, setFieldValue, remove, orchestDisabled, setOrchestDisabled, setIsCreatingBill}) {
 return (   <Grid item xs={2} container justifyContent="flex-end">
         {factura.is_creada && (
             <Box
@@ -31,6 +31,10 @@ return (   <Grid item xs={2} container justifyContent="flex-end">
                 </Typography>
             </Box>
         )}
+        <div style={{marginTop:7}}>
+            <Typography>{ f ? 'Nuevo' :''}</Typography>
+        </div>
+           
         <IconButton onClick={() => {
             // 1. Obtener valores clave de la factura a eliminar
             const billIdEliminada = factura.billId;

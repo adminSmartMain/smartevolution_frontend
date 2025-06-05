@@ -26,7 +26,7 @@ export default function SaldoDisponibleSelector({values, setFieldValue, factura,
 
             // Actualizar valores
             if (orchestDisabled.find(item => item.indice === index)?.status) {
-                setFieldValue(`facturas[${index}].saldoDisponible`, rawValue);
+                setFieldValue(`facturas[${index}].saldoDisponible`,  parseFloat(rawValue));
                 setFieldValue(`facturas[${index}].saldoDisponibleInfo`, parseFloat(rawValue));
             } else {
                 setFieldValue(`facturas[${index}].saldoDisponible`, parseFloat(rawValue));

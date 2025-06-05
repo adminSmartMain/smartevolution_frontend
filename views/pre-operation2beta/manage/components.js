@@ -182,6 +182,7 @@ export const ManageOperationC = ({
         isRebuy: false,
         billId: '',
         nombreInversionista: '',
+        cuentasDelInversionistaSelected:[],
         investorProfit: 0,
         numbercuentaInversionista: '',
         cuentaInversionista: '',
@@ -798,6 +799,7 @@ export const ManageOperationC = ({
                                               {editMode[index] ? <CheckIcon fontSize="small" /> : <EditIcon fontSize="small" />}
                                             </IconButton>
                                           </div>
+                                       
                                         </Grid>
                                       </Grid>
                                       {/* Botón de eliminar */}
@@ -806,7 +808,7 @@ export const ManageOperationC = ({
                                        index ={index}
                                        values={values}
                                        setFieldValue={ setFieldValue}
-                                      
+                                      f={factura.is_creada}
                                       orchestDisabled ={orchestDisabled}
                                       setOrchestDisabledset={setOrchestDisabled}
                                       setIsCreatingBill ={ setIsCreatingBill}

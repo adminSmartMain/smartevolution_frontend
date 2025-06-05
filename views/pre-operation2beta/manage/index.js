@@ -244,10 +244,10 @@ const validationSchema = Yup.object({
   facturas: Yup.array().of(
     Yup.object({
       billId: Yup.string().required('Este campo es obligatorio'),
-     
+     numbercuentaInversionista:Yup.string().required('Este campo es obligatorio'),
       investorProfit: Yup.number().required('Este campo es obligatorio').typeError('Debe ser un número válido'),
       nombreInversionista: Yup.string().required('Este campo es obligatorio'),
-      cuentaInversionista: Yup.string().required('Este campo es obligatorio'),
+      //cuentaInversionista: Yup.string().required('Este campo es obligatorio'),
       factura: Yup.string().required('Este campo es obligatorio'),
       fraccion: Yup.number().required('Este campo es obligatorio'),
       valorFuturo: Yup.number()
@@ -294,7 +294,7 @@ const transformData = (data) => {
         bill: factura.factura,
         billFraction: factura.fraccion,
         client: factura.nombreInversionista,
-        clientAccount: factura.cuentaInversionista[0]?.id || '',
+        clientAccount: factura.idCuentaInversionista|| '',
         comisionSF: factura.comisionSF,
         DateBill: factura.fechaEmision || new Date().toISOString().substring(0, 10),
         DateExpiration: new Date(factura.fechaFin).toISOString().substring(0, 10) || new Date().toISOString().substring(0, 10),
