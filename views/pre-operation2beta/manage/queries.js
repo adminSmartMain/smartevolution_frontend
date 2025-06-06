@@ -16,20 +16,37 @@ export const GetLastOperationId = async (id) => {
 
 // Create new operation
 export const CreateOperation = async (values, op) => {
-  const res = await Axios.post(
-    `${API_URL}/preOperation/`,
-    {
-      values,
-      opId: op,
-    },
-    {
-      headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+  try {
+    const res = await Axios.post(
+      `${API_URL}/preOperation/`,
+      {
+        values,
+        opId: op,
       },
-    }
-  );
-  return res.data;
+      {
+        headers: {
+          authorization: "Bearer " + localStorage.getItem("access-token"),
+        },
+      }
+    );
+
+    // Mostrar toast de éxito si la operación fue exitosa
+    toast.success(res.data.message || 'Operación creada exitosamente');
+    return res.data;
+
+  } catch (error) {
+    // Manejo de errores con toast de error
+    const errorMessage = error.response?.data?.message 
+      || error.message 
+      || 'Error al crear la operación';
+    
+    toast.error(errorMessage);
+    
+    // Opcional: puedes lanzar el error nuevamente si necesitas manejarlo en el componente
+    throw error;
+  }
 };
+
 
 export const UpdateOperation = async (data) => {
   let results = [];
