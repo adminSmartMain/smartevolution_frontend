@@ -24,7 +24,7 @@ export default function TasaDescuentoSelector({ values, setFieldValue, setFieldE
 
                 // Si el campo está vacío, permitir borrar (pero no guardar como "")
                 if (inputValue === "") {
-                    setFieldValue('discountTax', "");
+                    setFieldValue('discountTax', 0);
                     return;
                 }
 

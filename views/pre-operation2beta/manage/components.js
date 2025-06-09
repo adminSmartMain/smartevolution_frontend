@@ -1223,8 +1223,8 @@ export const ManageOperationC = ({
 
                                                 // Si el campo está vacío, permitir borrar (pero no guardar "")
                                                 if (inputValue === "") {
-                                                  setFieldValue(`investorTax`, "");
-                                                  setFieldValue(`facturas[${index}].investorTax`, "");
+                                                  setFieldValue(`investorTax`, 0);
+                                                  setFieldValue(`facturas[${index}].investorTax`, 0);
                                                   return;
                                                 }
 
@@ -1316,7 +1316,7 @@ export const ManageOperationC = ({
                                               inputProps={{
                                                 min: 0,
                                                 max: 100,
-                                                step: "1",  // Permitir decimales
+                                                step: "0.01",  // Permitir decimales
                                                 pattern: "[0-9.]*",  // Solo números y punto decimal
                                                 inputMode: "decimal",  // Teclado numérico en móviles
                                               }}
