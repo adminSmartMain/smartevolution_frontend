@@ -1103,7 +1103,7 @@ export const ManageOperationC = ({
                         <TextField
                           label="Saldo Disponible en factura"
                           fullWidth
-                          value={formatCurrency(values?.saldoDisponible || 0)}
+                          value={formatCurrency(values?.billsComplete?.currentBalance  || 0)}
                           disabled
                           helperText={
                             `Saldo actual factura: ${values?.billsComplete?.currentBalance ? formatNumberWithThousandsSeparator(Math.floor(values?.billsComplete?.currentBalance)) : 0}`
@@ -1920,6 +1920,7 @@ export const ManageOperationC = ({
                 <div style={{ marginTop: 20 }}>
                   <h4>Errores:</h4>
                   <pre>{JSON.stringify(errors, null, 2)}</pre>
+                   <pre>{JSON.stringify(values, null, 2)}</pre>
                 </div>
               )}
             </Form>

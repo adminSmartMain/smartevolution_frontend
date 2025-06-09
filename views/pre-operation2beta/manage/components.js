@@ -35,6 +35,7 @@ import BillManualSelector from "@components/selects/preOperationCreate/BillManua
 import BillSelector from "@components/selects/preOperationCreate/BillSelector";
 import InvestorSelector from "@components/selects/preOperationCreate/InvestorSelector";
 import ValorNominalSelector from "@components/selects/preOperationCreate/ValorNominalSelector";
+import TasaInversionistaSelector from "@components/selects/preOperationCreate/TasaInversionista";
 import EmitterBrokerModal from "@components/modals/emitterBrokerModal";
 import EmitterDeleteModal from "@components/modals/emitterDeleteModal";
 import ModalConfirmation from "@components/modals/modalConfirmation";
@@ -393,6 +394,8 @@ export const ManageOperationC = ({
     console.log("changedFields")
     setIsCreatingOp(true)
   }
+
+  
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={esLocale}>
@@ -1209,159 +1212,16 @@ export const ManageOperationC = ({
                                           />
                                         </Grid>
                                         <Grid item xs={12} md={1.5}>
-                                          <Box sx={{ position: 'relative' }}>
-                                            <TextField
-                                              id="investorTaxname"
-                                              data-testid="campo-investorTax"
-                                              label="Tasa Inversionista"
-                                              fullWidth
-                                              type="number"
-                                              name="investorTax"
-                                              value={factura.investorTax ?? 0}
-                                              onChange={(e) => {
-                                                const inputValue = e.target.value;
-
-                                                // Si el campo está vacío, permitir borrar (pero no guardar "")
-                                                if (inputValue === "") {
-                                                  setFieldValue(`investorTax`, 0);
-                                                  setFieldValue(`facturas[${index}].investorTax`, 0);
-                                                  return;
-                                                }
-
-                                                // Convertir a número y validar rango [0, 100]
-                                                let numericValue = parseFloat(inputValue) || 0;
-
-                                                // Si el usuario escribe un número negativo o >100, corregir
-                                                if (numericValue < 0) numericValue = 0;
-                                                if (numericValue > 100) numericValue = 100;
-
-                                                // Comportamiento inteligente para el 0 (evitar "021" → "21")
-                                                const currentValue = factura.investorTax;
-                                                const shouldClearZero = currentValue === 0 && inputValue.length > 1 && inputValue.startsWith("0");
-                                                const finalValue = shouldClearZero ? inputValue.replace(/^0+/, '') : numericValue;
-
-                                                // Validar relación con discountTax
-                                                const discountTax = values.discountTax || 0;
-
-                                                if (finalValue > discountTax) {
-                                                  // Si supera a discountTax, ajustar al valor de discountTax
-                                                  setFieldValue(`investorTax`, discountTax);
-                                                  setFieldValue(`facturas[${index}].investorTax`, discountTax);
-
-                                                  // Feedback al usuario
-                                                  setTimeout(() => {
-                                                    toast.error("La tasa inversionista no puede ser mayor que la tasa de descuento");
-                                                  }, 100);
-                                                } else {
-                                                  // Si es válido, mantener el valor
-                                                  setFieldValue(`investorTax`, finalValue);
-                                                  setFieldValue(`facturas[${index}].investorTax`, finalValue);
-                                                }
-
-                                                // Calcular valores dependientes
-                                                const operationDays = factura.operationDays || 0;
-                                                const valorNominal = factura.valorNominal || 0;
-
-                                                const presentValueInvestor = operationDays > 0 && valorNominal > 0
-                                                  ? Math.round(PV(finalValue / 100, operationDays / 365, 0, -valorNominal, 0))
-                                                  : factura.valorFuturo || 0;
-
-                                                const nuevoInvestorProfit = valorNominal - presentValueInvestor;
-
-                                                setFieldValue(`facturas[${index}].presentValueInvestor`, presentValueInvestor);
-                                                setFieldValue(`facturas[${index}].comisionSF`, presentValueInvestor - (factura.presentValueSF || 0));
-                                                setFieldValue(`facturas[${index}].investorProfit`, Number(nuevoInvestorProfit).toFixed(0) || 0);
-
-                                                // Calcular monto disponible global
-                                                const totalPresentValue = values.facturas
-                                                  .filter(f => f.idCuentaInversionista === factura.idCuentaInversionista)
-                                                  .reduce((sum, f) => sum + (f.presentValueInvestor || 0), 0);
-
-                                                const nuevoMontoGlobal = factura.montoDisponibleInfo - totalPresentValue;
-
-                                                // Actualizar todas las facturas del mismo inversionista
-                                                values.facturas.forEach((f, i) => {
-                                                  if (f.idCuentaInversionista === factura.idCuentaInversionista) {
-                                                    setFieldValue(`facturas[${i}].montoDisponibleCuenta`, nuevoMontoGlobal);
-                                                  }
-                                                });
-                                              }}
-                                              onBlur={(e) => {
-                                                // Si está vacío, poner 0
-                                                if (e.target.value === "") {
-                                                  setFieldValue(`investorTax`, 0);
-                                                  setFieldValue(`facturas[${index}].investorTax`, 0);
-                                                }
-
-                                                // Validar que esté entre 0 y 100
-                                                const finalValue = parseFloat(e.target.value) || 0;
-                                                let correctedValue = finalValue;
-
-                                                if (finalValue < 0) correctedValue = 0;
-                                                if (finalValue > 100) correctedValue = 100;
-
-                                                // Si se corrigió, actualizar el campo
-                                                if (correctedValue !== finalValue) {
-                                                  setFieldValue(`investorTax`, correctedValue);
-                                                  setFieldValue(`facturas[${index}].investorTax`, correctedValue);
-                                                }
-
-                                                // Validar si es mayor que discountTax
-                                                if (correctedValue > values.discountTax) {
-                                                  setFieldError('investorTax', 'Debe ser ≤ Tasa Descuento');
-                                                } else {
-                                                  setFieldError('investorTax', undefined);
-                                                }
-                                              }}
-                                              inputProps={{
-                                                min: 0,
-                                                max: 100,
-                                                step: "0.01",  // Permitir decimales
-                                                pattern: "[0-9.]*",  // Solo números y punto decimal
-                                                inputMode: "decimal",  // Teclado numérico en móviles
-                                              }}
-                                              error={!!errors.investorTax || values.investorTax > values.discountTax}
-                                              helperText={
-                                                !factura.valorNominalManual
-                                                  ? `Sugerido: ${factura.tasaInversionistaPR || 0}%`
-                                                  : values.investorTax > values.discountTax
-                                                    ? "La tasa inversionista no puede ser mayor que la tasa de descuento."
-                                                    : "Valor ingresado manualmente"
-                                              }
+                                          <TasaInversionistaSelector
+                                            values={values}
+                                            setFieldValue = {setFieldValue}
+                                            setFieldError = {setFieldError}
+                                            errors  = {errors}
+                                            factura  = {factura}
+                                            index = {index}
+                                            parseFloat  = {parseFloat}
                                             />
-                                            <Tooltip
-                                              title="Por defecto, este valor se establece en 0%. Si lo necesitas, puedes modificarlo manualmente en este formulario según las condiciones actuales del mercado.
-                                    Cambiar este valor solo afectará la operación actual, no se actualizará en el perfil de riesgo del cliente."
-                                              placement="top-end" // Cambiar la posición para que esté a la derecha, alineado con el campo
-                                              enterDelay={200} // Retardo para aparecer rápidamente
-                                              leaveDelay={200} // Retardo para desaparecer rápidamente
-                                              arrow
-                                              PopperProps={{
-                                                modifiers: [
-                                                  {
-                                                    name: 'offset',
-                                                    options: {
-                                                      offset: [0, 5], // Ajusta el desplazamiento del tooltip
-                                                    },
-                                                  },
-                                                ],
-                                              }}
-                                            >
-                                              <IconButton
-                                                size="small"
-                                                style={{
-                                                  position: 'absolute', // Alineado dentro del contenedor
-                                                  top: '50%',
-                                                  right: 2, // Colocado a la derecha del campo
-                                                  transform: 'translateY(-100%)', // Centrado verticalmente en el campo
-                                                  padding: 0.8,
-                                                  marginLeft: 1,
-                                                }}
-                                              >
-                                                <InfoIcon style={{ fontSize: '1rem', color: 'rgb(94, 163, 163)' }} />
-                                              </IconButton>
-                                            </Tooltip>
-                                          </Box>
+                                          
                                         </Grid>
                                         <Grid item xs={12} md={2}>
                                         <DatePicker

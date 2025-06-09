@@ -1,5 +1,6 @@
 import Axios from "axios";
 
+import { toast } from 'react-toastify'; // Asegúrate de tener instalada la librería
 
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -14,7 +15,6 @@ export const GetLastOperationId = async (id) => {
   return res.data;
 };
 
-// Create new operation
 export const CreateOperation = async (values, op) => {
   try {
     const res = await Axios.post(
@@ -46,7 +46,6 @@ export const CreateOperation = async (values, op) => {
     throw error;
   }
 };
-
 
 export const UpdateOperation = async (data) => {
   let results = [];

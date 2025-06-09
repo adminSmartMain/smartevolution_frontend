@@ -402,7 +402,7 @@ export const ManageOperationDetails = ({
                       label="Valor Futuro"
                       fullWidth
                       type="text" // Usamos tipo "text" para manejar el formato
-                      value={dataDetails?.data?.amount ? formatNumberWithThousandsSeparator(Math.floor(dataDetails?.data?.clientAccount?.balance)) : ""} // Aplicamos el formato solo en la visualización, usando Math.floor para eliminar decimales
+                      value={dataDetails?.data?.amount ? formatNumberWithThousandsSeparator(Math.floor(dataDetails?.data?.amount)) : ""} // Aplicamos el formato solo en la visualización, usando Math.floor para eliminar decimales
                       disabled
                     />
                      {/* Tooltip integrado */}
@@ -565,7 +565,7 @@ export const ManageOperationDetails = ({
                   <Grid item xs={12} md={2}>
                     <DatePicker
                       label="Fecha Fin"
-                      value={dataDetails?.data?.opExpiration}
+                      value={ addDays(new Date(dataDetails?.data?.opExpiration), 1)}
                       disabled
                       renderInput={(params) => <TextField {...params} fullWidth />}
                     />
@@ -669,7 +669,7 @@ export const ManageOperationDetails = ({
                                                 </Typography>
 
                       <TextField
-                        value={dataDetails?.data?.GM ? `$ ${dataDetails.data.GM}` : "$ 0.00"}
+                        value={dataDetails?.data?.GM ? `$ ${dataDetails.data.GM.toFixed(2)}` : "$ 0.00"}
                         disabled
                         size="small"  // <-- Esto reduce la altura
 
