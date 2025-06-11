@@ -1,4 +1,4 @@
-import OperationApproval from "@views/pre-operations/approval";
+import OperationApproval from "@views/pre-operationsold/approval";
 
 const Detail = () => {
   return <OperationApproval />;

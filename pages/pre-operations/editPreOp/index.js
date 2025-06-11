@@ -1,4 +1,4 @@
-import { ManageOperationV } from "@views/pre-operation/editPreOp";
+import { ManageOperationV } from "@views/pre-operations/editPreOp";
 
 export default function index() {
   return <ManageOperationV />;

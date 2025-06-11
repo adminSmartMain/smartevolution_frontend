@@ -49,7 +49,7 @@ import TasaDescuentoSelector from "@components/selects/preOperationCreate/TasaDe
 import PorcentajeDescuentoSelector from "@components/selects/preOperationCreate/PorcentajeDescuentoSelector";
 import SaldoDisponibleSelector from "@components/selects/preOperationCreate/SaldoDisponibleSelector";
 
-import "@views/pre-operation/components";
+
 
 
 export const ManageOperationC = ({
