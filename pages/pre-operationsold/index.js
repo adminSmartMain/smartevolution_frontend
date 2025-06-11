@@ -1,4 +1,4 @@
-import Operations from "@views/pre-operation2beta";
+import Operations from "@views/pre-operations";
 
 export default function index() {
   return <Operations />;

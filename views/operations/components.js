@@ -449,7 +449,7 @@ const router = useRouter();
 
         {/* Botón Detalles Operación */}
         <Link 
-          href={`/pre-operations2beta/detailPreOp?id=${params.row.id}`}
+          href={`/pre-operations/detailPreOp?id=${params.row.id}`}
           passHref
           legacyBehavior
         >
@@ -605,7 +605,7 @@ const router = useRouter();
         </Typography>
 
         <Box sx={{ ...sectionTitleContainerSx }}>
-        <Link href="/pre-operations2beta" passHref>
+        <Link href="/pre-operations" passHref>
   <button className="button-header-preop-title">
     Pre-Operaciones
   </button>
@@ -668,7 +668,7 @@ const router = useRouter();
 
 
   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
-    <Link href="/pre-operations2beta/byOp" underline="none">
+    <Link href="/pre-operations/byOp" underline="none">
       <button className="button-header-preop">Ver por Grupos</button>
     </Link>
 

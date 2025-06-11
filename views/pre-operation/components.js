@@ -131,7 +131,7 @@ const RegisterButton = (props) => {
     openWindow.focus();
   } else {
     // Si la ventana no está abierta, la abrimos y guardamos la referencia
-    const newWindow = window.open("/pre-operations2beta/manage", "_blank", "width=800, height=600");
+    const newWindow = window.open("/pre-operations/manage", "_blank", "width=800, height=600");
     setOpenWindow(newWindow); // Guardamos la referencia de la ventana
     // Escuchar el evento de cierre de la ventana
     newWindow.onbeforeunload = () => {
@@ -259,10 +259,10 @@ const handleCloseMenu = () => {
       let url;
       switch(status) {
         case 0: 
-          url = `/pre-operations2beta/editPreOp?id=${id}`;
+          url = `/pre-operations/editPreOp?id=${id}`;
           break;
         case 2: 
-          url = `/pre-operations2beta/editPreOp?id=${id}&previousDeleted=true`;
+          url = `/pre-operations/editPreOp?id=${id}&previousDeleted=true`;
           break;
         default:
           return;

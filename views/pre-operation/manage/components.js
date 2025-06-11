@@ -48,6 +48,10 @@ import DeleteButton from "@components/DeleteButton";
 import TasaDescuentoSelector from "@components/selects/preOperationCreate/TasaDescuentoSelector";
 import PorcentajeDescuentoSelector from "@components/selects/preOperationCreate/PorcentajeDescuentoSelector";
 import SaldoDisponibleSelector from "@components/selects/preOperationCreate/SaldoDisponibleSelector";
+
+import "@views/pre-operation/components";
+
+
 export const ManageOperationC = ({
   opId,
   emitters,
@@ -55,7 +59,7 @@ export const ManageOperationC = ({
   payers,
   typeOperation,
   onFormSubmit,
-
+  isFinished,
   success,
   isModalOpen,
   validationSchema,
@@ -66,7 +70,7 @@ export const ManageOperationC = ({
  
 }) => {
   const emisores = emitters;
-
+  
   const [clientWithoutBroker, setClientWithoutBroker] = useState(null);
   const [clientEmitter, setClientEmitter] = useState(null);
   const [clientPagador, setClientPagador] = useState(null);
@@ -306,12 +310,6 @@ export const ManageOperationC = ({
     return ((valorNominal / valorFuturo) * 100).toFixed(0);
   };
 
-  //Formatear la fecha en la cabecera del acordeon. 
-  const formatDate = (date) => {
-    if (!date) return "N/A";
-    const options = { day: "2-digit", month: "short", year: "numeric" };
-    return new Date(date).toLocaleDateString("es-ES", options);
-  };
   const formatDate2 = (dateString) => {
     if (!dateString) return "-- -- ----";
 
@@ -1439,6 +1437,7 @@ export const ManageOperationC = ({
                         <Grid item xs={12}>
                           <Button
                             variant="contained"
+                             disabled={ isFinished? true: false}
                             sx={{ marginLeft: 'auto' }}
                             onClick={() => {
                               // Calcular el nuevo índice basado en los existentes
@@ -1490,7 +1489,9 @@ export const ManageOperationC = ({
                     )}
                   </FieldArray>
                   <Grid item xs={12}>
-                    <Button type="submit" variant="contained" color="primary">
+                    <Button 
+                    disabled={ isFinished? true: false}
+                    type="submit" variant="contained" color="primary">
                       Registrar Operación
                     </Button>
                   </Grid>

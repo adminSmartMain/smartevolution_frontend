@@ -280,7 +280,7 @@ function Row(props) {
                           >
                             <div style={{ display: 'inline-block', marginLeft: '8px' }}>
                               <Link 
-                                href={`/pre-operations2beta/detailPreOp?id=${row.id}`}
+                                href={`/pre-operations/detailPreOp?id=${row.id}`}
                                 passHref
                                 legacyBehavior
                               >
@@ -634,7 +634,7 @@ const router = useRouter();
         />
 
         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
-          <Link href="/pre-operations2beta" underline="none">
+          <Link href="/pre-operations" underline="none">
             <Button sx={buttonHeaderPreop}>Ver por facturas</Button>
           </Link>
 

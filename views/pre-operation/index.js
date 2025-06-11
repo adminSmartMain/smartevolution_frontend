@@ -8,6 +8,7 @@ import { OperationsComponents } from "./components";
 // queries
 import { getOperationsVersionTwo } from "./queries";
 
+
 export default function Operations() {
   const [data, setData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);

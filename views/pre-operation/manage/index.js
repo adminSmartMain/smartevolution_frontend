@@ -33,6 +33,8 @@ import { PV } from "@formulajs/formulajs";
 import { addDays, differenceInDays, format, subDays } from "date-fns";
 import { useFormik } from "formik";
 
+
+
 export const ManageOperationV = () => {
   // States
   const [created, setCreated] = useState(0);
@@ -49,7 +51,7 @@ export const ManageOperationV = () => {
   
   const [pendingSubmit, setPendingSubmit] = useState(false);
   const [submitValues, setSubmitValues] = useState(null);
-  
+  const [isFinished,setIsFinished] =useState(null)
   // Router
   const router = useRouter();
 
@@ -425,11 +427,14 @@ const onSubmit = async (values, { setSubmitting }) => {
           <p>Incluyendo {facturasCreadas.length} facturas creadas</p>
         )}
       </div>,
-      { autoClose: 7000 }
+      { autoClose: 2000 }
     );
  
     await new Promise(resolve => setTimeout(resolve, 5000));
     setIsModalOpen(false);
+
+
+   setIsFinished(true);
     
   } catch (error) {
     // Manejo de errores permanece igual
@@ -673,28 +678,6 @@ const verificarSaldosFacturas = async (billIds, facturasTransformadas) => {
 };
 
 
-// Función para obtener el ID generado del backend
-const fetchGeneratedBillId = async (billId) => {
-  try {
-    const response = await Axios.get(
-      `${process.env.NEXT_PUBLIC_API_URL}/bill/${billId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("access-token")}`,
-        },
-        timeout: 10000,
-      }
-    );
-    console.log(response)
-    if (response.data?.results?.[0]?.id) {
-      return response.data.results[0].id;
-    }
-    throw new Error("No se encontró el ID generado en la respuesta");
-  } catch (error) {
-    console.error(`Error obteniendo ID generado para factura ${billId}:`, error);
-    throw error;
-  }
-};
 
 
 
@@ -756,6 +739,7 @@ const executeAtomicOperations = async (operations) => {
 
 return (
   <>
+  
     {opId && <ManageOperationC 
               opId={opId}
               emitters={client}
@@ -774,6 +758,7 @@ return (
               setShowConfirmationModal={setShowConfirmationModal}
               actionsFormik={actions}
               operations={operations}
+              isFinished={isFinished}
                />}
 
   </>
