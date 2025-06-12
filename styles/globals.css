@@ -704,3 +704,7 @@ body {
   to { width: 100%; }
 }
 
+.MuiInputBase-input.Mui-disabled {
+  -webkit-text-fill-color: #333333 !important;
+  color: #333333 !important;
+}
