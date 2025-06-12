@@ -312,7 +312,7 @@ const handleCloseMenu = () => {
         openWindow.focus();
       } else {
         const newWindow = window.open(
-          `/pre-operations2beta/detailPreOp?id=${id}`,
+          `/pre-operations/detailPreOp?id=${id}`,
           "_blank",
           "width=800,height=600"
         );
@@ -703,14 +703,14 @@ const handleCloseMenu = () => {
       },
     },
     
-    { field: "opId", headerName: "ID", width: 40 },
+    { field: "opId", headerName: "ID", width:55 },
    // { field: "created_at", headerName: "Creado el", width: 93,  valueFormatter: (params) => {
       // if (!params.value) return '';
       // Extrae directamente las partes de la fecha ISO (evita conversión local)
      //  const [year, month, day] = params.value.split('T')[0].split('-');
     //  return `${day}/${month}/${year}`; // Formato dd/mm/YYYY
     //}},
-    { field: "opDate", headerName: "Fecha Op", width: 93,valueFormatter: (params) => {
+    { field: "opDate", headerName: "Fecha Op", width: 100,valueFormatter: (params) => {
       if (!params.value) return '';
       const [year, month, day] = params.value.split('T')[0].split('-');
       return `${day}/${month}/${year}`;
