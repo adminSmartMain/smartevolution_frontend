@@ -1,4 +1,4 @@
-import PreOperationDetail from "@views/operations/manage";
+import PreOperationDetail from "@views/pre-operationsold/detail/index";
 
 const Detail = () => {
   return <PreOperationDetail />;
