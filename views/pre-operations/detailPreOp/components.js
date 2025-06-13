@@ -346,12 +346,12 @@ export const ManageOperationDetails = ({
                       fullWidth
                       value={formatCurrency(dataDetails?.data?.bill?.currentBalance || 0)}
                       disabled
-sx={{
-    "& .MuiInputBase-input.Mui-disabled": {
-      WebkitTextFillColor: "#333333", // Esto cambia el color del texto
-      color: "#333333", // Esto es por si acaso
-    }
-  }}
+                      sx={{
+                          "& .MuiInputBase-input.Mui-disabled": {
+                            WebkitTextFillColor: "#333333", // Esto cambia el color del texto
+                            color: "#333333", // Esto es por si acaso
+                          }
+                        }}
                     />
                   </Grid>
                   {/* Fecha Probable*/}

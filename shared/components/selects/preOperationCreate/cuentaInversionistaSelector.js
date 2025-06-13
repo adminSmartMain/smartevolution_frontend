@@ -85,6 +85,8 @@ export default function CuentaInversionistaSelector ({index,factura,values,setFi
                     numbercuentaInversionista: '',
                     cuentaInversionista: factura.cuentaInversionista,
                     is_creada:true,
+                    probableDate:factura.probableDate,
+                    fechaFin:factura.fechaFin
                     });
 
                     return
@@ -147,6 +149,8 @@ export default function CuentaInversionistaSelector ({index,factura,values,setFi
                     idCuentaInversionista: '',
                     numbercuentaInversionista: '',
                     cuentaInversionista: factura.cuentaInversionista,
+                    probableDate:factura.probableDate,
+                    fechaFin:factura.fechaFin,
                     });
 
                     return;

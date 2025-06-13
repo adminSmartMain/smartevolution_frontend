@@ -72,35 +72,58 @@ export default function TasaDescuentoSelector({ values, setFieldValue, setFieldE
 
         // Validar relación con investorTax
         const nuevoInvestorTax = parseFloat(normalizeDecimalSeparator(factura.investorTax)) || 0;
-
+        console.log(nuevoInvestorTax , parseFloat(normalizeDecimalSeparator(values.discountTax)))
         // Si eran iguales y cambias discountTax, ajusta investorTax automáticamente
         if (nuevoInvestorTax === parseFloat(normalizeDecimalSeparator(values.discountTax))) {
+            console.log('caso iguales');
             setFieldValue(`facturas[${index}].investorTax`, finalValue);
-        }
+            
+            const operationDays = factura.operationDays || 0;
+            const valorNominal = factura.valorNominal || 0;
 
+            // Calculamos ambos valores con la misma tasa (finalValue)
+            const presentValue = operationDays > 0 && valorNominal > 0
+                ? Math.round(PV(finalValue / 100, operationDays / 365, 0, valorNominal, 0) * -1)
+                : valorNominal || 0;
+
+            // Ambos valores son iguales cuando las tasas son iguales
+            setFieldValue(`facturas[${index}].presentValueInvestor`, presentValue);
+            setFieldValue(`facturas[${index}].presentValueSF`, presentValue);
+            setFieldValue(`facturas[${index}].investorProfit`, valorNominal - presentValue);
+            
+            // La comisión debe ser 0 cuando las tasas son iguales
+            setFieldValue(`facturas[${index}].comisionSF`, 0);
+        }else{
+            
+        }
+      
         // Si investorTax es 0, lo igualamos a discountTax
         if (nuevoInvestorTax === 0) {
             setFieldValue('investorTax', finalValue);
+           
         }
 
-        // Recalcular valores si hay fecha de operación
         if (values.opDate) {
-            values.facturas.forEach((f, i) => {
-                const operationDays = f.operationDays || 0;
-                const valorNominal = f.valorNominal || 0;
+    console.log('caso diferentes');
+    values.facturas.forEach((f, i) => {
+        // Saltar la factura actual (index)
+        if (i === index) return;
+        
+        const operationDays = f.operationDays || 0;
+        const valorNominal = f.valorNominal || 0;
 
-                const presentValueSF = operationDays > 0 && valorNominal > 0
-                    ? Math.round(PV(finalValue / 100, operationDays / 365, 0, -valorNominal, 0))
-                    : f.valorFuturo || 0;
-
-                setFieldValue(`facturas[${i}].presentValueSF`, presentValueSF);
-
-                if (f.presentValueInvestor) {
-                    const comisionSF = f.presentValueInvestor - presentValueSF;
-                    setFieldValue(`facturas[${i}].comisionSF`, comisionSF || 0);
-                }
-            });
-        }
+        const presentValueSF = operationDays > 0 && valorNominal > 0
+            ? Math.round(PV(finalValue / 100, operationDays / 365, 0, -valorNominal, 0))
+            : f.valorFuturo || 0;
+        
+        setFieldValue(`facturas[${i}].presentValueSF`, presentValueSF);
+        
+        const currentInvestorValue = values.facturas[i]?.presentValueInvestor || 0;
+        console.log(presentValueSF, currentInvestorValue);
+        const comisionSF = currentInvestorValue - presentValueSF;
+        setFieldValue(`facturas[${i}].comisionSF`, Math.max(0, comisionSF));
+    });
+}
     };
 
     const handleBlur = (e) => {

@@ -111,6 +111,7 @@ export default function BillSelector ({values, setFieldValue, errors, touched, i
                 );
 
                 // 3. Limpiar los valores de esta factura (manteniendo los datos del inversionista)
+                setFieldValue('discountTax',0)
                 setFieldValue(`facturas[${index}]`, {
                 billId: '',
                 factura: '',
@@ -124,6 +125,7 @@ export default function BillSelector ({values, setFieldValue, errors, touched, i
                 porcentajeDescuento: 0,
                 nombrePagador: '',
                 presentValueInvestor: 0,
+              
                 presentValueSF: 0,
                 investorProfit: 0,
                 comisionSF: 0,
@@ -152,32 +154,34 @@ export default function BillSelector ({values, setFieldValue, errors, touched, i
                 if (!selectedFactura) return;
 
 
-                function encontrarFacturasDuplicadas(facturas, billId, inversionistaId) {
-                // Validaciones iniciales
-                if (!Array.isArray(facturas)) return [];
-                if (!billId || !inversionistaId) return [];
+               function encontrarFacturasDuplicadas(facturas, billId, inversionistaId, currentIndex) {
+                  // Validaciones iniciales
+                  if (!Array.isArray(facturas)) return [];
+                  if (!billId || !inversionistaId) return [];
 
-                return facturas.filter(factura => {
-                // Verificar que la factura tenga los campos necesarios
-                if (!factura.billId || !factura.nombreInversionista) return false;
+                  return facturas.filter((factura, index) => {
+                      // Excluir la factura actual de la comparación (para evitar que se compare consigo misma)
+                      if (index === currentIndex) return false;
 
-                // Comparar billId con la factura actual
-                const mismoBillId = factura.factura=== billId;
+                      // Verificar que la factura tenga los campos necesarios
+                      if (!factura.billId || !factura.nombreInversionista) return false;
 
+                      // Comparar billId con otras facturas (excluyendo la actual)
+                      const mismoBillId = factura.billId === billId;
 
-                // Comparar inversionista con el seleccionado
-                const mismoInversionista = factura.nombreInversionista === inversionistaId;
+                      // Comparar inversionista con el seleccionado
+                      const mismoInversionista = factura.nombreInversionista === inversionistaId;
 
-                return mismoBillId && mismoInversionista;
-                });
-                }
+                      return mismoBillId && mismoInversionista;
+                  });
+              }
 
                 const inversionistaSeleccionado = factura.nombreInversionista// ID del inversionista seleccionado
 
                 const facturasDuplicadas = encontrarFacturasDuplicadas(
                 values.facturas, 
                 newValue.id, // la factura que estás procesando actualmente
-                inversionistaSeleccionado
+                inversionistaSeleccionado,index
                 );
 
 
@@ -280,7 +284,7 @@ export default function BillSelector ({values, setFieldValue, errors, touched, i
                 fraccion: fraccion,
                 fechaFin: factura.fechaFin,
                 valorNominal: valorNominalFactura,
-                porcentajeDescuento: Math.round((selectedFactura.currentBalance * 100) / selectedFactura.currentBalance),
+                porcentajeDescuento: Math.round((selectedFactura.currentBalance * 100) / selectedFactura.currentBalance) || 0,
                 expirationDate: selectedFactura.expirationDate,
                 valorFuturo: valorFuturoCalculado,
                 presentValueInvestor:valorFuturoCalculado,
@@ -471,7 +475,7 @@ export default function BillSelector ({values, setFieldValue, errors, touched, i
                 fraccion: fraccion,
                 fechaFin: factura.fechaFin,
                 valorNominal: Math.round(valorNominalFactura),
-                porcentajeDescuento: Math.round((selectedFactura.currentBalance * 100) / selectedFactura.currentBalance),
+                porcentajeDescuento: Math.round((selectedFactura.currentBalance * 100) / selectedFactura.currentBalance)|| 0,
                 expirationDate: selectedFactura.expirationDate,
                 valorFuturo: Math.round(valorFuturoCalculado),
                 presentValueInvestor:Math.round(valorFuturoCalculado),
