@@ -249,7 +249,8 @@ const validationSchema = Yup.object({
     'is-after-investorTax',
     'La tasa de descuento debe ser mayor o igual a la tasa de inversionista',
     function(value) {
-      const investorTax = this.options?.context?.investorTax;
+       console.log(this,'4')
+      const investorTax = this.parent?.investorTax; // Accede al valor raíz
       
       // Solo saltar validación si investorTax no está definido
       if (investorTax === undefined || investorTax === null) return true;
@@ -272,6 +273,7 @@ const validationSchema = Yup.object({
         'is-after-discountTax',
         'La tasa de inversionsita debe ser menor o igual a la tasa de descuento',
         function(value) {
+           console.log(this,'3')
           const discountTax = this.options?.context?.discountTax;
           if (!discountTax || !value) return true;
           return value <= discountTax;
@@ -292,6 +294,7 @@ const validationSchema = Yup.object({
         'is-same-or-after-opdate',
         'La fecha probable debe ser igual o posterior a la fecha de operación',
         function(value) {
+          console.log(this,'2')
           const opDate = this.options?.context?.opDate// Accede al valor raíz
           
           if (!opDate || !value) return true;
@@ -312,6 +315,7 @@ const validationSchema = Yup.object({
         'is-after-probable',
         'La fecha fin debe ser posterior a la fecha probable',
         function(value) {
+          console.log(this)
           const probableDate = this.parent.probableDate;
           if (!probableDate || !value) return true;
           return new Date(value) >= new Date(probableDate);
