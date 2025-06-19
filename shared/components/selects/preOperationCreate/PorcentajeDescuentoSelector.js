@@ -36,7 +36,7 @@ export default function PorcentajeDescuentoSelector({ values, setFieldValue, err
 
                 // Actualizar el valor en el formulario
                 const finalValue = shouldClearZero ? inputValue.replace(/^0+/, '') : numericValue;
-                setFieldValue(`facturas[${index}].porcentajeDescuento`, finalValue);
+                setFieldValue(`facturas[${index}].porcentajeDescuento`,  Number(finalValue.toFixed(2)));
 
                 // Calcular valores dependientes solo si hay un valor numérico válido
                 if (inputValue !== "" && !isNaN(numericValue)) {
@@ -52,10 +52,11 @@ export default function PorcentajeDescuentoSelector({ values, setFieldValue, err
                         const presentValueInvestor = Math.round(
                             PV(values.investorTax / 100, factura.operationDays / 365, 0, nuevoValorNominal, 0) * -1
                         );
+                        console.log(values?.discountTax)
                         const presentValueSF = Math.round(
-                            PV(values.discountTax / 100, factura.operationDays / 365, 0, nuevoValorNominal, 0) * -1
+                            PV(parseFloat(values?.discountTax) / 100, factura.operationDays / 365, 0, nuevoValorNominal, 0) * -1
                         );
-
+                        console.log(values.presentValueSF,parseFloat(values.discountTax),values.investorTax)
                         setFieldValue(`facturas[${index}].presentValueInvestor`, presentValueInvestor);
                         setFieldValue(`facturas[${index}].presentValueSF`, presentValueSF);
                         setFieldValue(`facturas[${index}].comisionSF`, presentValueInvestor - presentValueSF);

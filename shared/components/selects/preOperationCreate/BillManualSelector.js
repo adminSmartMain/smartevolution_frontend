@@ -25,6 +25,9 @@ return (
         error={touched?.facturas?.[index]?.billId && Boolean(errors?.facturas?.[index]?.billId)}
         helperText={touched?.facturas?.[index]?.billId && errors?.facturas?.[index]?.billId}
         InputProps={{
+             inputProps: {
+      maxLength: 25  // Límite HTML nativo como respaldo
+    },
         disableUnderline: true,
         sx: { marginTop: "0px" }
         }}
@@ -32,6 +35,7 @@ return (
 
 
         onChange={async (event) => {
+            
         const newValue = event.target.value
         const handleBillChange = async (event, index) => {
         const newValue = event.target.value;

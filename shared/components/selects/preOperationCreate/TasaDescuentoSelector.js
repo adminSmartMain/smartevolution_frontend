@@ -4,7 +4,22 @@ import { TextField } from '@mui/material';
 import { PV } from "@formulajs/formulajs";
 
 export default function TasaDescuentoSelector({ values, setFieldValue, setFieldError, errors, factura, index, parseFloat }) {
+  const hasError = () => {
+        // Error de validación Yup
+        if (errors?.discountTax) {
+            return true;
+        }
+        
+  
+    };
 
+    const getErrorMessage = () => {
+        if (errors?.discountTax) {
+            return errors.discountTax;
+        }
+        
+      
+    };
     const normalizeDecimalSeparator = (value) => {
         // Reemplazar comas por puntos para el cálculo interno
         return typeof value === 'string' ? value.replace(/,/g, '.') : value;
@@ -68,7 +83,7 @@ export default function TasaDescuentoSelector({ values, setFieldValue, setFieldE
         }
 
         // Actualizar el valor mostrado (manteniendo el separador original del usuario)
-        setFieldValue('discountTax', processedValue);
+        setFieldValue('discountTax', parseFloat(processedValue.replace(',', '.')));
 
         // Validar relación con investorTax
         const nuevoInvestorTax = parseFloat(normalizeDecimalSeparator(factura.investorTax)) || 0;
@@ -76,7 +91,7 @@ export default function TasaDescuentoSelector({ values, setFieldValue, setFieldE
         // Si eran iguales y cambias discountTax, ajusta investorTax automáticamente
         if (nuevoInvestorTax === parseFloat(normalizeDecimalSeparator(values.discountTax))) {
             console.log('caso iguales');
-            setFieldValue(`facturas[${index}].investorTax`, finalValue);
+           // setFieldValue(`facturas[${index}].investorTax`, finalValue);
             
             const operationDays = factura.operationDays || 0;
             const valorNominal = factura.valorNominal || 0;
@@ -151,13 +166,7 @@ export default function TasaDescuentoSelector({ values, setFieldValue, setFieldE
             setFieldValue('discountTax', displayValue);
         }
 
-        // Validar si es menor que investorTax
-        const investorTaxValue = parseFloat(normalizeDecimalSeparator(factura.investorTax)) || 0;
-        if (finalValue < investorTaxValue) {
-            setFieldError('discountTax', 'Debe ser ≥ Tasa Inversionista');
-        } else {
-            setFieldError('discountTax', undefined);
-        }
+        
     };
 
     return (
@@ -171,13 +180,8 @@ export default function TasaDescuentoSelector({ values, setFieldValue, setFieldE
             value={formatDisplayValue(values.discountTax)}
             onChange={handleChange}
             onBlur={handleBlur}
-            helperText={
-                !factura.valorNominalManual
-                    ? `Sugerido: ${formatDisplayValue(factura.tasaDescuentoPR || 0)}%`
-                    : parseFloat(normalizeDecimalSeparator(values.investorTax)) > parseFloat(normalizeDecimalSeparator(values.discountTax))
-                        ? "La tasa inversionista no puede ser mayor que la tasa de descuento."
-                        : "Valor ingresado manualmente"
-            }
+            errors={ hasError()}
+            helperText={ getErrorMessage() }
             inputProps={{
                 min: 0,
                 max: 100,

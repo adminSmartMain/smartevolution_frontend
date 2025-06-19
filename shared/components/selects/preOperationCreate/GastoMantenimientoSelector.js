@@ -82,7 +82,7 @@ export default function GastoMantenimiento({values,factura,setFieldValue,formatC
                                     }
                                     });
                                 }}
-                                disabled={!factura.applyGm}
+                                disabled
                                 size="small"  // <-- Esto reduce la altura
                                 
                                 thousandSeparator="."

@@ -7,7 +7,22 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 export default function TasaInversionistaSelector({ values, setFieldValue, setFieldError, errors, factura, index, parseFloat }) {
+  const hasError = () => {
+        // Error de validación Yup
+        if (errors?.facturas?.[index]?.investorTax) {
+            return true;
+        }
+        
+  
+    };
 
+    const getErrorMessage = () => {
+        if (errors?.facturas?.[index]?.investorTax) {
+            return errors.facturas[index].investorTax;
+        }
+        
+      
+    };
     const normalizeDecimalSeparator = (value) => {
         // Reemplazar comas por puntos para el cálculo interno
         if (value === null || value === undefined) return '0';
@@ -159,13 +174,9 @@ export default function TasaInversionistaSelector({ values, setFieldValue, setFi
                     pattern: "[0-9,.]*",  // Permitir números, comas y puntos
                     inputMode: "decimal",
                 }}
-                error={!!errors.investorTax || parseFloat(normalizeDecimalSeparator(values.investorTax)) > parseFloat(normalizeDecimalSeparator(values.discountTax))}
+                error={hasError()}
                 helperText={
-                    !factura.valorNominalManual
-                        ? `Sugerido: ${formatDisplayValue(factura.tasaInversionistaPR || 0)}%`
-                        : parseFloat(normalizeDecimalSeparator(values.investorTax)) > parseFloat(normalizeDecimalSeparator(values.discountTax))
-                            ? "La tasa inversionista no puede ser mayor que la tasa de descuento."
-                            : "Valor ingresado manualmente"
+                    getErrorMessage()
                 }
             />
             <Tooltip

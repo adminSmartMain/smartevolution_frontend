@@ -3,14 +3,14 @@ import React, { useEffect, useState, useContext } from "react";
 import { debounce } from 'lodash';
 import { InputAdornment, Box, Typography, TextField, Button, Grid, Autocomplete, Accordion, AccordionSummary, AccordionDetails, Tooltip, IconButton } from '@mui/material';
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney"; // Icono del dólar
-import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
+import { DatePicker, LocalizationProvider} from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import esLocale from 'date-fns/locale/es';
 import { Formik, Form, FieldArray } from 'formik';
 import Axios from "axios";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import DeleteIcon from '@mui/icons-material/Delete';
-
+import { DateField } from '@mui/x-date-pickers/DateField';
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import InfoIcon from '@mui/icons-material/Info';
@@ -48,8 +48,8 @@ import DeleteButton from "@components/DeleteButton";
 import TasaDescuentoSelector from "@components/selects/preOperationCreate/TasaDescuentoSelector";
 import PorcentajeDescuentoSelector from "@components/selects/preOperationCreate/PorcentajeDescuentoSelector";
 import SaldoDisponibleSelector from "@components/selects/preOperationCreate/SaldoDisponibleSelector";
-
-
+import EndDateSelector from "@components/selects/preOperationCreate/EndDateSelector";
+import ProbableDateSelector from "@components/selects/preOperationCreate/ProbableDateSelector";
 
 
 export const ManageOperationC = ({
@@ -166,7 +166,7 @@ export const ManageOperationC = ({
   };
   const initialValues = {
     opId: opId,
-    opDate: new Date(), // Fecha actual por defecto
+    opDate: `${new Date()}`, // Fecha actual por defecto
     // opType: 'Compra Titulo', // Valor por defecto
     emitter: '',
     emitterBroker: '',
@@ -203,7 +203,7 @@ export const ManageOperationC = ({
         fechaEmision: null,
         valorNominal: 0,
         porcentajeDescuento: 0,
-        probableDate: `${new Date().toISOString().substring(0, 10)}`,
+        probableDate:  `${new Date()}`,
         investorTax: 0,
         expirationDate: '',
         fechaFin: `${addDays(new Date(),1)}`,
@@ -424,6 +424,7 @@ export const ManageOperationC = ({
           initialValues={initialValues}
           validationSchema={validationSchema}
           onSubmit={handleConfirm}
+          
         >
           {/* {({ values, setFieldValue, touched, errors, handleBlur }) => ( */}
           {({ values, setFieldValue, touched, errors, handleBlur, setTouched, setFieldTouched, setFieldError, formikBag, dirty, isSubmitting }) => {
@@ -458,7 +459,8 @@ export const ManageOperationC = ({
                       data-testid="fecha-operacion"
                       label="Fecha de Operación *"
                       value={values.opDate}
-                      name="opDate"
+                      name="opDate"çinputFormat="dd/MM/yyyy"
+                      mask="__/__/____"
                       onChange={(newValue) => {
                         const parsedDate = newValue ? new Date(newValue) : null;
                         if (!parsedDate) return;
@@ -494,21 +496,21 @@ export const ManageOperationC = ({
                           }
                         });
                       }}
-                      inputFormat="dd/MM/yyyy"
-                      mask="__/__/____"
-                      disableMaskedInput={false}
+                      
+                      
                       renderInput={(params) => (
                         <TextField
                           {...params}
                           fullWidth
-                          error={!!errors.opDate}
+                          errors={!errors.facturas?.probableDate}
                           helperText={errors.opDate}
                           onKeyDown={(e) => {
                             // Permite solo números y barras
-                            if (!/[0-9/]/.test(e.key) && e.key !== 'Backspace' && e.key !== 'Delete') {
-                              e.preventDefault();
-                            }
-                          }}
+                                            if (!/[0-9/]/.test(e.key) && 
+                                            !['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                                            e.preventDefault();
+                                        }
+                                        }}
                         />
                       )}
                       PopperProps={{
@@ -983,36 +985,14 @@ export const ManageOperationC = ({
                                           </Grid>
                                           {/* Fecha Probable*/}
                                           <Grid item xs={12} md={1.8}>
-                                            <DatePicker
-                                              id="probDate-name"
-                                              data-testid="campo-fechaProbable"
-                                              label="Fecha probable"
-                                              value={factura.probableDate ? parseISO(factura.probableDate) : null} // Convertir string a Date
-                                              onChange={(newValue) => {
-                                                if (newValue) {
-                                                  // 1. Ajustar a UTC para evitar problemas de timezone (día anterior)
-                                                  const adjustedDate = new Date(newValue);
-                                                  adjustedDate.setMinutes(adjustedDate.getMinutes() + adjustedDate.getTimezoneOffset());
-
-                                                  // 2. Formatear como YYYY-MM-DD para el backend
-                                                  const backendFormat = format(adjustedDate, 'yyyy-MM-dd');
-                                                  setFieldValue(`facturas[${index}].probableDate`, backendFormat);
-                                                } else {
-                                                  setFieldValue(`facturas[${index}].probableDate`, null);
-                                                }
-                                              }}
-                                              inputFormat="dd/MM/yyyy" // Formato de visualización
-                                              mask="__/__/____" // Máscara de entrada
-                                              renderInput={(params) => (
-                                                <TextField
-                                                  {...params}
-                                                  fullWidth
-                                                  onKeyDown={(e) => e.stopPropagation()}
-                                                />
-                                              )}
-                                              disableMaskedInput={false}
-                                              allowSameDateSelection
-                                              openTo="day"
+                                            <ProbableDateSelector
+                                            factura={factura}
+                                            touched={ touched}
+                                            errors={errors}
+                                            setFieldValue={setFieldValue}
+                                            index={index}
+                                            values={values}
+                                            
                                             />
                                           </Grid>
                                           {/* Fecha de Vencimiento */}
@@ -1221,94 +1201,22 @@ export const ManageOperationC = ({
                                             />
                                           
                                         </Grid>
-                                        <Grid item xs={12} md={2}>
-                                        <DatePicker
-                                          id="endDatename"
-                                          data-testid="campo-fechaFin"
-                                          label="Fecha Fin"
-                                          value={factura.fechaFin}
-                                          inputFormat="dd/MM/yyyy"
-                                          mask="__/__/____"
-                                          disableMaskedInput={false}
-                                          onChange={(newValue) => {
-                                            let parsedDate = newValue ? new Date(newValue) : null;
-                                            
-                                            // Validación: fechaFin debe ser > opDate
-                                            if (parsedDate && values.opDate && parsedDate <= values.opDate) {
-                                              // Ajustar fechaFin a opDate + 1 día (sin cambiar opDate)
-                                              parsedDate = addDays(new Date(values.opDate), 1);
-                                            }
+                                     <Grid item xs={12} md={2}>
+                                       <EndDateSelector
+                                       
+                                       setFieldValue={setFieldValue}
+                                       values={values}
+                                        factura={factura}
+                                        errors={errors}
+                                        touched={touched}
+                                        index={index}
+                                        parseFloat={parseFloat}
 
-                                            if (!parsedDate) return;
-                                            
-                                            setFieldValue(`facturas[${index}].fechaFin`, parsedDate);
-
-                                            // Calcular operationDays (siempre será >=1 por la validación anterior)
-                                            if (values.opDate) {
-                                              console.log(parsedDate, values.opDate)
-                                              const operationDays = differenceInDays(
-                                                  startOfDay(parsedDate), 
-                                                  startOfDay(values.opDate)
-                                                );
-                                              console.log('Operation Days:', operationDays);
-                                               setFieldValue(`facturas[${index}].operationDays`, operationDays);
-                                              // Resto de cálculos (PV, comisiones, etc.)
-                                              const presentValueInvestor = operationDays > 0 && factura.valorNominal > 0
-                                                ? Math.round(PV(values.investorTax / 100, operationDays / 365, 0, -factura.valorNominal, 0))
-                                                : factura.valorFuturo;
-
-                                              const presentValueSF = operationDays > 0 && factura.valorNominal > 0
-                                                ? Math.round(PV(values.discountTax / 100, operationDays / 365, 0, -factura.valorNominal, 0))
-                                                : factura.currentBalance;
-                                              console.log(factura.valorNominal - presentValueSF)
-                                              const investorProfitValue = Number.isNaN(Number(factura.valorNominal - presentValueSF)) 
-                                                      ? 0 
-                                                      : Number((factura.valorNominal - presentValueSF).toFixed(0));
-                                              console.log(investorProfitValue)
-                                              setFieldValue(`facturas[${index}].presentValueInvestor`, presentValueInvestor || 0);
-                                              setFieldValue(`facturas[${index}].presentValueSF`, presentValueSF || 0);
-                                              setFieldValue(`facturas[${index}].comisionSF`, presentValueInvestor - presentValueSF || 0);
-                                              setFieldValue(`facturas[${index}].investorProfit`,investorProfitValue.toFixed(0) || 0);
-
-                                              // Actualizar montos disponibles
-                                              const totalPresentValue = values.facturas
-                                                .filter(f => f.idCuentaInversionista === factura.idCuentaInversionista)
-                                                .reduce((sum, f) => sum + (f.presentValueInvestor || 0), 0);
-
-                                              const montoDisponibleGlobal = factura.montoDisponibleInfo - totalPresentValue;
-                                              
-                                              values.facturas.forEach((f, i) => {
-                                                if (f.idCuentaInversionista === factura.idCuentaInversionista) {
-                                                  setFieldValue(`facturas[${i}].montoDisponibleCuenta`, montoDisponibleGlobal);
-                                                }
-                                              });
-                                            }
-                                          }}
-                                          renderInput={(params) => (
-                                            <TextField
-                                              {...params}
-                                              fullWidth
-                                              onKeyDown={(e) => {
-                                                if (!/[0-9/]/.test(e.key) && 
-                                                    !['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-                                                  e.preventDefault();
-                                                }
-                                              }}
-                                            />
-                                          )}
-                                          minDate={values.opDate ? addDays(new Date(values.opDate), 1) : null} // Bloquea fechas <= opDate
-                                          OpenPickerButtonProps={{
-                                            'aria-label': 'Seleccionar fecha',
-                                          }}
-                                          componentsProps={{
-                                            actionBar: {
-                                              actions: ['clear', 'accept'],
-                                            },
-                                          }}
-                                          error={touched.facturas?.[index]?.fechaFin && Boolean(errors.facturas?.[index]?.fechaFin)}
-                                          helperText={touched.facturas?.[index]?.fechaFin && errors.facturas?.[index]?.fechaFin}
-                                        />
-                                                                                </Grid>
+                                       
+                                       />
+                                     </Grid>
+                                      
+                                          
                                         <Grid item xs={12} md={2}>
                                           <TextField
                                             id="operationDays" // Para CSS/JS si es necesario
@@ -1465,12 +1373,14 @@ export const ManageOperationC = ({
                                 fechaEmision: null,
                                 valorNominal: 0,
                                 porcentajeDescuento: 0,
-                                probableDate: `${new Date().toISOString().substring(0, 10)}`,
+                                probableDate:  `${new Date()}`,
                                 investorTax: 0,
                                 nombrePagador: '',
                                 fechaFin:  `${addDays(new Date(),1)}`,
-                                diasOperaciones: 0,
-                                operationDays: 0,
+                                saldoDisponible: 0,
+                                saldoDisponibleInfo: 0,
+                                diasOperaciones: 1,
+                                operationDays: 1,
                                 comisionSF: 0,
                                 gastoMantenimiento: 0,
                                 fechaOperacion: `${new Date().toISOString().substring(0, 10)}`,

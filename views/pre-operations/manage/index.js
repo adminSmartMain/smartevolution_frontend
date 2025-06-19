@@ -243,6 +243,21 @@ const validationSchema = Yup.object({
   emitter: Yup.string().required('Este campo es obligatorio'),
   corredorEmisor: Yup.string().required('El corredor emisor es requerido'),
   investorTax: Yup.number().required('Este campo es obligatorio'),
+ discountTax: Yup.number()
+  .required('Este campo es obligatorio')
+  .test(
+    'is-after-investorTax',
+    'La tasa de descuento debe ser mayor o igual a la tasa de inversionista',
+    function(value) {
+      const investorTax = this.options?.context?.investorTax;
+      
+      // Solo saltar validación si investorTax no está definido
+      if (investorTax === undefined || investorTax === null) return true;
+      
+      // Ahora 0 será comparado correctamente con investorTax
+      return value >= investorTax;
+    }
+  ),
   facturas: Yup.array().of(
     Yup.object({
       billId: Yup.string().required('Este campo es obligatorio'),
@@ -252,6 +267,15 @@ const validationSchema = Yup.object({
       //cuentaInversionista: Yup.string().required('Este campo es obligatorio'),
       factura: Yup.string().required('Este campo es obligatorio'),
       fraccion: Yup.number().required('Este campo es obligatorio'),
+      investorTax: Yup.number().required('Este campo es obligatorio').test(
+        'is-after-discountTax',
+        'La tasa de inversionsita debe ser menor o igual a la tasa de descuento',
+        function(value) {
+          const discountTax = this.options?.context?.discountTax;
+          if (!discountTax || !value) return true;
+          return value <= discountTax;
+        }
+      ),
       valorFuturo: Yup.number()
         .required('Este campo es obligatorio')
         .typeError('Debe ser un número válido'),
@@ -261,17 +285,37 @@ const validationSchema = Yup.object({
         .max(100, 'El descuento no puede ser mayor a 100%'),
       fechaEmision: Yup.date().required('Este campo es obligatorio'),
       valorNominal: Yup.number().required('Este campo es obligatorio').typeError('Debe ser un número válido'),
+     probableDate: Yup.date()
+        .required('Este campo es obligatorio')
+        .test(
+        'is-same-or-after-opdate',
+        'La fecha probable debe ser igual o posterior a la fecha de operación',
+        function(value) {
+          const opDate = this.options?.context?.opDate// Accede al valor raíz
+          
+          if (!opDate || !value) return true;
       
-      fechaFin: Yup.date().required('Este campo es obligatorio').when('opDate', (opDate, schema) => {
-          if (!opDate) return schema;
-          return schema.test(
-            'is-after-opdate',
-            'La fecha fin debe ser posterior a la fecha de operación',
-            (fechaFin) => {
-              return fechaFin > opDate;
-            }
-          );
-        }),
+      // Normalizar fechas para comparación (ignorar husos horarios)
+      const valueDate = new Date(value);
+      valueDate.setHours(0, 0, 0, 0);
+      
+      const opDateObj = new Date(opDate);
+      opDateObj.setHours(0, 0, 0, 0);
+      
+      return valueDate >= opDateObj;
+        }
+      ),
+     fechaFin: Yup.date()
+      .required('Este campo es obligatorio')
+      .test(
+        'is-after-probable',
+        'La fecha fin debe ser posterior a la fecha probable',
+        function(value) {
+          const probableDate = this.parent.probableDate;
+          if (!probableDate || !value) return true;
+          return new Date(value) >= new Date(probableDate);
+        }
+      ),
       operationDays:Yup.number().required('Este campo es obligatorio'),
       comisionSF: Yup.number().required('Este campo es obligatorio'),
       gastoMantenimiento: Yup.number().required('Este campo es obligatorio'),
@@ -309,7 +353,7 @@ const transformData = (data) => {
         investorBroker: factura.investorBroker,
         investorProfit: factura.investorProfit,
         investorTax: factura.investorTax,
-        opDate: data.opDate.toISOString().substring(0, 10),
+        opDate: new Date(data.opDate).toISOString().substring(0, 10),
         operationDays: factura.operationDays,
         opExpiration: new Date(factura.fechaFin).toISOString().substring(0, 10) || new Date().toISOString().substring(0, 10),
         opId: data.opId,
@@ -319,14 +363,14 @@ const transformData = (data) => {
         payer: data.nombrePagador,
         presentValueInvestor: factura.presentValueInvestor,
         presentValueSF: factura.presentValueSF,
-        probableDate: factura.probableDate,
+        probableDate: new Date(factura.probableDate).toISOString().substring(0, 10),
         status: 0,
         isReBuy: false,
         massive: false,
         saldoInicialFactura: factura.saldoDisponibleInfo, 
       }
     };
-
+    console.log(baseStructure)
     if (factura.is_creada) {
       if (!processedBillIds[factura.billId]) {
         // Primera factura con este billId
@@ -419,9 +463,9 @@ const onSubmit = async (values, { setSubmitting }) => {
     }
 
     setSuccess(true);
-    toast.success(
+    toast.info(
       <div>
-        <strong>¡Operación completada con éxito!</strong>
+        <strong>¡Operacioes procesadas!</strong>
         <p>Se procesaron {facturasTransformadas.length} facturas correctamente</p>
         {facturasCreadas.length > 0 && (
           <p>Incluyendo {facturasCreadas.length} facturas creadas</p>
@@ -434,7 +478,7 @@ const onSubmit = async (values, { setSubmitting }) => {
     setIsModalOpen(false);
 
 
-   setIsFinished(true);
+ 
     
   } catch (error) {
     // Manejo de errores permanece igual
@@ -459,6 +503,7 @@ const onSubmit = async (values, { setSubmitting }) => {
   } finally {
     setLoading(false);
     setSubmitting(false);
+   
   }
 };
 

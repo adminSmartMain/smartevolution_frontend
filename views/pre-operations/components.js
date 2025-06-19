@@ -38,54 +38,6 @@ const sectionTitleContainerSx = {
   alignItems: "rigth",
 };
 
-const filtersContainerSx = {
-  display: "flex",
-  flexWrap: "wrap", // importante si hay poco espacio
-  alignItems: "center", // mantiene alineado verticalmente
-  columnGap: 1.5, // espacio horizontal
-  rowGap: 1, // espacio vertical en pantallas pequeñas
-  width: "100%",
-  maxWidth: "100%", // asegura que no crezca más allá del padre
-};
-
-
-const entryContainerSx = {
-  display: "flex",
-  justifyContent: "flex-end",
-  alignItems: "center",
-
-  position: "relative",
-};
-
-const titleSx = {
-  letterSpacing: 0,
-  fontSize: 10,
-  fontWeight: "bold",
-  color: "#488B8F",
-  textTransform: "uppercase",
-  textAlign: "right",
-
-  position: "absolute",
-  left: 8,
-  top: 3,
-};
-
-const valueSx = {
-  letterSpacing: 0,
-  color: "#488B8F",
-  fontSize: 14,
-  fontWeight: 600,
-  textAlign: "right",
-
-  border: "1px solid #C7C7C780",
-  borderRadius: "4px",
-
-  backgroundColor: "#ebfaf6",
-  width: "100%",
-  padding: "0.35rem",
-  pt: "0.7rem",
-  pb: "0.1rem",
-};
 
 const tableWrapperSx = {
   marginTop: 2,
@@ -1089,8 +1041,10 @@ const handleCloseMenu = () => {
                 backgroundColor: '#fafafa', // Color filas pares
               },
               '&:hover': {
-                backgroundColor: '#f0f0f0', // Color al pasar el mouse
-              },
+        overflow: 'visible', // Muestra todo el contenido al hacer hover
+        zIndex: 1,
+        position: 'relative'
+      },
             },
             '& .MuiDataGrid-footerContainer': {
               borderTop: '1px solid #e0e0e0', // Borde superior del footer

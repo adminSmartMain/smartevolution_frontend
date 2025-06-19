@@ -58,7 +58,9 @@ export default function SaldoDisponibleSelector({values, setFieldValue, factura,
         }}
 
         inputProps={{
+            maxLength: 22, // Límite HTML nativo
             min: 0,
+            
             type: orchestDisabled.find(item => item.indice === index)?.status ? 'text' : 'text',
             startAdornment: (
                 <InputAdornment position="start">
