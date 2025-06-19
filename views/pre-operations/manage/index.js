@@ -274,7 +274,7 @@ const validationSchema = Yup.object({
         'La tasa de inversionsita debe ser menor o igual a la tasa de descuento',
         function(value) {
            console.log(this,'3')
-          const discountTax = this.options?.context?.discountTax;
+          const discountTax = this.parent?.discountTax; // Accede al valor raíz
           if (!discountTax || !value) return true;
           return value <= discountTax;
         }
@@ -295,7 +295,7 @@ const validationSchema = Yup.object({
         'La fecha probable debe ser igual o posterior a la fecha de operación',
         function(value) {
           console.log(this,'2')
-          const opDate = this.options?.context?.opDate// Accede al valor raíz
+          const opDate = this.parent.opDate// Accede al valor raíz
           
           if (!opDate || !value) return true;
       

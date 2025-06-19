@@ -179,9 +179,10 @@ export const ManageOperationC = ({
     filteredPayers: "",
     facturas: [
 
-      {
+      {opDate: `${new Date()}`, // Fecha actual por defecto
         is_creada: false,
         applyGm: false,
+        discountTax:0,
         amount: 0,
         payedAmount: 0,
         isRebuy: false,
@@ -459,7 +460,8 @@ export const ManageOperationC = ({
                       data-testid="fecha-operacion"
                       label="Fecha de Operación *"
                       value={values.opDate}
-                      name="opDate"çinputFormat="dd/MM/yyyy"
+                      name="opDate"
+                      inputFormat="dd/MM/yyyy"
                       mask="__/__/____"
                       onChange={(newValue) => {
                         const parsedDate = newValue ? new Date(newValue) : null;
@@ -473,7 +475,7 @@ export const ManageOperationC = ({
                             startOfDay(parsedDate)
                           ));
                           setFieldValue(`facturas[${index}].operationDays`, operationDays);
-
+                          setFieldValue(`facturas[${index}].opDate`, parsedDate);
                           // 2. Recalcula los valores presentes y comisiones SOLO si hay días y valor futuro
                           if (operationDays > 0 && factura.valorFuturo > 0) {
                             const presentValueInvestor = Math.round(
@@ -1368,6 +1370,7 @@ export const ManageOperationC = ({
                                 cuentaInversionista: '',
                                 factura: '',
                                 fraccion: 1,
+                                discountTax:values.discountTax,
                                 valorFuturo: '',
                                 valorFuturoManual: false,
                                 fechaEmision: null,

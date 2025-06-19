@@ -30,7 +30,14 @@ export default function TasaDescuentoSelector({ values, setFieldValue, setFieldE
         if (value === null || value === undefined || value === "") return '0';
         return value.toString().replace('.', ',');
     };
-
+     // Función para actualizar todas las facturas
+  const updateAllFacturas = (newValue) => {
+    if (values.facturas && values.facturas.length > 0) {
+      values.facturas.forEach((_, i) => {
+        setFieldValue(`facturas[${i}].discountTax`, newValue);
+      });
+    }
+  };
     const handleChange = (e) => {
         const inputValue = e.target.value;
 
@@ -84,7 +91,7 @@ export default function TasaDescuentoSelector({ values, setFieldValue, setFieldE
 
         // Actualizar el valor mostrado (manteniendo el separador original del usuario)
         setFieldValue('discountTax', parseFloat(processedValue.replace(',', '.')));
-
+        updateAllFacturas(parseFloat(processedValue.replace(',', '.')))
         // Validar relación con investorTax
         const nuevoInvestorTax = parseFloat(normalizeDecimalSeparator(factura.investorTax)) || 0;
         console.log(nuevoInvestorTax , parseFloat(normalizeDecimalSeparator(values.discountTax)))
