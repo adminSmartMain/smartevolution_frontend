@@ -258,6 +258,7 @@ const validationSchema = Yup.object({
       return value >= investorTax;
     }
   ),
+  
   facturas: Yup.array().of(
     Yup.object({
       billId: Yup.string().required('Este campo es obligatorio'),
