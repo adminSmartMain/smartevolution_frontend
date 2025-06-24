@@ -213,3 +213,18 @@ export const TypeOperation = async (data) => {
   return res.data;
 };
 
+
+
+export const GetSummaryList = async (params) => {
+  console.log(params)
+  const res = await Axios.get(
+    `${API_URL}/report/negotiationSummary?pdf=undefined&id=undefined&opId=undefined`,
+    {
+      headers: {
+        authorization: "Bearer " + localStorage.getItem("access-token"),
+      },
+      params,
+    }
+  );
+  return res.data;
+};

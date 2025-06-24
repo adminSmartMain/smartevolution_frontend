@@ -85,7 +85,7 @@ const [inputValue, setInputValue] = useState(
       } 
       setFieldValue(`facturas[${index}].presentValueSF`, newPresentValueSF);
       setFieldValue(`facturas[${index}].comisionSF`, newPresentValueInvestor-newPresentValueSF || 0);
-      setFieldValue(`facturas[${index}].investorProfit`, Number(nuevoValorNominal - newPresentValueSF).toFixed(0));
+      setFieldValue(`facturas[${index}].investorProfit`, Number(nuevoValorNominal -  newPresentValueInvestor).toFixed(0));
       
       // Lógica para montoDisponibleCuenta compartido entre facturas con mismo inversionista
       if (factura.idCuentaInversionista) {

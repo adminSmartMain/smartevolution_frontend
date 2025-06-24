@@ -61,11 +61,12 @@ const EndDateSelector = ({ factura, values, setFieldValue, touched, errors, inde
                 ? Math.round(PV(values.discountTax / 100, operationDays / 365, 0, -factura.valorNominal, 0))
                 : factura.currentBalance;
             
-            const investorProfitValue = Number.isNaN(Number(factura.valorNominal - presentValueSF)) 
+            const investorProfitValue = Number.isNaN(Number(factura.valorNominal - presentValueInvestor)) 
                 ? 0 
-                : Number((factura.valorNominal - presentValueSF).toFixed(0));
+                : Number((factura.valorNominal - presentValueInvestor).toFixed(0));
             
             setFieldValue(`facturas[${index}].presentValueInvestor`, presentValueInvestor || 0);
+            setFieldValue(`facturas[${index}].gastoMantenimiento`, presentValueInvestor*0.02 || 0);
             setFieldValue(`facturas[${index}].presentValueSF`, presentValueSF || 0);
             setFieldValue(`facturas[${index}].comisionSF`, presentValueInvestor - presentValueSF || 0);
             setFieldValue(`facturas[${index}].investorProfit`, investorProfitValue.toFixed(0) || 0);

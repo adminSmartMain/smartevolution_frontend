@@ -102,14 +102,17 @@ export default function TasaDescuentoSelector({ values, setFieldValue, setFieldE
             
             const operationDays = factura.operationDays || 0;
             const valorNominal = factura.valorNominal || 0;
-
+            console.log('operationDays', operationDays, 'valorNominal', valorNominal);
             // Calculamos ambos valores con la misma tasa (finalValue)
             const presentValue = operationDays > 0 && valorNominal > 0
-                ? Math.round(PV(finalValue / 100, operationDays / 365, 0, valorNominal, 0) * -1)
+                ? Math.round(PV(finalValue / 100, operationDays / 365, 0, -valorNominal, 0) )
                 : valorNominal || 0;
+            
 
+            console.log(presentValue)
             // Ambos valores son iguales cuando las tasas son iguales
             setFieldValue(`facturas[${index}].presentValueInvestor`, presentValue);
+            setFieldValue(`facturas[${index}].gastoMantenimiento`, presentValue*0.02);
             setFieldValue(`facturas[${index}].presentValueSF`, presentValue);
             setFieldValue(`facturas[${index}].investorProfit`, valorNominal - presentValue);
             
@@ -126,10 +129,9 @@ export default function TasaDescuentoSelector({ values, setFieldValue, setFieldE
         }
 
         if (values.opDate) {
-    console.log('caso diferentes');
+    console.log('caso diferentes aaaa');
     values.facturas.forEach((f, i) => {
-        // Saltar la factura actual (index)
-        if (i === index) return;
+      
         
         const operationDays = f.operationDays || 0;
         const valorNominal = f.valorNominal || 0;
@@ -137,13 +139,15 @@ export default function TasaDescuentoSelector({ values, setFieldValue, setFieldE
         const presentValueSF = operationDays > 0 && valorNominal > 0
             ? Math.round(PV(finalValue / 100, operationDays / 365, 0, -valorNominal, 0))
             : f.valorFuturo || 0;
+
+        console.log(presentValueSF);
         
-        setFieldValue(`facturas[${i}].presentValueSF`, presentValueSF);
+        setFieldValue(`facturas[${index}].presentValueSF`, presentValueSF);
         
         const currentInvestorValue = values.facturas[i]?.presentValueInvestor || 0;
         console.log(presentValueSF, currentInvestorValue);
         const comisionSF = currentInvestorValue - presentValueSF;
-        setFieldValue(`facturas[${i}].comisionSF`, Math.max(0, comisionSF));
+        setFieldValue(`facturas[${index}].comisionSF`, Math.max(0, comisionSF));
     });
 }
     };

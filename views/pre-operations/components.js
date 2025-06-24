@@ -25,13 +25,15 @@ import ClearIcon from "@mui/icons-material/Clear";
 import scrollSx from "@styles/scroll";
 import CircularProgress from '@mui/material/CircularProgress';
 import CustomDataGrid from "@styles/tables";
-import { DeleteOperation, MassiveUpdateOperation, UpdateOperation } from "./queries";
+import { DeleteOperation, MassiveUpdateOperation, UpdateOperation ,GetSummaryList} from "./queries";
 import { id } from "date-fns/locale";
 import moment from "moment";
 import DocumentIcon from '@mui/icons-material/Description';
 import { Tooltip } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { T } from "@formulajs/formulajs";
+
+
 const sectionTitleContainerSx = {
   display: "flex",
   justifyContent: "space-between",
@@ -133,9 +135,69 @@ export const OperationsComponents = ({
   dataCount,
  loading
 }) => {
-
-
+ // Nuevo estado para controlar cuando se aplica un filtro
+  const [filterApplied, setFilterApplied] = useState(false);
+// Hooks
+  const {
+    fetch: fetch,
+    loading: loadingNegotiationSummary,
+    error: error,
+    data: data,
+  } = useFetch({
+    service: GetSummaryList,
+    init: true,
+  });
  
+
+   // Estado para almacenar qué operaciones tienen resumen
+  const [haveNegotiationSummary, setHaveNegotiationSummary] = useState({});
+  // Estado para evitar múltiples verificaciones en la misma página
+  const [checkedPages, setCheckedPages] = useState(new Set());
+
+  // Hook para verificar resúmenes
+  const checkNegotiationSummaries = async (rowsToCheck) => {
+    const results = {};
+    
+    for (const row of rowsToCheck) {
+      const opId = row.opId;
+      
+      try {
+        await GetSummaryList(opId);
+        console.log('aaa')
+        results[opId] = true; // Tiene resumen
+      } catch (error) {
+        if (error.response?.status === 500) {
+          results[opId] = false; // No tiene resumen
+        } else {
+          console.error(`Error verificando resumen para opId ${opId}:`, error);
+          results[opId] = false;
+        }
+      }
+    }
+    
+    return results;
+  };
+
+  // Efecto que se ejecuta cuando cambia la página o las filas
+    useEffect(() => {
+    if (rows.length > 0) {
+      // Si hay filtros activos, verificamos siempre (sin usar checkedPages)
+      const hasActiveFilters = Object.values(filtersHandlers.value).some(
+        val => val !== null && val !== "" && val !== undefined
+      );
+      
+      if (hasActiveFilters || !checkedPages.has(page)) {
+        checkNegotiationSummaries(rows).then(results => {
+          setHaveNegotiationSummary(prev => ({ ...prev, ...results }));
+          if (!hasActiveFilters) {
+            setCheckedPages(prev => new Set(prev).add(page));
+          }
+        });
+      }
+    }
+  }, [page, rows, checkedPages, filtersHandlers.value]);
+
+  console.log(haveNegotiationSummary)
   const calcs = rows[0]?.calcs;
 
   const [other, setOther] = useState(calcs?.others || 0);
@@ -144,7 +206,7 @@ export const OperationsComponents = ({
   const [open, setOpen] = useState([false, ""]);
   const [rowCount, setRowCount] = useState(dataCount);
   const [pageSize, setPageSize] = useState(10);
-  
+
   const [search, setSearch] = useState("");
  // Supongamos que `dateRange` es un estado que mantiene el rango de fechas seleccionado
 const [dateRange, setDateRange] = useState({ startDate: null, endDate: null });
@@ -155,7 +217,7 @@ const [dateRange, setDateRange] = useState({ startDate: null, endDate: null });
   const [openWindow, setOpenWindow] = useState(null);
   const [openModal, setOpenModal] = useState(false);
   const [openDelete, setOpenDelete] = useState([false, null]);
-  
+
   const handleOpenDelete = (id) => setOpenDelete([true, id]);
   const handleCloseDelete = () => setOpenDelete([false, null]);
 
@@ -489,13 +551,11 @@ const handleCloseMenu = () => {
   } = useFetch({ service: DeleteOperation, init: false });
 
   
-  console.log(rows)
 
-  console.log(calcs)
   const mockData =rows[0]?.calcs;
-  console.log(mockData)
+
   const [selectedData, setSelectedData] = useState(mockData);
-  console.log(selectedData)
+
   useEffect(() => {
     if (dataDeleteOperation) {
       Toast("Operación eliminada", "success");
@@ -600,21 +660,55 @@ const handleCloseMenu = () => {
   };
   const numberFormat = new Intl.NumberFormat("en-US", formatOptions);
 
-  const handleOpenNegotiationSummary = (id) => {
-    if (openWindow && !openWindow.closed) {
-      // Si la ventana ya está abierta, solo le damos el foco (la trae al frente)
-      openWindow.focus();
+const handleOpenNegotiationSummary = (id, opId,hasSummary) => {
+  // Verificar si ya tenemos información sobre si existe resumen para este opId
+
+  console.log(`Verificando resumen para opId ${opId}:`, hasSummary);
+  // Construir la URL basada en si existe o no el resumen
+  let url;
+  if (hasSummary) {
+    // Si existe, usar la URL de modificación con los parámetros invertidos
+    url = `http://localhost:3000/administration/negotiation-summary?modify&id=${id}&opId=${opId}`;
+  } else {
+    // Si no existe o no sabemos, usar la URL de registro normal
+    url = `/administration/negotiation-summary?register&id=${id}`;
+  }
+
+  if (openWindow && !openWindow.closed) {
+    // Si la ventana ya está abierta, solo le damos el foco
+    openWindow.focus();
+  } else {
+    // Si la ventana no está abierta, la abrimos con la URL correspondiente
+    const newWindow = window.open(url, "_blank", "width=800,height=600");
+    setOpenWindow(newWindow);
+    
+    // Escuchar el evento de cierre de la ventana
+    newWindow.onbeforeunload = () => {
+      setOpenWindow(null);
+      
+      // Cuando se cierra la ventana, podríamos querer actualizar el estado
+      // de si tiene resumen o no (opcional)
+      if (hasSummary === undefined) {
+        // Si no sabíamos si tenía resumen, verificamos ahora
+        checkSingleNegotiationSummary(opId);
+      }
+    };
+  }
+};
+
+// Función auxiliar para verificar un solo resumen
+const checkSingleNegotiationSummary = async (opId) => {
+  try {
+    await GetSummaryList(opId);
+    setHaveNegotiationSummary(prev => ({ ...prev, [opId]: true }));
+  } catch (error) {
+    if (error.response?.status === 500) {
+      setHaveNegotiationSummary(prev => ({ ...prev, [opId]: false }));
     } else {
-      // Si la ventana no está abierta, la abrimos y guardamos la referencia
-      const newWindow = window.open(`/administration/negotiation-summary?register&id=${id}`, "_blank", "width=800, height=600");
-      setOpenWindow(newWindow); // Guardamos la referencia de la ventana
-      // Escuchar el evento de cierre de la ventana
-      newWindow.onbeforeunload = () => {
-        setOpenWindow(null); // Restablecer la referencia cuando la ventana se cierre
-      };
+      console.error(`Error verificando resumen para opId ${opId}:`, error);
     }
-  };
-  console.log(page)
+  }
+};
   const columns = [
     {
       field: "status",
@@ -712,16 +806,29 @@ const handleCloseMenu = () => {
       width: 90,
       renderCell: (params) => {
         const isOperationApproved = params.row.estado === "Aprobado";
-       
+       const hasSummary = haveNegotiationSummary[params.row.opId];
+      
         return (
           <div style={{ display: "flex", justifyContent: "center" }}>
             {/* Botón de Documento */}
-            <Tooltip title="Crear o ver resumen de negociación" arrow>
+            <Tooltip 
+              title={hasSummary ? "Ver resumen de negociación" : "Crear resumen de negociación"} 
+              arrow
+            >
               <IconButton
-                onClick={() => handleOpenNegotiationSummary(params.row.opId) }
-                style={{ marginRight: 10 }}
+                onClick={() => handleOpenNegotiationSummary(params.row.opId,params.row.id,hasSummary)}
+                style={{ marginRight: 10, position: 'relative' }}
               >
-                <DocumentIcon />
+                <DocumentIcon color={hasSummary ? "primary" : "disabled"} />
+                {hasSummary === undefined && (
+                  <CircularProgress 
+                    size={16} 
+                    sx={{ 
+                      position: 'absolute',
+                      color: '#488b8f'
+                    }} 
+                  />
+                )}
               </IconButton>
             </Tooltip>
     
@@ -788,7 +895,7 @@ const handleCloseMenu = () => {
 
   const handleDateRangeApply = (dateRange) => {
     // Actualiza solo las fechas manteniendo otros filtros
-    console.log(dateRange)
+
     filtersHandlers.set({
       ...filtersHandlers.value,
       startDate: dateRange.startDate,
@@ -805,17 +912,23 @@ const handleCloseMenu = () => {
     });
   };
   const updateFilters = (value, field) => {
-    if (field !== "multi") {
-      filtersHandlers.set({ 
+     if (field !== "multi") {
+      const newFilters = { 
         ...tempFilters, 
         [field]: value,
-        // Mantiene las fechas existentes
         startDate: tempFilters.startDate,
         endDate: tempFilters.endDate
-      });
+      };
+      
+      filtersHandlers.set(newFilters);
+      
+      // Si el valor es diferente al filtro actual, marcamos como filtro aplicado
+      if (tempFilters[field] !== value) {
+        setFilterApplied(true);
+      }
       return;
     }
-  
+
     const onlyDigits = /^\d{3,4}$/; // Operación: 3-4 dígitos
     const alphaNumeric = /^[a-zA-Z0-9]{3,10}$/; // Factura: Alfanumérico de 3-10 caracteres
     const hasLetters = /[a-zA-Z]/.test(value); // Si tiene letras
@@ -844,7 +957,7 @@ const handleCloseMenu = () => {
       newFilters.startDate = tempFilters.startDate;
       newFilters.endDate = tempFilters.endDate;
     }
-    console.log(tempFilters)
+
     // Filtramos y actualizamos los filtros
     filtersHandlers.set({
       ...tempFilters,
@@ -852,10 +965,18 @@ const handleCloseMenu = () => {
       startDate: tempFilters.startDate, // Conserva fechas
       endDate: tempFilters.endDate
     });
+
+        setFilterApplied(true);
   };
   
   
-  
+      // Modificar el useEffect para resetear checkedPages cuando se aplica un filtro
+  useEffect(() => {
+    if (filterApplied) {
+      setCheckedPages(new Set());
+      setFilterApplied(false);
+    }
+  }, [filterApplied]);
   
   /* Experimento para exportar los datos del data grid a un archivo csv que pueda ser leido por Excel*/
   const handleExportExcel = () => {
@@ -1109,7 +1230,7 @@ const handleCloseMenu = () => {
                       if (page > 1) {
                        
                         setPage(page - 1);
-                        console.log('e')
+                  
                       }
                     }}
                   >
@@ -1130,7 +1251,7 @@ const handleCloseMenu = () => {
                        
                         setPage(page + 1);
                       }
-                      console.log('f')
+                      
                     }}
                   >
                     &#xe91f;

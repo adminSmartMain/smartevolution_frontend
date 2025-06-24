@@ -141,10 +141,10 @@ export const ManageOperationC = ({
       currency: 'COP',
     }).format(value);
   // Función para formatear el número con separadores de miles
+  // Safe version of formatNumberWithThousandsSeparator
   const formatNumberWithThousandsSeparator = (value) => {
-    return value
-      .toString()
-      .replace(/\B(?=(\d{3})+(?!\d))/g, ","); // Agrega separadores de miles
+    if (value === undefined || value === null) return '';
+    return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
   const [] = useState([
     { id: 1, titulo: "Factura 1", contenido: "Detalles de Factura 1" }
@@ -488,7 +488,7 @@ export const ManageOperationC = ({
                             setFieldValue(`facturas[${index}].presentValueInvestor`, presentValueInvestor || 0);
                             setFieldValue(`facturas[${index}].presentValueSF`, presentValueSF || 0);
                             setFieldValue(`facturas[${index}].comisionSF`, presentValueInvestor - presentValueSF || 0);
-                            setFieldValue(`facturas[${index}].investorProfit`, presentValueInvestor - factura.valorNominal || 0);
+                            setFieldValue(`facturas[${index}].investorProfit`,factura.valorNominal- presentValueInvestor  || 0);
                           } else {
                             // Resetea a valores por defecto si no hay días o valor futuro
                             setFieldValue(`facturas[${index}].presentValueInvestor`, factura.currentBalance || 0);
@@ -1362,6 +1362,7 @@ export const ManageOperationC = ({
                               // Agregar la nueva factura
                               push({
                                 is_creada: false,
+                                opDate: values.opDate,
                                 applyGm: false,
                                 amount: 0,
                                 payedAmount: 0,

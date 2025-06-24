@@ -41,7 +41,7 @@ export default function ClientSelect({ formik, customer, disabled }) {
       setClient(Clients);
     }
   }, [data, loading, error]);
-
+  console.log('client', client)
   return (
     <Box
       sx={{
@@ -62,11 +62,13 @@ export default function ClientSelect({ formik, customer, disabled }) {
           options={client}
           getOptionLabel={(option) => option.label}
           onChange={(e, value) => {
+
             if (value !== null) {
               formik.setFieldValue("investor", value.value);
             } else {
               formik.setFieldValue("investor", null);
             }
+           
           }}
           color="#5EA3A3"
           value={

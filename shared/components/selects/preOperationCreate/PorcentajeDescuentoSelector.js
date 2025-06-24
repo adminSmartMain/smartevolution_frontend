@@ -47,7 +47,7 @@ export default function PorcentajeDescuentoSelector({ values, setFieldValue, err
                     setFieldValue(`facturas[${index}].payedAmount`, Number(nuevoValorNominal.toFixed(0)));
                     setFieldValue(`facturas[${index}].valorNominalManual`, false);
 
-                    setFieldValue(`facturas[${index}].investorProfit`, Number(nuevoValorNominal - factura.presentValueSF).toFixed(0));
+                    setFieldValue(`facturas[${index}].investorProfit`, Number(nuevoValorNominal - factura.presentValueInvestor).toFixed(0));
                     if (values.opDate && factura.operationDays) {
                         const presentValueInvestor = Math.round(
                             PV(values.investorTax / 100, factura.operationDays / 365, 0, nuevoValorNominal, 0) * -1
@@ -58,9 +58,10 @@ export default function PorcentajeDescuentoSelector({ values, setFieldValue, err
                         );
                         console.log(values.presentValueSF,parseFloat(values.discountTax),values.investorTax)
                         setFieldValue(`facturas[${index}].presentValueInvestor`, presentValueInvestor);
+                        setFieldValue(`facturas[${index}].gastoMantenimiento`, presentValueInvestor*0.02);
                         setFieldValue(`facturas[${index}].presentValueSF`, presentValueSF);
                         setFieldValue(`facturas[${index}].comisionSF`, presentValueInvestor - presentValueSF);
-                        setFieldValue(`facturas[${index}].investorProfit`, Number(nuevoValorNominal - presentValueSF).toFixed(0));
+                        setFieldValue(`facturas[${index}].investorProfit`, Number(nuevoValorNominal - presentValueInvestor).toFixed(0));
 
                         // Actualizar montos disponibles
                         const totalPresentValue = values.facturas.reduce((sum, f) => sum + (f.presentValueInvestor || 0), 0);

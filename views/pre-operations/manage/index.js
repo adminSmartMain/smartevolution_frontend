@@ -166,7 +166,7 @@ export const ManageOperationV = () => {
       
     }
   }, [loadingGetLastId, errorGetLastId, dataGetLastId]);
-console.log(opId)
+
 
 const [client, setClient] = useState([]);
 const [payer, setPayer] = useState([]);
@@ -177,7 +177,7 @@ const [typeOp, setTypeOp] = useState([]);
 
 useEffect(() => {
   if (dataTypeIdSelect) {
-    console.log(dataTypeIdSelect)
+
     var typesID = [];
     dataTypeIdSelect.data.map((typeID) => {
       typesID.push({ label: typeID.description, value: typeID.id });
@@ -249,7 +249,7 @@ const validationSchema = Yup.object({
     'is-after-investorTax',
     'La tasa de descuento debe ser mayor o igual a la tasa de inversionista',
     function(value) {
-       console.log(this,'4')
+
       const investorTax = this.parent?.investorTax; // Accede al valor raíz
       
       // Solo saltar validación si investorTax no está definido
@@ -273,7 +273,7 @@ const validationSchema = Yup.object({
         'is-after-discountTax',
         'La tasa de inversionsita debe ser menor o igual a la tasa de descuento',
         function(value) {
-           console.log(this,'3')
+
           const discountTax = this.parent?.discountTax; // Accede al valor raíz
           if (!discountTax || !value) return true;
           return value <= discountTax;
@@ -294,7 +294,7 @@ const validationSchema = Yup.object({
         'is-same-or-after-opdate',
         'La fecha probable debe ser igual o posterior a la fecha de operación',
         function(value) {
-          console.log(this,'2')
+
           const opDate = this.parent.opDate// Accede al valor raíz
           
           if (!opDate || !value) return true;
@@ -315,7 +315,8 @@ const validationSchema = Yup.object({
         'is-after-probable',
         'La fecha fin debe ser posterior a la fecha probable',
         function(value) {
-          console.log(this)
+          
+
           const probableDate = this.parent.probableDate;
           if (!probableDate || !value) return true;
           return new Date(value) >= new Date(probableDate);
@@ -333,9 +334,9 @@ const validationSchema = Yup.object({
 const transformData = (data) => {
   const usedBillCodes = {};
   const processedBillIds = {}; // Para rastrear billIds ya procesados
-  console.log(data)
+
   return data.facturas.map((factura) => {
-    console.log(factura)
+
     const baseStructure = {
       billId: factura.billId,
       is_creada: factura.is_creada || false,
@@ -346,9 +347,9 @@ const transformData = (data) => {
         billFraction: factura.fraccion,
         client: factura.nombreInversionista,
         clientAccount: factura.idCuentaInversionista|| '',
-        comisionSF: factura.comisionSF,
+        commissionSF: factura.comisionSF,
         DateBill: factura.fechaEmision || new Date().toISOString().substring(0, 10),
-        DateExpiration: new Date(factura.fechaFin).toISOString().substring(0, 10) || new Date().toISOString().substring(0, 10),
+        DateExpiration: new Date(factura.expirationDate).toISOString().substring(0, 10) || new Date().toISOString().substring(0, 10),
         discountTax: data.discountTax,
         emitter: data.emitter.value,
         emitterBroker: data.emitterBroker,
@@ -375,7 +376,7 @@ const transformData = (data) => {
         saldoInicialFactura: factura.saldoDisponibleInfo, 
       }
     };
-    console.log(baseStructure)
+
     if (factura.is_creada) {
       if (!processedBillIds[factura.billId]) {
         // Primera factura con este billId
@@ -442,7 +443,6 @@ const onSubmit = async (values, { setSubmitting }) => {
     if (facturasCreadas.length > billCodesUnicos.length) {
       console.warn("Advertencia: Algunas facturas creadas no tienen billCode o están duplicados");
     }
-    console.log(facturasCreadas)
     // Resto de tu lógica de validación...
     const billIds = [...new Set(facturasTransformadas.map(op => op.billId))];
     const saldoValido = await verificarSaldosFacturas(billIds, facturasTransformadas);
@@ -454,11 +454,7 @@ const onSubmit = async (values, { setSubmitting }) => {
     // Ejecución de operaciones
     const { success, successfulOperations, failedOperations } = await executeAtomicOperations(facturasTransformadas);
     
-    console.log("Resultado:", {
-      success,
-      successfulCount: successfulOperations?.length || 0,
-      failedCount: failedOperations?.length || 0
-    });
+    
     if (failedOperations?.length > 0) {
       throw new Error(
         `${failedOperations.length} operaciones fallaron: ${
@@ -517,7 +513,7 @@ const verificarSaldosFacturas = async (billIds, facturasTransformadas) => {
     if (!Array.isArray(billIds) || billIds.length === 0) {
       throw new Error("No se proporcionaron IDs de facturas válidos");
     }
-    console.log(facturasTransformadas)
+
     
     // 1. Primero verificamos si hay billIds duplicados
     const billIdsConEstado = billIds.map((billId, index) => ({
@@ -529,14 +525,14 @@ const verificarSaldosFacturas = async (billIds, facturasTransformadas) => {
     const billIdsUnicos = Array.from(new Map(
       billIdsConEstado.map(item => [item.billId, item])
     ).values());
-    console.log(billIdsUnicos)
+ 
 
     // 2. Obtenemos los datos de todas las facturas únicas
     const resultadosUnicos = await Promise.all(
       billIdsUnicos.map(async (billId) => {
         const billIdStr = String(billId.billId).trim();
         const is_creada_billId= facturasTransformadas.filter(f => f.billId==billIdStr)
-         console.log(is_creada_billId.is_creada)
+     
         try {
           const response = await Axios.get(
             `${process.env.NEXT_PUBLIC_API_URL}/bill/${billIdStr}`,
@@ -553,7 +549,7 @@ const verificarSaldosFacturas = async (billIds, facturasTransformadas) => {
           }
 
           let factura;
-          console.log(response.data.results,is_creada_billId)
+        
           if (response.data.results && Array.isArray(response.data.results)) {
             if (response.data.results.length === 0 && billIdStr.is_creada==0 ) {
               throw new Error("Factura no encontrada");
@@ -748,10 +744,7 @@ const executeAtomicOperations = async (operations) => {
     // Procesar resultados
     const failed = response?.data.failed || [];
     const successful = response?.data.successful || [];
-    console.log(response.data)
-    console.log(failed)
-    // Si hay operaciones fallidas, intentamos obtener los IDs generados
-    console.log(successful)
+
     toast.dismiss(progressToast);
     
  
@@ -775,10 +768,10 @@ const executeAtomicOperations = async (operations) => {
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [actions,  setActions] = useState('');
   const handleConfirm = async (values,actions) => {
-    console.log("1. Entrando a handleConfirm");
+
     setShowConfirmationModal(true);
     setActions(actions)
-    console.log("2. Estado actualizado, showConfirmationModal debería ser true");
+
     // Verifica en React DevTools si el estado realmente cambió
   };
   

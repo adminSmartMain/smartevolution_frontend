@@ -77,6 +77,7 @@ export default function InvestorSelector({setFieldTouched,setFieldError,errors, 
                              probableDate:  factura.probableDate,
                             investorProfit: factura.investorProfit || 0,
                             comisionSF:  factura.comisionSF  || 0,
+                            
                             fechaFin:`${addDays(new Date(),1)}`,
                             numbercuentaInversionista: '',
                             cuentaInversionista:[],
@@ -85,10 +86,11 @@ export default function InvestorSelector({setFieldTouched,setFieldError,errors, 
                             investorBroker: '',
                             expirationDate: factura.expirationDate,
                             investorBrokerName: '',
-                            montoDisponibleCuenta: 0, // Restablecer al máximo
+                            montoDisponibleCuenta: -factura.presentValueInvestor-factura.gastoMantenimiento || 0, // Restablecer al máximo
                             montoDisponibleInfo: 0,
                             gastoMantenimiento: factura.gastoMantenimiento,
                             operationDays: factura.operationDays,
+                            saldoDisponibleInfo: factura.saldoDisponibleInfo,
                             tasaInversionistaPR: 0,
                         });
 
@@ -121,12 +123,14 @@ export default function InvestorSelector({setFieldTouched,setFieldError,errors, 
                             return; // Detener la ejecución si tasaDescuento es undefined
                          }
 
+                         console.log(tasaDescuento)
 
                         const brokerFromInvestor = await cargarBrokerFromInvestor(newValue?.data.id);
 
-
-
-
+                         const valorGm = factura.presentValueInvestor * 0.002;
+                         
+                        setFieldValue(`facturas[${index}].applyGm`, tasaDescuento?.data?.gmf|| false);
+                         setFieldValue(`facturas[${index}].gastoMantenimiento`,  tasaDescuento?.data?.gmf ? valorGm : 0);
                         const todasFacturasInversionista = values.facturas
                         .map((f, i) => {
                             // Asignación segura del nuevo valor
