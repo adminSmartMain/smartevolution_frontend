@@ -816,26 +816,20 @@ const checkSingleNegotiationSummary = async (opId) => {
               arrow
             >
               <IconButton
-  onClick={() => handleOpenNegotiationSummary(params.row.opId, params.row.id, hasSummary)}
-  sx={{ 
-    marginRight: 10, 
-    position: 'relative',
-    color: hasSummary ? "#488B8F" : "action.disabled",
-    '&:hover': {
-      backgroundColor: hasSummary ? "rgba(72, 139, 143, 0.08)" : undefined
-    }
-  }}
->
-  <DocumentIcon />
-  {hasSummary === undefined && (
-    <CircularProgress 
-      size={16} 
-      sx={{ 
-        position: 'absolute',
-      }} 
-    />
-  )}
-</IconButton>
+                onClick={() => handleOpenNegotiationSummary(params.row.opId,params.row.id,hasSummary)}
+                style={{ marginRight: 10, position: 'relative' }}
+              >
+               <DocumentIcon sx={{ color: hasSummary ? "#488B8F" : "action.disabled" }} />
+                {hasSummary === undefined && (
+                  <CircularProgress 
+                    size={16} 
+                    sx={{ 
+                      position: 'absolute',
+                     
+                    }} 
+                  />
+                )}
+              </IconButton>
             </Tooltip>
     
             {/* Botón de Menú */}
