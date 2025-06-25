@@ -108,7 +108,7 @@ export default function TasaInversionistaSelector({ values, setFieldValue, setFi
 
         setFieldValue(`facturas[${index}].presentValueInvestor`, presentValueInvestor);
         
-        setFieldValue(`facturas[${index}].gastoMantenimiento`, presentValueInvestor*0.02);
+        setFieldValue(`facturas[${index}].gastoMantenimiento`, presentValueInvestor*0.002);
         setFieldValue(`facturas[${index}].comisionSF`, presentValueInvestor - (factura.presentValueSF || 0));
         setFieldValue(`facturas[${index}].investorProfit`, Number(nuevoInvestorProfit).toFixed(0) || 0);
 

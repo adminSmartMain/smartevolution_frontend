@@ -668,7 +668,7 @@ const handleOpenNegotiationSummary = (id, opId,hasSummary) => {
   let url;
   if (hasSummary) {
     // Si existe, usar la URL de modificación con los parámetros invertidos
-    url = `http://localhost:3000/administration/negotiation-summary?modify&id=${id}&opId=${opId}`;
+    url = `/administration/negotiation-summary?modify&id=${id}&opId=${opId}`;
   } else {
     // Si no existe o no sabemos, usar la URL de registro normal
     url = `/administration/negotiation-summary?register&id=${id}`;
@@ -816,20 +816,26 @@ const checkSingleNegotiationSummary = async (opId) => {
               arrow
             >
               <IconButton
-                onClick={() => handleOpenNegotiationSummary(params.row.opId,params.row.id,hasSummary)}
-                style={{ marginRight: 10, position: 'relative' }}
-              >
-                <DocumentIcon color={hasSummary ? "primary" : "disabled"} />
-                {hasSummary === undefined && (
-                  <CircularProgress 
-                    size={16} 
-                    sx={{ 
-                      position: 'absolute',
-                      color: '#488b8f'
-                    }} 
-                  />
-                )}
-              </IconButton>
+  onClick={() => handleOpenNegotiationSummary(params.row.opId, params.row.id, hasSummary)}
+  sx={{ 
+    marginRight: 10, 
+    position: 'relative',
+    color: hasSummary ? "#488B8F" : "action.disabled",
+    '&:hover': {
+      backgroundColor: hasSummary ? "rgba(72, 139, 143, 0.08)" : undefined
+    }
+  }}
+>
+  <DocumentIcon />
+  {hasSummary === undefined && (
+    <CircularProgress 
+      size={16} 
+      sx={{ 
+        position: 'absolute',
+      }} 
+    />
+  )}
+</IconButton>
             </Tooltip>
     
             {/* Botón de Menú */}

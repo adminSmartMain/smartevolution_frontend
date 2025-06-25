@@ -58,7 +58,7 @@ export default function PorcentajeDescuentoSelector({ values, setFieldValue, err
                         );
                         console.log(values.presentValueSF,parseFloat(values.discountTax),values.investorTax)
                         setFieldValue(`facturas[${index}].presentValueInvestor`, presentValueInvestor);
-                        setFieldValue(`facturas[${index}].gastoMantenimiento`, presentValueInvestor*0.02);
+                        setFieldValue(`facturas[${index}].gastoMantenimiento`, presentValueInvestor*0.002);
                         setFieldValue(`facturas[${index}].presentValueSF`, presentValueSF);
                         setFieldValue(`facturas[${index}].comisionSF`, presentValueInvestor - presentValueSF);
                         setFieldValue(`facturas[${index}].investorProfit`, Number(nuevoValorNominal - presentValueInvestor).toFixed(0));

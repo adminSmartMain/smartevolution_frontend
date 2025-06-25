@@ -294,12 +294,13 @@ export default function BillSelector ({values, setFieldValue, errors, touched, i
                 investorProfit: investorProfit,
                 integrationCode: selectedFactura?.integrationCode ? selectedFactura?.integrationCode : "",
                 isReBuy: selectedFactura?.reBuyAvailable ?? 0,
-                 gastoMantenimiento:valorFuturoCalculado*0.002|| 0,
+                 gastoMantenimiento:factura.applyGm ? valorFuturoCalculado*0.002 : 0,
                   diasOperaciones: 1,
                 operationDays: 1,
                 investorTax: values.investorTax,
                 montoDisponibleInfo: factura.montoDisponibleInfo,
                 cuentasDelInversionistaSelected:factura.cuentasDelInversionistaSelected,
+                 applyGm:factura.applyGm,
                 });
 
 
@@ -446,7 +447,7 @@ export default function BillSelector ({values, setFieldValue, errors, touched, i
                 investorProfit: investorProfit,
                 integrationCode: selectedFactura?.integrationCode ? selectedFactura?.integrationCode : "",
                 isReBuy: selectedFactura?.reBuyAvailable ?? 0,
-                  gastoMantenimiento:valorFuturoCalculado*0.002|| 0,
+                  gastoMantenimiento:factura.applyGm ? valorFuturoCalculado*0.002 : 0,
                   diasOperaciones: 1,
                 operationDays: 1,
                 investorTax: values.investorTax,
@@ -485,12 +486,13 @@ export default function BillSelector ({values, setFieldValue, errors, touched, i
                 investorProfit: investorProfit,
                 integrationCode: selectedFactura?.integrationCode ? selectedFactura?.integrationCode : "",
                 isReBuy: selectedFactura?.reBuyAvailable ?? 0,
-                 gastoMantenimiento:valorFuturoCalculado*0.002|| 0,
+                 gastoMantenimiento: factura.applyGm ? valorFuturoCalculado*0.002 : 0,
                  diasOperaciones: 1,
                 operationDays: 1,
                 investorTax: values.investorTax,
                 montoDisponibleInfo: factura.montoDisponibleInfo,
                 cuentasDelInversionistaSelected:factura.cuentasDelInversionistaSelected,
+                 applyGm:factura.applyGm,
                 });
                 }
 
@@ -533,12 +535,13 @@ export default function BillSelector ({values, setFieldValue, errors, touched, i
                 investorProfit: investorProfit,
                 integrationCode: selectedFactura?.integrationCode ? selectedFactura?.integrationCode : "",
                 isReBuy: selectedFactura?.reBuyAvailable ?? 0,
-                 gastoMantenimiento:valorFuturoCalculado*0.002|| 0,
+                 gastoMantenimiento:factura.applyGm ? valorFuturoCalculado*0.002 : 0,
                   diasOperaciones: 1,
                 operationDays: 1,
                 investorTax: values.investorTax,
                 montoDisponibleInfo: factura.montoDisponibleInfo,
                 cuentasDelInversionistaSelected:factura.cuentasDelInversionistaSelected,
+                 applyGm:factura.applyGm,
                 });
                 }
 

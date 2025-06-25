@@ -168,7 +168,8 @@ return (
         gastoMantenimiento: 0,
         operationDays: 0,
         expirationDate: "",
-        billCode:""
+        billCode:"",
+         applyGm:factura.applyGm,
         });
         return;
 
@@ -313,7 +314,7 @@ return (
         expirationDate: selectedFactura.expirationDate,
         valorFuturo: valorFuturoCalculado,
         presentValueInvestor:valorFuturoCalculado,
-     
+      applyGm:factura.applyGm,
         presentValueSF:valorFuturoCalculado|| 0,
         comisionSF,
         investorProfit: investorProfit,
@@ -501,6 +502,7 @@ return (
                 presentValueInvestor:valorFuturoCalculado,
                 presentValueSF:valorFuturoCalculado|| 0,
                 comisionSF,
+                 applyGm:factura.applyGm,
                 investorProfit: investorProfit,
                 integrationCode: selectedFactura?.integrationCode ? selectedFactura?.integrationCode : "",
                 isReBuy: selectedFactura?.reBuyAvailable ?? 0,
@@ -519,7 +521,7 @@ return (
             setFieldValue(`facturas[${index}]`, {
                 is_creada:true,
                 billCode: selectedFactura.billId,
-                
+                 applyGm:factura.applyGm,
                 billId: selectedFactura.billId,
                 idCuentaInversionista: factura.idCuentaInversionista,
                 factura: newValue.id || newValue,
@@ -566,6 +568,7 @@ return (
         // [MANTENIDO] Asignación final de valores
         setFieldValue(`facturas[${index}]`, {
         is_creada:true,
+        applyGm:factura.applyGm,
         billCode: selectedFactura.billId,
         billId: selectedFactura.billId,
         idCuentaInversionista: factura.idCuentaInversionista,

@@ -66,7 +66,7 @@ const EndDateSelector = ({ factura, values, setFieldValue, touched, errors, inde
                 : Number((factura.valorNominal - presentValueInvestor).toFixed(0));
             
             setFieldValue(`facturas[${index}].presentValueInvestor`, presentValueInvestor || 0);
-            setFieldValue(`facturas[${index}].gastoMantenimiento`, presentValueInvestor*0.02 || 0);
+            setFieldValue(`facturas[${index}].gastoMantenimiento`, presentValueInvestor*0.002 || 0);
             setFieldValue(`facturas[${index}].presentValueSF`, presentValueSF || 0);
             setFieldValue(`facturas[${index}].comisionSF`, presentValueInvestor - presentValueSF || 0);
             setFieldValue(`facturas[${index}].investorProfit`, investorProfitValue.toFixed(0) || 0);
