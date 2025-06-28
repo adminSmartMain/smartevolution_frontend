@@ -6,7 +6,7 @@ import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import esLocale from 'date-fns/locale/es';
 import { Formik, Form, FieldArray } from 'formik';
-
+import {  startOfDay,isSameDay } from "date-fns";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { Dialog, DialogContent, DialogTitle, DialogActions, CircularProgress } from "@mui/material";
@@ -18,6 +18,31 @@ import { useFetch } from "@hooks/useFetch";
 import { PV } from "@formulajs/formulajs";
 import { CheckCircle, Error } from "@mui/icons-material";
 import { addDays, differenceInDays, parseISO, set, isValid } from "date-fns";
+import EmitterSelector from "@components/selects/preOperationEdit/EmitterSelector";
+import PayerSelector from "@components/selects/preOperationEdit/PayerSelector";
+
+import BillSelector from "@components/selects/preOperationEdit/BillSelector";
+import InvestorSelector from "@components/selects/preOperationEdit/InvestorSelector";
+import ValorNominalSelector from "@components/selects/preOperationEdit/ValorNominalSelector";
+import TasaInversionistaSelector from "@components/selects/preOperationEdit/TasaInversionista";
+import EmitterBrokerModal from "@components/modals/emitterBrokerModal";
+import EmitterDeleteModal from "@components/modals/emitterDeleteModal";
+import ModalConfirmation from "@components/modals/modalConfirmation";
+import ProcessModal from "@components/modals/processModal";
+
+import ValorFuturoSelector from "@components/selects/preOperationEdit/valorFuturoSelector";
+import GastoMantenimiento from "@components/selects/preOperationEdit/GastoMantenimientoSelector";
+import CuentaInversionistaSelector from "@components/selects/preOperationEdit/cuentaInversionistaSelector";
+
+import TasaDescuentoSelector from "@components/selects/preOperationEdit/TasaDescuentoSelector";
+import PorcentajeDescuentoSelector from "@components/selects/preOperationEdit/PorcentajeDescuentoSelector";
+
+import EndDateSelector from "@components/selects/preOperationEdit/EndDateSelector";
+import ProbableDateSelector from "@components/selects/preOperationEdit/ProbableDateSelector";
+
+
+
+
 export const ManageOperationC = ({
   opId,
   emitters,
@@ -29,7 +54,7 @@ export const ManageOperationC = ({
   loading,
   success,
   isModalOpen,
-  validationSchema,
+  validationSchema2,
   showConfirmationModal,
   handleConfirm,
   setShowConfirmationModal,
@@ -38,24 +63,23 @@ export const ManageOperationC = ({
 
 
 }) => {
-  console.log(success)
-  console.log('data details', dataDetails)
-  console.log(investors)
+const [orchestDisabled, setOrchestDisabled] = useState([{ indice: 0, status: false }])
   const emisores = emitters;
-  console.log(payers)
+   const [clientWithoutBroker, setClientWithoutBroker] = useState(null);
+  const [openEmitterBrokerModal, setOpenEmitterBrokerModal] = useState(false)
   const tipoOperaciones = ['Compra Titulo', 'Lorem Ipsum', 'Lorem Ipsum'];
-  console.log(users)
-
+  const [brokeDelete, setBrokeDelete] = useState(false)
+  const [clientPagador, setClientPagador] = useState(null);
+  const [isSelectedPayer, setIsSelectedPayer] = useState(false)
+    const [clientInvestor, setClientInvestor] = useState(null);
   // Encontrar el usuario que coincide con dataDetails.user_id
   const usuarioEncontrado = users?.data?.find(user => user.id === dataDetails?.data?.user_created_at);
-
+const [isModalEmitterAd, setIsModalEmitterAd] = useState(false)
   const usuarioEncontradoEdit = users?.data?.find(user => user.id === dataDetails?.data?.user_updated_at);
-  console.log(usuarioEncontrado, usuarioEncontradoEdit)
-  console.log(dataDetails?.data?.created_at, dataDetails?.data?.updated_at);
-
+  const [clientEmitter, setClientEmitter] = useState(null);
   const createdAt = new Date(dataDetails?.data?.created_at);
   const updatedAt = dataDetails?.data?.updated_at ? new Date(dataDetails?.data?.updated_at) : null;
-
+const [clientBrokerEmitter, setClientBrokerEmitter] = useState(null);
   const opcionesFormato = {
     dateStyle: 'short',
     timeStyle: 'medium'
@@ -130,13 +154,18 @@ export const ManageOperationC = ({
 
   // Función para formatear el número con separadores de miles
   const formatNumberWithThousandsSeparator = (value) => {
-    return value
-      .toString()
-      .replace(/\B(?=(\d{3})+(?!\d))/g, ","); // Agrega separadores de miles
+    if (value === undefined || value === null) return '';
+    return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
 
 
-
+const parseBackendDate = (dateString) => {
+  if (!dateString) return null;
+  // Parseamos la fecha ISO del backend
+  const date = parseISO(dateString);
+  // Ajustamos por zona horaria
+  return new Date(date.getTime() + date.getTimezoneOffset() * 60000);
+};
   const initialValues = {
     amount: 0,
     applyGm: false,
@@ -148,8 +177,8 @@ export const ManageOperationC = ({
     filtroEmitterPagador: { emitter: "", payer: "" },
     takedBills: "",
     filteredPayers: "",
-    DateBill: `${new Date().toISOString().substring(0, 10)}`,
-    DateExpiration: `${new Date().toISOString().substring(0, 10)}`,
+    DateBill: `${new Date()}`,
+    DateExpiration: `${new Date()}`,
     discountTax: 0,
     emitter: "",
     emitterBroker: "",
@@ -160,9 +189,9 @@ export const ManageOperationC = ({
     investorBroker: "",
     investorProfit: 0,
     investorTax: 0,
-    opDate: `${new Date().toISOString().substring(0, 10)}`,
+    opDate: `${new Date()}`,
     operationDays: 0,
-    opExpiration: `${new Date().toISOString().substring(0, 10)}`,
+    opExpiration: `${new Date()}`,
     opId: null,
     opType: "",
     payedAmount: 0,
@@ -170,7 +199,7 @@ export const ManageOperationC = ({
     payer: "",
     presentValueInvestor: 0,
     presentValueSF: 0,
-    probableDate: `${new Date().toISOString().substring(0, 10)}`,
+    probableDate: `${new Date()}`,
     status: 0,
     billCode: "",
     isReBuy: false,
@@ -184,10 +213,9 @@ export const ManageOperationC = ({
 
 
   const [isRecompra, setIsRecompra] = useState(false); // Estado para el aviso de Recompra
-  const [facturasFiltradas, setFacturasFiltradas] = useState([]); // Facturas filtradas por emisor
-  const [cuentasFiltradas, setCuentasFiltradas] = useState([]); // Cuentas filtradas por inversionista
+
   const [initialPayer, setInitialPayer] = useState(null);
-  const [initialPayerBills, setInitialPayerBills] = useState(null);
+  
   // Función para cargar cuentas cuando se selecciona un inversionista
   const cargarCuentas = async (inversionista) => {
     if (!inversionista) return null; // Retorna null si no hay inversionista
@@ -277,11 +305,11 @@ export const ManageOperationC = ({
   const [brokerByClient, setBrokerByClient] = useState()
 
   useEffect(() => {
-    console.log("Data broker filtradas actualizadas:", dataBrokerByClient);
+ 
     setBrokerByClient(dataBrokerByClient)
   }, [dataBrokerByClient]); // Se ejecuta cuando cambia el estado
 
-  console.log(brokerByClient)
+
 
 
 
@@ -290,28 +318,19 @@ export const ManageOperationC = ({
 
   const [AccountFromClient, setAccountFromClient] = useState()
   useEffect(() => {
-    console.log("Account of investor filtradas actualizadas:", dataAccountFromClient);
+    
     setAccountFromClient(dataAccountFromClient)
   }, [dataAccountFromClient]); // Se ejecuta cuando cambia el estado
 
-  console.log(AccountFromClient)
-  // Función para calcular el valor nominal basado en el valor futuro y el porcentaje de descuento
-  const calcularValorNominal = (valorFuturo, porcentajeDescuento) => {
-    return valorFuturo * (1 - porcentajeDescuento / 100);
-  };
 
+ 
   // Función para calcular el porcentaje de descuento basado en el valor futuro y el valor nominal
   const calcularPorcentajeDescuento = (valorFuturo, valorNominal) => {
     if (valorFuturo === 0) return 0;
     return ((1 - valorNominal / valorFuturo) * 100).toFixed(2);
   };
 
-  //Formatear la fecha en la cabecera del acordeon. 
-  const formatDate = (date) => {
-    if (!date) return "N/A";
-    const options = { day: "2-digit", month: "short", year: "numeric" };
-    return new Date(date).toLocaleDateString("es-ES", options);
-  };
+
 
   useEffect(() => {
     if (dataDetails?.data?.emitter?.id) {
@@ -325,8 +344,7 @@ export const ManageOperationC = ({
 
   // Efecto para cargar pagadores filtrados
   useEffect(() => {
-    console.log('Emitter ID:', dataDetails?.data?.emitter?.id);
-    console.log('Payers disponibles:', payers);
+  
     // 1. Establecer el pagador inicial inmediatamente si existe en dataDetails
     if (dataDetails?.data?.payer) {
       const payerFromDetails = {
@@ -345,37 +363,36 @@ export const ManageOperationC = ({
       const emitterId = dataDetails?.data?.emitter?.id;
 
       if (!emitterId) {
-        console.log('No hay emitter ID - limpiando filteredPayers');
+ 
         setFilteredPayers([]);
         return;
       }
 
       try {
-        console.log('Cargando facturas para emitter:', emitterId);
+       
         const facturasEmisor = await cargarFacturas(emitterId);
-        console.log('Facturas recibidas:', facturasEmisor);
+        
 
         if (!facturasEmisor?.data?.length) {
-          console.log('No hay facturas válidas');
+       
           setFilteredPayers([]);
           return;
         }
 
         const facturasConSaldo = facturasEmisor.data.filter(
-          f => Number(f.currentBalance) > 0
+          f => Number(f.currentBalance) >= 0
         );
-        console.log('Facturas con saldo:', facturasConSaldo);
+        
 
         const payerIdsUnicos = [...new Set(
           facturasConSaldo.map(f => f.payerId).filter(Boolean)
         )];
-        console.log('IDs de pagadores únicos:', payerIdsUnicos);
+
 
         const pagadoresFiltrados = payers?.filter(p =>
           p?.data?.document_number &&
           payerIdsUnicos.includes(p.data.document_number)
         ) || [];
-        console.log('Pagadores filtrados:', pagadoresFiltrados);
 
         setFilteredPayers(pagadoresFiltrados);
 
@@ -403,8 +420,7 @@ export const ManageOperationC = ({
 
   // Efecto para cargar bills con pagadores filtrados
   useEffect(() => {
-    console.log('Emitter ID:', dataDetails?.data?.emitter?.id);
-    console.log('Payers disponibles:', payers);
+    
     // 1. Establecer el pagador inicial inmediatamente si existe en dataDetails
     if (dataDetails?.data?.bill) {
       const payerFromDetails = {
@@ -420,20 +436,20 @@ export const ManageOperationC = ({
     const loadBillsByPayers = async () => {
       const emitterId = dataDetails?.data?.emitter?.id;
       const document_numberPayer = dataDetails?.data?.payer?.document_number;
-      console.log(document_numberPayer)
+    
       if (!emitterId) {
-        console.log('No hay emitter ID - limpiando filteredPayers');
+        
         setFilteredPayerBills([]);
         return;
       }
 
       try {
-        console.log('Cargando facturas para emitter:', emitterId);
+        
         const facturasEmisor = await cargarFacturas(emitterId);
-        console.log('Facturas recibidas:', facturasEmisor);
+      
 
         if (!facturasEmisor?.data?.length) {
-          console.log('No hay facturas válidas version pagador');
+          
           setFilteredPayerBills([]);
           return;
         }
@@ -441,9 +457,9 @@ export const ManageOperationC = ({
         const facturasFiltradas = facturasEmisor.data.filter(
           factura =>
             factura.payerId === document_numberPayer &&
-            Number(factura.currentBalance) > 0  // Filtro por saldo positivo
+            Number(factura.currentBalance) >= 0  // Filtro por saldo positivo
         );
-        console.log('filtradas por pagador', facturasFiltradas)
+       
         setFilteredPayerBills(facturasFiltradas);
 
 
@@ -459,8 +475,7 @@ export const ManageOperationC = ({
 
   // Efecto para cargar bills con pagadores filtrados
   useEffect(() => {
-    console.log('Emitter ID:', dataDetails?.data?.emitter?.id);
-    console.log('Payers disponibles:', payers);
+ 
     // 1. Establecer el pagador inicial inmediatamente si existe en dataDetails
     if (dataDetails?.data?.bill) {
       const payerFromDetails = {
@@ -476,20 +491,20 @@ export const ManageOperationC = ({
     const loadAccountByInvestor = async () => {
       const emitterId = dataDetails?.data?.investor?.id;
       const document_numberPayer = dataDetails?.data?.payer?.document_number;
-      console.log(document_numberPayer)
+     
       if (!emitterId) {
-        console.log('No hay emitter ID - limpiando filteredPayers');
+     
         setAcountsInvestor([]);
         return;
       }
 
       try {
-        console.log('Cargando cuentas por inversor:', emitterId);
+        
         const facturasEmisor = await cargarCuentas(emitterId);
-        console.log('cuentas recibidas:', facturasEmisor);
+
 
         if (!facturasEmisor?.data?.length) {
-          console.log('No hay facturas válidas version pagador');
+
           setAcountsInvestor([]);
           return;
         }
@@ -507,119 +522,81 @@ export const ManageOperationC = ({
     loadAccountByInvestor();
   }, [dataDetails?.data?.investor?.id]); // Dependencias específicas
 
-  console.log(initialValues2)
-  const mapDataDetailsToInitialValues = (dataDetails) => {
-    if (!dataDetails?.data) return initialValues;
 
-    return {
-      amount: dataDetails.data.amount || 0,
-      applyGm: dataDetails.data.applyGm || false,
-      billBack: dataDetails.data.bill?.id || "",
-      bill: dataDetails.data.bill?.billId || "",
-      billFraction: dataDetails.data.billFraction || 0,
-      client: dataDetails.data.clientAccount?.account_number || "",
-      clientId: dataDetails.data.investor?.id || "",
-      clientAccount: dataDetails.data.clientAccount?.id || "",
+ 
+
+  const initialValues2 = {
+      amount: dataDetails.data?.amount || 0,
+      applyGm: dataDetails.data?.applyGm || false,
+      billBack: dataDetails.data?.bill?.id || "",
+      bill: dataDetails.data?.bill?.billId || "",
+      billFraction: dataDetails.data?.billFraction || 0,
+      client: dataDetails.data?.clientAccount?.account_number || "",
+      clientId: dataDetails.data?.investor?.id || "",
+      clientAccount: dataDetails.data?.clientAccount?.id || "",
       accountsInvestorArray: filteredAcountsInvestor,
-      commissionSF: dataDetails.data.commissionSF || 0,
+      commissionSF: dataDetails.data?.commissionSF || 0,
       filtroEmitterPagador: {
-        emitter: dataDetails.data.emitter?.id || "",
-        payer: dataDetails.data.payer?.document_number || ""
+        emitter: dataDetails.data?.emitter?.id || "",
+        payer: dataDetails.data?.payer?.document_number || ""
       },
       emitterBrokerInfo: {
-        emitterBrokerid: dataDetails.data.emitterBroker?.id || "",
+        emitterBrokerid: dataDetails.data?.emitterBroker?.id || "",
         emitterBrokerName: dataDetails?.data?.emitterBroker?.social_reason ||
           `${dataDetails?.data?.emitterBroker?.first_name || ''} ${dataDetails?.data?.emitterBroker?.last_name || ''}`.trim() ||
           ""
       },
       investorBrokerInfo: {
-        investorBrokerid: dataDetails.data.investorBroker?.id || "",
+        investorBrokerid: dataDetails.data?.investorBroker?.id || "",
         investorBrokerName: dataDetails?.data?.investorBroker?.social_reason ||
           `${dataDetails?.data?.investorBroker?.first_name || ''} ${dataDetails?.data?.investorBroker?.last_name || ''}`.trim() ||
           ""
       },
       investorAccountInfo: {
-        investorAccountid: dataDetails.data.clientAccount?.id || "",
-        investorAccountMonto: dataDetails.data.clientAccount?.balance || ""
+        investorAccountid: dataDetails.data?.clientAccount?.id || "",
+        investorAccountMonto: dataDetails.data?.clientAccount?.balance || ""
       },
-      montoDisponibleCuenta: dataDetails.data.clientAccount?.balance,
-      saldoDisponible: dataDetails.data.bill?.currentBalance - dataDetails.data?.amount,
-      montoDisponibleInfo: dataDetails.data.clientAccount?.balance,
-      billsComplete: dataDetails.data.bill,
+      montoDisponibleCuenta: dataDetails.data?.clientAccount?.balance.toFixed(0)-dataDetails.data?.presentValueInvestor.toFixed(0)-dataDetails.data?.GM.toFixed(0),
+      saldoDisponible: dataDetails.data?.bill?.currentBalance.toFixed(0) ,
+      saldoDisponibleInfo: dataDetails.data?.bill?.currentBalance.toFixed(0) ,
+      montoDisponibleInfo: dataDetails.data?.clientAccount?.balance.toFixed(0),
+      billsComplete: dataDetails.data?.bill,
       takedBills: filteredPayersBills,
       filteredPayers: "",
-      DateBill: dataDetails.data.DateBill || new Date().toISOString().substring(0, 10),
-      DateExpiration: dataDetails.data.DateExpiration || new Date().toISOString().substring(0, 10),
-      discountTax: dataDetails.data.discountTax || 0,
-      emitter: dataDetails.data.emitter?.id || "",
-      emitterBroker: dataDetails.data.emitterBroker?.id || "",
-      cuentaInversionista: dataDetails.data.investor?.id || '',
-      GM: dataDetails.data.GM || 0,
-      id: dataDetails.data.id || "",
-      investor: dataDetails.data.investor?.id || "",
-      investorInfo: dataDetails.data.investor,
-      investorBroker: dataDetails.data.investorBroker?.id || "",
-      investorProfit: dataDetails.data.investorProfit || 0,
-      investorTax: dataDetails.data.investorTax || 0,
-      opDate: dataDetails.data.opDate || new Date().toISOString().substring(0, 10),
-      operationDays: dataDetails.data.operationDays || 0,
-      opExpiration: dataDetails.data.opExpiration || new Date().toISOString().substring(0, 10),
-      opId: dataDetails.data.opId || null,
-      opType: dataDetails.data.opType?.id || "",
-      opTypeInfo: dataDetails.data.opType,
-      payedAmount: dataDetails.data.payedAmount || 0,
-      payedPercent: dataDetails.data.payedPercent || 0,
-      payer: dataDetails.data.payer?.id || "",
+      DateBill: dataDetails.data?.DateBill || new Date().toISOString().substring(0, 10),
+      DateExpiration: dataDetails.data?.DateExpiration || new Date().toISOString().substring(0, 10),
+      discountTax: dataDetails.data?.discountTax || 0,
+      emitter: dataDetails.data?.emitter?.id || "",
+      emitterBroker: dataDetails.data?.emitterBroker?.id || "",
+      cuentaInversionista: dataDetails.data?.investor?.id || '',
+      GM: dataDetails.data?.GM || 0,
+      id: dataDetails.data?.id || "",
+      investor: dataDetails.data?.investor?.id || "",
+      investorInfo: dataDetails.data?.investor,
+      investorBroker: dataDetails.data?.investorBroker?.id || "",
+      investorProfit: dataDetails.data?.investorProfit || 0,
+      investorTax: dataDetails.data?.investorTax || 0,
+      opDate:parseBackendDate(dataDetails.data?.opDate)|| new Date().toISOString().substring(0, 10),
+      operationDays: dataDetails.data?.operationDays || 0,
+      opExpiration: parseBackendDate(dataDetails.data?.opExpiration) || new Date().toISOString().substring(0, 10),
+      opId: dataDetails.data?.opId || null,
+      opType: dataDetails.data?.opType?.id || "",
+      opTypeInfo: dataDetails.data?.opType,
+      payedAmount: dataDetails.data?.payedAmount || 0,
+      payedPercent: dataDetails.data?.payedPercent || 0,
+      payer: dataDetails.data?.payer?.id || "",
       arrayPayers: allPayers,
-      presentValueInvestor: dataDetails.data.presentValueInvestor || 0,
-      presentValueSF: dataDetails.data.presentValueSF || 0,
-      probableDate: dataDetails.data.probableDate || new Date().toISOString().substring(0, 10),
-      status: dataDetails.data.status || 0,
-      billCode: dataDetails.data.bill?.billId || "",
-      isReBuy: dataDetails.data.isRebuy || false,
+      presentValueInvestor: dataDetails.data?.presentValueInvestor.toFixed(0) || 0,
+      presentValueSF: dataDetails.data?.presentValueSF.toFixed(0) || 0,
+      probableDate: parseBackendDate(dataDetails.data?.probableDate)|| new Date().toISOString().substring(0, 10),
+      status: dataDetails.data?.status || 0,
+      billCode: dataDetails.data?.bill?.billId || "",
+      isReBuy: dataDetails.data?.isRebuy || false,
       massive: false,
-      integrationCode: dataDetails.data.bill?.integrationCode || ""
+      integrationCode: dataDetails.data?.bill?.integrationCode || ""
     };
-  };
 
-  const initialValues2 = mapDataDetailsToInitialValues(dataDetails);
-  console.log(initialValues2)
 
-  console.log(filteredAcountsInvestor)
-
-  const cargarOperationFromInvestor = async (investor) => {
-    if (!investor) return null; // Retorna null si no hay inversionista
-
-    try {
-      // Parámetros para la consulta
-      const params = {
-        investor: investor, // Inversionista proporcionado
-        status: 0, // Estado de la operación
-      };
-
-      // Realizar la consulta a la API
-      const response = await getOperationByInvestorFetch(params);
-
-      // Verificar si la respuesta es válida y es un array
-      if (!Array.isArray(response.data)) {
-        console.error("La respuesta no es un array:", response.data);
-        return null;
-      }
-
-      // Extraer y sumar 'presentValueInvestor' y 'GM' de cada objeto
-      const total = response.data.reduce((sum, operation) => {
-        const presentValueInvestor = parseFloat(operation.presentValueInvestor) || 0;
-        const gm = parseFloat(operation.GM) || 0;
-        return sum + presentValueInvestor + gm;
-      }, 0);
-
-      // Devuelve la suma total
-      return total;
-    } catch (error) {
-      console.error("Error al cargar las operaciones del inversionista:", error);
-      return null; // Retorna null en caso de error
-    }
-  };
   const handleSubmit = async (values, actions) => {
     try {
       await onFormSubmit(values, actions);
@@ -635,6 +612,31 @@ export const ManageOperationC = ({
       {usuario?.social_reason || `${usuario?.first_name} ${usuario?.last_name}`}
     </Box>
   );
+
+    const formatDate2 = (dateString) => {
+    if (!dateString) return "-- -- ----";
+
+    let dateObj;
+
+    // Si dateString es un objeto Date, convertirlo a cadena
+    if (dateString instanceof Date) {
+      const year = dateString.getFullYear();
+      const month = String(dateString.getMonth() + 1).padStart(2, "0"); // Meses van de 0 a 11
+      const day = String(dateString.getDate()).padStart(2, "0");
+      dateObj = { year, month, day };
+    }
+    // Si dateString es una cadena en formato "YYYY-MM-DD"
+    else if (typeof dateString === "string" && dateString.includes("-")) {
+      const [year, month, day] = dateString.split("-");
+      dateObj = { year, month, day };
+    }
+    // Si el formato no es válido
+    else {
+      return "-- -- ----";
+    }
+
+    return `${dateObj.day}/${dateObj.month}/${dateObj.year}`; // Formato DD/MM/YYYY
+  };
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={esLocale}>
       {/* Para mostrar los toast */}
@@ -701,7 +703,7 @@ export const ManageOperationC = ({
 
         <Formik
           initialValues={initialValues2}
-          validationSchema={validationSchema}
+          validationSchema={validationSchema2}
           onSubmit={handleConfirm}
           enableReinitialize={true} >
           {/* {({ values, setFieldValue, touched, errors, handleBlur }) => ( */}
@@ -740,13 +742,70 @@ export const ManageOperationC = ({
                   )}
                 </Grid>
                 <Grid item xs={12} md={2}>
-                  <DatePicker
-                    label="Fecha de Operación *"
-                    value={dataDetails?.data?.opDate}
-                    name="opDate"
-                    onChange={(newValue) => setFieldValue('opDate', parseDateToLocal(newValue))}
-                    renderInput={(params) => <TextField {...params} fullWidth />}
-                  />
+<DatePicker
+        id="opDate-name" // Para CSS/JS si es necesario
+        data-testid="fecha-operacion"
+        label="Fecha de Operación *"
+        value={values.opDate}
+        name="opDate"
+        inputFormat="dd/MM/yyyy"
+        mask="__/__/____"
+        onChange={(newValue) => {
+          const parsedDate = newValue ? new Date(newValue) : null;
+          if (!parsedDate) return;
+          setFieldValue('opDate', parsedDate);
+         
+            if (!values.opExpiration) return;
+            // 1. Calcula operationDays (como ya lo hacías)
+            const operationDays = Math.max(0, differenceInDays(
+              startOfDay(parseDateToLocal(values.opExpiration)),
+              startOfDay(parsedDate)
+            ));
+            setFieldValue(`operationDays`, operationDays);
+            setFieldValue(`opDate`, parsedDate);
+            // 2. Recalcula los valores presentes y comisiones SOLO si hay días y valor futuro
+            if (operationDays > 0 && values.amount > 0) {
+              const presentValueInvestor = Math.round(
+                PV(values.investorTax / 100, operationDays / 365, 0, values.amount, 0) * -1
+              );
+              const presentValueSF = Math.round(
+                PV(values.discountTax / 100, operationDays / 365, 0, values.amount, 0) * -1
+              );
+
+              setFieldValue(`presentValueInvestor`, presentValueInvestor || 0);
+              setFieldValue(`presentValueSF`, presentValueSF || 0);
+              setFieldValue(`comisionSF`, presentValueInvestor - presentValueSF || 0);
+              setFieldValue(`finvestorProfit`,values.payedAmount- presentValueInvestor  || 0);
+            } else {
+              // Resetea a valores por defecto si no hay días o valor futuro
+              setFieldValue(`presentValueInvestor`, values.currentBalance || 0);
+              setFieldValue(`presentValueSF`, values.currentBalance || 0);
+              setFieldValue(`comisionSF`, 0);
+              setFieldValue(`investorProfit`, 0);
+            }
+          
+        }}
+        
+        
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            fullWidth
+            errors={!errors.opDate}
+            helperText={errors.opDate}
+            onKeyDown={(e) => {
+              // Permite solo números y barras
+                              if (!/[0-9/]/.test(e.key) && 
+                              !['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                              e.preventDefault();
+                          }
+                          }}
+          />
+        )}
+        PopperProps={{
+          placement: 'bottom-start',
+        }}
+      />
                 </Grid>
                 <Grid item xs={12} md={2}>
                   <Autocomplete
@@ -754,7 +813,7 @@ export const ManageOperationC = ({
                     getOptionLabel={(option) => option.description || ''}
                     value={typeOperation?.data?.find(op => op.description === values?.opTypeInfo?.description) || null}
                     onChange={async (event, newValue) => {
-                      console.log(newValue);
+                      
                       setFieldValue('opType', newValue?.id || '');
                     }}
                     isOptionEqualToValue={(option, value) => option.id === value?.id}
@@ -764,7 +823,7 @@ export const ManageOperationC = ({
                         label="Tipo de Operación *"
                         name="opType"
                         fullWidth
-                        error={touched.opType && Boolean(errors.opType)}
+                        errors={touched.opType && Boolean(errors.opType)}
                         helperText={touched.opType && errors.opType}
                       />
                     )}
@@ -773,146 +832,34 @@ export const ManageOperationC = ({
 
 
                 <Grid item xs={12} md={5.9}>
-                  <Autocomplete
-                    options={emisores}
-                    isOptionEqualToValue={(option, value) =>
-                      option?.data?.id === value?.data?.id
-                    }
-                    getOptionLabel={(option) =>
-                      option?.data?.social_reason ||
-                      `${option?.data?.first_name} ${option?.data?.last_name}` ||
-                      ''
-                    }
-                    value={emisores.find(emisor =>
-                      emisor?.data?.id === (values?.emitter?.data?.id || values?.emitter)
-                    ) || null}
-                    onChange={async (event, newValue) => {
-                      if (!newValue) {
-                        // Limpiar campos
-                        setFieldValue('emitter', null);
-                        setFieldValue('corredorEmisor', '');
-                        setFieldValue('emitterBroker', null);
-                        setFieldValue('investorTax', null);
-                        setFieldValue('discountTax', null);
-                        setFieldValue('filteredPayers', '');
-                        setFieldValue('nombrePagador', '');
-                        return;
-                      }
-
-                      // Guardar solo el ID o el objeto completo consistentemente
-                      // Opción 1: Guardar solo el ID
-                      setFieldValue('emitter', newValue.data.id);
-
-                      // Opción 2: O guardar el objeto completo (elige una)
-                      // setFieldValue('emitter', newValue);
-
-                      const brokerByClientFetch = await fetchBrokerByClient(newValue?.data.id);
-                      const fullName = brokerByClientFetch?.data?.social_reason ||
-                        `${brokerByClientFetch?.data?.first_name || ''} ${brokerByClientFetch?.data?.last_name || ''}`.trim();
-
-                      setFieldValue('corredorEmisor', fullName);
-                      setFieldValue('filtroEmitterPagador.emitter', newValue?.data.id);
-
-                      const tasaDescuento = await cargarTasaDescuento(newValue?.data.id);
-
-                      if (!tasaDescuento) {
-                        toast("No se ha encontrado un perfil de riesgo para el cliente", "error");
-                        return;
-                      }
-
-                      setFieldValue('emitterBroker', brokerByClientFetch?.data?.id);
-                      const discountRate = parseFloat(tasaDescuento?.data?.discount_rate) || 0;
-                      setFieldValue('investorTax', 0);
-                      setFieldValue('discountTax', discountRate);
-                      setFieldTouched('corredorEmisor', true);
-
-                      if (newValue?.data.id) {
-                        const facturasEmisor = await cargarFacturas(newValue?.data.id, values.filtroEmitterPagador.payer);
-
-                        if (facturasEmisor?.data) {
-                          const facturasConSaldo = facturasEmisor.data.filter(
-                            f => Number(f.currentBalance) > 0
-                          );
-
-                          const payerIdsUnicos = [...new Set(
-                            facturasConSaldo.map(f => f.payerId).filter(Boolean)
-                          )];
-
-                          const pagadoresFiltrados = payers.filter(p =>
-                            p?.data?.document_number &&
-                            payerIdsUnicos.includes(p.data.document_number)
-                          );
-
-                          setFieldValue('arrayPayers', pagadoresFiltrados);
-                        }
-                      }
-                    }}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Nombre Emisor *"
-                        name="emitter"
-                        fullWidth
-
-                        error={touched.emitter && Boolean(errors.emitter)}
-                        helperText={touched.emitter && errors.emitter}
-                      />
-                    )}
-                  />
+                 <EmitterSelector
+                  errors={errors}
+                  payers={payers}
+                  setFieldTouched={setFieldTouched}
+                  setFieldValue={setFieldValue}
+                  setFieldError={setFieldError}
+                  touched={touched}
+                  values={values}
+                  emisores={emisores}
+                  fetchBrokerByClient={fetchBrokerByClient}
+                  cargarFacturas={cargarFacturas}
+                  cargarTasaDescuento={cargarTasaDescuento}
+                 
+                 />
                 </Grid>
 
                 {/* Selector de Pagadores */}
                 <Grid item xs={12} md={6}>
-                  <Autocomplete
-                    options={Array.isArray(values?.arrayPayers) ? values?.arrayPayers : []}
-                    value={
-                      Array.isArray(values?.arrayPayers)
-                        ? values?.arrayPayers.find(payer =>
-                          payer?.data?.document_number === (values?.filtroEmitterPagador?.payer || values?.filtroEmitterPagador?.payer)
-                        ) || null
-                        : null
-                    }
-                    isOptionEqualToValue={(option, value) =>
-                      option?.data?.document_number === value?.data?.document_number
-                    }
-                    getOptionLabel={(option) => {
-                      if (!option?.data) return 'Sin nombre';
-                      return option.data.social_reason ||
-                        `${option.data.first_name || ''} ${option.data.last_name || ''}`.trim();
-                    }}
-                    onChange={async (event, newValue) => {
-                      setFieldValue('nombrePagador', newValue?.id || '');
-                      setFieldValue('filtroEmitterPagador.payer', newValue?.data?.document_number || '');
+                  <PayerSelector
+                  errors={errors}
+                  dataBills={dataBills}
+                  values={values}
+                  setFieldValue={setFieldValue}
+                  touched={touched}
+                  setClientPagador={setClientPagador}
+                  setIsSelectedPayer={setIsSelectedPayer}
 
-                      if (newValue?.data?.document_number && Array.isArray(dataBills?.data)) {
-                        const facturasFiltradas = dataBills.data.filter(factura =>
-                          factura.payerId === newValue.data.document_number &&
-                          Number(factura.currentBalance) > 0
-                        );
-                        setFieldValue('takedBills', facturasFiltradas);
-                      } else {
-                        setFieldValue('takedBills', []);
-                      }
-                    }}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Nombre Pagador *"
-                        fullWidth
-                        name="nombrePagador"
-                        InputProps={{
-                          ...params.InputProps,
-                          endAdornment: (
-                            <>
-                              {!values?.arrayPayers ? <CircularProgress size={20} /> : null}
-                              {params.InputProps.endAdornment}
-                            </>
-                          )
-                        }}
-                        error={touched.nombrePagador && Boolean(errors.nombrePagador)}
-                        helperText={touched.nombrePagador && errors.nombrePagador}
-                      />
-                    )}
+                  
                   />
                 </Grid>
                 {/*Selector de Corredor Emisor */}
@@ -939,142 +886,40 @@ export const ManageOperationC = ({
                 </Grid>
 
                 {/* Factura */}
-
+                       
                 <Grid container item xs={12} spacing={2} sx={{ display: 'flex', alignItems: 'stretch' }}>
+
+                     
                   <Grid container item xs={12} spacing={2}>
                     <Grid container spacing={2} sx={{ margin: 0, width: '100%' }}>
+                      <Grid container alignItems="center" spacing={3} sx={{ mb: 2 ,mt:1,ml:0}}>
+                                        {/* Número de factura de la cabecera del acordeon */}
+                                        <Grid item>
+                                          <Typography >
+                                            {values.bill  ?  values.bill : "ID Factura"}
+                                          </Typography>
+                                        </Grid>
+                      
+                                        {/* Fecha de emisión y vencimiento de la cabecera del acordeon*/}
+                                        <Grid item>
+                                          <Typography variant="body2" color="textSecondary">
+                                            Emisión: {values.DateBill ? formatDate2(values.DateBill) : "-- -- ----"} |
+                                            Vencimiento: {values.DateExpiration ? formatDate2(values.DateExpiration) : "-- -- ----"}
+                                          </Typography>
+                                        </Grid>
+                                      </Grid>
                       <Grid xs={12} md={2} item>
-                        <Autocomplete
-                          options={(values?.takedBills || []).map(factura => ({
-                            label: `${factura.billId}`,
-                            value: factura.billId, // Usamos billId como valor clave
-                            rawData: factura
-                          }))}
-                          getOptionLabel={(option) => (typeof option === 'string' ? option : option?.label) || ''}
-                          isOptionEqualToValue={(option, value) => {
-                            // Comparación robusta que maneja ambos casos:
-                            // - Cuando value es el objeto completo (selección nueva)
-                            // - Cuando es solo el billId (valor inicial)
-                            return option?.value === (value?.value || value);
-                          }}
-                          value={
-                            // Primero intenta encontrar en options
-                            (values?.takedBills || [])
-                              .find(f => f.billId === values?.bill)
-                              ? {
-                                label: `${values?.bill}`,
-                                value: values?.bill,
-                                rawData: (values?.takedBills || []).find(f => f.billId === values?.bill)
-                              }
-                              : null
-                          }
-                          onChange={async (event, newValue) => {
-                            console.log("Nuevo valor seleccionado:", newValue); // Debug
-                            if (!newValue) {
-                              await Promise.all([
-                                setFieldValue('bill', ''),
-                                setFieldValue('billCode', ''),
-                                setFieldValue('integrationCode', ''),
-                                setFieldValue('isReBuy', false),
-                                setFieldValue('DateBill', new Date().toISOString().substring(0, 10)),
-                                setFieldValue('DateExpiration', new Date().toISOString().substring(0, 10))
-                              ]);
-                              return;
-                            }
 
-                            const selectedFactura = newValue.rawData;
-                            console.log("Datos completos de la factura:", selectedFactura); // Debug
-
-                            try {
-                              if (values.integrationCode && values.integrationCode !== selectedFactura?.integrationCode) {
-                                toast.error("El código de integración debe coincidir con el de la factura previa");
-                                return;
-                              }
-                              const billId = newValue?.value || null;
-                              setFieldValue('bill', billId);
-                              // Actualización atómica de todos los campos
-                              const fractionBill = await cargarFraccionFactura(selectedFactura.id);
-                              console.log(fractionBill)
-                              let fraccion = fractionBill?.data?.fraction || 1;
-                              await Promise.all([
-                                setFieldValue('billFraction', fraccion),
-
-                                setFieldValue('billBack', selectedFactura.id),
-                                setFieldValue('billsComplete', selectedFactura),
-                                setFieldValue('billCode', selectedFactura.billId),
-                                setFieldValue('integrationCode', selectedFactura.integrationCode || ""),
-                                setFieldValue('isReBuy', selectedFactura.reBuyAvailable || false),
-                                setFieldValue('DateBill', selectedFactura.dateBill),
-                                setFieldValue('DateExpiration', selectedFactura.expirationDate),
-
-                                // Actualizaciones financieras
-                                (async () => {
-                                  const valorFuturoCalculado = selectedFactura.currentBalance;
-                                  const presentValueInvestor = Math.round(
-                                    PV(values.investorTax / 100, values.operationDays / 365, 0, valorFuturoCalculado, 0) * -1
-                                  );
-                                  const presentValueSF = Math.round(
-                                    PV(values.discountTax / 100, values.operationDays / 365, 0, valorFuturoCalculado, 0) * -1
-                                  );
-
-                                  await Promise.all([
-                                    setFieldValue('amount', selectedFactura.currentBalance),
-                                    setFieldValue('payedAmount', selectedFactura.currentBalance),
-                                    setFieldValue('presentValueInvestor', presentValueInvestor),
-                                    setFieldValue('presentValueSF', presentValueSF),
-                                    setFieldValue('saldoDisponible', 0),
-                                    setFieldValue('montoDisponibleCuenta', values?.investorAccountInfo?.investorAccountMonto - presentValueInvestor - values?.GM),
-                                    setFieldValue('commissionSF', presentValueInvestor - presentValueSF),
-                                    setFieldValue('investorProfit', selectedFactura.currentBalance - presentValueInvestor)
-                                  ]);
-
-                                  const gmValue = presentValueInvestor * 0.002;
-                                  setFieldValue('GM', gmValue)
-                                })()
-                              ]);
-                              console.log(values)
-
-                              // Actualización del pagador (si aplica)
-                              if (selectedFactura.payerId && values.arrayPayers) {
-                                const payerInfo = values.arrayPayers.find(p =>
-                                  p?.data?.document_number === selectedFactura.payerId
-                                );
-                                if (payerInfo) {
-                                  await Promise.all([
-                                    setFieldValue('filtroEmitterPagador.payer', selectedFactura.payerId),
-                                    setFieldValue('payer', payerInfo.id)
-                                  ]);
-                                }
-                              }
-
-                            } catch (error) {
-                              console.error("Error detallado:", error);
-                              toast.error(`Error al cargar los datos: ${error.message}`);
-                            }
-                          }}
-
-                          renderInput={(params) => (
-                            <TextField
-                              {...params}
-                              label="Número de Factura *"
-                              fullWidth
-                              InputProps={{
-                                ...params.InputProps,
-                                endAdornment: (
-                                  <>
-                                    {!values?.takedBills ? <CircularProgress size={20} /> : null}
-                                    {params.InputProps.endAdornment}
-                                  </>
-                                )
-                              }}
-                              error={touched.bill && Boolean(errors.bill)}
-                              helperText={
-                                ` ${dataDetails?.data?.isRebuy ? "Disponible Recompra" : "No disponible Recompra"}`
-                              }
-                            />
-                          )}
-                          noOptionsText="No hay facturas disponibles"
-                        />
+                        
+                       <BillSelector
+                       
+                       values={values}
+                       setFieldValue={setFieldValue}
+                       errors={errors}
+                       touched={touched}
+                       cargarFraccionFactura={cargarFraccionFactura}
+                       dataDetails={dataDetails}
+                       />
                       </Grid>
 
                       <Grid item xs={12} md={0.6}>
@@ -1103,166 +948,50 @@ export const ManageOperationC = ({
                         <TextField
                           label="Saldo Disponible en factura"
                           fullWidth
-                          value={formatCurrency(values?.billsComplete?.currentBalance  || 0)}
+                          value={formatNumberWithThousandsSeparator(values?.saldoDisponible || 0)}
                           disabled
                           helperText={
-                            `Saldo actual factura: ${values?.billsComplete?.currentBalance ? formatNumberWithThousandsSeparator(Math.floor(values?.billsComplete?.currentBalance)) : 0}`
+                            `Saldo actual factura: ${values?.saldoDisponibleInfo ? formatNumberWithThousandsSeparator(values?.saldoDisponibleInfo ) : 0}`
                           }
                         />
                       </Grid>
                       {/* Fecha Probable*/}
                       <Grid item xs={12} md={1.8}>
-                        <DatePicker
-                          label="Fecha probable"
-                          value={values?.billsComplete?.dateBill}
-
-                          renderInput={(params) => <TextField {...params} fullWidth />}
+                        <ProbableDateSelector
+                        
+                          values={values}
+                          errors={errors}
+                          setFieldValue={setFieldValue}
+                          
                         />
                       </Grid>
 
                       <Grid item xs={12} md={5.5}>
-                        <Autocomplete
-                          options={investors || []}
-                          value={
-                            investors?.find(inv =>
-                              inv?.data?.id === values?.investor ||
-                              inv?.data?.document_number === values?.investorInfo?.document_number
-                            ) || null
-                          }
-                          getOptionLabel={(option) => {
-                            if (!option?.data) return "Desconocido";
-                            return option.data.social_reason ||
-                              `${option.data.first_name || ''} ${option.data.last_name || ''}`.trim() ||
-                              option.data.document_number ||
-                              "Desconocido";
-                          }}
-                          isOptionEqualToValue={(option, value) =>
-                            option?.data?.id === value?.data?.id
-                          }
-                          onChange={async (event, newValue) => {
-                            console.log("Nuevo inversionista seleccionado:", newValue);
-
-                            if (newValue) {
-                              try {
-                                // Cargar datos relacionados con el inversionista
-                                const [cuentas, brokerFromInvestor] = await Promise.all([
-                                  cargarCuentas(newValue.data.id),
-                                  cargarBrokerFromInvestor(newValue.data.id)
-                                ]);
-
-                                setFieldValue('accountsInvestorArray', cuentas);
-                                console.log("Datos cargados:", {
-                                  cuentas,
-                                  brokerFromInvestor
-                                });
-
-                                // Actualizar valores del formulario
-                                setFieldValue('investor', newValue.data.id);
-                                setFieldValue('investorInfo', newValue.data);
-                                setFieldValue('cuentaInversionista', cuentas?.data || []);
-
-                                // Actualizar información del broker
-                                if (brokerFromInvestor?.data) {
-                                  setFieldValue('investorBroker', brokerFromInvestor.data.id);
-                                  setFieldValue('investorBrokerInfo', {
-                                    investorBrokerid: brokerFromInvestor.data.id,
-                                    investorBrokerName: brokerFromInvestor.data.social_reason ||
-                                      `${brokerFromInvestor.data.first_name || ''} ${brokerFromInvestor.data.last_name || ''}`.trim()
-                                  });
-                                }
-
-                              } catch (error) {
-                                console.error("Error al cargar datos del inversionista:", error);
-                                toast.error("Error al cargar información del inversionista");
-                              }
-                            } else {
-                              // Limpiar campos si se deselecciona
-                              setFieldValue('investor', '');
-                              setFieldValue('investorInfo', null);
-                              setFieldValue('cuentaInversionista', []);
-                              setFieldValue('investorBroker', '');
-                              setFieldValue('investorBrokerInfo', {
-                                investorBrokerid: '',
-                                investorBrokerName: ''
-                              });
-                            }
-                          }}
-                          renderInput={(params) => (
-                            <TextField
-                              {...params}
-                              label="Nombre Inversionista / ID *"
-                              fullWidth
-                              name="investor"
-                              error={touched.investor && Boolean(errors.investor)}
-                              helperText={touched.investor && errors.investor}
-                              InputProps={{
-                                ...params.InputProps,
-                                endAdornment: (
-                                  <>
-                                    {!investors ? <CircularProgress size={20} /> : null}
-                                    {params.InputProps.endAdornment}
-                                  </>
-                                )
-                              }}
-                            />
-                          )}
-                          noOptionsText="No hay inversionistas disponibles"
-                        />
+                      <InvestorSelector
+                        errors={errors}
+                        touched={touched}
+                        values={values}
+                        investors={investors}
+                        cargarCuentas={cargarCuentas}
+                        cargarBrokerFromInvestor={cargarBrokerFromInvestor}
+                        setFieldValue={setFieldValue}
+                        setClientInvestor={setClientInvestor}
+                        cargarTasaDescuento={cargarTasaDescuento}
+                        
+                      
+                      />
                       </Grid>
                       <Grid container spacing={2} sx={{ margin: 0, width: '100%' }}>
                         {/* Cuenta de Inversionista */}
                         <Grid item xs={12} sm={5} md={3.8}>
-                          <Autocomplete
-                            options={values?.accountsInvestorArray?.data || []}
-                            getOptionLabel={(option) =>
-                              option?.account_number ||
-                              option?.number ||
-                              option?.id ||
-                              'Sin número de cuenta'
-                            }
-                            value={
-                              // Opción 1: Buscar en el array de cuentas
-                              values?.accountsInvestorArray?.data?.find(account =>
-                                String(account?.id) === String(values?.clientAccount)
-                              ) ?? null
-                            }
-                            isOptionEqualToValue={(option, value) =>
-                              String(option?.id) === String(value?.id)
-                            }
-                            onChange={(event, newValue) => {
-                              // Actualizar campos relacionados con la cuenta
-                              console.log(newValue)
-                              setFieldValue('clientAccount', newValue?.id);
-
-                              setFieldValue('montoDisponibleCuenta', newValue?.balance - values?.presentValueInvestor - values?.GM)
-
-                              // Actualizar monto disponible
-                              const nuevoSaldo = newValue?.balance || 0;
-
-                              setFieldValue('montoDisponibleInfo', nuevoSaldo);
-                            }}
-                            renderInput={(params) => (
-                              <TextField
-                                {...params}
-                                label="Cuenta Inversionista*"
-                                fullWidth
-                                variant="outlined"
-                                error={touched.investorAccountInfo?.investorAccountid && Boolean(errors.investorAccountInfo?.investorAccountid)}
-                                helperText={touched.investorAccountInfo?.investorAccountid && errors.investorAccountInfo?.investorAccountid}
-                                InputProps={{
-                                  ...params.InputProps,
-                                  endAdornment: (
-                                    <>
-                                      {!values?.accountsInvestorArray?.data && <CircularProgress size={20} />}
-                                      {params.InputProps.endAdornment}
-                                    </>
-                                  )
-                                }}
-                              />
-                            )}
-                            noOptionsText="No hay cuentas disponibles"
-                            disabled={!values.investor} // Deshabilitar si no hay inversionista seleccionado
-                          />
+                         <CuentaInversionistaSelector
+                         
+                          values={values}
+                          setFieldValue={setFieldValue}
+                          touched={touched}
+                          errors={errors}
+                         
+                         />
                         </Grid>
 
                         {/* Monto disponible en cuenta inversionista */}
@@ -1282,77 +1011,19 @@ export const ManageOperationC = ({
                         {/* Valor Futuro */}
                         <Grid item xs={5} md={3}>
                           <Box sx={{ position: 'relative' }}>
-                            <TextField
-                              label="Valor Futuro"
-                              fullWidth
-                              name="amount"
-                              type="text"
-                              value={values?.amount ? formatNumberWithThousandsSeparator(Math.floor(values.amount)) : ""}
-                              onChange={(e) => {
-                                // Eliminar caracteres no numéricos
-                                const rawValue = e.target.value.replace(/[^\d]/g, "");
-                                const numericValue = rawValue ? parseInt(rawValue, 10) : 0;
+                            <ValorFuturoSelector
+                              parseFloat={parseFloat}
+  
 
-                                // Actualizar el valor
-                                setFieldValue('amount', numericValue);
-                                setFieldValue('payedAmount', numericValue); // Asumimos que payedAmount es igual al amount
-                                setFieldValue('saldoDisponible', values?.billsComplete?.currentBalance - numericValue)
-                                setFieldValue('payedPercent', 100)
-                                const operationDays = values.operationDays
-                                const presentValueInvestor = operationDays > 0 && numericValue > 0
-                                  ? Math.round(PV(values?.investorTax / 100, operationDays / 365, 0, numericValue, 0) * -1)
-                                  : numericValue;
-                                const presentValueSF = operationDays > 0 && numericValue > 0
-                                  ? Math.round(PV(values?.discountTax / 100, operationDays / 365, 0, numericValue, 0) * -1)
-                                  : numericValue;
-                                // Si hay un porcentaje de descuento, calcular el valor nominal
-                                if (values?.discountTax) {
-                                  console.log(values?.montoDisponibleInfo - presentValueInvestor - values?.GM)
-                                  setFieldValue('presentValueInvestor', presentValueInvestor);
-                                  setFieldValue('presentValueSF', presentValueSF);
-                                  setFieldValue('montoDisponibleCuenta', values?.montoDisponibleInfo - presentValueInvestor - values?.GM)
+                              formatNumberWithThousandsSeparator={formatNumberWithThousandsSeparator}
 
-                                  const gmValue = (presentValueInvestor || 0) * 0.002;
-                                  setFieldValue('GM', gmValue);
-                                }
-                              }}
-                              onFocus={(e) => {
-                                // Mostrar valor sin formato al enfocar
-                                e.target.value = values?.amount?.toString() || "";
-                              }}
-                              onBlur={(e) => {
-                                // Aplicar formato al perder el foco
-                                const rawValue = e.target.value.replace(/[^\d]/g, "");
-                                const numericValue = rawValue ? parseInt(rawValue, 10) : 0;
-                                setFieldValue('amount', numericValue);
-                              }}
-                              placeholder={
-                                values?.billFraction && values.billsComplete?.total
-                                  ? `Sugerido: ${formatNumberWithThousandsSeparator(
-                                    Math.floor(values.billsComplete.total / values.billFraction)
-                                  )}`
-                                  : ""
-                              }
-                              InputProps={{
-                                startAdornment: (
-                                  <InputAdornment position="start">
-                                    <AttachMoneyIcon style={{ color: 'rgb(94, 163, 163)', fontSize: '1.2rem' }} />
-                                  </InputAdornment>
-                                ),
-                                endAdornment: (
-                                  <Tooltip
-                                    title="Valor total de la operación sin incluir descuentos ni comisiones"
-                                    placement="top-end"
-                                    arrow
-                                  >
-                                    <IconButton size="small" edge="end">
-                                      <InfoIcon style={{ fontSize: '1rem', color: 'rgb(94, 163, 163)' }} />
-                                    </IconButton>
-                                  </Tooltip>
-                                )
-                              }}
-                              error={touched.amount && Boolean(errors.amount)}
-                              helperText={touched.amount && errors.amount}
+                              values={values}
+                              setFieldValue={setFieldValue}
+                              errors={errors}
+                              touched={touched}
+                            
+                            
+                            
                             />
                           </Box>
 
@@ -1360,62 +1031,14 @@ export const ManageOperationC = ({
                         {/* Campo de porcentaje de descuento */}
                         <Grid item xs={12} md={1} >
                           <Box sx={{ position: 'relative' }}>
-                            <TextField
-                              id="payedPercentname"
-                              data-testid="campo-payedPercent"
-                              label="% Descuento"
-                              fullWidth
-                              name="porcentajeDescuento"
-                              type="number"
-                              value={values?.payedPercent ?? 0}
-
-                              onChange={(e) => {
-                                // Validar y establecer el porcentaje de descuento (0-100)
-                                const discountValue = Math.min(Math.max(Number(e.target.value) || 0, 0), 100);
-                                setFieldValue('payedPercent', Math.min(Math.max(Number(e.target.value) || 0, 0), 100));
-
-                                // Calcular valores derivados si amount está definido
-                                if (values.amount) {
-                                  // Calcular valor con descuento
-                                  const discountedValue = values.amount * (discountValue / 100);
-
-                                  // Actualizar valores relacionados
-                                  setFieldValue('payedAmount', discountedValue);
-
-
-                                  // Calcular comisión si hay días de operación
-                                  if (values.operationDays) {
-                                    const presentValueInvestor = Math.round(
-                                      PV(values.investorTax / 100, values.operationDays / 365, 0, -discountedValue, 0)
-                                    );
-                                    const presentValueSF = Math.round(
-                                      PV(values.discountTax / 100, values.operationDays / 365, 0, -discountedValue, 0)
-                                    );
-
-                                    setFieldValue('presentValueInvestor', presentValueInvestor);
-                                    setFieldValue('presentValueSF', presentValueSF);
-                                    setFieldValue('commissionSF', presentValueInvestor - presentValueSF);
-                                    const gmValue = (presentValueInvestor || 0) * 0.002;
-                                    setFieldValue('GM', gmValue);
-                                  }
-                                }
-                              }}
-                              onBlur={(e) => {
-                                // Al salir del campo, si está vacío o no es un número, poner 0
-                                const numericValue = Number(e.target.value);
-                                if (e.target.value === "" || isNaN(numericValue)) {
-                                  setFieldValue(`facturas[${index}].porcentajeDescuento`, 0);
-                                }
-                              }}
-                              inputProps={{
-                                min: 0,
-                                max: 100,
-                                step: '0.01',
-                                pattern: "[0-9]*" // Mejor experiencia en móviles
-                              }}
-                              error={touched.discountTax && Boolean(errors.discountTax)}
-                              helperText={touched.discountTax && errors.discountTax}
-                            />
+                          <PorcentajeDescuentoSelector 
+                          
+                           values={values}
+                            setFieldValue={setFieldValue}
+                            errors={errors}
+                            touched={touched}
+                          
+                          />
 
                             {/* Tooltip integrado */}
                             <Tooltip
@@ -1454,42 +1077,14 @@ export const ManageOperationC = ({
                         </Grid>
                         {/*Tasa Descuento */}
                         <Grid item xs={12} md={1.1}>
-                          <TextField
-                            label="Tasa Descuento"
-                            fullWidth
-                            type="number"
-                            value={values?.discountTax ?? 0}
-                            onChange={(e) => {
-                              const nuevaTasaDescuento = e.target.value;
+                          <TasaDescuentoSelector
 
-                              // 1. Actualizar la tasa de descuento global
-                              setFieldValue('discountTax', nuevaTasaDescuento);
-
-                              // 2. Solo proceder si hay fecha de operación
-                              if (values.opDate) {
-                                // 3. Recorrer todas las facturas para actualizar sus presentValueSF
-
-                                const operationDays = values?.operationDays || 0;
-                                const valorNominal = values?.payedAmount || 0;
-
-                                // 4. Calcular nuevo presentValueSF para cada factura
-                                const presentValueSF = operationDays > 0 && valorNominal > 0
-                                  ? Math.round(PV(nuevaTasaDescuento / 100, operationDays / 365, 0, -valorNominal, 0))
-                                  : f.valorFuturo || 0;
-
-
-
-                                // 5. Actualizar el presentValueSF para cada factura
-                                setFieldValue(`presentValueSF`, presentValueSF);
-
-                                // 6. Recalcular comisionSF si es necesario (diferencia entre presentValueInvestor y presentValueSF)
-                                if (values?.presentValueInvestor) {
-                                  const comisionSF = values?.presentValueInvestor - presentValueSF;
-                                  setFieldValue(`comisionSF`, comisionSF);
-                                }
-
-                              }
-                            }}
+                          values={values}
+                          setFieldValue={ setFieldValue}
+                           setFieldError={setFieldError}
+                           errors={errors}
+                            parseFloat ={parseFloat}
+                          
                           />
                         </Grid>
                       </Grid>
@@ -1499,163 +1094,36 @@ export const ManageOperationC = ({
 
                       {/* Campo de valor nominal */}
                       <Grid item xs={12} md={3}>
-                        <TextField
-                          label="Valor Nominal"
-                          fullWidth
-                          name="payedAmount"
-                          value={values?.payedAmount ? formatNumberWithThousandsSeparator(Math.floor(values.payedAmount)) : ""}
-                          onChange={(e) => {
-                            // Manejo del valor nominal
-                            const rawValue = e.target.value.replace(/[^\d]/g, "");
-                            let numericValue = parseFloat(rawValue) || 0;
+                        <ValorNominalSelector
+                          calcularPorcentajeDescuento={calcularPorcentajeDescuento} 
+                          setFieldValue={setFieldValue} 
+                          values={values} 
+                          errors={errors} 
+                          touched={touched} 
+                          formatNumberWithThousandsSeparator={ formatNumberWithThousandsSeparator} 
 
-                            // Validar que no exceda el monto total (amount)
-                            if (values.amount && numericValue > values.amount) {
-                              numericValue = values.amount;
-                              toast.warning("El valor nominal no puede exceder el monto total");
-                            }
-
-                            // Actualizar valor nominal
-                            setFieldValue('payedAmount', numericValue);
-
-                            if (values.amount && values.amount > 0) {
-                              const discountPercentage = (numericValue / values.amount) * 100;
-                              const rounded = Math.round(discountPercentage * 100) / 100; // Redondea a 2 decimales
-                              setFieldValue('payedPercent', Math.min(Math.max(rounded, 0), 100));
-                            }
-
-                            // Recalcular valores financieros si hay operación activa
-                            if (values.opDate && values.operationDays) {
-                              const presentValueInvestor = Math.round(
-                                PV(values.investorTax / 100, values.operationDays / 365, 0, -numericValue, 0)
-                              );
-
-                              const presentValueSF = Math.round(
-                                PV(values.discountTax / 100, values.operationDays / 365, 0, -numericValue, 0)
-                              );
-
-                              // Actualizar valores calculados
-                              setFieldValue('presentValueInvestor', presentValueInvestor);
-                              setFieldValue('presentValueSF', presentValueSF);
-                              setFieldValue('commissionSF', presentValueInvestor - presentValueSF);
-                              setFieldValue('investorProfit', numericValue - presentValueSF);
-                              setFieldValue('montoDisponibleCuenta', values?.montoDisponibleInfo - presentValueInvestor - values?.GM)
-                              const gmValue = (presentValueInvestor || 0) * 0.002;
-                              setFieldValue('GM', gmValue);
-                            }
-                          }}
-                          onFocus={(e) => {
-                            // Mostrar valor sin formato al enfocar
-                            e.target.value = values?.payedAmount?.toString() || "";
-                          }}
-                          onBlur={(e) => {
-                            // Aplicar formato al perder el foco
-                            const rawValue = e.target.value.replace(/[^\d]/g, "");
-                            const numericValue = rawValue ? parseInt(rawValue, 10) : 0;
-                            setFieldValue('payedAmount', numericValue);
-                          }}
-                          InputProps={{
-                            startAdornment: (
-                              <InputAdornment position="start">
-                                <AttachMoneyIcon style={{ color: 'rgb(94, 163, 163)', fontSize: '1.2rem' }} />
-                              </InputAdornment>
-                            ),
-                          }}
-                          error={touched.payedAmount && Boolean(errors.payedAmount)}
-                          helperText={touched.payedAmount && errors.payedAmount}
+                        
                         />
                       </Grid>
 
                       {/* Tasa Inversionista */}
                       <Grid item xs={12} md={1.5}>
-                        <TextField
-                          label="Tasa Inversionista (%)"
-                          fullWidth
-                          name="investorTax"
-                          type="number"
-                          value={values?.investorTax ?? 0}
-                          onChange={(e) => {
-                            const newInvestorTax = parseFloat(e.target.value) || 0;
-                            const currentDiscountTax = values.discountTax || 0;
-
-                            // Validate that investor tax doesn't exceed discount tax
-                            const validatedTax = Math.min(newInvestorTax, currentDiscountTax);
-                            setFieldValue('investorTax', validatedTax);
-
-                            // Recalculate financial values if operation data exists
-                            if (values.opDate && values.operationDays && values.payedAmount) {
-                              const presentValueInvestor = Math.round(
-                                PV(validatedTax / 100, values.operationDays / 365, 0, -values.payedAmount, 0)
-                              );
-
-                              const presentValueSF = values.presentValueSF || 0;
-
-                              setFieldValue('presentValueInvestor', presentValueInvestor);
-                              setFieldValue('commissionSF', presentValueInvestor - presentValueSF);
-                              setFieldValue('montoDisponibleCuenta', values?.montoDisponibleInfo - presentValueInvestor - values?.GM)
-                              const gmValue = (presentValueInvestor || 0) * 0.002;
-                              setFieldValue('GM', gmValue);
-                            }
-                          }}
-                          inputProps={{
-                            min: 0,
-                            max: values?.discountTax || 100,
-                            step: 0.01
-                          }}
-                          InputProps={{
-                            endAdornment: <InputAdornment position="end">%</InputAdornment>,
-                          }}
-                          error={touched.investorTax && Boolean(errors.investorTax)}
-                          helperText={touched.investorTax && errors.investorTax}
+                        <TasaInversionistaSelector
+                         values={values}
+                          setFieldValue={setFieldValue}
+                          setFieldError={setFieldError}
+                           errors={errors}
+                            parseFloat={parseFloat}
                         />
                       </Grid>
                       <Grid item xs={12} md={2}>
-                        <DatePicker
-                          label="Fecha Fin"
-                          value={values?.opExpiration ? new Date(values.opExpiration) : null}
-                          onChange={(newValue) => {
-                            if (!newValue) return;
-
-                            const expirationDate = parseDateToLocal(newValue);
-                            setFieldValue('opExpiration', expirationDate);
-
-                            // Calculate operation days if opDate exists
-                            if (values.opDate) {
-                              const startDate = new Date(values.opDate);
-                              const endDate = new Date(expirationDate);
-
-                              // Ensure we don't get negative days
-                              const operationDays = Math.max(0, differenceInDays(endDate, startDate));
-                              setFieldValue('operationDays', operationDays);
-
-                              // Recalculate financial values if payedAmount exists
-                              if (values.payedAmount) {
-                                const presentValueInvestor = Math.round(
-                                  PV(values.investorTax / 100, operationDays / 365, 0, -values.payedAmount, 0)
-                                );
-
-                                const presentValueSF = Math.round(
-                                  PV(values.discountTax / 100, operationDays / 365, 0, -values.payedAmount, 0)
-                                );
-
-                                setFieldValue('presentValueInvestor', presentValueInvestor);
-                                setFieldValue('presentValueSF', presentValueSF);
-                                setFieldValue('commissionSF', presentValueInvestor - presentValueSF);
-                                setFieldValue('investorProfit', values.payedAmount - presentValueSF);
-                                setFieldValue('montoDisponibleCuenta', values?.montoDisponibleInfo - presentValueInvestor - values?.GM)
-                              }
-                            }
-                          }}
-                          minDate={values?.opDate ? new Date(values.opDate) : null}
-                          renderInput={(params) => (
-                            <TextField
-                              {...params}
-                              fullWidth
-                              error={touched.opExpiration && Boolean(errors.opExpiration)}
-                              helperText={touched.opExpiration && errors.opExpiration}
-                            />
-                          )}
-                        />
+                       <EndDateSelector
+                       values={values}
+                       setFieldValue={setFieldValue}
+                     
+                        errors={errors}
+               
+                       />
                       </Grid>
                       <Grid item xs={12} md={2}>
                         <TextField
@@ -1664,24 +1132,7 @@ export const ManageOperationC = ({
                           type="number"
                           value={values?.operationDays || 0}
                           disabled
-                          onChange={(e) => {
-
-                            disabled
-                            console.log(factura.operationDays)
-                            const nuevosDiasOperacion = parseFloat(e.target.value); // Convertir a número
-                            setFieldValue(`operationDays`, nuevosDiasOperacion); // Actualizar el valor
-
-                            const presentValueInvestor = nuevosDiasOperacion > 0 && factura.valorNominal > 0
-                              ? Math.round(PV(values.investorTax / 100, nuevosDiasOperacion / 365, 0, factura.valorNominal, 0) * -1)
-                              : factura.valorFuturo;
-
-                            const presentValueSF = nuevosDiasOperacion > 0 && factura.valorNominal > 0
-                              ? Math.round(PV(values.discountTax / 100, nuevosDiasOperacion / 365, 0, factura.valorNominal, 0) * -1)
-                              : factura.currentBalance;
-                            console.log("DIAS", nuevosDiasOperacion, presentValueInvestor, presentValueSF)
-                            setFieldValue(`presentValueInvestor`, presentValueInvestor); // Actualizar el valor
-                            setFieldValue(`presentValueSF`, presentValueSF); // Actualizar el valor
-                          }}
+                          
                         />
                       </Grid>
                       {/* Campo Utilidad Inversión*/}
@@ -1752,95 +1203,15 @@ export const ManageOperationC = ({
 
                       {/* Gasto de Mantenimiento */}
                       <Grid item xs={12} md={7.82}>
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            flexDirection: { xs: 'column', sm: 'row' },
-                            alignItems: 'center',
-                            gap: 1,
-                            p: 1,
-                            border: '1px solid',
-                            borderColor: 'rgba(0, 0, 0, 0.23)',
-                            borderRadius: 2,
-                            boxShadow: 0,
-                            bgcolor: 'background.paper',
-                            width: '100%',
-                          }}
-                        >
-
-                          <Typography variant="body1" sx={{ whiteSpace: 'nowrap' }}>
-                            Gasto de Mantenimiento (GM)
-                          </Typography>
-                          <Switch
-                            checked={values?.applyGm || false}
-                            onChange={(event) => {
-                              const isChecked = event.target.checked;
-                              const gmValue = isChecked ? (values?.presentValueInvestor || 0) * 0.002 : 0;
-
-                              // Update GM values
-                              setFieldValue('applyGm', isChecked);
-                              setFieldValue('GM', gmValue);
-
-                              // Update available amount if needed
-                              if (values?.montoDisponibleInfo) {
-                                const difference = isChecked ? -gmValue : gmValue;
-                                const newAvailableAmount = (values.montoDisponibleInfo) + difference;
-                                setFieldValue('montoDisponibleCuenta', newAvailableAmount);
-                              }
-                            }}
-                          />
-                          <TextField
-                            type="text"
-                            placeholder="$ 0,00"
-                            size="small"
-                            value={values?.GM ? formatCurrency(values.GM) : "0"}
-                            onChange={(e) => {
-                              const rawValue = e.target.value.replace(/[^\d]/g, "");
-                              const newValue = parseFloat(rawValue) || 0;
-
-                              // Update GM value
-                              setFieldValue('GM', newValue);
-
-                              // Calculate difference with previous value
-                              const previousValue = values.GM || 0;
-                              const difference = newValue - previousValue;
-
-                              // Update available amount if needed
-                              if (values?.montoDisponibleInfo) {
-                                const newAvailableAmount = (values.montoDisponibleInfo) - previousValue;
-                                setFieldValue('montoDisponibleCuenta', newAvailableAmount);
-                              }
-                            }}
-                            disabled={!values?.applyGm}
-                            fullWidth
-                            variant="outlined"
-                            className={`flex-1 ${values?.applyGm ? "bg-white" : "bg-gray-200 text-gray-500"}`}
-                            InputProps={{
-                              startAdornment: (
-                                <InputAdornment position="start">$</InputAdornment>
-                              ),
-                            }}
-                          />
-
-                        </Box></Grid>
-
-
+                       <GastoMantenimiento 
+                       
+                       values={values}
+                       setFieldValue={setFieldValue}
+                       formatCurrency={formatCurrency}
+                       parseFloat={parseFloat}
+                       /></Grid>
                     </Grid>
-
-
-
-
-
-
-
                   </Grid>
-
-
-
-
-
-
-
                   <Grid item xs={12}>
                     <Button type="submit" variant="contained" color="primary">
                       Editar Operación
@@ -1850,71 +1221,38 @@ export const ManageOperationC = ({
                 </Grid>
 
               </Grid>
+   <ModalConfirmation
+                  showConfirmationModal={showConfirmationModal}
+                  setShowConfirmationModal={setShowConfirmationModal}
+                  handleSubmit={handleSubmit}
+                  actionsFormik={actionsFormik}
+                  values={values}
+
+                />
+                <ProcessModal
+                  success={success}
+                />
+                <EmitterBrokerModal
+                  openEmitterBrokerModal={openEmitterBrokerModal}
+                  setOpenEmitterBrokerModal={setOpenEmitterBrokerModal}
+                  clientWithoutBroker={clientWithoutBroker}
+
+                />
+                <EmitterDeleteModal
+                  orchestDisabled={orchestDisabled}
+                  isModalEmitterAd={isModalEmitterAd}
+                  setIsModalEmitterAd={setIsModalEmitterAd}
+                  setBrokeDelete={setBrokeDelete}
+                  setFieldValue={setFieldValue}
+                  values={values}
+                  setClientEmitter={setClientEmitter}
+                  setClientBrokerEmitter={setClientBrokerEmitter}
+                />
+
+
 
               {/* Modal de Confirmación usando Dialog */}
-              <Dialog
-                open={showConfirmationModal}
-                onClose={() => setShowConfirmationModal(false)}
-                PaperProps={{
-                  sx: {
-                    borderRadius: 2,
-                    padding: 3,
-                    minWidth: 400
-                  }
-                }}
-              >
-                <DialogTitle>Confirmar Operación</DialogTitle>
-                <DialogContent>
-                  <Typography variant="body1" mb={3}>
-                    ¿Estás seguro de editar esta operación?
-                  </Typography>
-                </DialogContent>
-                <DialogActions>
-                  <Button
-                    variant="outlined"
-                    onClick={() => setShowConfirmationModal(false)}
-                  >
-                    Cancelar
-                  </Button>
-
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={async () => {
-                      setShowConfirmationModal(false);
-                      try {
-                        await handleSubmit(values, actionsFormik);
-                      } catch (e) {
-                        console.error("Error al confirmar:", getErrorMessage(e));
-                      }
-                    }}
-                  >
-                    Confirmar
-                  </Button>
-                </DialogActions>
-              </Dialog>
-
-              {/* MODAL DE PROCESO */}
-              <Dialog open={isModalOpen} PaperProps={{ sx: { borderRadius: "10px", textAlign: "center", p: 3 } }}>
-                <DialogContent>
-                  {success === null ? (
-                    <>
-                      <CircularProgress size={80} sx={{ color: "#1976D2", mb: 2 }} />
-                      <Typography variant="h6">Procesando...</Typography>
-                    </>
-                  ) : success ? (
-                    <>
-                      <CheckCircle sx={{ fontSize: 80, color: "green", mb: 2 }} />
-                      <Typography variant="h5" color="success.main">¡Registro Exitoso!</Typography>
-                    </>
-                  ) : (
-                    <>
-                      <Error sx={{ fontSize: 80, color: "red", mb: 2 }} />
-                      <Typography variant="h5" color="error.main">Error al Registrar</Typography>
-                    </>
-                  )}
-                </DialogContent>
-              </Dialog>
+             
               {/* Debug */}
               {process.env.NODE_ENV === 'development' && (
                 <div style={{ marginTop: 20 }}>

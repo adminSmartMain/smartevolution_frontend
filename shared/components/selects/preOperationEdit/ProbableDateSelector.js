@@ -3,11 +3,11 @@ import { TextField } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers';
 import { isAfter, isSameDay, parseISO } from "date-fns";
 
-const ProbableDateSelector = ({ values, factura, touched, errors, setFieldValue, index }) => {
+const ProbableDateSelector = ({ values,  errors, setFieldValue}) => {
     // Función para determinar si hay error
     const hasError = () => {
         // Error de Yup validation
-        if (errors?.facturas?.[index]?.probableDate) {
+        if (errors?.probableDate) {
             return true;
         }
         
@@ -16,31 +16,37 @@ const ProbableDateSelector = ({ values, factura, touched, errors, setFieldValue,
 
     // Función para obtener el mensaje de error
     const getErrorMessage = () => {
-        if (errors?.facturas?.[index]?.probableDate) {
-            return errors.facturas[index].probableDate;
+        if (errors?.probableDate) {
+            return errors.probableDate;
         }
         
       
     };
+    const handleDateChange = (newValue) => {
+        console.log(newValue)
+        const parsedDate = newValue ? new Date(newValue) : null;
+        console.log(parsedDate)
+        if (!parsedDate) return;
+        
+        setFieldValue(`probableDate`, parsedDate);
+   
 
 
+      
+    };
+
+console.log(errors)
 
     return (
         <DatePicker
-            id={`probDate-name-${index}`}
-            data-testid={`campo-fechaProbable-${index}`}
+            id={`probDate-name`}
+            data-testid={`campo-fechaProbable`}
             label="Fecha probable"
-            value={factura.probableDate}
-            onChange={(newValue) => {
-                const parsedDate = newValue ? new Date(newValue) : null;
-                console.log(newValue)
-                if (parsedDate) {
-                    setFieldValue(`facturas[${index}].probableDate`, parsedDate);
-                }
-            }}
+            value={values?.probableDate}
+             onChange={handleDateChange}
             inputFormat="dd/MM/yyyy"
             mask="__/__/____"
-            minDate={values.opDate ? new Date(values.opDate) : null} // Permite seleccionar la misma fecha
+            minDate={values.opDate ?values.opDate : null} // Permite seleccionar la misma fecha
             renderInput={(params) => (
                 <TextField
                     {...params}

@@ -3,9 +3,9 @@ import { useEffect, useState } from "react";
 import { useBeforeunload } from "react-beforeunload";
 // Alerts
 import { ToastContainer } from "react-toastify";
-
+import {  startOfDay,isSameDay } from "date-fns";
 import { useRouter } from "next/router";
-
+import { isValid, isAfter } from 'date-fns'; // Asegúrate de importar estas funciones
 import { Toast } from "@components/toast";
 import * as Yup from 'yup';
 import { useFetch } from "@hooks/useFetch";
@@ -158,7 +158,7 @@ export const ManageOperationV = () => {
       if (router && router.query) {
         
         if (router.query.id) {
-          console.log(router.query)
+      
           setId(router.query.id);
         }
   
@@ -167,7 +167,7 @@ export const ManageOperationV = () => {
         }
       }
     }, [router.query]);
-    console.log(id)
+
   
     useEffect(() => {
       if (id) {
@@ -196,13 +196,12 @@ export const ManageOperationV = () => {
       
     }
   }, [loadingGetLastId, errorGetLastId, dataGetLastId]);
-console.log(opId)
 
 
 
 useEffect(() => {
   if (dataTypeIdSelect) {
-    console.log(dataTypeIdSelect)
+  
     var typesID = [];
     dataTypeIdSelect.data.map((typeID) => {
       typesID.push({ label: typeID.description, value: typeID.id });
@@ -232,7 +231,6 @@ useEffect(() => {
       setClient(Clients);
     }
   }, [data, loading, error]);
-  console.log(client)
 
   useEffect(() => {
     if (data) {
@@ -259,7 +257,7 @@ useEffect(() => {
     }
   }, [data, loading, error]);
 
-  console.log(payer)
+
 
 
   useEffect(() => {
@@ -287,8 +285,8 @@ useEffect(() => {
     }
   }, [data, loading, error]);
 
-  console.log(investor)
-  const validationSchema = Yup.object().shape({
+
+  const validationSchema2 = Yup.object({
     opId: Yup.number()
       .required('ID de operación es obligatorio')
       .typeError('Debe ser un número válido'),
@@ -298,9 +296,16 @@ useEffect(() => {
     opType: Yup.string().required('Tipo de operación es obligatorio'),
     emitter: Yup.string().required('Emisor es obligatorio'),
     emitterBroker: Yup.string().required('Corredor emisor es obligatorio'),
-    investorTax: Yup.number()
-      .required('Impuesto de inversionista es obligatorio')
-      .min(0, 'No puede ser negativo'),
+    investorTax: Yup.number().required('Este campo es obligatorio').test(
+            'is-after-discountTax',
+            'La tasa de inversionsita debe ser menor o igual a la tasa de descuento',
+            function(value) {
+    
+              const discountTax = this.parent?.discountTax; // Accede al valor raíz
+              if (!discountTax || !value) return true;
+              return value <= discountTax;
+            }
+          ),
     investor: Yup.string().required('Inversionista es obligatorio'),
     investorBroker: Yup.string().required('Corredor inversionista es obligatorio'),
     clientAccount: Yup.string().required('Cuenta de cliente es obligatoria'),
@@ -313,40 +318,90 @@ useEffect(() => {
       .min(0, 'No puede ser negativo'),
     DateBill: Yup.date().required('Fecha de factura es obligatoria'),
     DateExpiration: Yup.date().required('Fecha de vencimiento es obligatoria'),
-    discountTax: Yup.number()
-      .required('Tasa de descuento es obligatoria')
-      .min(0, 'Mínimo 0%')
-      .max(100, 'Máximo 100%'),
-    operationDays: Yup.number()
-      .required('Días de operación es obligatorio')
-      .min(1, 'Mínimo 1 día'),
-    commissionSF: Yup.number()
-      .required('Comisión SF es obligatoria')
-      .min(0, 'No puede ser negativo'),
-    GM: Yup.number()
-      .min(0, 'No puede ser negativo')
-      .when('applyGm', {
-        is: true,
-        then: Yup.number().required('Gasto mantenimiento es obligatorio')
-      }),
-    presentValueSF: Yup.number()
-      .required('Valor presente SF es obligatorio')
-      .min(0, 'No puede ser negativo'),
+   discountTax: Yup.number()
+     .required('Este campo es obligatorio')
+     .test(
+       'is-after-investorTax',
+       'La tasa de descuento debe ser mayor o igual a la tasa de inversionista',
+       function(value) {
+   
+         const investorTax = this.parent?.investorTax; // Accede al valor raíz
+         
+         // Solo saltar validación si investorTax no está definido
+         if (investorTax === undefined || investorTax === null) return true;
+         
+         // Ahora 0 será comparado correctamente con investorTax
+         return value >= investorTax;
+       }
+     ),
+    operationDays:Yup.number().required('Este campo es obligatorio'),
+   
+   
+  
     investorProfit: Yup.number()
       .required('Rentabilidad inversionista es obligatoria')
       .min(0, 'No puede ser negativo'),
     payedAmount: Yup.number()
       .required('Monto a pagar es obligatorio')
       .min(0, 'No puede ser negativo'),
-    payedPercent: Yup.number()
-      .required('Porcentaje a pagar es obligatorio')
-      .min(0, 'Mínimo 0%')
-      .max(100, 'Máximo 100%'),
+    payedPercent:Yup.number()
+            .required('Este campo es obligatorio')
+            .min(0, 'El descuento no puede ser menor a 0%')
+            .max(100, 'El descuento no puede ser mayor a 100%'),
     status: Yup.number()
       .required('Estado es obligatorio')
       .oneOf([0, 1], 'Estado inválido'),
     isReBuy: Yup.boolean(),
     massive: Yup.boolean(),
+    probableDate: Yup.date()
+            .required('Este campo es obligatorio')
+            .test(
+            'is-same-or-after-opdate',
+            'La fecha probable debe ser igual o posterior a la fecha de operación',
+            function(value) {
+              console.log(value)
+              const opDate = this.parent.opDate// Accede al valor raíz
+              
+              if (!opDate || !value) return true;
+          
+          // Normalizar fechas para comparación (ignorar husos horarios)
+          const valueDate = new Date(value);
+          valueDate.setHours(0, 0, 0, 0);
+          
+          const opDateObj = new Date(opDate);
+          opDateObj.setHours(0, 0, 0, 0);
+          
+          return valueDate >= opDateObj;
+            }
+          ),
+  opExpiration: Yup.date()
+  .required('Este campo es obligatorio').test(
+    'is-after-probable',
+    'La fecha fin debe ser posterior o igual a la fecha probable',
+    function(value) {
+
+      console.log(value)
+      
+      const probableDate = this.parent.probableDate
+       if (!probableDate || !value) return true;
+      const endDate = value;
+      const valueDate = new Date(endDate);
+      valueDate.setHours(0, 0, 0, 0);
+
+      const probableDateObj = new Date(probableDate);
+      probableDateObj.setHours(0, 0, 0, 0);
+
+ 
+
+
+
+      return valueDate >= probableDateObj;
+    }
+  ),
+    operationDays:Yup.number().required('Este campo es obligatorio'),
+    commissionSF: Yup.number().required('Este campo es obligatorio'),
+    GM: Yup.number().required('Este campo es obligatorio'),
+    investorBrokerName:Yup.string().required('Este campo es obligatorio'),
     integrationCode: Yup.string().when('massive', {
       is: true,
       then: Yup.string().required('Código de integración es obligatorio para operaciones masivas')
@@ -373,7 +428,7 @@ const onSubmit = async (values, { setSubmitting }) => {
   setLoading(true);
   setSubmitting(true);
   setSuccessA(null); // Estado inicial
-  console.log(values)
+
   const operationData = {
     id: values.id,
     DateBill: values.DateBill || new Date().toISOString().substring(0, 10),
@@ -396,8 +451,8 @@ const onSubmit = async (values, { setSubmitting }) => {
     investorTax: Number(values.investorTax) || 0,
     isPartiallyPayed: Boolean(values.isPartiallyPayed),
     isRebuy: Boolean(values.isReBuy),
-    opDate: values.opDate || new Date().toISOString().substring(0, 10),
-    opExpiration: values.opExpiration || new Date().toISOString().substring(0, 10),
+   opDate: values.opDate ? new Date(values.opDate).toISOString().substring(0, 10) : new Date().toISOString().substring(0, 10),
+opExpiration: values.opExpiration ? new Date(values.opExpiration).toISOString().substring(0, 10) : new Date().toISOString().substring(0, 10),
     opId: values.opId,
     opPendingAmount: Number(values.opPendingAmount) || 0,
     opType: values.opType,
@@ -411,11 +466,11 @@ const onSubmit = async (values, { setSubmitting }) => {
     integrationCode: values.integrationCode || ""
   };
 
-  console.log("Datos a enviar:", operationData);
+ 
   try {
-    await validationSchema.validate(values, { abortEarly: false });
+    await validationSchema2.validate(values, { abortEarly: false });
     const data = [...operations, { ...operationData }];
-    console.log(data,operation,'')
+   
     const response = await updateOperationFetch(data,operation,'');
 
     // 4. Verificar respuesta
@@ -457,15 +512,14 @@ const onSubmit = async (values, { setSubmitting }) => {
 
 
 const handleConfirm = async (values,actions) => {
-  console.log("1. Entrando a handleConfirm");
+
   setShowConfirmationModal(true);
   setActions(actions)
-  console.log("2. Estado actualizado, showConfirmationModal debería ser true");
+
   // Verifica en React DevTools si el estado realmente cambió
 };
 
-// En tu componente principal
-console.log("3. Renderizado, showConfirmationModal:", showConfirmationModal);
+
 
 
 
@@ -476,7 +530,7 @@ return (
               emitters={client}
               investors={client}
               dataDetails={operation}
-              validationSchema={validationSchema}
+              validationSchema2={validationSchema2}
               typeOperation={dataTypeIdSelect}
               loading={loading}
               success={success}

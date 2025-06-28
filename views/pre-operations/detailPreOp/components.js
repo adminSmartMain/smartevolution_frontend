@@ -41,11 +41,9 @@ export const ManageOperationDetails = ({
 
   // Función para formatear el número con separadores de miles
   const formatNumberWithThousandsSeparator = (value) => {
-    return value
-      .toString()
-      .replace(/\B(?=(\d{3})+(?!\d))/g, ","); // Agrega separadores de miles
+    if (value === undefined || value === null) return '';
+    return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
-
   const validationSchema = Yup.object({
     numeroOperacion: Yup.number()
       .required('Este campo es obligatorio')
@@ -344,7 +342,7 @@ export const ManageOperationDetails = ({
                     <TextField
                       label="Saldo Disponible en factura"
                       fullWidth
-                      value={formatCurrency(dataDetails?.data?.bill?.currentBalance || 0)}
+                      value={formatNumberWithThousandsSeparator(dataDetails?.data?.bill?.currentBalance || 0)}
                       disabled
                       sx={{
                           "& .MuiInputBase-input.Mui-disabled": {
