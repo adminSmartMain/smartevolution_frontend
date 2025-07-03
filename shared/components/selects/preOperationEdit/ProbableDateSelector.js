@@ -23,9 +23,9 @@ const ProbableDateSelector = ({ values,  errors, setFieldValue}) => {
       
     };
     const handleDateChange = (newValue) => {
-        console.log(newValue)
+       
         const parsedDate = newValue ? new Date(newValue) : null;
-        console.log(parsedDate)
+       
         if (!parsedDate) return;
         
         setFieldValue(`probableDate`, parsedDate);
@@ -35,7 +35,7 @@ const ProbableDateSelector = ({ values,  errors, setFieldValue}) => {
       
     };
 
-console.log(errors)
+
 
     return (
         <DatePicker

@@ -526,7 +526,10 @@ const parseBackendDate = (dateString) => {
  
 
   const initialValues2 = {
+    bill_total:dataDetails.data?.bill?.total|| 0,
+    currentBalanceActual:dataDetails.data?.bill?.currentBalance|| 0,
       amount: dataDetails.data?.amount || 0,
+      amountInitial: dataDetails.data?.amount || 0,
       applyGm: dataDetails.data?.applyGm || false,
       billBack: dataDetails.data?.bill?.id || "",
       bill: dataDetails.data?.bill?.billId || "",
@@ -593,10 +596,11 @@ const parseBackendDate = (dateString) => {
       billCode: dataDetails.data?.bill?.billId || "",
       isReBuy: dataDetails.data?.isRebuy || false,
       massive: false,
+      valorFuturoManual:true,
       integrationCode: dataDetails.data?.bill?.integrationCode || ""
     };
 
-
+    console.log(initialValues2)
   const handleSubmit = async (values, actions) => {
     try {
       await onFormSubmit(values, actions);

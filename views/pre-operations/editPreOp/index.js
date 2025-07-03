@@ -226,8 +226,8 @@ useEffect(() => {
             : client.social_reason + " - " + client.document_number,
           value: client.id,
           data:client,
-        });
-      });
+           sortKey: client.social_reason || `${client.first_name} ${client.last_name}`,
+        })}).sort((a, b) => a.sortKey.localeCompare(b.sortKey));
       setClient(Clients);
     }
   }, [data, loading, error]);
@@ -251,8 +251,8 @@ useEffect(() => {
           : client.social_reason,
           data:client,
           id:client.id,
-        });
-      });
+          sortKey: client.social_reason || `${client.first_name} ${client.last_name}`}
+        )}).sort((a, b) => a.sortKey.localeCompare(b.sortKey));
       setPayer(Payers);
     }
   }, [data, loading, error]);
@@ -359,7 +359,7 @@ useEffect(() => {
             'is-same-or-after-opdate',
             'La fecha probable debe ser igual o posterior a la fecha de operación',
             function(value) {
-              console.log(value)
+            
               const opDate = this.parent.opDate// Accede al valor raíz
               
               if (!opDate || !value) return true;
@@ -380,7 +380,7 @@ useEffect(() => {
     'La fecha fin debe ser posterior o igual a la fecha probable',
     function(value) {
 
-      console.log(value)
+      
       
       const probableDate = this.parent.probableDate
        if (!probableDate || !value) return true;
@@ -401,7 +401,7 @@ useEffect(() => {
     operationDays:Yup.number().required('Este campo es obligatorio'),
     commissionSF: Yup.number().required('Este campo es obligatorio'),
     GM: Yup.number().required('Este campo es obligatorio'),
-    investorBrokerName:Yup.string().required('Este campo es obligatorio'),
+    
     integrationCode: Yup.string().when('massive', {
       is: true,
       then: Yup.string().required('Código de integración es obligatorio para operaciones masivas')
