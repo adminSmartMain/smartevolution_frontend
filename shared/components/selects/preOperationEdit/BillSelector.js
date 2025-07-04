@@ -22,6 +22,7 @@ export default function BillSelector ({values, setFieldValue, dataDetails,errors
     return (
         <>
          <Autocomplete
+         disabled
                           options={(values?.takedBills || []).map(factura => ({
                             label: `${factura.billId}`,
                             value: factura.billId, // Usamos billId como valor clave

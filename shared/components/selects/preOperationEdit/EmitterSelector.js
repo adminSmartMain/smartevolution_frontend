@@ -14,7 +14,7 @@ export default function EmitterSelector({setClientPagador, orchestDisabled, setI
 
   return (
     <>
-  <Autocomplete
+  <Autocomplete  disabled
                      options={emisores}
                      isOptionEqualToValue={(option, value) =>
                        option?.data?.id === value?.data?.id

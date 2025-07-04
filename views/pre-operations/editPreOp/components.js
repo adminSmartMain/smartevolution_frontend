@@ -872,6 +872,7 @@ const parseBackendDate = (dateString) => {
                   <TextField
                     label="Corredor Emisor *"
                     fullWidth
+                    disabled
                     name="corredorEmisor"
                     value={
                       dataDetails?.data?.emitterBroker?.social_reason ||

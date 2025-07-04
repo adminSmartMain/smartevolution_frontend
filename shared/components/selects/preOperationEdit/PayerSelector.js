@@ -15,7 +15,7 @@ import {
 export default function PayerSelector( {errors,dataBills,showAllPayers,payers,values,setFieldValue,setClientPagador,setIsSelectedPayer,touched,orchestDisabled}) {
 
     return (
- <Autocomplete
+ <Autocomplete disabled
                     options={Array.isArray(values?.arrayPayers) ? values?.arrayPayers : []}
                     value={
                       Array.isArray(values?.arrayPayers)
