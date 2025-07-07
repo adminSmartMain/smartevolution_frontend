@@ -43,7 +43,7 @@ export default function InvestorSelector({setFieldTouched,setFieldError,errors, 
                                                 setFieldValue('billFraction',1)
                                                 setFieldValue('montoDisponibleCuenta', 0)
                                                 setFieldValue('montoDisponibleInfo',0)
-                                                setFieldValue('applyGm',0)
+                                                setFieldValue('applyGm',false)
                                                 setFieldValue('investorTax',0)
                                                 setFieldValue('GM',0)
                                                 setFieldValue('client','')
@@ -89,8 +89,8 @@ export default function InvestorSelector({setFieldTouched,setFieldError,errors, 
                                                  setFieldValue('investor', newValue.data.id);
                                                  setFieldValue('investorInfo', newValue.data);
                                                  setFieldValue('cuentaInversionista', cuentas?.data || []);
-                                                setFieldValue(`facturas[${index}].applyGm`, tasaDescuento?.data?.gmf|| false);
-                                                setFieldValue(`facturas[${index}].gastoMantenimiento`,  tasaDescuento?.data?.gmf ? valorGm : 0);
+                                                setFieldValue(`applyGm`, tasaDescuento?.data?.gmf|| false);
+                                                setFieldValue(`GM`,  tasaDescuento?.data?.gmf ? valorGm : 0);
                                                  // Actualizar información del broker
                                                  if (brokerFromInvestor?.data) {
                                                    setFieldValue('investorBroker', brokerFromInvestor.data.id);

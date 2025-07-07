@@ -2,6 +2,10 @@
 import React from "react";
 import { TextField } from '@mui/material';
 import { PV } from "@formulajs/formulajs";
+import { InputAdornment } from '@mui/material';
+import ErrorIcon from '@mui/icons-material/Error';
+import { Tooltip, IconButton } from '@mui/material';
+import InfoIcon from '@mui/icons-material/Info';
 
 export default function TasaDescuentoSelector({ values, setFieldValue, setFieldError, errors, factura, index, parseFloat }) {
   const hasError = () => {
@@ -191,16 +195,48 @@ export default function TasaDescuentoSelector({ values, setFieldValue, setFieldE
             value={formatDisplayValue(values.discountTax)}
             onChange={handleChange}
             onBlur={handleBlur}
-            errors={ hasError()}
-            helperText={ getErrorMessage() }
-            inputProps={{
-                min: 0,
-                max: 100,
-                step: "0.01",
-                pattern: "[0-9,.]*",
-                inputMode: "decimal",
-            }}
-            error={!!errors.discountTax}
+               error={hasError()}
+  InputProps={{
+     endAdornment: (
+    <InputAdornment position="end">
+      {hasError() ? (
+        <Tooltip 
+          title={getErrorMessage()} 
+          arrow
+          open={hasError()} // Solo se abre cuando hay error
+          placement="top-end"
+          componentsProps={{
+            tooltip: {
+              sx: {
+                bgcolor: 'error.main',
+                '& .MuiTooltip-arrow': {
+                  color: 'error.main',
+                }
+              }
+            }
+          }}
+        >
+          <IconButton edge="end" size="small">
+            <ErrorIcon color="error" fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      ) : (
+        <Tooltip title="Información sobre la tasa de descuento">
+          <IconButton edge="end" size="small">
+            <InfoIcon style={{ fontSize: '1rem', color: 'rgb(94, 163, 163)' }} />
+          </IconButton>
+        </Tooltip>
+      )}
+    </InputAdornment>
+  ),
+    inputProps: {
+      min: 0,
+      max: 100,
+      step: "0.01",
+      pattern: "[0-9,.]*",
+      inputMode: "decimal",
+    }
+  }}
         />
     )
 }

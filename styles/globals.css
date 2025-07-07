@@ -501,7 +501,7 @@ body {
   }
   
   .badge.cancelada {
-    background-color: #ff0000; /* rojo  para 'Cancelado' */
+    background-color: #488B8F; /* rojo  para 'Cancelado' */
   }
   
   .badge.vencido {

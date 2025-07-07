@@ -61,6 +61,7 @@ export default function Operations() {
       const checkOperations = dataGetOperations?.results.map(row => {
         const opExpiration = new Date(row.opExpiration + " " + "00:00:00");
         const today = new Date();
+        console.log(opExpiration,today)
         if (opExpiration < today && row.status != 4) {
           return {
             ...row,
@@ -70,7 +71,7 @@ export default function Operations() {
         return row
       });
       const preOperations = checkOperations.filter(
-        (x) => x.status >= 3 || x.status == 1
+        (x) =>  x.status >= 3 || x.status == 1 
       );
       setData(preOperations);
       

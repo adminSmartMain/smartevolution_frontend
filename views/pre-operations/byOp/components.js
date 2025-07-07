@@ -150,7 +150,12 @@ function Row(props) {
       case 4:
         statusText = "Cancelada";
         badgeClass = "badge cancelada";
+      
         break;
+       case 5:
+            statusText = "Vencida";
+            badgeClass = "badge vencido";
+            break;
       default:
         statusText = "Por Aprobar";
         badgeClass = "badge por-aprobar";

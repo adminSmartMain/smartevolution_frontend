@@ -5,6 +5,9 @@ import { PV } from "@formulajs/formulajs";
 import InfoIcon from '@mui/icons-material/Info';
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import ErrorIcon from '@mui/icons-material/Error';
+import { InputAdornment } from '@mui/material';
+
 
 export default function TasaInversionistaSelector({ values, setFieldValue, setFieldError, errors }) {
   const hasError = () => !!errors?.investorTax;
@@ -122,46 +125,55 @@ export default function TasaInversionistaSelector({ values, setFieldValue, setFi
         fullWidth
         name="investorTax"
         value={formatDisplayValue(values?.investorTax)}
-        error={hasError()}
-        helperText={getErrorMessage()}
-        inputProps={{
-          min: 0,
-          max: 100,
-          step: "0.01",
-          pattern: "[0-9,.]*",
-          inputMode: "decimal",
-        }}
-        onChange={handleChange}
-        onBlur={handleBlur}
-      />
-      <Tooltip
-        title="Por defecto, este valor se establece en 0%. Si lo necesitas, puedes modificarlo manualmente en este formulario según las condiciones actuales del mercado.
-          Cambiar este valor solo afectará la operación actual, no se actualizará en el perfil de riesgo del cliente."
-        placement="top-end"
-        enterDelay={200}
-        leaveDelay={200}
+           error={hasError()}
+  InputProps={{
+   endAdornment: (
+  <InputAdornment position="end">
+    {hasError() ? (
+      <Tooltip 
+        title={getErrorMessage()} 
         arrow
-        PopperProps={{
-          modifiers: [{
-            name: 'offset',
-            options: { offset: [0, 5] }
-          }]
+        open={hasError()}  // Solo se abre cuando hay error
+        placement="top-end"
+        componentsProps={{
+          tooltip: {
+            sx: {
+              bgcolor: 'error.main',
+              '& .MuiTooltip-arrow': {
+                color: 'error.main',
+              }
+            }
+          }
         }}
       >
-        <IconButton
-          size="small"
-          style={{
-            position: 'absolute',
-            top: '50%',
-            right: 2,
-            transform: 'translateY(-50%)',
-            padding: 4,
-            marginLeft: 1,
-          }}
-        >
+        <IconButton edge="end" size="small" aria-label="Error">
+          <ErrorIcon color="error" fontSize="small" />
+        </IconButton>
+      </Tooltip>
+    ) : (
+      <Tooltip 
+        title="Por defecto, este valor se establece en 0%. Si lo necesitas, puedes modificarlo manualmente en este formulario según las condiciones actuales del mercado.
+          Cambiar este valor solo afectará la operación actual, no se actualizará en el perfil de riesgo del cliente"
+        placement="top-end"
+        arrow
+      >
+        <IconButton edge="end" size="small" aria-label="Información">
           <InfoIcon style={{ fontSize: '1rem', color: 'rgb(94, 163, 163)' }} />
         </IconButton>
       </Tooltip>
+    )}
+  </InputAdornment>
+),
+    inputProps: {
+      min: 0,
+      max: 100,
+      step: "0.01",
+      pattern: "[0-9,.]*",
+      inputMode: "decimal",
+    }
+  }}
+      />
+      
       <ToastContainer />
     </div>
   );

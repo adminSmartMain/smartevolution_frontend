@@ -2,8 +2,9 @@
 import React from "react";
 
 import { TextField } from '@mui/material';
-
-
+import { InputAdornment } from '@mui/material';
+import { Tooltip, IconButton } from '@mui/material';
+import InfoIcon from '@mui/icons-material/Info';
 import { PV } from "@formulajs/formulajs";
 
 export default function PorcentajeDescuentoSelector({ values, setFieldValue, errors, touched, factura, index }) {
@@ -83,14 +84,54 @@ export default function PorcentajeDescuentoSelector({ values, setFieldValue, err
                     setFieldValue(`facturas[${index}].porcentajeDescuento`, 0);
                 }
             }}
-            inputProps={{
+         
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                 
+                                              <Tooltip
+                                                title="Este campo se utiliza para aplicar un descuento sobre el valor futuro de la factura."
+                                                placement="top-end" // Cambiar la posición para que esté a la derecha, alineado con el campo
+                                                enterDelay={200} // Retardo para aparecer rápidamente
+                                                leaveDelay={200} // Retardo para desaparecer rápidamente
+                                                arrow
+                                                PopperProps={{
+                                                  modifiers: [
+                                                    {
+                                                      name: 'offset',
+                                                      options: {
+                                                        offset: [0, 5], // Ajusta el desplazamiento del tooltip
+                                                      },
+                                                    },
+                                                  ],
+                                                }}
+                                              >
+                                                <IconButton
+                                                  size="small"
+                                                  style={{
+                                                    position: 'absolute', // Alineado dentro del contenedor
+                                                    top: '50%',
+                                                    right: 4, // Colocado a la derecha del campo
+                                                    transform: 'translateY(-50%)', // Centrado verticalmente en el campo
+                                                  
+                                                    marginLeft: 8,
+                                                  }}
+                                                >
+                                                  <InfoIcon style={{ fontSize: '1rem', color: 'rgb(94, 163, 163)' }} />
+                                                </IconButton>
+                                              </Tooltip>
+                </InputAdornment>
+              ),
+              inputProps: {
                 min: 0,
                 max: 100,
-                step: '0.01',
-                pattern: "[0-9]*" // Mejor experiencia en móviles
+                step: "0.01",
+                pattern: "[0-9,.]*",
+                inputMode: "decimal",
+              }
             }}
-            error={touched.facturas?.[index]?.porcentajeDescuento && Boolean(errors.facturas?.[index]?.porcentajeDescuento)}
-            helperText={touched.facturas?.[index]?.porcentajeDescuento && errors.facturas?.[index]?.porcentajeDescuento}
         />
+        
     );
 }
+

@@ -595,26 +595,28 @@ const handleCloseMenu = () => {
 
 
   const handleUpdateClick = (e) => {
-    fetchUpdateOperationMassive({
-      id: open[1],
-      status: operationState,
-      massive: false,
-      massiveByInvestor: false,
-      billCode: "",
-    });
-    getOperationsFetch();
-  };
-  const handleUpdateAllClick = (e) => {
-    fetchUpdateOperation({
-      id: open[1],
-      status: operationState,
-      massive: true,
-      massiveByInvestor: false,
-      billCode: "",
-    });
-    getOperationsFetch();
-  };
+  fetchUpdateOperationMassive({
+    id: open[1],
+    status: operationState,
+    massive: false,
+    massiveByInvestor: false,
+    billCode: "",
+  }).then(() => {  // Espera a que termine la actualización
+    getOperationsFetch();  // Luego actualiza la lista
+  });
+};
 
+const handleUpdateAllClick = (e) => {
+  fetchUpdateOperation({
+    id: open[1],
+    status: operationState,
+    massive: true,
+    massiveByInvestor: false,
+    billCode: "",
+  }).then(() => {  // Espera a que termine la actualización
+    getOperationsFetch();  // Luego actualiza la lista
+  });
+};
   useEffect(() => {
     if (dataUpdateOperation) {
       Toast("Operacion actualizada", "success");
@@ -709,6 +711,7 @@ const checkSingleNegotiationSummary = async (opId) => {
     }
   }
 };
+console.log(rows)
   const columns = [
     {
       field: "status",
@@ -742,7 +745,7 @@ const checkSingleNegotiationSummary = async (opId) => {
             break;
           default:
             statusText = "Por Aprobar";
-            badgeClass = "badge";
+            badgeClass = "badge por-aprobar";
         }
         
         return <span className={badgeClass}>{statusText}</span>;

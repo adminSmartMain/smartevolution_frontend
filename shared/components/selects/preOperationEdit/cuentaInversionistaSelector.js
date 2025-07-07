@@ -7,7 +7,9 @@ export default function CuentaInversionistaSelector({ index, factura, values, se
 
     return (
         <Autocomplete
+        
             options={values?.accountsInvestorArray?.data || []}
+            
             getOptionLabel={(option) =>
                 option?.account_number ||
                 option?.number ||

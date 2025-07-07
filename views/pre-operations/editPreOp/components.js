@@ -883,7 +883,7 @@ const parseBackendDate = (dateString) => {
                       setFieldValue('corredorEmisor', event.target.value); // Actualiza el valor
                       setFieldTouched('corredorEmisor', true); // Marca el campo como "touched"
                     }}
-                    disabled // Deshabilitar edición manual
+                    // Deshabilitar edición manual
                     error={touched.corredorEmisor && Boolean(errors.corredorEmisor)}
                     helperText={touched.corredorEmisor && errors.corredorEmisor}
                   />

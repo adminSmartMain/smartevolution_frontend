@@ -267,7 +267,7 @@ export const OperationsComponents = ({
     currency: "USD",
   };
   const numberFormat = new Intl.NumberFormat("en-US", formatOptions);
-  
+  console.log(rows)
   const [selectedData, setSelectedData] = useState(calcs);
 
 const router = useRouter();
@@ -332,6 +332,10 @@ const router = useRouter();
           case 4:
             statusText = "Cancelada";
             badgeClass = "badge cancelada";
+            break;
+          case 5:
+            statusText = "Vencida";
+            badgeClass = "badge vencido";
             break;
           default:
             statusText = "Por Aprobar";

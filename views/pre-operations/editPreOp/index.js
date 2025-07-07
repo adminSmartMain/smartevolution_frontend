@@ -212,25 +212,25 @@ useEffect(() => {
 }, [dataTypeIdSelect, loadingTypeIdSelect, errorTypeIdSelect]);
 
 
-  useEffect(() => {
-    if (data) {
-      var Clients = [];
-      data.data.map((client) => {
-        Clients.push({
-          label: client.first_name
-            ? client.first_name +
-              " " +
-              client.last_name +
-              " - " +
-              client.document_number
-            : client.social_reason + " - " + client.document_number,
-          value: client.id,
-          data:client,
-           sortKey: client.social_reason || `${client.first_name} ${client.last_name}`,
-        })}).sort((a, b) => a.sortKey.localeCompare(b.sortKey));
-      setClient(Clients);
-    }
-  }, [data, loading, error]);
+// GET CLIENTS (EMITTERS)
+useEffect(() => {
+  if (!data) return;
+
+  const processClients = (clients) => {
+    return clients
+      .map(client => ({
+        label: client.first_name
+          ? `${client.first_name} ${client.last_name} - ${client.document_number}`
+          : `${client.social_reason} - ${client.document_number}`,
+        value: client.id,
+        data: client,
+        sortKey: client.social_reason || `${client.first_name} ${client.last_name}`
+      }))
+      .sort((a, b) => a.sortKey.localeCompare(b.sortKey));
+  };
+
+  setClient(processClients(data.data));
+}, [data, loading, error]);
 
   useEffect(() => {
     if (data) {
@@ -260,30 +260,7 @@ useEffect(() => {
 
 
 
-  useEffect(() => {
-    if (data) {
-      var Payers = [];
-      data.data.map((client) => {
-       Payers.push({
-          label: client.first_name
-            ? client.first_name +
-              " " +
-              client.last_name +
-              " - " +
-              client.document_number
-            : client.social_reason + " - " + client.document_number,
-          value: client.first_name
-          ? client.first_name +
-            " " +
-            client.last_name 
-          : client.social_reason,
-          data:client,
-          id:client.id,
-        });
-      });
-      setInvestor(Payers);
-    }
-  }, [data, loading, error]);
+
 
 
   const validationSchema2 = Yup.object({

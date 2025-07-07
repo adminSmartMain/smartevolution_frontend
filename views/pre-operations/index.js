@@ -64,8 +64,14 @@ export default function Operations() {
   useEffect(() => {
     if (dataGetOperations) {
      
-      console.log(dataGetOperations.results)
-      setData(dataGetOperations.results);
+      const checkOperations = dataGetOperations?.results.map(row => {
+       
+        return row
+      });
+      const preOperations = checkOperations.filter(
+        (x) =>   x.status == 0 ||   x.status == 2
+      );
+      setData(preOperations);;
     }
     console.log('d')
   }, [dataGetOperations, loadingGetOperations, errorGetOperations]);
