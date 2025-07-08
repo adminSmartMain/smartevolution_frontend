@@ -79,9 +79,9 @@ const [inputValue, setInputValue] = useState(
       // Actualizar valores calculados
       setFieldValue(`presentValueInvestor`, newPresentValueInvestor);
       if(values.applyGm) {
-        setFieldValue(`gastoMantenimiento`, newPresentValueInvestor * 0.002);
+        setFieldValue(`GM`, newPresentValueInvestor * 0.002);
       } else {
-        setFieldValue(`gastoMantenimiento`, 0);
+        setFieldValue(`GM`, 0);
       } 
       setFieldValue(`presentValueSF`, newPresentValueSF);
       setFieldValue(`comisionSF`, newPresentValueInvestor-newPresentValueSF || 0);

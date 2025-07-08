@@ -116,7 +116,12 @@ export default function TasaDescuentoSelector({ values, setFieldValue, setFieldE
             console.log(presentValue)
             // Ambos valores son iguales cuando las tasas son iguales
             setFieldValue(`facturas[${index}].presentValueInvestor`, presentValue);
-            setFieldValue(`facturas[${index}].gastoMantenimiento`, presentValue*0.002);
+            if(factura.applyGm){
+                setFieldValue(`facturas[${index}].gastoMantenimiento`, presentValue*0.002);
+            }else{
+              setFieldValue(`facturas[${index}].gastoMantenimiento`,0);
+            }
+          
             setFieldValue(`facturas[${index}].presentValueSF`, presentValue);
             setFieldValue(`facturas[${index}].investorProfit`, valorNominal - presentValue);
             

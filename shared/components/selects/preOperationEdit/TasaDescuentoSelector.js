@@ -73,11 +73,17 @@ export default function TasaDescuentoSelector({ values, setFieldValue, setFieldE
 
       await Promise.all([
         setFieldValue('presentValueInvestor', presentValue),
-        setFieldValue('GM', presentValue * 0.002),
+        
         setFieldValue('presentValueSF', presentValue),
         setFieldValue('investorProfit', valorNominal - presentValue),
         setFieldValue('commissionSF', 0)
       ]);
+
+       if(values.applyGm) {
+        setFieldValue(`GM`, presentValue * 0.002);
+      } else {
+        setFieldValue(`GM`, 0);
+      } 
     }
 
     if (nuevoInvestorTax === 0) {

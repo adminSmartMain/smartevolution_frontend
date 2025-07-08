@@ -84,7 +84,12 @@ export default function TasaInversionistaSelector({ values, setFieldValue, setFi
 
     // Actualización secuencial de campos dependientes
     await setFieldValue('presentValueInvestor', presentValueInvestor, false);
-    await setFieldValue('GM', presentValueInvestor * 0.002, false);
+    if (values.applyGm) {
+         await setFieldValue(`GM`, presentValueInvestor * 0.002);
+      } else {
+        await  setFieldValue(`GM`, 0);
+      }
+   
     await setFieldValue('commissionSF', presentValueInvestor - (values.presentValueSF || 0), false);
     await setFieldValue('investorProfit', Number(nuevoInvestorProfit).toFixed(0) || 0, false);
   };

@@ -60,7 +60,13 @@ const EndDateSelector = ({ values, setFieldValue, errors }) => {
 
             
             setFieldValue('presentValueInvestor', presentValueInvestor);
-            setFieldValue('GM', Math.round(presentValueInvestor * 0.002));
+
+            if(values.applyGm) {
+                setFieldValue('GM', Math.round(presentValueInvestor * 0.002));
+                } else {
+                    setFieldValue(`GM`, 0);
+                } 
+            
             setFieldValue('presentValueSF', presentValueSF);
             setFieldValue('commissionSF', Math.round(presentValueInvestor - presentValueSF));
             setFieldValue('investorProfit', Math.round(investorProfitValue));
