@@ -12,19 +12,19 @@ export default function GastoMantenimiento({values,factura,setFieldValue,formatC
                         display: 'flex',
                         flexDirection: { xs: 'column', sm: 'row' },
                         alignItems: 'center',
-                        gap: 1,
+                        gap: 0,
                         p: 1,
                         border: '1px solid',
                         borderColor: 'rgba(0, 0, 0, 0.23)',
                         borderRadius: 2,
                         boxShadow: 0,
                         bgcolor: 'background.paper',
-                        width: '100%',
+                   
                         }}
                             >
-                                <Typography variant="body1" sx={{ whiteSpace: 'nowrap' }}>
-                                Gasto de Mantenimiento (GM)
-                                </Typography>
+                              
+                                GM
+                                
                                 <Switch
                                 checked={factura.applyGm || false}
                                 onChange={(event) => {

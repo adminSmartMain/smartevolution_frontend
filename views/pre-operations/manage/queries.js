@@ -228,3 +228,14 @@ export const GetSummaryList = async (params) => {
   );
   return res.data;
 };
+
+
+
+export const getTypeBill = async () => {
+  const res = await Axios.get(`${API_URL}/type_bill/`, {
+    headers: {
+      authorization: "Bearer " + localStorage.getItem("access-token"),
+    },
+  });
+  return res.data;
+};

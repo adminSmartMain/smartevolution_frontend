@@ -45,6 +45,23 @@ export const BillsComponents = () => {
     currency: "USD",
   };
   const numberFormat = new Intl.NumberFormat("en-US", formatOptions);
+ const [openWindow, setOpenWindow] = useState(null); 
+ const handleOpenRegisterOperation = () => {
+  if (openWindow && !openWindow.closed) {
+    // Si la ventana ya está abierta, solo le damos el foco (la trae al frente)
+    openWindow.focus();
+  } else {
+    // Si la ventana no está abierta, la abrimos y guardamos la referencia
+    const newWindow = window.open("/bills/createBill", "_blank", "width=800, height=600");
+    setOpenWindow(newWindow); // Guardamos la referencia de la ventana
+    // Escuchar el evento de cierre de la ventana
+    newWindow.onbeforeunload = () => {
+      setOpenWindow(null); // Restablecer la referencia cuando la ventana se cierre
+    };
+  }
+};
+
+
 
   const handleDownload = (url, fileName) => {
     // Download XML from url
@@ -795,6 +812,39 @@ export const BillsComponents = () => {
             </Typography>
           </Button>
         </Link>
+
+        
+          <Button
+            variant="standard"
+            color="primary"
+            size="large"
+            sx={{
+              height: "2.6rem",
+              backgroundColor: "transparent",
+              border: "1.4px solid #63595C",
+              borderRadius: "4px",
+            }}
+            onClick={handleOpenRegisterOperation}
+          >
+            <Typography
+              letterSpacing={0}
+              fontSize="80%"
+              fontWeight="bold"
+              color="#63595C"
+            >
+              Registrar nueva factura manualmente
+            </Typography>
+
+            <Typography
+              fontFamily="icomoon"
+              fontSize="1.2rem"
+              color="#63595C"
+              marginLeft="0.9rem"
+            >
+              &#xe927;
+            </Typography>
+          </Button>
+       
       </Box>
       <Box container display="flex" flexDirection="column" mt={3}>
         <InputTitles>Buscar factura</InputTitles>

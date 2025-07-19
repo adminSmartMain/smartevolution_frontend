@@ -99,18 +99,10 @@ const RegisterButton = (props) => {
         onClick={handleOpenRegisterOperation}
        
       >
-        
-          Registrar operacion
-        
-       
-        </button>
-    
-  );
+         Registrar operacion
+    </button>
+ );
 };
-
-
-
-
 
 const SellOrderButton = (props) => {
   const { ...rest } = props;

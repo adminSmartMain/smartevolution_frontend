@@ -145,7 +145,7 @@ export const BillsComponents = () => {
   useEffect(() => {
     if (dataSaveBills) {
       setTimeout(() => {
-        router.push("/bills/billList");
+       
       }, 2000);
     }
   }, [dataSaveBills]);
@@ -187,7 +187,7 @@ export const BillsComponents = () => {
   };
 
   const getAllRows = ({ apiRef }) => gridRowIdsSelector(apiRef);
-
+console.log(bill)
   function CustomToolbar() {
     const apiRef = useGridApiContext();
     const handleExport = (options) => apiRef.current.exportDataAsCsv(options);
@@ -342,7 +342,7 @@ export const BillsComponents = () => {
               ? sumOfAllCreditNotes(dataReadCreditNotes.data, billToMap.billId)
               : 0,
 
-          other_retentions:
+          other_ret:
             otherRet[billToMap.billId] && otherRet[billToMap.billId] !== ""
               ? parseFloat(otherRet[billToMap.billId])
               : 0,

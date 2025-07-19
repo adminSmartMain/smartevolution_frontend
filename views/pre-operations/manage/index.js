@@ -374,6 +374,7 @@ const transformData = (data) => {
         isReBuy: false,
         massive: false,
         saldoInicialFactura: factura.saldoDisponibleInfo, 
+        file:factura.file,
       }
     };
 

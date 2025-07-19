@@ -1,7 +1,10 @@
 // components/RegisterOperationForm.js
 import React, { useEffect, useState, useContext } from "react";
 import { debounce } from 'lodash';
-import { InputAdornment, Box, Typography, TextField, Button, Grid, Autocomplete, Accordion, AccordionSummary, AccordionDetails, Tooltip, IconButton } from '@mui/material';
+import { Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions, InputAdornment, Box, Typography, TextField, Button, Grid, Autocomplete, Accordion, AccordionSummary, AccordionDetails, Tooltip, IconButton } from '@mui/material';
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney"; // Icono del dólar
 import { DatePicker, LocalizationProvider} from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -14,20 +17,24 @@ import { DateField } from '@mui/x-date-pickers/DateField';
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import InfoIcon from '@mui/icons-material/Info';
-import {  Bills, GetBillFraction, GetRiskProfile,BrokerByClient, AccountsFromClient } from "./queries";
+import {  getTypeBill,Bills, GetBillFraction, GetRiskProfile,BrokerByClient, AccountsFromClient } from "./queries";
 import { useFetch } from "@hooks/useFetch";
 import { PV } from "@formulajs/formulajs";
 import { format, parseISO } from "date-fns";
 import authContext from "@context/authContext";
 import { useRouter } from 'next/router';
-
+import Image from 'next/image';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import FilterAltOffIcon from '@mui/icons-material/FilterAltOff';
 import EditIcon from '@mui/icons-material/Edit';
-
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import PreviewIcon from '@mui/icons-material/Preview';
+import CloseIcon from '@mui/icons-material/Close';
 import { differenceInDays, startOfDay, addDays } from "date-fns";
 import CheckIcon from '@mui/icons-material/Check';
 import ErrorIcon from '@mui/icons-material/Error'; // o cualquier otro ícono de error
+import { styled } from '@mui/material/styles';
+
 
 import EmitterSelector from "@components/selects/preOperationCreate/EmitterSelector";
 import PayerSelector from "@components/selects/preOperationCreate/PayerSelector";
@@ -50,6 +57,127 @@ import PorcentajeDescuentoSelector from "@components/selects/preOperationCreate/
 import SaldoDisponibleSelector from "@components/selects/preOperationCreate/SaldoDisponibleSelector";
 import EndDateSelector from "@components/selects/preOperationCreate/EndDateSelector";
 import ProbableDateSelector from "@components/selects/preOperationCreate/ProbableDateSelector";
+import TypeBillSelector from "@components/selects/preOperationCreate/TypeBillSelector";
+import fileToBase64 from "@lib/fileToBase64";
+
+const FilePreviewModal = ({ open, onClose, file, fileUrl }) => {
+  const renderPreviewContent = () => {
+    if (!file && !fileUrl) return null;
+
+    // Si hay una URL (archivo ya subido)
+    if (fileUrl) {
+      if (fileUrl.includes('.pdf')) {
+        return (
+          <iframe 
+            src={fileUrl} 
+            width="100%" 
+            height="500px" 
+            style={{ border: 'none' }}
+            title="Vista previa del PDF"
+          />
+        );
+      } else {
+        return (
+          <Image
+            src={fileUrl}
+            alt="Vista previa del documento"
+            width={600}
+            height={800}
+            style={{ width: '100%', height: 'auto', maxHeight: '500px', objectFit: 'contain' }}
+          />
+        );
+      }
+    }
+
+    // Si hay un archivo local (aún no subido)
+    if (file?.type?.includes('pdf')) {
+      const fileObjectUrl = URL.createObjectURL(file);
+      return (
+        <iframe 
+          src={fileObjectUrl} 
+          width="100%" 
+          height="500px" 
+          style={{ border: 'none' }}
+          title="Vista previa del PDF"
+        />
+      );
+    } else {
+      const fileObjectUrl = URL.createObjectURL(file);
+      return (
+        <Image
+          src={fileObjectUrl}
+          alt="Vista previa del documento"
+          width={600}
+          height={800}
+          style={{ width: '100%', height: 'auto', maxHeight: '500px', objectFit: 'contain' }}
+          onLoad={() => URL.revokeObjectURL(fileObjectUrl)}
+        />
+      );
+    }
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        sx: {
+          height: '80vh'
+        }
+      }}
+    >
+      <DialogTitle>
+        <Box display="flex" justifyContent="space-between" alignItems="center">
+          <Typography variant="h6">Previsualización del Documento</Typography>
+          <IconButton onClick={onClose}>
+            <CloseIcon />
+          </IconButton>
+        </Box>
+      </DialogTitle>
+      <DialogContent dividers>
+        {renderPreviewContent()}
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} variant="contained" color="primary">
+          Cerrar
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+// Estilo para input oculto
+const VisuallyHiddenInput = styled('input')({
+  clip: 'rect(0 0 0 0)',
+  clipPath: 'inset(50%)',
+  height: 1,
+  overflow: 'hidden',
+  position: 'absolute',
+  bottom: 0,
+  left: 0,
+  whiteSpace: 'nowrap',
+  width: 1,
+});
+
+// Estilo para el modal
+const modalStyle = {
+  position: 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  width: '80%',
+  maxWidth: '800px',
+  bgcolor: 'background.paper',
+  boxShadow: 24,
+  p: 4,
+  borderRadius: 2,
+  maxHeight: '90vh',
+  overflowY: 'auto'
+};
+
+
 
 
 export const ManageOperationC = ({
@@ -89,7 +217,13 @@ export const ManageOperationC = ({
   const [isCreatingBill, setIsCreatingBill] = useState(false)
   const [emitterSaved, setEmitterSaved] = useState(false)
 
-
+// Estado inicial para manejar múltiples archivos
+const [files, setFiles] = useState([]);
+const [filePreviews, setFilePreviews] = useState([]);
+const [fileUrls, setFileUrls] = useState([]);
+const [openPreview, setOpenPreview] = useState(false);
+const [previewIndex, setPreviewIndex] = useState(null);
+const [isUploading, setIsUploading] = useState(false);
 
   const [openModal, setOpenModal] = React.useState(false);
   const {
@@ -134,6 +268,15 @@ export const ManageOperationC = ({
     error: errorGetBillFraction,
     data: dataGetBillFraction,
   } = useFetch({ service: GetBillFraction, init: false });
+
+    const {
+      fetch: fetchTypeBill,
+      loading: loadingTypeBill,
+      error: errorTypeBill,
+      data: dataTypeBill,
+    } = useFetch({ service: getTypeBill, init: true });
+
+  
   // Formatear monto como moneda colombiana
   const formatCurrency = (value) =>
     new Intl.NumberFormat('es-CO', {
@@ -150,6 +293,65 @@ export const ManageOperationC = ({
     { id: 1, titulo: "Factura 1", contenido: "Detalles de Factura 1" }
   ]);
   const [expanded, setExpanded] = useState(0); // Primer acordeón abierto por defecto
+
+
+
+
+
+
+  
+  
+const handleFileChange = (event, setFieldValue, index) => {
+  const selectedFile = event.target?.files[0];
+  console.log(selectedFile);
+  
+  if (selectedFile) {
+    // Validar tipo de archivo
+    const validTypes = ['application/pdf', 'image/jpeg', 'image/png'];
+    if (!validTypes.includes(selectedFile.type)) {
+      toast.error('Solo se permiten archivos PDF, JPEG o PNG');
+      return;
+    }
+
+    // Validar tamaño (20MB máximo)
+    if (selectedFile.size > 20 * 1024 * 1024) {
+      toast.error('El archivo no debe exceder los 20MB');
+      return;
+    }
+
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+      // Actualizamos el estado de archivos manteniendo los demás
+      setFiles(prev => {
+        const newFiles = [...prev];
+        newFiles[index] = selectedFile;
+        return newFiles;
+      });
+      
+      // Actualizamos Formik con el formato que espera el backend
+      setFieldValue(`facturas[${index}].file`, e.target.result.split(',')[1]); // Solo el string base64 sin prefijo
+      
+      // Actualizamos las vistas previas
+      setFilePreviews(prev => {
+        const newPreviews = [...prev];
+        if (selectedFile.type.includes('image')) {
+          newPreviews[index] = e.target.result; // Aquí usamos el resultado completo con prefijo
+        } else {
+          newPreviews[index] = null;
+        }
+        return newPreviews;
+      });
+    };
+    
+    reader.onerror = (error) => {
+      console.error('Error al leer el archivo:', error);
+      toast.error('Error al procesar el archivo');
+    };
+    
+    reader.readAsDataURL(selectedFile);
+  }
+};
 
   const handleChange = (index) => (_event, isExpanded) => {
     setExpanded(isExpanded ? index : false);
@@ -210,6 +412,7 @@ export const ManageOperationC = ({
         fechaFin: `${addDays(new Date(),1)}`,
         diasOperaciones: 1,
         operationDays: 1,
+        typeBill:'',
         comisionSF: 0,
         gastoMantenimiento: 0,
         fechaOperacion: `${new Date().toISOString().substring(0, 10)}`,
@@ -220,6 +423,7 @@ export const ManageOperationC = ({
         integrationCode: "",
         saldoDisponibleInfo: 0,
         montoDisponibleInfo: 0,
+        file:'',
       },
     ],
   };
@@ -394,8 +598,75 @@ export const ManageOperationC = ({
     setIsCreatingOp(true)
   }
 
-  
+  const handleOpenPreview = (index) => {
+  setPreviewIndex(index);
+  setOpenPreview(true);
+};
 
+
+  const handleClosePreview = () => {
+    setOpenPreview(false);
+  };
+
+
+  
+const renderPreviewContent = () => {
+  const file = files[previewIndex];
+  const fileUrl = fileUrls[previewIndex];
+
+  // Si hay una URL de archivo remoto
+  if (fileUrl) {
+    if (fileUrl.includes('.pdf')) {
+      return (
+        <iframe 
+          src={fileUrl} 
+          width="100%" 
+          height="500px" 
+          style={{ border: 'none' }}
+          title="Vista previa del PDF"
+        />
+      );
+    } else {
+      return (
+        <Image
+          src={fileUrl}
+          alt="Vista previa del documento"
+          width={600}
+          height={800}
+          style={{ width: '100%', height: 'auto', maxHeight: '500px', objectFit: 'contain' }}
+        />
+      );
+    }
+  }
+
+  // Si hay un archivo local (aún no subido)
+  if (file?.type?.includes('pdf')) {
+    const fileObjectUrl = URL.createObjectURL(file);
+    return (
+      <iframe 
+        src={fileObjectUrl} 
+        width="100%" 
+        height="500px" 
+        style={{ border: 'none' }}
+        title="Vista previa del PDF"
+      />
+    );
+  } else if (file) {
+    const fileObjectUrl = URL.createObjectURL(file);
+    return (
+      <Image
+        src={fileObjectUrl}
+        alt="Vista previa del documento"
+        width={600}
+        height={800}
+        style={{ width: '100%', height: 'auto', maxHeight: '500px', objectFit: 'contain' }}
+        onLoad={() => URL.revokeObjectURL(fileObjectUrl)}
+      />
+    );
+  }
+
+  return <Typography>No hay archivo para previsualizar</Typography>;
+};
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={esLocale}>
       {/* Para mostrar los toast */}
@@ -828,6 +1099,8 @@ export const ManageOperationC = ({
                                           <Grid xs={12} md={2} item>
                                             {(orchestDisabled.find(item => item.indice === index)?.status) ? (
                                               <>
+                                               <Grid container spacing={2} alignItems="center">
+                                              <Grid item xs={12} md={6}>
                                                 <BillManualSelector
                                                   values={values}
                                                   setFieldValue={setFieldValue}
@@ -841,7 +1114,22 @@ export const ManageOperationC = ({
                                                   setBillExists={setBillExists}
                                                   debouncedCheckBill={debouncedCheckBill}
                                                 />
+                                              </Grid>
+                                              <Grid item xs={12} md={6}>
+                                                <TypeBillSelector 
+                                                  errors={errors}
+                                                  setFieldTouched={setFieldTouched}
+                                                  setFieldValue={setFieldValue}
+                                                  touched={touched}
+                                                  values={values}
+                                                  dataTypeBill={dataTypeBill}
+                                                  index={index}
+                                                  factura={factura}
+                                                />
+                                              </Grid>
+                                            </Grid>
                                               </>
+                                              
                                             ) : (
                                               <> <BillSelector
                                                 values={values}
@@ -872,7 +1160,7 @@ export const ManageOperationC = ({
 
                                             />
                                           </Grid>
-                                         <Grid item xs={12} md={0.5}>
+                                           {/* <Grid item xs={12} md={0.5}>
                                             <Box
                                               sx={{
                                                 color: (orchestDisabled.find(item => item.indice === index))?.status ? "#ffffff" : "#5EA3A3",
@@ -914,6 +1202,7 @@ export const ManageOperationC = ({
                                                   setFieldValue(`facturas[${index}].is_creada`, true);
                                                   setIsCreatingBill(true);
                                                   setBrokeDelete(true)
+                                                  
                                                   setOrchestDisabled(prev =>
                                                     prev.map(item =>
                                                       item.indice === index ? { ...item, status: true } : item
@@ -934,7 +1223,8 @@ export const ManageOperationC = ({
                                                 />
                                               )}
                                             </Box>
-                                          </Grid>
+                                          </Grid> */}
+                                        
                                           {/* Fracción */}
                                           <Grid item xs={12} md={0.6}>
                                             <TextField
@@ -1274,8 +1564,10 @@ export const ManageOperationC = ({
                                             }}
                                           />
                                         </Grid>
+
+                                    
                                         {/*Selector de Corredor Inversionista */}
-                                        <Grid item xs={12} md={4}>
+                                        <Grid item xs={12} md={6}>
                                           <TextField
                                             id="investorBrokername" // Para CSS/JS si es necesario
                                             data-testid="campo-investorBroker"
@@ -1293,7 +1585,7 @@ export const ManageOperationC = ({
                                           />
                                         </Grid>
                                         {/* Gasto de Mantenimiento */}
-                                        <Grid item xs={12} md={7.82}>
+                                          <Grid item xs={12} md={6}>
                                           <GastoMantenimiento
                                             factura={factura}
                                             setFieldValue={setFieldValue}
@@ -1302,8 +1594,63 @@ export const ManageOperationC = ({
                                             index={index}
                                             values={values}
                                           />
-
                                         </Grid>
+                                      <Grid item xs={12} md={6}>
+                                 
+                                    {orchestDisabled.find(item => item.indice === index)?.status && (
+                                      <>
+                                        <Box display="flex" alignItems="center" gap={2}>
+                                          <Button
+                                            component="label"
+                                            variant="contained"
+                                            startIcon={<CloudUploadIcon />}
+                                          >
+                                            Seleccionar archivo
+                                            <VisuallyHiddenInput
+                                              type="file"
+                                              onChange={(e) => handleFileChange(e, setFieldValue, index)}
+                                              accept=".pdf,.jpg,.jpeg,.png"
+                                            />
+                                          </Button>
+
+                                          {(files[index] || fileUrls[index]) && (
+                                            <Button
+                                              variant="outlined"
+                                              startIcon={<PreviewIcon />}
+                                              onClick={() => handleOpenPreview(index)}
+                                            >
+                                              Previsualizar
+                                            </Button>
+                                          )}
+                                        </Box>
+                                        
+                                        {(files[index] || fileUrls[index]) && (
+                                          <Typography variant="body2" mt={1}>
+                                            Archivo seleccionado: {files[index]?.name || fileUrls[index]?.split('/').pop()}
+                                          </Typography>
+                                        )}
+
+                                        {errors.facturas?.[index]?.file && (
+                                          <Typography
+                                            variant="body2"
+                                            mt={1}
+                                            sx={{ color: 'error.main' }}
+                                          >
+                                            {'El archivo es obligatorio'}
+                                          </Typography>
+                                        )}
+                                      </>
+                                    )}
+
+                                      </Grid>
+                                         
+
+
+                                  
+
+                                        
+                                        
+                                     
                                       </Grid>
                                     </Grid>
                                   </AccordionDetails>
@@ -1420,6 +1767,38 @@ export const ManageOperationC = ({
             );
           }}
         </Formik>
+<Dialog
+  open={openPreview}
+  onClose={() => setOpenPreview(false)}
+  maxWidth="md"
+  fullWidth
+  PaperProps={{
+    sx: {
+      height: '80vh'
+    }
+  }}
+>
+  <DialogTitle>
+    <Box display="flex" justifyContent="space-between" alignItems="center">
+      <Typography variant="h6">Previsualización del Documento</Typography>
+      <IconButton onClick={() => setOpenPreview(false)}>
+        <CloseIcon />
+      </IconButton>
+    </Box>
+  </DialogTitle>
+  <DialogContent dividers>
+    {renderPreviewContent()} {/* Aquí se usa la función */}
+  </DialogContent>
+  <DialogActions>
+    <Button 
+      onClick={() => setOpenPreview(false)} 
+      variant="contained" 
+      color="primary"
+    >
+      Cerrar
+    </Button>
+  </DialogActions>
+</Dialog>
  <ToastContainer
           position="top-right"
           autoClose={5000}

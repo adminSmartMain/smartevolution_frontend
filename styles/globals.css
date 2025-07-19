@@ -216,17 +216,21 @@ body {
   border-color: #909090; /* Color al hacer hover */
 }
 
-/* Cambiar el estilo del label */
+/* POR esto: */
 .MuiInputLabel-outlined {
-  color: #5f6368; /* Color del label */
-  transform: translate(14px, 14px) scale(1); /* Posición inicial */
+  color: #5f6368;
+  /* Elimina el transform forzado */
 }
 
 /* Label cuando el campo está enfocado */
 .MuiInputLabel-outlined.Mui-focused {
   color: #1976d2; /* Color del label cuando está enfocado */
   
-}ç
+}
+
+
+
+
 
 
 /* Aplica fondo gris siempre */

@@ -328,4 +328,3 @@ export default function PayerSelector( {errors,dataBills,showAllPayers,payers,va
                 />
     )
 }
-
