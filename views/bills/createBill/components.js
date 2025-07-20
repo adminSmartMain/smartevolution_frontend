@@ -30,7 +30,7 @@ import "react-toastify/dist/ReactToastify.css";
 
 import { Bills, GetBillFraction, GetRiskProfile, BrokerByClient, AccountsFromClient,getTypeBill } from "./queries";
 import { parseISO } from "date-fns";
-
+import { differenceInDays, startOfDay, addDays } from "date-fns";
 import EmitterSelector from "@components/selects/billCreateSelects/EmitterSelector";
 import PayerSelector from "@components/selects/billCreateSelects/PayerSelector";
 import BillManualSelector from "@components/selects/billCreateSelects/BillManualSelector";
@@ -330,19 +330,6 @@ onFormSubmit,
   }
 };
 
-   
-  // Función para cargar cuentas cuando se selecciona un inversionista
-  const cargarCuentas = async (inversionista) => {
-    if (!inversionista) return null; // Retorna null si no hay inversionista
-
-    try {
-      const cuentas = await fetchAccountFromClient(inversionista);
-      return cuentas; // 🔹 Devuelve las cuentas obtenidas
-    } catch (error) {
-      console.error("Error al cargar cuentas:", error);
-      return null; // Retorna null en caso de error
-    }
-  };
 
   const cargarTasaDescuento = async (emisor) => {
     if (!emisor) return null; // Retorna null si no hay emisor
@@ -436,13 +423,13 @@ const handleConfirm = async (values, actions) => {
     filteredPayers: "",
     billId: '',
     factura: '',
-    DateBill: `${new Date()}`,
+    DateBill:  `${new Date()}`,
     emitterId:'',
     payerName:'',
     payerId:'',
-    datePayment:`${new Date()}`,
+    datePayment:  `${addDays(new Date(),1)}`,
     typeBill:'fdb5feb4-24e9-41fc-9689-31aff60b76c9',
-   expirationDate: `${new Date()}`,
+   expirationDate:  `${addDays(new Date(),1)}`,
    ret_fte:0,
    ret_ica:0,
    ret_iva:0,
@@ -558,7 +545,7 @@ const handleOpenPreview = () => {
                       <DatePicker
                         label="Emisión"
                         maxDate={new Date()} // Esto limita a fechas hasta hoy
-                        value={values.DateBill ? parseISO(values.DateBill) : null}
+                        value={values.DateBill ? values.DateBill : null}
                         onChange={(newValue) => {
                           if (newValue) {
                             const formattedDate = newValue.toISOString().substring(0, 10);
@@ -609,7 +596,7 @@ const handleOpenPreview = () => {
 
                       <DatePicker
                         label="Vencimiento"
-                        value={values.expirationDate ? parseISO(values.expirationDate) : null}
+                        value={values.expirationDate ? values.expirationDate : null}
                         min={parseISO(values.DateBill)} // Esto limita a fechas hasta hoy
                         onChange={(newValue) => {
                           if (newValue) {
@@ -658,7 +645,7 @@ const handleOpenPreview = () => {
                     <div style={{ display: 'flex', gap: '10px', flex: 1 }}>
                       <DatePicker
                         label="Fecha de pago"
-                        value={values.datePayment ? parseISO(values.datePayment ) : null}
+                        value={values.datePayment ?values.datePayment  : null}
                         
                         onChange={(newValue) => {
                           if (newValue) {
@@ -742,7 +729,9 @@ const handleOpenPreview = () => {
                     <SubTotalSelector
                       values={values}
                       setFieldValue={setFieldValue}
+                      errors={errors
 
+                      }
 
                       formatNumberWithThousandsSeparator={formatNumberWithThousandsSeparator}
                       parseFloat={parseFloat}

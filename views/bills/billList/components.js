@@ -781,7 +781,9 @@ export const BillsComponents = () => {
         >
           Consulta de Facturas
         </Typography>
-        <Link href="/bills?=register" underline="none">
+        
+        <Box display="flex" gap="1rem">
+<Link href="/bills?=register" underline="none">
           <Button
             variant="standard"
             color="primary"
@@ -799,7 +801,7 @@ export const BillsComponents = () => {
               fontWeight="bold"
               color="#63595C"
             >
-              Registrar nueva factura
+              Extraer nueva factura
             </Typography>
 
             <Typography
@@ -832,7 +834,7 @@ export const BillsComponents = () => {
               fontWeight="bold"
               color="#63595C"
             >
-              Registrar nueva factura manualmente
+              Registrar Factura Manual
             </Typography>
 
             <Typography
@@ -845,6 +847,8 @@ export const BillsComponents = () => {
             </Typography>
           </Button>
        
+        </Box>
+        
       </Box>
       <Box container display="flex" flexDirection="column" mt={3}>
         <InputTitles>Buscar factura</InputTitles>

@@ -6,7 +6,7 @@ import AttachMoneyIcon from "@mui/icons-material/AttachMoney"; // Icono del dól
 
 
 
-export default function SubTotalSelector({values, setFieldValue,formatNumberWithThousandsSeparator,parseFloat}) {
+export default function SubTotalSelector({values, setFieldValue,formatNumberWithThousandsSeparator,parseFloat,errors}) {
 
     return (<TextField
         id={`SubTotal`}
@@ -31,7 +31,8 @@ export default function SubTotalSelector({values, setFieldValue,formatNumberWith
             // Al hacer foco, removemos el formato para permitir la edición del valor numérico
             e.target.value = values.subTotal ? values.subTotal.toString() : "";
         }}
-     
+     error={Boolean(errors.subTotal)}
+          helperText={errors.subTotal}
         onBlur={(e) => {
                     // Al perder el foco, aplicar el formato de separadores de miles y asegurarse que sea un número entero
                     const rawValue = e.target.value.replace(/[^\d]/g, "");

@@ -15,8 +15,8 @@ return (
         fullWidth
         
         value={values?.billId || ''}
-        error={touched?.billId && Boolean(errors?.billId)}
-        helperText={touched?.billId && errors?.billId}
+        error={ Boolean(errors?.billId)}
+        helperText={errors?.billId}
         InputProps={{
                 
              inputProps: {

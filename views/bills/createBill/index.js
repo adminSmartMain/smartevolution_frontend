@@ -264,7 +264,9 @@ useEffect(() => {
   
 const validationSchema2 = Yup.object({
   emitter: Yup.string().required('Emisor es obligatorio'),
-  bill: Yup.string().when('massive', {
+  nombrePagador: Yup.string().required('Emisor es obligatorio'),
+
+  billId: Yup.string().when('massive', {
     is: false,
     then: Yup.string().required('Factura es obligatoria')
   }),
@@ -291,6 +293,11 @@ expirationDate: Yup.date()
   currentBalance: Yup.number()
     .required('Monto a pagar es obligatorio')
     .min(0, 'No puede ser negativo'),
+  subTotal: Yup.number()
+  .required('Monto a pagar es obligatorio')
+  .min(0, 'No puede ser negativo')
+  .moreThan(0, 'El monto no puede ser cero'), // Asegura que sea mayor que 0
+    
   arrayPayers: Yup.array()
     .min(1, 'Debe seleccionar al menos un pagador')
     .required('Debe seleccionar al menos un pagador'),
