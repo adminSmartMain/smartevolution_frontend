@@ -147,6 +147,8 @@ export const NegotiationSummary = ({
     }
   }, [router.query, option]);
 
+
+  //comentario de prueba
   useEffect(() => {
    
     
@@ -722,7 +724,7 @@ export const NegotiationSummary = ({
                 size="small"
                 type="number"
                 disabled={option === "modify" ? true : false}
-                value={option === "modify" ? id : null}
+                value={option === "modify" || "create" ? id : nul}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();

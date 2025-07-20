@@ -704,7 +704,7 @@ export const ManageOperationC = ({
             marginLeft: "1.5rem",
           }}
         >
-         <InputTitles marginBottom={2}>Tasa Descuento</InputTitles>
+        <InputTitles marginBottom={2}>Tasa Descuento</InputTitles>
 <MuiTextField
   id="discountTax"
   placeholder=""
@@ -947,7 +947,7 @@ export const ManageOperationC = ({
   }
 />
         </Box>
-
+        
         <Box
           sx={{
             marginLeft: "3rem",

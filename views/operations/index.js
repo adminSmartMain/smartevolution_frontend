@@ -1,18 +1,9 @@
 import { useEffect, useState } from "react";
-
-
-
 import Head from "next/head";
-
-
-
 import { useFetch } from "@hooks/useFetch";
-
-
-
 import { OperationsComponents } from "./components";
 // queries
-import { getOperationsVersionTwo } from "./queries";
+import { getOperationsVersionTwo,getOperationsVersionTwo2 } from "./queries";
 
 
 export default function Operations() {
@@ -33,7 +24,7 @@ export default function Operations() {
     error: errorGetOperations,
     data: dataGetOperations,
   } = useFetch({
-    service: () => getOperationsVersionTwo({ ...filters, page }),
+    service: () =>getOperationsVersionTwo({ ...filters, page }),
     init: true,
   });
 
@@ -50,7 +41,7 @@ export default function Operations() {
 
   useEffect(() => {
     getOperationsFetch();
-  }, [filters.opId, filters.billId, filters.investor, page]);
+  }, [filters.opId, filters.billId, filters.investor,filters.startDate, filters.endDate, page]);
   
   useEffect(() => {
     if (dataGetOperations) {
@@ -70,6 +61,7 @@ export default function Operations() {
       const checkOperations = dataGetOperations?.results.map(row => {
         const opExpiration = new Date(row.opExpiration + " " + "00:00:00");
         const today = new Date();
+        console.log(opExpiration,today)
         if (opExpiration < today && row.status != 4) {
           return {
             ...row,
@@ -79,13 +71,14 @@ export default function Operations() {
         return row
       });
       const preOperations = checkOperations.filter(
-        (x) => x.status >= 3 || x.status == 1
+        (x) =>  x.status >= 3 || x.status == 1 
       );
       setData(preOperations);
+      
       setCalcs(dataGetOperations?.results[0]?.calcs);
     }
   }, [dataGetOperations, loadingGetOperations, errorGetOperations]);
-
+ 
   return (
     <>
       <Head>
@@ -103,6 +96,7 @@ export default function Operations() {
         page={page}
         setPage={setPage}
         dataCount={dataCount}
+        loading={loadingGetOperations}
       />
     </>
   );

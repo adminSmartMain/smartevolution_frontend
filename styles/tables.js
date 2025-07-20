@@ -5,12 +5,21 @@ import scrollSx from "@styles/scroll";
 
 const CustomDataGrid = styled(DataGrid)({
   border: "none",
+  
+  '& .MuiDataGrid-detailPanel': {
+    overflow: 'visible !important',
+    zIndex: 1,
+  },
+  
+  '& .MuiDataGrid-detailPanelToggle': {
+    height: '100% !important',
+  },
 
   "& .MuiDataGrid-virtualScroller": {
     ...scrollSx,
     overflowX: "auto",
   },
-
+  
   "& .MuiDataGrid-cellCheckbox": {
     "& .MuiCheckbox-root": {
       color: "#488B8F",
@@ -21,7 +30,7 @@ const CustomDataGrid = styled(DataGrid)({
     backgroundColor: "transparent",
     color: "#000000",
     fontSize: "0.8rem",
-    fontWeight: "bold",
+    fontWeight: "normal",
     "&:hover": {
       backgroundColor: "#F5F5F5",
     },
@@ -35,7 +44,6 @@ const CustomDataGrid = styled(DataGrid)({
     "&:focus-within": {
       outline: "none",
     },
-
     "&.MuiDataGrid-cell--editing": {
       backgroundColor: "transparent",
       "&:focus": {
@@ -51,69 +59,68 @@ const CustomDataGrid = styled(DataGrid)({
         padding: "7px 0px",
         borderRadius: "4px",
         backgroundColor: "#488B8F1A",
-
         fontSize: "0.9rem",
         fontWeight: "600",
         textAlign: "right",
       },
     },
   },
-  "& .MuiDataGrid-columnsContainer": {
-    backgroundColor: "#F5F5F5",
-    color: "#000000",
-
-    fontSize: "0.8rem",
-    fontWeight: "bold",
-  },
-  "& .MuiDataGrid-columnsContainerSeparator": {
-    display: "none",
-  },
-
-  "& .MuiDataGrid-columnHeaderTitle": {
-    fontWeight: "bold",
-    fontSize: "0.7rem",
-    color: "#8C7E82",
-    letterSpacing: "0px",
-  },
-
+  
+  // HEADER STYLES
   "& .MuiDataGrid-columnHeaders": {
+    backgroundColor: "#F5F5F5",
     borderBottom: "none",
+    minHeight: '36px !important',
+    maxHeight: '36px !important',
   },
-
-  "& .MuiDataGrid-columnHeader ": {
+  
+  "& .MuiDataGrid-columnHeader": {
+    padding: '0px',
+    minHeight: '36px !important',
+    maxHeight: '36px !important',
     "&:focus": {
       outline: "none",
     },
-
     "&:focus-within": {
       outline: "none",
     },
   },
 
+  // ESTO ES LO QUE CENTRA EL TEXTO DEL HEADER
+  "& .MuiDataGrid-columnHeaderTitleContainer": {
+    justifyContent: "center !important", // Centrado horizontal
+    padding: '0px',
+    width: '100%',
+  },
+  
+  "& .MuiDataGrid-columnHeaderTitle": {
+    fontWeight: "bold",
+    fontSize: "0.8rem",
+    color: "#808080",
+    letterSpacing: "0px",
+    lineHeight: '1.3',
+    textAlign: 'center', // Centrado horizontal del texto
+    width: '100%',
+    
+  },
+
+  // Footer y otros estilos
   "& .MuiDataGrid-footerContainer": {
     borderTop: "none",
   },
-
-  "& .MuiDataGrid-columnHeaderTitleContainer": {
-    justifyContent: "left",
-    hover: "none",
-    "& .MuiCheckbox-root": {
-      color: "#488B8F",
-    },
-  },
+  
   "& .MuiDataGrid-columnHeaderCheckbox": {
     justifyContent: "center",
   },
-  "& .MuiDataGrid-columnHeaderSeparator": {
-    display: "none",
-  },
-  "& .MuiDataGrid-columnSeparator": {
+  
+  "& .MuiDataGrid-columnHeaderSeparator, & .MuiDataGrid-columnSeparator": {
     display: "none",
   },
 
   "& .MuiDataGrid-sortIcon": {
     color: "#8C7E82",
-    display: "static",
+    fontSize: '16px',
+    marginLeft: '4px',
   },
 
   "& .MuiDataGrid-menuIcon": {

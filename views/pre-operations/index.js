@@ -8,6 +8,7 @@ import { OperationsComponents } from "./components";
 // queries
 import { getOperationsVersionTwo } from "./queries";
 
+
 export default function Operations() {
   const [data, setData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
@@ -31,10 +32,7 @@ export default function Operations() {
 
 
   let dataCount = dataGetOperations?.count || 0;
-  console.log(data)
-  console.log(filteredData)
-  console.log(dataGetOperations)
-  console.log(page)
+
 
 
   const filtersHandlers = {
@@ -45,10 +43,10 @@ export default function Operations() {
     error: errorGetOperations,
     data: dataGetOperations?.results || {},
   };
-
+  console.log(filters)
   useEffect(() => {
     getOperationsFetch();
-  }, [filters.opId, filters.billId, filters.investor, page]);
+  }, [filters.opId, filters.billId, filters.investor,filters.startDate, filters.endDate, page]);
 
   useEffect(() => {
     if (dataGetOperations) {
@@ -66,8 +64,14 @@ export default function Operations() {
   useEffect(() => {
     if (dataGetOperations) {
      
-      console.log(dataGetOperations.results)
-      setData(dataGetOperations.results);
+      const checkOperations = dataGetOperations?.results.map(row => {
+       
+        return row
+      });
+      const preOperations = checkOperations.filter(
+        (x) =>   x.status == 0 ||   x.status == 2
+      );
+      setData(preOperations);;
     }
     console.log('d')
   }, [dataGetOperations, loadingGetOperations, errorGetOperations]);
@@ -88,6 +92,7 @@ export default function Operations() {
         page={page}
         setPage={setPage}
         dataCount={dataCount}
+        loading={loadingGetOperations}
       />
     </>
   );

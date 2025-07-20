@@ -3,12 +3,14 @@ import { useEffect, useState } from "react";
 import { useBeforeunload } from "react-beforeunload";
 // Alerts
 import { ToastContainer } from "react-toastify";
-
+import * as Yup from 'yup';
 import { useRouter } from "next/router";
 
 import { Toast } from "@components/toast";
 
 import { useFetch } from "@hooks/useFetch";
+import { toast } from "react-toastify";
+import Axios from "axios";
 
 // Components
 import { ManageOperationC } from "./components";
@@ -16,17 +18,22 @@ import { ManageOperationC } from "./components";
 import {
   CreateOperation,
   DeleteOperation,
+  TypeOperation,
   GetBillFraction,
   GetLastOperationId,
   GetOperationById,
   GetRiskProfile,
   UpdateOperation,
+  Clients,
+ 
 } from "./queries";
-
+import { Bills, billById, payerByBill } from "./queries";
 // Utils
 import { PV } from "@formulajs/formulajs";
 import { addDays, differenceInDays, format, subDays } from "date-fns";
 import { useFormik } from "formik";
+
+
 
 export const ManageOperationV = () => {
   // States
@@ -38,47 +45,51 @@ export const ManageOperationV = () => {
   const [operations, setOperations] = useState([]);
   const [isAddingBill, setIsAddingBill] = useState(false);
   const [isCreatingBill, setIsCreatingBill] = useState(false);
-
-  const handleMultipleOperations = () => {
-    setOperations([...operations, { ...formik.values }]);
-    formik.setValues({
-      ...formik.values,
-      opId: opId,
-      payer: "",
-      investor: "",
-      bill: "",
-      client: "",
-      clientAccount: "",
-      billFraction: 0,
-      DateBill: `${new Date().toISOString().substring(0, 10)}`,
-      DateOperation: `${new Date().toISOString().substring(0, 10)}`,
-      probableDate: `${new Date().toISOString().substring(0, 10)}`,
-      DateExpiration: `${new Date().toISOString().substring(0, 10)}`,
-      opExpiration: `${new Date().toISOString().substring(0, 10)}`,
-      amount: 0,
-      discountTax: 0,
-      investorTax: 0,
-      payedAmount: 0,
-      payedPercent: 0,
-      emitterBroker: "",
-      investorBroker: "",
-      operationDays: 0,
-      investorProfit: 0,
-      presentValueInvestor: 0,
-      presentValueSF: 0,
-      GM: 0,
-      applyGm: false,
-      opPendingAmount: 0,
-      commissionSF: 0,
-      billCode: "",
-      massive:false
-    });
-  };
-
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [success, setSuccess] = useState(null);
+  const [loading2, setLoading] = useState(false);
+  
+  const [pendingSubmit, setPendingSubmit] = useState(false);
+  const [submitValues, setSubmitValues] = useState(null);
+  const [isFinished,setIsFinished] =useState(null)
   // Router
   const router = useRouter();
 
   // Queries
+
+
+
+  const {
+    fetch: fetch,
+    loading: loading,
+    error: error,
+    data: data,
+  } = useFetch({ service: Clients, init: true });
+
+  const {
+      fetch: fetchBills,
+      loading: loadingBills,
+      error: errorBills,
+      data: dataBills,
+    } = useFetch({ service: Bills, init: false });
+
+  // get the payer of the bill
+  const {
+    fetch: fetchPayer,
+    loading: loadingPayer,
+    error: errorPayer,
+    data: dataPayer,
+  } = useFetch({ service: payerByBill, init: false });
+
+  // get the bill info
+  const {
+    fetch: fetchBill,
+    loading: loadingBill,
+    error: errorBill,
+    data: dataBill,
+  } = useFetch({ service: billById, init: false });
+   
+
   const {
     fetch: getLastId,
     loading: loadingGetLastId,
@@ -128,327 +139,664 @@ export const ManageOperationV = () => {
     data: dataUpdateOperation,
   } = useFetch({ service: UpdateOperation, init: false });
 
-  // Formik
 
-  const initialValues = {
-    amount: 0,
-    applyGm: false,
-    bill: "",
-    billFraction: 0,
-    client: "",
-    clientAccount: "",
-    commissionSF: 0,
-    DateBill: `${new Date().toISOString().substring(0, 10)}`,
-    DateExpiration: `${new Date().toISOString().substring(0, 10)}`,
-    discountTax: 0,
-    discountTax: 0,
-    emitter: "",
-    emitterBroker: "",
-    GM: 0,
-    id: "",
-    investor: "",
-    investorBroker: "",
-    investorProfit: 0,
-    investorTax: 0,
-    opDate: `${new Date().toISOString().substring(0, 10)}`,
-    operationDays: 0,
-    opExpiration: `${new Date().toISOString().substring(0, 10)}`,
-    opId: null,
-    opType: "",
-    payedAmount: 0,
-    payedPercent: 0,
-    payer: "",
-    presentValueInvestor: 0,
-    presentValueSF: 0,
-    probableDate: `${new Date().toISOString().substring(0, 10)}`,
-    status: 0,
-    billCode: "",
-  };
+    // Hooks
+    const {
+      fetch: fetchTypeIdSelect,
+      loading: loadingTypeIdSelect,
+      error: errorTypeIdSelect,
+      data: dataTypeIdSelect,
+    } =  useFetch({ service: TypeOperation, init: true });
+        
 
-  const formik = useFormik({
-    initialValues: initialValues,
-
-    onSubmit: (values) => {
-      const data = [...operations, { ...formik.values }];
-      updateOperationFetch(data);
-      setUpdated(1);
-      router.push("/operations");
-    },
-  });
-
-  // Detect when the user refresh the page
-  useBeforeunload((event) => {
-    if (updated === 0 && isEditing === false) {
-      deleteOperationFetch(formik.values.opId);
-    }
-  });
-
-  // Effects
-
-  // Detect when the user selects an investor
-  useEffect(() => {
-    formik.setFieldValue("client", formik.values.investor);
-    riskProfileFetch(formik.values.investor);
-  }, [formik.values.investor]);
-
-  // Detect when the user is editing an operation
-  useEffect(() => {
-    if (router && router.query) {
-      setId(Object.values(router.query)[0]);
-    }
-  }, [router.query]);
-
-  // detect when the user is editing an operation and get the operation data
-  useEffect(() => {
-    if (id) {
-      getOperationByIdFetch(id);
-      setIsEditing(true);
-    }
-  }, [id]);
-
-  // Get the last operation id
+    
+ // Get the last operation id
   useEffect(() => {
     if (dataGetLastId) {
       setOpId(dataGetLastId.data);
-      formik.setFieldValue("opId", dataGetLastId.data);
+      
     }
   }, [loadingGetLastId, errorGetLastId, dataGetLastId]);
 
-  // Get the operation data if the user is editing an operation else create a new operation
-  useEffect(() => {
-    if (
-      formik.values.opId !== null &&
-      created === 0 &&
-      id === undefined &&
-      isAddingBill === false
-    ) {
-      createOperationFetch(formik.values, opId);
-      setCreated(1);
-    } else if (id !== undefined && id !== null) {
-    }
-  }, [formik.values.opId, id]);
 
-  // Detect when the user change the page
-  useEffect(() => {
-    const handleRouteChange = (url) => {
-      if (isEditing === false && updated === 0) {
-        if (dataCreateOperation)
-          deleteOperationFetch(dataCreateOperation.data.opId);
+const [client, setClient] = useState([]);
+const [payer, setPayer] = useState([]);
+const [typeOp, setTypeOp] = useState([]);
+
+
+//GET TYPE OPERATION
+
+useEffect(() => {
+  if (dataTypeIdSelect) {
+
+    var typesID = [];
+    dataTypeIdSelect.data.map((typeID) => {
+      typesID.push({ label: typeID.description, value: typeID.id });
+    });
+
+    setTypeOp(typesID);
+  }
+}, [dataTypeIdSelect, loadingTypeIdSelect, errorTypeIdSelect]);
+
+
+// GET CLIENTS (EMITTERS)
+useEffect(() => {
+  if (!data) return;
+
+  const processClients = (clients) => {
+    return clients
+      .map(client => ({
+        label: client.first_name
+          ? `${client.first_name} ${client.last_name} - ${client.document_number}`
+          : `${client.social_reason} - ${client.document_number}`,
+        value: client.id,
+        data: client,
+        sortKey: client.social_reason || `${client.first_name} ${client.last_name}`
+      }))
+      .sort((a, b) => a.sortKey.localeCompare(b.sortKey));
+  };
+
+  setClient(processClients(data.data));
+}, [data, loading, error]);
+
+// GET PAYERS
+useEffect(() => {
+  if (!data) return;
+
+  const processPayers = (payers) => {
+    return payers
+      .map(client => ({
+        label: client.first_name
+          ? `${client.first_name} ${client.last_name} - ${client.document_number}`
+          : `${client.social_reason} - ${client.document_number}`,
+        value: client.first_name
+          ? `${client.first_name} ${client.last_name}`
+          : client.social_reason,
+        data: client,
+        id: client.id,
+        sortKey: client.social_reason || `${client.first_name} ${client.last_name}`
+      }))
+      .sort((a, b) => a.sortKey.localeCompare(b.sortKey));
+  };
+
+  setPayer(processPayers(data.data));
+}, [data, loading, error]);
+
+
+
+
+const validationSchema = Yup.object({
+  opId: Yup.number()
+    .required('Este campo es obligatorio')
+    .typeError('Debe ser un número válido'), // Validación para campo numérico
+  opDate: Yup.date().required('Este campo es obligatorio'),
+  opType: Yup.string().required('Este campo es obligatorio'),
+  emitter: Yup.string().required('Este campo es obligatorio'),
+  corredorEmisor: Yup.string().required('El corredor emisor es requerido'),
+  investorTax: Yup.number().required('Este campo es obligatorio'),
+ discountTax: Yup.number()
+  .required('Este campo es obligatorio')
+  .test(
+    'is-after-investorTax',
+    'La tasa de descuento debe ser mayor o igual a la tasa de inversionista',
+    function(value) {
+
+      const investorTax = this.parent?.investorTax; // Accede al valor raíz
+      
+      // Solo saltar validación si investorTax no está definido
+      if (investorTax === undefined || investorTax === null) return true;
+      
+      // Ahora 0 será comparado correctamente con investorTax
+      return value >= investorTax;
+    }
+  ),
+  
+  facturas: Yup.array().of(
+    Yup.object({
+      billId: Yup.string().required('Este campo es obligatorio'),
+     numbercuentaInversionista:Yup.string().required('Este campo es obligatorio'),
+      investorProfit: Yup.number().required('Este campo es obligatorio').typeError('Debe ser un número válido'),
+      nombreInversionista: Yup.string().required('Este campo es obligatorio'),
+      //cuentaInversionista: Yup.string().required('Este campo es obligatorio'),
+      factura: Yup.string().required('Este campo es obligatorio'),
+      fraccion: Yup.number().required('Este campo es obligatorio'),
+      investorTax: Yup.number().required('Este campo es obligatorio').test(
+        'is-after-discountTax',
+        'La tasa de inversionsita debe ser menor o igual a la tasa de descuento',
+        function(value) {
+
+          const discountTax = this.parent?.discountTax; // Accede al valor raíz
+          if (!discountTax || !value) return true;
+          return value <= discountTax;
+        }
+      ),
+      valorFuturo: Yup.number()
+        .required('Este campo es obligatorio')
+        .typeError('Debe ser un número válido'),
+      porcentajeDescuento: Yup.number()
+        .required('Este campo es obligatorio')
+        .min(0, 'El descuento no puede ser menor a 0%')
+        .max(100, 'El descuento no puede ser mayor a 100%'),
+      fechaEmision: Yup.date().required('Este campo es obligatorio'),
+      valorNominal: Yup.number().required('Este campo es obligatorio').typeError('Debe ser un número válido'),
+     probableDate: Yup.date()
+        .required('Este campo es obligatorio')
+        .test(
+        'is-same-or-after-opdate',
+        'La fecha probable debe ser igual o posterior a la fecha de operación',
+        function(value) {
+
+          const opDate = this.parent.opDate// Accede al valor raíz
+          
+          if (!opDate || !value) return true;
+      
+      // Normalizar fechas para comparación (ignorar husos horarios)
+      const valueDate = new Date(value);
+      valueDate.setHours(0, 0, 0, 0);
+      
+      const opDateObj = new Date(opDate);
+      opDateObj.setHours(0, 0, 0, 0);
+      
+      return valueDate >= opDateObj;
+        }
+      ),
+     fechaFin: Yup.date()
+      .required('Este campo es obligatorio')
+      .test(
+        'is-after-probable',
+        'La fecha fin debe ser posterior a la fecha probable',
+        function(value) {
+          
+
+          const probableDate = this.parent.probableDate;
+          if (!probableDate || !value) return true;
+          return new Date(value) >= new Date(probableDate);
+        }
+      ),
+      operationDays:Yup.number().required('Este campo es obligatorio'),
+      comisionSF: Yup.number().required('Este campo es obligatorio'),
+      gastoMantenimiento: Yup.number().required('Este campo es obligatorio'),
+      investorBrokerName:Yup.string().required('Este campo es obligatorio'),
+    })
+  ),
+});
+
+
+const transformData = (data) => {
+  const usedBillCodes = {};
+  const processedBillIds = {}; // Para rastrear billIds ya procesados
+
+  return data.facturas.map((factura) => {
+
+    const baseStructure = {
+      billId: factura.billId,
+      is_creada: factura.is_creada || false,
+      dataSent: {
+        amount: factura.valorFuturo,
+        applyGm: factura.gastoMantenimiento > 0,
+        bill: factura.factura,
+        billFraction: factura.fraccion,
+        client: factura.nombreInversionista,
+        clientAccount: factura.idCuentaInversionista|| '',
+        commissionSF: factura.comisionSF,
+        DateBill: factura.fechaEmision || new Date().toISOString().substring(0, 10),
+        DateExpiration: new Date(factura.expirationDate).toISOString().substring(0, 10) || new Date().toISOString().substring(0, 10),
+        discountTax: data.discountTax,
+        emitter: data.emitter.value,
+        emitterBroker: data.emitterBroker,
+        GM: factura.gastoMantenimiento || 0,
+        billCode:"",
+        investor: factura.nombreInversionista,
+        investorBroker: factura.investorBroker,
+        investorProfit: factura.investorProfit,
+        investorTax: factura.investorTax,
+        opDate: new Date(data.opDate).toISOString().substring(0, 10),
+        operationDays: factura.operationDays,
+        opExpiration: new Date(factura.fechaFin).toISOString().substring(0, 10) || new Date().toISOString().substring(0, 10),
+        opId: data.opId,
+        opType: data.opType,
+        payedAmount: factura.payedAmount,
+        payedPercent: factura.porcentajeDescuento,
+        payer: data.nombrePagador,
+        presentValueInvestor: factura.presentValueInvestor,
+        presentValueSF: factura.presentValueSF,
+        probableDate: new Date(factura.probableDate).toISOString().substring(0, 10),
+        status: 0,
+        isReBuy: false,
+        massive: false,
+        saldoInicialFactura: factura.saldoDisponibleInfo, 
+        file:factura.file,
       }
     };
-    router.events.on("routeChangeStart", handleRouteChange);
 
-    return () => {
-      router.events.off("routeChangeStart", handleRouteChange);
+    if (factura.is_creada) {
+      if (!processedBillIds[factura.billId]) {
+        // Primera factura con este billId
+        processedBillIds[factura.billId] = true;
+        
+        if (factura.billCode && !usedBillCodes[factura.billCode]) {
+          usedBillCodes[factura.billCode] = true;
+          return {
+            ...baseStructure,
+            dataSent: {
+              ...baseStructure.dataSent,
+              billCode: factura.billCode,
+              currentBalance: factura.saldoDisponible,
+            },
+            isFirstOccurrence: true // Marcamos como primera ocurrencia
+          };
+        }
+      }
+      
+      // Facturas subsiguientes con el mismo billId
+      return {
+        ...baseStructure,
+        needsGeneratedBillId: true, // Marcar que necesita obtener el ID generado
+        isFirstOccurrence: false
+      };
+    }
+    
+    return baseStructure;
+  });
+};
+// Efecto para manejar la alerta de saldo insuficiente
+useEffect(() => {
+  if (dataCreateOperation?.data?.insufficientAccountBalance) {
+    toast(
+      "El monto de la operación es mayor al saldo disponible en la cuenta del cliente",
+      "warning"
+    );
+  }
+}, [dataCreateOperation]); // Se ejecutará cada vez que dataCreateOperation cambie
+
+
+
+
+
+
+const onSubmit = async (values, { setSubmitting }) => {
+  setIsModalOpen(true);
+  setLoading(true);
+  setSubmitting(true);
+
+  try {
+    await validationSchema.validate(values, { abortEarly: false });
+    
+    const facturasTransformadas = transformData(values);
+    
+    // Validación adicional para facturas creadas
+    const facturasCreadas = facturasTransformadas.filter(f => f.is_creada);
+    const billCodesUnicos = [...new Set(
+      facturasCreadas
+        .map(f => f.dataSent.billCode)
+        .filter(code => code) // Filtramos códigos nulos/undefined
+    )];
+    
+    if (facturasCreadas.length > billCodesUnicos.length) {
+      console.warn("Advertencia: Algunas facturas creadas no tienen billCode o están duplicados");
+    }
+    // Resto de tu lógica de validación...
+    const billIds = [...new Set(facturasTransformadas.map(op => op.billId))];
+    const saldoValido = await verificarSaldosFacturas(billIds, facturasTransformadas);
+    
+    if (!saldoValido.todasValidas) {
+      throw new Error(saldoValido.mensajeError || "Una o más facturas no cumplen con las reglas de saldo");
+    }
+    
+    // Ejecución de operaciones
+    const { success, successfulOperations, failedOperations } = await executeAtomicOperations(facturasTransformadas);
+    
+    
+    if (failedOperations?.length > 0) {
+      throw new Error(
+        `${failedOperations.length} operaciones fallaron: ${
+          failedOperations.map(op => op.error?.message || op.error).join('; ')
+        }`
+      );
+    }
+
+    setSuccess(true);
+    toast.info(
+      <div>
+        <strong>¡Operacioes procesadas!</strong>
+        <p>Se procesaron {facturasTransformadas.length} facturas correctamente</p>
+        {facturasCreadas.length > 0 && (
+          <p>Incluyendo {facturasCreadas.length} facturas creadas</p>
+        )}
+      </div>,
+      { autoClose: 2000 }
+    );
+ 
+    await new Promise(resolve => setTimeout(resolve, 5000));
+    setIsModalOpen(false);
+
+
+ 
+    
+  } catch (error) {
+    // Manejo de errores permanece igual
+    setSuccess(false);
+    console.error("Error detallado:", error);
+    
+    const errorMessage = error.name === 'ValidationError' 
+      ? `Errores de validación: ${error.errors.join(', ')}`
+      : error.message;
+    
+    toast.error(
+      <div>
+        <strong>¡Operación cancelada!</strong>
+        <p>{errorMessage}</p>
+      </div>,
+      { autoClose: 10000 }
+    );
+    
+    if (window.navigator.vibrate) {
+      window.navigator.vibrate([200, 100, 200]);
+    }
+  } finally {
+    setLoading(false);
+    setSubmitting(false);
+   
+  }
+};
+
+const verificarSaldosFacturas = async (billIds, facturasTransformadas) => {
+  try {
+    if (!Array.isArray(billIds) || billIds.length === 0) {
+      throw new Error("No se proporcionaron IDs de facturas válidos");
+    }
+
+    
+    // 1. Primero verificamos si hay billIds duplicados
+    const billIdsConEstado = billIds.map((billId, index) => ({
+      billId,
+      is_creada: facturasTransformadas[index]?.is_creada| false
+    }));
+    
+    // Filtrar para obtener solo los únicos, manteniendo el estado is_creada
+    const billIdsUnicos = Array.from(new Map(
+      billIdsConEstado.map(item => [item.billId, item])
+    ).values());
+ 
+
+    // 2. Obtenemos los datos de todas las facturas únicas
+    const resultadosUnicos = await Promise.all(
+      billIdsUnicos.map(async (billId) => {
+        const billIdStr = String(billId.billId).trim();
+        const is_creada_billId= facturasTransformadas.filter(f => f.billId==billIdStr)
+     
+        try {
+          const response = await Axios.get(
+            `${process.env.NEXT_PUBLIC_API_URL}/bill/${billIdStr}`,
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("access-token")}`,
+              },
+              timeout: 10000,
+            }
+          );
+
+          if (!response.data) {
+            throw new Error("Respuesta vacía del servidor");
+          }
+
+          let factura;
+        
+          if (response.data.results && Array.isArray(response.data.results)) {
+            if (response.data.results.length === 0 && billIdStr.is_creada==0 ) {
+              throw new Error("Factura no encontrada");
+            }
+            factura = response.data.results[0] || is_creada_billId[0];
+          } else if (response.data.id || response.data.uuid && billIdStr.is_creada==0 ) {
+            factura = response.data;
+          } else {
+            throw new Error("Formato de respuesta no reconocido");
+          }
+
+          // Validaciones básicas
+          if ( factura.is_creada==0 && factura.state !== true ) {
+            throw new Error("Factura no está activa");
+          }
+
+          if (typeof factura.currentBalance !== 'number' && billIdStr.is_creada==0) {
+            throw new Error("Valor de saldo inválido");
+          }
+
+          return {
+            billId: billIdStr,
+            currentBalance: factura.currentBalance,
+            billData: factura,
+            status: "success"
+          };
+
+        } catch (error) {
+          let errorMessage = `Error en factura ${billIdStr}: `;
+          
+          if (error.response) {
+            errorMessage += error.response.data?.message || error.response.statusText;
+          } else {
+            errorMessage += error.message;
+          }
+
+          return {
+            billId: billIdStr,
+            currentBalance: 0,
+            status: "error",
+            error: errorMessage,
+            tipoError: "ERROR_VERIFICACION"
+          };
+        }
+      })
+    );
+
+    // 3. Mapeamos los resultados a todas las facturas (incluyendo duplicados)
+    const resultados = billIds.map(billId => {
+      const billIdStr = String(billId).trim();
+      const resultadoUnico = resultadosUnicos.find(r => r.billId === billIdStr);
+      
+      if (!resultadoUnico || resultadoUnico.status !== "success") {
+        return {
+          billId: billIdStr,
+          currentBalance: 0,
+          valida: false,
+          error: resultadoUnico?.error || "Factura no verificada",
+          status: "error",
+          tipoError: resultadoUnico?.tipoError || "ERROR_VERIFICACION"
+        };
+      }
+
+      return {
+        ...resultadoUnico,
+        valida: true // Lo validaremos después
+      };
+    });
+
+    // 4. Ahora validamos las reglas para cada factura
+    const resultadosFinales = billIds.map((billId, index) => {
+      const billIdStr = String(billId).trim();
+      const resultado = resultados[index];
+      
+      // Si ya hay un error, lo mantenemos
+      if (resultado.status !== "success") {
+        return resultado;
+      }
+
+      // Obtenemos todas las facturas con este billId
+      const facturasConMismoId = facturasTransformadas.filter(f => String(f.billId).trim() === billIdStr);
+      const facturaOperacion = facturasTransformadas[index];
+      
+      if (!facturaOperacion) {
+        return {
+          ...resultado,
+          valida: false,
+          error: `No se encontró la factura en la operación`,
+          status: "error",
+          tipoError: "ERROR_OPERACION"
+        };
+      }
+
+      // REGLA 1: Si currentBalance es 0
+      if (resultado.currentBalance === 0) {
+        return {
+          ...resultado,
+          valida: false,
+          error: `Factura ${billIdStr} tiene saldo 0`,
+          status: "error",
+          tipoError: "SALDO_CERO"
+        };
+      }
+
+      // REGLA 2: Para facturas duplicadas, suma de amounts vs currentBalance
+      if (facturasConMismoId.length > 1) {
+        const totalAmount = facturasConMismoId.reduce((sum, f) => sum + f.dataSent.amount, 0);
+        
+        if (totalAmount > resultado.currentBalance) {
+          return {
+            ...resultado,
+            valida: false,
+            error: `La suma de montos (${totalAmount}) para factura ${billIdStr} excede el saldo (${resultado.currentBalance})`,
+            status: "error",
+            tipoError: "MONTO_EXCEDIDO"
+          };
+        }
+      } 
+      // REGLA 3: Para facturas únicas, amount vs currentBalance
+      else if (facturaOperacion.dataSent.amount > resultado.currentBalance) {
+        return {
+          ...resultado,
+          valida: false,
+          error: `El monto a pagar (${facturaOperacion.dataSent.amount}) excede el saldo (${resultado.currentBalance})`,
+          status: "error",
+          tipoError: "MONTO_EXCEDIDO"
+        };
+      }
+
+      // Si pasa todas las validaciones
+      return {
+        ...resultado,
+        valida: true,
+        status: "success"
+      };
+    });
+
+    // 5. Clasificación de resultados finales
+    const facturasValidas = resultadosFinales.filter(r => r.valida);
+    const facturasConSaldoCero = resultadosFinales.filter(r => r.tipoError === "SALDO_CERO");
+    const facturasConMontoExcedido = resultadosFinales.filter(r => r.tipoError === "MONTO_EXCEDIDO");
+    const otrosErrores = resultadosFinales.filter(r => !r.valida && r.tipoError !== "SALDO_CERO" && r.tipoError !== "MONTO_EXCEDIDO");
+
+    // 6. Preparar mensaje de error compuesto
+    let mensajeError = "";
+    if (facturasConSaldoCero.length > 0) {
+      mensajeError += `Facturas con saldo 0: ${facturasConSaldoCero.map(f => f.billId).join(', ')}. `;
+    }
+    if (facturasConMontoExcedido.length > 0) {
+      mensajeError += `Facturas con monto excedido: ${facturasConMontoExcedido.map(f => `${f.billId} (${f.error})`).join(', ')}. `;
+    }
+    if (otrosErrores.length > 0) {
+      mensajeError += `Errores de verificación: ${otrosErrores.map(f => f.billId).join(', ')}.`;
+    }
+
+    return {
+      exitoso: facturasValidas.length === billIds.length,
+      facturasValidas,
+      facturasConSaldoCero,
+      facturasConMontoExcedido,
+      otrosErrores,
+      todasValidas: facturasValidas.length === billIds.length,
+      facturaInvalida: resultadosFinales.find(r => !r.valida) || null,
+      detalles: resultadosFinales,
+      mensajeError: mensajeError.trim()
     };
-  }, [updated, router.events, dataCreateOperation]);
 
-  // detect when a bill is selected
-  useEffect(() => {
-    if (formik.values.bill !== "") {
-      if (!id) {
-        getBillFractionFetch(formik.values.bill);
-      } else if (dataGetOperationById?.data?.bill !== formik.values.bill) {
-        getBillFractionFetch(formik.values.bill);
-      }
-    }
-  }, [formik.values.bill, dataGetOperationById]);
+  } catch (error) {
+    console.error("Error crítico en verificarSaldosFacturas:", error);
+    throw new Error(`Error al verificar saldos: ${error.message}`);
+  }
+};
 
-  // Get the id of the new operation
-  useEffect(() => {
-    if (dataCreateOperation) {
-      formik.setFieldValue("id", dataCreateOperation.data.id);
-      formik.setFieldValue("DateBill", "");
-      formik.setFieldValue("probableDate", "");
-    }
-  }, [dataCreateOperation]);
 
-  // Get the bill data
-  useEffect(() => {
-    if (dataGetOperationById) {
-      formik.setValues(dataGetOperationById.data);
-      formik.setFieldValue(
-        "billFraction",
-        dataGetOperationById.data.billFraction
-      );
-      formik.setFieldValue("bill", dataGetOperationById.data.bill.id);
-      formik.setFieldValue(
-        "DateExpiration",
-        dataGetOperationById.data.DateExpiration
-      );
-      formik.setFieldValue(
-        "investorBroker",
-        dataGetOperationById.data.investorBroker.id
-      );
-    }
-  }, [dataGetOperationById, loadingGetOperationById, errorGetOperationById]);
 
-  // Set the values of the bill
-  useEffect(() => {
-    if (dataGetBillFraction) {
-      const date = new Date(`${dataGetBillFraction.data.expirationDate}`);
-      const addDay = addDays(date, 1);
-      const substractDay = differenceInDays(addDay, new Date());
-      formik.setFieldValue("billFraction", dataGetBillFraction.data.fraction);
-      formik.setFieldValue("amount", dataGetBillFraction.data.billValue);
-      formik.setFieldValue("DateBill", dataGetBillFraction.data.dateBill);
-      formik.setFieldValue("opDate", dataGetBillFraction.data.opDate);
-      formik.setFieldValue(
-        "DateExpiration",
-        dataGetBillFraction.data.expirationDate
-      );
-      formik.setFieldValue(
-        "operationDays",
-        substractDay > 0 ? substractDay + 1 : substractDay * -1 + 1
-      );
-    }
-  }, [dataGetBillFraction]);
 
-  // update the operation values when the user is editing the values
-  useEffect(() => {
-    if (dataRiskProfile) {
-      formik.setFieldValue("discountTax", dataRiskProfile.data.discount_rate);
-      formik.setFieldValue("applyGm", dataRiskProfile.data.gmf);
-    }
-  }, [dataRiskProfile]);
 
-  useEffect(() => {
-    // 58% of the discount rate
-    formik.setFieldValue(
-      "investorTax",
-      (formik.values.discountTax * 0.58).toFixed(2)
-    );
-  }, [formik.values.discountTax]);
+const executeAtomicOperations = async (operations) => {
+  const progressToast = toast.info(`Procesando ${operations.length} operaciones...`, { autoClose: false });
 
-  useEffect(() => {
-    if (formik.values.payedAmount > formik.values.amount) {
-      alert("El monto pagado no puede ser mayor al monto de la operación");
-      formik.setFieldValue("payedAmount", 0);
-      formik.setFieldValue("payedPercent", 0);
-    }
+  try {
+    // Preparar payload marcando primeras ocurrencias
+    const payload = operations.map((op, index) => ({
+      ...op.dataSent,
+      _isFirstOccurrence: operations.findIndex(
+        o => o.billId === op.billId
+      ) === index
+    }));
 
-    if (dataGetBillFraction?.data?.billValue) {
-      if (formik.values.amount > dataGetBillFraction?.data?.billValue) {
-        alert(
-          "El valor futuro no puede ser mayor al valor disponible de la factura"
-        );
-        formik.setFieldValue("amount", dataGetBillFraction?.data?.billValue);
-      }
-    }
+    const response = await createOperationFetch(payload, payload[0]?.opId);
 
-    if (formik.values.payedAmount !== 0) {
-      formik.setFieldValue(
-        "payedPercent",
-        ((formik.values.payedAmount / formik.values.amount) * 100).toFixed(2)
-      );
-    }
-  }, [formik.values.payedAmount, formik.values.amount]);
+    // Procesar resultados
+    const failed = response?.data.failed || [];
+    const successful = response?.data.successful || [];
 
-  // calc the amounts of the operation
-  useEffect(() => {
-    if (formik.values.operationDays > 0 && formik.values.payedAmount > 0) {
-      formik.setFieldValue(
-        "presentValueInvestor",
-        Math.round(
-          PV(
-            formik.values.investorTax / 100,
-            formik.values.operationDays / 365,
-            0,
-            formik.values.payedAmount,
-            0
-          ) * -1
-        )
-      );
+    toast.dismiss(progressToast);
+    
+ 
+    return {
+      success: failed.length === 0, // true solo si no hay fallos
+      successfulOperations: successful,
+      failedOperations: failed,
+      totalOperations: operations.length
+    };
 
-      formik.setFieldValue(
-        "presentValueSF",
-        Math.round(
-          PV(
-            formik.values.discountTax / 100,
-            formik.values.operationDays / 365,
-            0,
-            formik.values.payedAmount,
-            0
-          ) * -1
-        )
-      );
-    }
-  }, [
-    formik.values.operationDays,
-    formik.values.amount,
-    formik.values.payedAmount,
-    formik.values.discountTax,
-    formik.values.investorTax,
-  ]);
+  } catch (error) {
+    toast.dismiss(progressToast);
+    return {
+      success: false,
+      error: error.response?.data?.message || error.message,
+      totalOperations: operations?.length
+    };
+  }
+};
 
-  useEffect(() => {
-    formik.setFieldValue(
-      "investorProfit",
-      formik.values.presentValueInvestor * -1 + formik.values.payedAmount
-    );
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+  const [actions,  setActions] = useState('');
+  const handleConfirm = async (values,actions) => {
 
-    formik.setFieldValue(
-      "commissionSF",
-      formik.values.presentValueInvestor - formik.values.presentValueSF
-    );
-    /*Cambio en el factor de GM
-    Por solicitud cambia el factor de GM de 0,004 a 0,002 a partir del 26 de octubre de 2024.
-    */
-    if (formik.values.applyGm) {
-      formik.setFieldValue("GM", formik.values.presentValueInvestor * 0.002);
-    }
-  }, [formik.values.presentValueInvestor]);
+    setShowConfirmationModal(true);
+    setActions(actions)
 
-  // detect when a new bill is added
-  useEffect(() => {
-    if (operations.length) {
-      createOperationFetch(formik.values, opId);
-      formik.setFieldValue("opId", opId);
-      setIsCreatingBill(false);
-    }
-  }, [operations]);
+    // Verifica en React DevTools si el estado realmente cambió
+  };
+  
+  // En tu componente principal
+ 
+  
+  // 🔥 Elimina el useEffect completamente - Todo se maneja en onSubmit
 
-  useEffect(() => {
-    if (dataCreateOperation) {
-      if (operations.length > 1) {
-        Toast("operaciones creadas", "success");
-      } else {
-        Toast("operación creada", "success");
-      }
-    }
-    if (loadingCreateOperation) {
-      Toast("creando operaciones", "info");
-    }
+return (
+  <>
+  
+    {opId && <ManageOperationC 
+              opId={opId}
+              emitters={client}
+              investors={client}
+              payers={payer}
+              typeOperation={dataTypeIdSelect}
+              onFormSubmit={onSubmit}
+              loading={loading}
+              success={success}
+              isModalOpen={isModalOpen}
+              validationSchema={validationSchema}
+              showConfirmationModal={showConfirmationModal}
+              handleConfirm={handleConfirm}
+              setIsCreatingBill={setIsCreatingBill}
+              isCreatingBill={isCreatingBill}
+              setShowConfirmationModal={setShowConfirmationModal}
+              actionsFormik={actions}
+              operations={operations}
+              isFinished={isFinished}
+               />}
 
-    if (errorCreateOperation) {
-      Toast(errorCreateOperation.message, "error");
-    }
-  }, [dataUpdateOperation, dataUpdateOperation, loadingUpdateOperation]);
+  </>
+);
 
-  useEffect(() => {
-    if (isCreatingBill) {
-      const substractDate = differenceInDays(
-        new Date(formik.values.DateExpiration),
-        new Date()
-      );
-      formik.setFieldValue(
-        "operationDays",
-        substractDate > 0 ? substractDate + 1 : substractDate * -1 + 1
-      );
-    }
-  }, [formik.values.DateExpiration]);
-
-  return (
-    <>
-      <ManageOperationC
-        formik={formik}
-        updated={updated}
-        ToastContainer={ToastContainer}
-        isEditing={isEditing}
-        isCreatingBill={isCreatingBill}
-        setIsCreatingBill={setIsCreatingBill}
-        handleMultipleOperations={handleMultipleOperations}
-      />
-    </>
-  );
 };

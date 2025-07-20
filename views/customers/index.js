@@ -63,7 +63,7 @@ export default function RegisterClient() {
     if (data3) {
       Toast("Cliente actualizado correctamente", "success");
       setTimeout(() => {
-        router.push("customers/customerList");
+        router.push("/customers/customerList");
       }, 2000);
     }
   }, [loading3, data3, error3]);

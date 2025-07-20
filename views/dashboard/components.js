@@ -1,11 +1,16 @@
 import EastIcon from "@mui/icons-material/East";
 import { Box, CircularProgress, Typography } from "@mui/material";
-
+// components/RegisterOperationForm.js
+import React from "react";
 import DashboardButton from "@styles/buttons/button_3";
-
+import SecurityDialog from "@components/modals/infoModal";
 export const DashboardContent = () => {
+
+
+
   return (
     <>
+       <SecurityDialog />
       <Box height="46.9vh" bgcolor="#B5D1C9" display="flex">
         <Typography
           variant="h5"

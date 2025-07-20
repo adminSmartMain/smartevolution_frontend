@@ -43,6 +43,7 @@ export default function BrokerByClientSelect({
 
   useEffect(() => {
     if (data) {
+      console.log(data,'BrokerByClient')
       if (isEmitter) {
         formik.setFieldValue("emitterBroker", data.data.id);
       } else {
