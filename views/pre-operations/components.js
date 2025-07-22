@@ -1046,7 +1046,7 @@ console.log(rows)
   variant="outlined"
   id="searchBar"
   size="small"
-  placeholder="Buscar por Emisor o Inversionista..."
+  placeholder="Buscar por ID, Factura, Emisor o Inversionista."
   value={search}
   onChange={(evt) => handleTextFieldChange(evt, "investor")}
   onKeyPress={(event) => {
