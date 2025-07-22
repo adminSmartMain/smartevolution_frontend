@@ -16,7 +16,7 @@ export default function PayerSelector( {errors,dataBills,showAllPayers,payers,va
 
     return (
  <Autocomplete
-                    options={Array.isArray(values?.arrayPayers) ? values?.arrayPayers : []}
+                     options={showAllPayers ? payers : values?.arrayPayers || []}
                     value={
                       Array.isArray(values?.arrayPayers)
                         ? values?.arrayPayers.find(payer =>
@@ -33,7 +33,7 @@ export default function PayerSelector( {errors,dataBills,showAllPayers,payers,va
                         `${option.data.first_name || ''} ${option.data.last_name || ''}`.trim();
                     }}
                     onChange={async (event, newValue) => {
-
+                        console.log(payers)
 
                         if (!newValue) {
 
@@ -85,13 +85,13 @@ export default function PayerSelector( {errors,dataBills,showAllPayers,payers,va
                         {...params}
                         label="Nombre Pagador *"
                         fullWidth
-                        name="nombrePagador"
+                        name="payerName"
                         InputProps={{
                           ...params.InputProps,
                           
                         }}
-                        error={touched.nombrePagador && Boolean(errors.nombrePagador)}
-                        helperText={touched.nombrePagador && errors.nombrePagador}
+                        error={touched.payerName && Boolean(errors.payerName)}
+                        helperText={touched.payerName && errors.payerName}
                       />
                     )}
                   />

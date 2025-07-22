@@ -34,9 +34,10 @@ export default function BillCreation() {
   const [payer, setPayer] = useState([]);
   const [client, setClient] = useState([]);
   const [users, setUsers] = useState([]);
+  const [isFinished,setIsFinished] =useState(null)
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [success, setSuccessA] = useState(null);
+
+  const [success, setSuccess] = useState(null);
   const [typeOp, setTypeOp] = useState([]);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [actions,  setActions] = useState('');
@@ -264,12 +265,9 @@ useEffect(() => {
   
 const validationSchema2 = Yup.object({
   emitter: Yup.string().required('Emisor es obligatorio'),
-  nombrePagador: Yup.string().required('Emisor es obligatorio'),
+  payerName: Yup.string().required('Pagador es obligatorio'),
 
-  billId: Yup.string().when('massive', {
-    is: false,
-    then: Yup.string().required('Factura es obligatoria')
-  }),
+  billId: Yup.string().required('Código de factura es obligatorio'),
   DateBill: Yup.date()
   .required('La fecha de emisión es obligatoria')
   .max(new Date(), 'La fecha de emisión no puede ser futura'),
@@ -316,11 +314,13 @@ useEffect(() => {
 
 
 const onSubmit = async (values, { setSubmitting }) => {
-  setIsModalOpen(true);
+
   setLoading(true);
   setSubmitting(true);
-  setSuccessA(null); // Estado inicial
-  console.log(values.payer)
+  setSuccess(null); // Estado inicial
+  
+    
+
   const operationData = {
   
     dateBill: values.fechaEmision || new Date().toISOString().substring(0, 10),
@@ -351,54 +351,41 @@ const onSubmit = async (values, { setSubmitting }) => {
     await validationSchema2.validate(values, { abortEarly: false });
     const data = operationData ;
    
-    const response = await createBillManuallyFetch(data);
-
+    const response = await CreateBillManually(data);
+    console.log("Respuesta del servidor:", response?.data);
     // 4. Verificar respuesta
     if (response?.error) {
       throw new Error(response.error.message || "Error en el servidor");
     }
-
-
-     
-    
-      Toast("Todas las operaciones se completaron con éxito", "success");
-      
-      setTimeout(() => {
-        setIsModalOpen(false);
-        
-      }, 5000);
-   
     // 5. Manejar éxito
-    setSuccessA(true); // ✅ Actualizar estado de éxito
-    Toast("Operación completada con éxito", "success");
-    setTimeout(() => console.log('ya'), 5000);
+    setSuccess(true); // ✅ Actualizar estado de éxito
+    Toast("Registro de factura con éxito", "success");
+   setLoading(false);
+    setSubmitting(false);
+    setIsFinished(true)   
 
   } catch (error) {
-    
+    setSuccess(false);
     console.error("Error detallado:", error);
     
     const errorMessage = error.name === 'ValidationError' 
       ? `Errores: ${error.errors.join(', ')}`
-      : error.message || "Error en el proceso";
+      : error?.response?.data?.details.billId || "Error en el proceso";
     
     Toast(errorMessage, "error");
-  } finally {
-    setLoading(false);
-    setSubmitting(false);
-    setIsModalOpen(false);
-    // No necesitas setTimeout aquí si usas el modal para mostrar resultados
-  }
+    setIsFinished(false)
+  } 
 };
 
 
-const handleConfirm = async (values,actions) => {
+  const handleConfirm = async (values,actions) => {
 
-  setShowConfirmationModal(true);
-  setActions(actions)
+    setShowConfirmationModal(true);
+    setActions(actions)
 
-  // Verifica en React DevTools si el estado realmente cambió
-};
-  const [isFinished,setIsFinished] =useState(null)
+    // Verifica en React DevTools si el estado realmente cambió
+  };
+
   
   return (
     <>
@@ -414,6 +401,9 @@ const handleConfirm = async (values,actions) => {
       validationSchema2={validationSchema2}
       actionsFormik={actions}
        isFinished={isFinished}
+       success={success}
+       showConfirmationModal={showConfirmationModal}
+       setShowConfirmationModal={setShowConfirmationModal}
       />
     </>
   );

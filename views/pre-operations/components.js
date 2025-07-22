@@ -912,6 +912,7 @@ const handleTextFieldChange = (evt) => {
       endDate: ""
     });
   };
+
   const updateFilters = (value, field) => {
      if (field !== "multi") {
       const newFilters = { 
@@ -922,7 +923,7 @@ const handleTextFieldChange = (evt) => {
       };
       
       filtersHandlers.set(newFilters);
-      
+
       // Si el valor es diferente al filtro actual, marcamos como filtro aplicado
       if (tempFilters[field] !== value) {
         setFilterApplied(true);
@@ -968,6 +969,7 @@ const handleTextFieldChange = (evt) => {
     });
 
         setFilterApplied(true);
+              setPage(1)
   };
   
   

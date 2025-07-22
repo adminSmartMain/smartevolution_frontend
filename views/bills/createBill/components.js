@@ -9,7 +9,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  IconButton
+  IconButton, Tooltip,
 } from "@mui/material";
 import { useFetch } from "@hooks/useFetch";
 import { debounce } from 'lodash';
@@ -27,6 +27,8 @@ import CloseIcon from '@mui/icons-material/Close';
 import { styled } from '@mui/material/styles';
 import Image from 'next/image';
 import "react-toastify/dist/ReactToastify.css";
+import FilterAltIcon from '@mui/icons-material/FilterAlt';
+import FilterAltOffIcon from '@mui/icons-material/FilterAltOff';
 
 import { Bills, GetBillFraction, GetRiskProfile, BrokerByClient, AccountsFromClient,getTypeBill } from "./queries";
 import { parseISO } from "date-fns";
@@ -46,7 +48,8 @@ import RetIvaSelector from "@components/selects/billCreateSelects/RetIvaSelector
 import IvaSelector from "@components/selects/billCreateSelects/IvaSelector";
 import OtrasRetSelector from "@components/selects/billCreateSelects/OtrasRetSelector";
 import fileToBase64 from "@lib/fileToBase64";
-
+import ModalConfirmation from "@components/modals/createBillModals/modalConfirmation";
+import ProcessModal from "@components/modals/createBillModals/processModal";
 
 
 
@@ -168,7 +171,7 @@ const VisuallyHiddenInput = styled('input')({
   left: 0,
   whiteSpace: 'nowrap',
   width: 1,
-});
+});debounce
 
 
 
@@ -178,12 +181,14 @@ const BillCreationComponent = ({
   opId,
   emitters,
   payers,
-onFormSubmit,
-  isFinished,
+actionsFormik,
+  onFormSubmit,
   validationSchema2,
-
- 
-
+isFinished,
+handleConfirm,
+  success,
+  setShowConfirmationModal,
+  showConfirmationModal,
 }) => {
 
   const [clientWithoutBroker, setClientWithoutBroker] = useState(null);
@@ -199,7 +204,7 @@ onFormSubmit,
   const [openPreview, setOpenPreview] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const { user, logout } = useContext(authContext);
-
+const [showAllPayers, setShowAllPayers] = useState(false);
 
 
   const debouncedCheckBill = debounce(async (billNumber, callback) => {
@@ -270,7 +275,7 @@ onFormSubmit,
     return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
 
-  console.log(dataTypeBill)
+
 
   const [initialPayer, setInitialPayer] = useState(null);
 
@@ -278,14 +283,14 @@ onFormSubmit,
     const data = new FormData(event.currentTarget)
     const values = Array.from(data.values())
     const changedFields = values.filter(value => value.length);
-    console.log("changedFields")
+
     
   }
 
 
   const handleFileChange = (event,setFieldValue) => {
   const selectedFile = event.target?.files[0];
-  console.log(selectedFile);
+  
   
   if (selectedFile) {
     // Validar tipo de archivo
@@ -402,17 +407,15 @@ onFormSubmit,
   // Combinar el pagador inicial con los filtrados
 
 
-console.log(fileUrl)
 
-const handleConfirm = async (values, actions) => {
-  try {
-    await onFormSubmit(values, actions);
-  } catch (error) {
-    console.error('Error al enviar el formulario:', error);
-    toast.error('Error al enviar el formulario');
-    actions.setSubmitting(false);
-  }
-};
+
+const handleSubmit = async (values, actions) => {
+    try {
+      await onFormSubmit(values, actions); // 🔥 Ejecuta el submit del padre
+    } finally {
+      actions.setSubmitting(false);
+    }
+  };
 
   const initialValues2 = {
     emitter: '',
@@ -451,6 +454,8 @@ const handleOpenPreview = () => {
   const handleClosePreview = () => {
     setOpenPreview(false);
   };
+
+
   return (
 
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={esLocale}>
@@ -520,7 +525,7 @@ const handleOpenPreview = () => {
                       dataBills={dataBills}
                       setFieldTouched={setFieldTouched}
                       setFieldError={setFieldError}
-
+                      errors={errors}
                       debouncedCheckBill={debouncedCheckBill}
                     />
                   </Grid>
@@ -712,15 +717,53 @@ const handleOpenPreview = () => {
                 {/* fila typeBill */}
                  <Grid container item xs={12} spacing={2}>
                   <Grid item xs={12} md={6}>
-                    <PayerSelector
+<div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                      <div style={{ flex: 1 }}> {/* Este div ocupa el espacio restante */}
+
+                        <PayerSelector
                       errors={errors}
                       dataBills={dataBills}
+                      showAllPayers={showAllPayers}
+                      payers={payers}
                       values={values}
                       setFieldValue={setFieldValue}
                       touched={touched}
                       setClientPagador={setClientPagador}
                       setIsSelectedPayer={setIsSelectedPayer}
                     />
+ </div>
+                   {/* Botón para alternar entre todos los payers y los filtrados */}
+                      <Tooltip title={showAllPayers ? "Mostrar solo pagadores filtrados" : "Mostrar todos los pagadores"}>
+                        <IconButton
+                          size="small"
+                          onClick={() => setShowAllPayers(!showAllPayers)}
+                          color={showAllPayers ? "primary" : "default"}
+                          style={{ marginTop: '8px' }}
+                        >
+                          {showAllPayers ? <FilterAltOffIcon /> : <FilterAltIcon />}
+                        </IconButton>
+                      </Tooltip>
+                      {clientPagador && (
+                        <IconButton
+                          color="primary"
+                          onClick={() => {
+                            window.open(`${window.location.origin}/customers?modify=${clientPagador}`, '_blank');
+                          }}
+                          sx={{
+                            marginTop: '15px',
+                            height: '20px',
+                            width: '20px',
+                            color: '#488F88', // Aquí sí funciona
+                            '&:hover': {
+                              color: '#3a726c', // Color más oscuro para hover
+                              backgroundColor: 'rgba(72, 143, 136, 0.1)' // Fondo sutil al hacer hover
+                            }
+                          }}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      )}
+                    </div>    
                     
 
                   </Grid>
@@ -869,20 +912,30 @@ const handleOpenPreview = () => {
           
                 {/* Botón de submit */}
                 <Grid item xs={1.5} style={{ marginTop: '16px' }} alignContent={'center'}>
-                  <Button
-       
-                type="submit"
-                variant="contained"
-                color="primary"
-                fullWidth
-                size="large"
-              >
-                {isSubmitting ? 'Enviando...' : 'Registrar Facturas'}
-              </Button>
+               
+<Button
+  type="submit"
+  variant="contained"
+  color="primary"
+  fullWidth
+  disabled={isSubmitting || isFinished} // Se deshabilita en ambos casos
+>
+  {isSubmitting ? 'Procesando...' : isFinished ? 'Registro completado' : 'Registrar'}
+</Button>
                 </Grid>
               </Grid>
 
+                <ModalConfirmation
+                  showConfirmationModal={showConfirmationModal}
+                  setShowConfirmationModal={setShowConfirmationModal}
+                  handleSubmit={handleSubmit}
+                  actionsFormik={actionsFormik}
+                  values={values}
 
+                />
+                <ProcessModal
+                  success={success}
+                />
               {process.env.NODE_ENV === 'development' && (
                 <div style={{ marginTop: 20 }}>
                   <h4>Errores:</h4>
