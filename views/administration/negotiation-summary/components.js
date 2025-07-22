@@ -723,8 +723,17 @@ export const NegotiationSummary = ({
                 variant="outlined"
                 size="small"
                 type="number"
+               onChange={(e) => {
+      if (option !== "modify") {
+        const value = e.target.value;
+        // Validación para solo números
+        if (value === '' || /^[0-9]+$/.test(value)) {
+          setOpID(value);
+        }
+      }
+    }}
                 disabled={option === "modify" ? true : false}
-                value={option === "modify" || "create" ? id : nul}
+                value={option === "modify" ? id : OpID}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();

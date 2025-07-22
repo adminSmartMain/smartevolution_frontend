@@ -884,9 +884,15 @@ console.log(rows)
     
    
   ];
-  const handleTextFieldChange = (evt) => {
-    setSearch(evt.target.value);
-  };
+const handleTextFieldChange = (evt) => {
+  const value = evt.target.value;
+  setSearch(value);
+  
+  // Si el campo queda vacío, actualizar filtros automáticamente
+  if (value === "") {
+    updateFilters("", "multi");
+  }
+};
 
   const handleDateRangeApply = (dateRange) => {
     // Actualiza solo las fechas manteniendo otros filtros
@@ -1046,7 +1052,7 @@ console.log(rows)
   variant="outlined"
   id="searchBar"
   size="small"
-  placeholder="Buscar por Emisor o Inversionista..."
+  placeholder="Buscar por ID, Factura, Emisor o Inversionista."
   value={search}
   onChange={(evt) => handleTextFieldChange(evt, "investor")}
   onKeyPress={(event) => {
