@@ -46,9 +46,11 @@ export default function Operations() {
   useEffect(() => {
     if (dataGetOperations) {
       dataCount = dataGetOperations?.count || 0;
-      const preOperations = dataGetOperations.results.filter(
-        (x) => x.status >= 3 || x.status == 1
-      );
+
+      const preOperations = dataGetOperations.results
+     // const preOperations = dataGetOperations.results.filter(
+     //   (x) => x.status >= 3 || x.status == 1
+    //  );
 
       setFilteredData(preOperations);
 
@@ -70,9 +72,11 @@ export default function Operations() {
         }
         return row
       });
-      const preOperations = checkOperations.filter(
-        (x) =>  x.status >= 3 || x.status == 1 
-      );
+
+      const preOperations = checkOperations
+      //const preOperations = checkOperations.filter(
+        //(x) =>  x.status >= 3 || x.status == 1 
+      //);
       setData(preOperations);
       
       setCalcs(dataGetOperations?.results[0]?.calcs);

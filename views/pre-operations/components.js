@@ -884,9 +884,15 @@ console.log(rows)
     
    
   ];
-  const handleTextFieldChange = (evt) => {
-    setSearch(evt.target.value);
-  };
+const handleTextFieldChange = (evt) => {
+  const value = evt.target.value;
+  setSearch(value);
+  
+  // Si el campo queda vacío, actualizar filtros automáticamente
+  if (value === "") {
+    updateFilters("", "multi");
+  }
+};
 
   const handleDateRangeApply = (dateRange) => {
     // Actualiza solo las fechas manteniendo otros filtros
@@ -896,6 +902,8 @@ console.log(rows)
       startDate: dateRange.startDate,
       endDate: dateRange.endDate
     });
+ setPage(1)
+
   };
   const handleClear = () => {
     
@@ -906,6 +914,7 @@ console.log(rows)
       endDate: ""
     });
   };
+
   const updateFilters = (value, field) => {
      if (field !== "multi") {
       const newFilters = { 
@@ -916,7 +925,7 @@ console.log(rows)
       };
       
       filtersHandlers.set(newFilters);
-      
+
       // Si el valor es diferente al filtro actual, marcamos como filtro aplicado
       if (tempFilters[field] !== value) {
         setFilterApplied(true);
@@ -962,6 +971,7 @@ console.log(rows)
     });
 
         setFilterApplied(true);
+        setPage(1)
   };
   
   

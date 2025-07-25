@@ -97,7 +97,9 @@ export const CreateBillManually = async (values) => {
       },
     }
   );
+
   return res.data;
+  
 };
 export const UpdateOperation = async (data, previousValues, previousDeleted) => {
   let results = [];

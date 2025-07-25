@@ -715,7 +715,7 @@ export const NegotiationSummary = ({
             gap={2}
             width="90%"
           >
-           <Box display="flex" flexDirection="column">
+            <Box display="flex" flexDirection="column">
               <InputTitles marginBottom={1}>N° operación</InputTitles>
               <TextField
                 id="opId"

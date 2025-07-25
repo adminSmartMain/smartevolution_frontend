@@ -25,7 +25,7 @@ import {
   GetRiskProfile,
   UpdateOperation,
   Clients,
- 
+  getOperationsVersionTwo,
 } from "./queries";
 import { Bills, billById, payerByBill } from "./queries";
 // Utils
@@ -139,6 +139,15 @@ export const ManageOperationV = () => {
     data: dataUpdateOperation,
   } = useFetch({ service: UpdateOperation, init: false });
 
+  const {
+    fetch: getOperationsFetch,
+    loading: loadingGetOperations,
+    error: errorGetOperations,
+    data: dataGetOperations,
+  } = useFetch({
+    service: () => getOperationsVersionTwo({ ...filters, page }),
+    init: true,
+  });
 
     // Hooks
     const {

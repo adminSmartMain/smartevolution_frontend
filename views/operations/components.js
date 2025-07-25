@@ -346,7 +346,7 @@ const router = useRouter();
       },
     },
     
-    { field: "opId", headerName: "ID", width: 40 },
+    { field: "opId", headerName: "ID", width: 50 },
     //{
      // field: "created_at",
      // headerName: "Creado el",
@@ -486,11 +486,17 @@ const router = useRouter();
 },
   ];
 
-  const handleTextFieldChange = (evt) => {
-    setSearch(evt.target.value);
-  };
+const handleTextFieldChange = (evt) => {
+  const value = evt.target.value;
+  setSearch(value);
+  
+  // Si el campo queda vacío, actualizar filtros automáticamente
+  if (value === "") {
+    updateFilters("", "multi");
+  }
+};
 
-  const handleDateRangeApply = (dateRange) => {
+   const handleDateRangeApply = (dateRange) => {
     // Actualiza solo las fechas manteniendo otros filtros
 
     filtersHandlers.set({
@@ -498,6 +504,8 @@ const router = useRouter();
       startDate: dateRange.startDate,
       endDate: dateRange.endDate
     });
+ setPage(1)
+
   };
   const handleClear = () => {
     
@@ -508,18 +516,26 @@ const router = useRouter();
       endDate: ""
     });
   };
+
+    const [filterApplied, setFilterApplied] = useState(false);
   const updateFilters = (value, field) => {
-    if (field !== "multi") {
-      filtersHandlers.set({ 
+     if (field !== "multi") {
+      const newFilters = { 
         ...tempFilters, 
         [field]: value,
-        // Mantiene las fechas existentes
         startDate: tempFilters.startDate,
         endDate: tempFilters.endDate
-      });
+      };
+      
+      filtersHandlers.set(newFilters);
+
+      // Si el valor es diferente al filtro actual, marcamos como filtro aplicado
+      if (tempFilters[field] !== value) {
+        setFilterApplied(true);
+      }
       return;
     }
-  
+
     const onlyDigits = /^\d{3,4}$/; // Operación: 3-4 dígitos
     const alphaNumeric = /^[a-zA-Z0-9]{3,10}$/; // Factura: Alfanumérico de 3-10 caracteres
     const hasLetters = /[a-zA-Z]/.test(value); // Si tiene letras
@@ -548,7 +564,7 @@ const router = useRouter();
       newFilters.startDate = tempFilters.startDate;
       newFilters.endDate = tempFilters.endDate;
     }
-   
+
     // Filtramos y actualizamos los filtros
     filtersHandlers.set({
       ...tempFilters,
@@ -556,8 +572,10 @@ const router = useRouter();
       startDate: tempFilters.startDate, // Conserva fechas
       endDate: tempFilters.endDate
     });
+
+        setFilterApplied(true);
+              setPage(1)
   };
-  
   
   /* Experimento para exportar los datos del data grid a un archivo csv que pueda ser leido por Excel*/
   const handleExportExcel = () => {
