@@ -219,21 +219,20 @@ export default function BillSelector ({values, setFieldValue, errors, touched, i
 
 
                 try {
-
-                                // Verificar si hay al menos una factura con integrationCode en el array
-                    const facturaConIntegrationCode = values.facturas.find(f => f.integrationCode && f.integrationCode !== "");
-                 
-                    // Si existe al menos una factura con integrationCode, validar que todas coincidan
-                 
-                        if (selectedFactura.integrationCode !== facturaConIntegrationCode.integrationCode ) {
-                          console.log('a')
-                            toast(<div style={{ display: 'flex', alignItems: 'center' }}>
-                                <ErrorIcon style={{ marginRight: '10px', color: '#d32f2f' }} />
-                                <span>El código de integración debe coincidir con el de las facturas previas</span>
-                            </div>);
-                            setFieldValue(`facturas[${index}].factura`, null);
-                            return; // Salir temprano para evitar procesamiento adicional
-                        }
+ // Verificar si hay al menos una factura con integrationCode en el array
+    const facturaConIntegrationCode = values.facturas.find(f => f.integrationCode && f.integrationCode !== "");
+    
+    // Si existe al menos una factura con integrationCode, validar que todas coincidan
+    
+        if (selectedFactura.integrationCode !== facturaConIntegrationCode.integrationCode && values.integrationCode !== "") {
+            toast(<div style={{ display: 'flex', alignItems: 'center' }}>
+                <ErrorIcon style={{ marginRight: '10px', color: '#d32f2f' }} />
+                <span>El código de integración debe coincidir con el de las facturas previas</span>
+            </div>);
+            setFieldValue(`facturas[${index}].factura`, null);
+            return; // Salir temprano para evitar procesamiento adicional
+        }
+   
                      else {
                 console.log('b')
                 const facturaActual2 = values?.facturas[index];
