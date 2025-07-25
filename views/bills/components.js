@@ -192,6 +192,14 @@ console.log(bill)
     const apiRef = useGridApiContext();
     const handleExport = (options) => apiRef.current.exportDataAsCsv(options);
 
+    
+  useEffect(() => {
+    if (dataSaveBills) {
+      setTimeout(() => {
+        router.push("/bills/billList");
+      }, 2000);
+    }
+  }, [dataSaveBills]);
     return (
       <GridToolbarContainer
         sx={{
