@@ -553,7 +553,8 @@ const handleOpenPreview = () => {
                         value={values.DateBill ? values.DateBill : null}
                         onChange={(newValue) => {
                           if (newValue) {
-                            const formattedDate = newValue.toISOString().substring(0, 10);
+                            const formattedDate = newValue ? new Date(newValue) : null;
+                            if (!formattedDate) return;
                             setFieldValue('DateBill', formattedDate);
                           } else {
                             setFieldValue('DateBill', null);
@@ -573,7 +574,12 @@ const handleOpenPreview = () => {
                             }}
                             error={touched.DateBill && Boolean(errors.DateBill)}
                             helperText={touched.DateBill && errors.DateBill}
-                            onKeyDown={(e) => e.stopPropagation()}
+                           onKeyDown={(e) => {
+                        if (!/[0-9/]/.test(e.key) && 
+                            !['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) {
+                            e.preventDefault();
+                        }
+                    }}
                             onClick={(e) => {
                               e.stopPropagation();
                               e.preventDefault();
@@ -605,7 +611,8 @@ const handleOpenPreview = () => {
                         min={parseISO(values.DateBill)} // Esto limita a fechas hasta hoy
                         onChange={(newValue) => {
                           if (newValue) {
-                            const formattedDate = newValue.toISOString().substring(0, 10);
+                            const formattedDate = newValue ? new Date(newValue) : null;
+                            if (!formattedDate) return;
                             setFieldValue('expirationDate', formattedDate);
                           
                           } else {
@@ -654,7 +661,8 @@ const handleOpenPreview = () => {
                         
                         onChange={(newValue) => {
                           if (newValue) {
-                            const formattedDate = newValue.toISOString().substring(0, 10);
+                             const formattedDate = newValue ? new Date(newValue) : null;
+                            if (!formattedDate) return;
                             setFieldValue('datePayment', formattedDate);
                           } else {
                             setFieldValue('datePayment', null);

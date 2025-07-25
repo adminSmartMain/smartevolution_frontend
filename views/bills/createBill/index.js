@@ -323,13 +323,13 @@ const onSubmit = async (values, { setSubmitting }) => {
 
   const operationData = {
   
-    dateBill: values.fechaEmision || new Date().toISOString().substring(0, 10),
-    expirationDate: values.DateExpiration || new Date().toISOString().substring(0, 10),
+    dateBill: new Date(values.DateBill).toISOString().substring(0, 10) || new Date().toISOString().substring(0, 10),
+    expirationDate: new Date(values.expirationDate).toISOString().substring(0, 10) || new Date().toISOString().substring(0, 10),
     currentBalance: Number(values.currentBalance) || 0,
     billId: values.factura,
     bill: values.factura,
     typeBill:values.typeBill,
-    datePayment:values.datePayment,
+    datePayment:new Date(values.datePayment).toISOString().substring(0, 10) || new Date().toISOString().substring(0, 10),
     billValue:values.subTotal,
     subTotal:values.total,
     total:values.currentBalance,

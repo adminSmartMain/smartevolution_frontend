@@ -1099,7 +1099,7 @@ const renderPreviewContent = () => {
                                           <Grid xs={12} md={2} item>
                                             {(orchestDisabled.find(item => item.indice === index)?.status) ? (
                                               <>
-                                               <Grid container spacing={2} alignItems="center">
+                                              
                                               <Grid item xs={12} md={6}>
                                                 <BillManualSelector
                                                   values={values}
@@ -1127,7 +1127,7 @@ const renderPreviewContent = () => {
                                                   factura={factura}
                                                 />
                                               </Grid>
-                                            </Grid>
+                                            
                                               </>
                                               
                                             ) : (
@@ -1297,7 +1297,7 @@ const renderPreviewContent = () => {
                                                 /> */}
                                           {/* </Grid> */}
                                           {/* Nombre de Inversionista */}
-                                          <Grid item xs={12} md={5}>
+                                          <Grid item xs={12} md={5.5}>
                                             <InvestorSelector
                                               errors={errors}
                                               touched={touched}

@@ -124,7 +124,7 @@ function Row(props) {
   const { row } = props;
   const [open, setOpen] = React.useState(false);
   const [openDelete, setOpenDelete] = React.useState([false, null]);
-  console.log(row)
+
   const handleOpenDelete = (id) => setOpenDelete([true, id]);
   const handleCloseDelete = () => setOpenDelete([false, null]);
   const getStatusBadge = (status) => {
@@ -385,6 +385,8 @@ export const OperationsComponents = ({
   const [openModal, setOpenModal] = useState(false);
   const [anchorElCSV, setAnchorElCSV] = useState(null);
   const [openDelete, setOpenDelete] = useState([false, null]);
+   const [tempFilters, setTempFilters] = useState({ ...filtersHandlers.value });
+   const [filterApplied, setFilterApplied] = useState(false);
   // Calcula el total de páginas basado en el conteo de datos
   const totalPages = Math.ceil(dataCount / 15); // 15 es el tamaño de página por defecto
   const handleOpenModal = () => setOpenModal(true);
@@ -420,16 +422,27 @@ const router = useRouter();
     setSearch("");
   };
 
-  const handleTextFieldChange = (evt) => {
-    setSearch(evt.target.value);
-  };
+const handleTextFieldChange = (evt) => {
+  const value = evt.target.value;
+  setSearch(value);
+  
+  // Si el campo queda vacío, actualizar filtros automáticamente
+  if (value === "") {
+    updateFilters("", "multi");
+  }
+};
 
-  const handleDateRangeApply = (dateRange) => {
+   const handleDateRangeApply = (dateRange) => {
+    // Actualiza solo las fechas manteniendo otros filtros
+
     filtersHandlers.set({
       ...filtersHandlers.value,
       startDate: dateRange.startDate,
       endDate: dateRange.endDate
     });
+     console.log("Rango de fechas actualizado:", dateRange);
+ setPage(1)
+
   };
 
   const handleClear = () => {
@@ -439,47 +452,66 @@ const router = useRouter();
       endDate: ""
     });
   };
-
+ 
   const updateFilters = (value, field) => {
-    if (field !== "multi") {
-      filtersHandlers.set({ 
-        ...filtersHandlers.value, 
+     if (field !== "multi") {
+      const newFilters = { 
+        ...tempFilters, 
         [field]: value,
-        startDate: filtersHandlers.value.startDate,
-        endDate: filtersHandlers.value.endDate
-      });
+        startDate: tempFilters.startDate,
+        endDate: tempFilters.endDate
+      };
+      
+      filtersHandlers.set(newFilters);
+
+      // Si el valor es diferente al filtro actual, marcamos como filtro aplicado
+      if (tempFilters[field] !== value) {
+        setFilterApplied(true);
+      }
       return;
     }
+
+    const onlyDigits = /^\d{3,4}$/; // Operación: 3-4 dígitos
+    const alphaNumeric = /^[a-zA-Z0-9]{3,10}$/; // Factura: Alfanumérico de 3-10 caracteres
+    const hasLetters = /[a-zA-Z]/.test(value); // Si tiene letras
+    const hasSpaces = /\s/.test(value); // Si tiene espacios
   
-    const onlyDigits = /^\d{3,4}$/;
-    const alphaNumeric = /^[a-zA-Z0-9]{3,10}$/;
-    const hasLetters = /[a-zA-Z]/.test(value);
-    const hasSpaces = /\s/.test(value);
-  
+    // Inicializamos los filtros vacíos
     const newFilters = { opId: "", billId: "", investor: "", startDate: null, endDate: null };
   
+    // Clasificación más precisa
     if (onlyDigits.test(value)) {
-      newFilters.opId = value;
+      // Asignamos opId solo si tiene 3-4 dígitos
+      newFilters.opId = value; // Asignar a opId si es una operación
     } else if (alphaNumeric.test(value) && !hasLetters && value.length >= 3 && value.length <= 10) {
+      // Asignamos billId solo si es alfanumérico de 3-10 caracteres y no tiene letras
       newFilters.billId = value;
     } else if (hasLetters || hasSpaces || value.length > 4) {
+      // Si tiene letras o espacios, es un nombre de inversionista
       newFilters.investor = value;
     } else {
+      // Por defecto lo tratamos como inversionista
       newFilters.investor = value;
     }
   
-    if (filtersHandlers.value.startDate && filtersHandlers.value.endDate) {
-      newFilters.startDate = filtersHandlers.value.startDate;
-      newFilters.endDate = filtersHandlers.value.endDate;
+    // Si las fechas no están vacías, las agregamos
+    if (tempFilters.startDate && tempFilters.endDate) {
+      newFilters.startDate = tempFilters.startDate;
+      newFilters.endDate = tempFilters.endDate;
     }
-  
+
+    // Filtramos y actualizamos los filtros
     filtersHandlers.set({
-      ...filtersHandlers.value,
+      ...tempFilters,
       ...newFilters,
-      startDate: filtersHandlers.value.startDate,
-      endDate: filtersHandlers.value.endDate
+      startDate: tempFilters.startDate, // Conserva fechas
+      endDate: tempFilters.endDate
     });
+
+        setFilterApplied(true);
+              setPage(1)
   };
+  
   
   const handleDelete = (id) => {
     DeleteOperation(id);
@@ -490,6 +522,7 @@ const router = useRouter();
   };
 
   function groupByOperation(data) {
+    
     const grouped = {};
 
     data.forEach(item => {
@@ -525,9 +558,14 @@ const router = useRouter();
       });
     });
     
-    return Object.values(grouped);
+     return Object.values(grouped).sort((a, b) => {
+    const numA = parseInt(a.opId, 10);
+    const numB = parseInt(b.opId, 10);
+    return numB - numA; // Orden descendente
+  });
   }
-  
+
+
   const handleExportExcel = () => {
     const currentRows = rows; 
     const columnHeaders = [
@@ -601,7 +639,7 @@ const router = useRouter();
         <TextField
           variant="outlined"
           size="small"
-          placeholder="Buscar por Inversionista..."
+          placeholder="Buscar por ID, Factura, Emisor o Inversionista."
           value={search}
           onChange={(evt) => handleTextFieldChange(evt, "investor")}
           onKeyPress={(event) => {
@@ -649,10 +687,13 @@ const router = useRouter();
           
           <ModalValorAGirar open={openModal} handleClose={handleCloseModal} data={calcs} />
 
-          <AdvancedDateRangePicker
-            onApply={handleDateRangeApply}
-            onClean={handleClear}
-          />
+            <AdvancedDateRangePicker
+      
+      className="date-picker"
+      onApply={handleDateRangeApply}
+      onClean={handleClear}
+      
+    />
 
           <IconButton onClick={handleMenuClickCSV} sx={{ color: "#488B8F" }}>
             <MoreVertIcon />

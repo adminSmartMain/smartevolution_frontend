@@ -361,7 +361,43 @@ console.log(bill)
               ? billToMap.subTotal -
                 sumOfAllCreditNotes(dataReadCreditNotes.data, billToMap.billId)
               : billToMap.subTotal,
-          total:
+          currentBalance:
+            dataReadCreditNotes !== null &&
+            dataReadCreditNotes !== undefined &&
+            dataReadCreditNotes !== []
+              ? Math.round(
+                  billToMap.subTotal -
+                    (retICA[billToMap.billId] && retICA[billToMap.billId] !== ""
+                      ? (retICA[billToMap.billId] / 100) * billToMap.billValue
+                      : 0) -
+                    (retFTE[billToMap.billId] && retFTE[billToMap.billId] !== ""
+                      ? (retFTE[billToMap.billId] / 100) * billToMap.billValue
+                      : 0) -
+                    (otherRet[billToMap.billId] &&
+                    otherRet[billToMap.billId] !== ""
+                      ? parseFloat(otherRet[billToMap.billId])
+                      : 0) -
+                    (retIVA[billToMap.billId] ? retIVA[billToMap.billId] : 0) -
+                    sumOfAllCreditNotes(
+                      dataReadCreditNotes.data,
+                      billToMap.billId
+                    )
+                )
+              : Math.round(
+                  billToMap.subTotal -
+                    (retICA[billToMap.billId] && retICA[billToMap.billId] !== ""
+                      ? (retICA[billToMap.billId] / 100) * billToMap.billValue
+                      : 0) -
+                    (retFTE[billToMap.billId] && retFTE[billToMap.billId] !== ""
+                      ? (retFTE[billToMap.billId] / 100) * billToMap.billValue
+                      : 0) -
+                    (otherRet[billToMap.billId] &&
+                    otherRet[billToMap.billId] !== ""
+                      ? parseFloat(otherRet[billToMap.billId])
+                      : 0) -
+                    (retIVA[billToMap.billId] ? retIVA[billToMap.billId] : 0)
+                ),
+                total:
             dataReadCreditNotes !== null &&
             dataReadCreditNotes !== undefined &&
             dataReadCreditNotes !== []

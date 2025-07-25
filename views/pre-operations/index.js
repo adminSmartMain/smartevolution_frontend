@@ -68,9 +68,11 @@ export default function Operations() {
        
         return row
       });
-      const preOperations = checkOperations.filter(
-        (x) =>   x.status == 0 ||   x.status == 2
-      );
+
+      const preOperations = checkOperations
+      //const preOperations = checkOperations.filter(
+        //(x) =>   x.status == 0 ||   x.status == 2
+      //);
       setData(preOperations);;
     }
     console.log('d')

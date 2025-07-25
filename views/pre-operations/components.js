@@ -902,6 +902,8 @@ const handleTextFieldChange = (evt) => {
       startDate: dateRange.startDate,
       endDate: dateRange.endDate
     });
+ setPage(1)
+
   };
   const handleClear = () => {
     
@@ -969,7 +971,7 @@ const handleTextFieldChange = (evt) => {
     });
 
         setFilterApplied(true);
-              setPage(1)
+        setPage(1)
   };
   
   

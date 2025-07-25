@@ -486,11 +486,17 @@ const router = useRouter();
 },
   ];
 
-  const handleTextFieldChange = (evt) => {
-    setSearch(evt.target.value);
-  };
+const handleTextFieldChange = (evt) => {
+  const value = evt.target.value;
+  setSearch(value);
+  
+  // Si el campo queda vacío, actualizar filtros automáticamente
+  if (value === "") {
+    updateFilters("", "multi");
+  }
+};
 
-  const handleDateRangeApply = (dateRange) => {
+   const handleDateRangeApply = (dateRange) => {
     // Actualiza solo las fechas manteniendo otros filtros
 
     filtersHandlers.set({
@@ -498,6 +504,8 @@ const router = useRouter();
       startDate: dateRange.startDate,
       endDate: dateRange.endDate
     });
+ setPage(1)
+
   };
   const handleClear = () => {
     

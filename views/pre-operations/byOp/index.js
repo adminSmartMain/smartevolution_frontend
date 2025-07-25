@@ -51,7 +51,7 @@ export default function Operations() {
     data: dataGetOperations?.results || {},
   };
 //GET TYPE OPERATION
-
+console.log(filters)
 useEffect(() => {
   if (dataTypeIdSelect) {
 
@@ -64,16 +64,17 @@ useEffect(() => {
   }
 }, [dataTypeIdSelect, loadingTypeIdSelect, errorTypeIdSelect]);
 
-  useEffect(() => {
+useEffect(() => {
     getOperationsFetch();
-  }, [filters.opId, filters.billId, filters.investor, page]);
+  }, [filters.opId, filters.billId, filters.investor,filters.startDate, filters.endDate, page]);
 
   useEffect(() => {
     if (dataGetOperations) {
       dataCount = dataGetOperations?.count || 0;
-      const preOperations = dataGetOperations.results.filter(
-        (x) => x.status >= 3 || x.status == 1
-      );
+        const preOperations = dataGetOperations.results
+     // const preOperations = dataGetOperations.results.filter(
+     //   (x) => x.status >= 3 || x.status == 1
+    //  );
 
       setFilteredData(preOperations);
 
@@ -94,9 +95,11 @@ useEffect(() => {
         }
         return row
       });
-      const preOperations = checkOperations.filter(
-        (x) => x.status >= 3 || x.status == 1
-      );
+
+      const preOperations = checkOperations
+      //const preOperations = checkOperations.filter(
+        //(x) => x.status >= 3 || x.status == 1
+      //);
       setData(preOperations);
       
       setCalcs(dataGetOperations?.results[0]?.calcs);
