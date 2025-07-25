@@ -219,19 +219,32 @@ export default function BillSelector ({values, setFieldValue, errors, touched, i
 
 
                 try {
- // Verificar si hay al menos una factura con integrationCode en el array
-    const facturaConIntegrationCode = values.facturas.find(f => f.integrationCode && f.integrationCode !== "");
-    
-    // Si existe al menos una factura con integrationCode, validar que todas coincidan
-    
-        if (selectedFactura.integrationCode !== facturaConIntegrationCode.integrationCode && values.integrationCode !== "") {
-            toast(<div style={{ display: 'flex', alignItems: 'center' }}>
-                <ErrorIcon style={{ marginRight: '10px', color: '#d32f2f' }} />
-                <span>El código de integración debe coincidir con el de las facturas previas</span>
-            </div>);
-            setFieldValue(`facturas[${index}].factura`, null);
-            return; // Salir temprano para evitar procesamiento adicional
-        }
+                  
+ // 1. Buscar TODAS las facturas con integrationCode válido
+    const facturasConCodigo = values.facturas.filter(f => 
+        f.integrationCode?.trim() && f.integrationCode !== "no-code"
+    );
+
+    // 2. Validación principal
+    if (
+        // Caso 1: Factura nueva tiene código pero no coincide con las existentes
+        (selectedFactura.integrationCode?.trim() && 
+         selectedFactura.integrationCode !== "no-code" &&
+         facturasConCodigo.length > 0 &&
+         !facturasConCodigo.every(f => f.integrationCode === selectedFactura.integrationCode))
+        ||
+        // Caso 2: Factura nueva no tiene código pero existen facturas con código
+        (!selectedFactura.integrationCode?.trim() && 
+         facturasConCodigo.length > 0)
+    ) {
+        // Mostrar error
+        toast.error(facturasConCodigo.length > 0 
+            ? `El código debe coincidir con "${facturasConCodigo[0].integrationCode}"`
+            : "No se permiten facturas sin código cuando otras lo tienen"
+        );
+        setFieldValue(`facturas[${index}].factura`, null);
+        return;
+    } 
    
                      else {
                 console.log('b')
