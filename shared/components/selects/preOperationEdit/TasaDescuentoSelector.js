@@ -71,19 +71,44 @@ export default function TasaDescuentoSelector({ values, setFieldValue, setFieldE
         ? Math.round(PV(finalValue / 100, operationDays / 365, 0, -valorNominal, 0))
         : valorNominal;
 
-      await Promise.all([
+  
         setFieldValue('presentValueInvestor', presentValue),
         
         setFieldValue('presentValueSF', presentValue),
         setFieldValue('investorProfit', valorNominal - presentValue),
         setFieldValue('commissionSF', 0)
-      ]);
+      
 
        if(values.applyGm) {
         setFieldValue(`GM`, presentValue * 0.002);
       } else {
         setFieldValue(`GM`, 0);
       } 
+    }
+
+
+       if (values.opDate) {
+        console.log('caso diferentes aaaa');
+      
+          
+            
+            const operationDays = values.operationDays || 0;
+            const valorNominal = values.payedAmount|| 0;
+    
+            const presentValueSF = operationDays > 0 && valorNominal > 0
+                ? Math.round(PV(finalValue / 100, operationDays / 365, 0, -valorNominal, 0))
+                : values.amount || 0;
+    
+            console.log(presentValueSF);
+            
+            setFieldValue(`presentValueSF`, presentValueSF);
+            
+            const currentInvestorValue = Number(values.presentValueInvestor) || 0;
+            console.log(presentValueSF, currentInvestorValue);
+            const comisionSF = currentInvestorValue - presentValueSF;
+
+            setFieldValue(`commissionSF`, Math.max(0, comisionSF));
+     
     }
 
     if (nuevoInvestorTax === 0) {

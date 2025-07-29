@@ -6,7 +6,7 @@ import {  Typography,  Button } from '@mui/material';
 import { Dialog,DialogContent, DialogTitle,DialogActions,} from "@mui/material";
 
 
-export default function ModalConfirmation({ values,showConfirmationModal, setShowConfirmationModal, handleSubmit, actionsFormik }) {
+export default function ModalConfirmation({ values,showConfirmationModal, setShowConfirmationModal, handleSubmit, actionsFormik, }) {
 
     return (
 

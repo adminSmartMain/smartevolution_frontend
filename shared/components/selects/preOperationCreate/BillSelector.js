@@ -1,5 +1,5 @@
 // components/RegisterOperationForm.js
-import React from "react";
+import React, { useState } from "react";
 
 import { TextField,  Autocomplete} from '@mui/material';
 
@@ -9,12 +9,25 @@ import { PV } from "@formulajs/formulajs";
 import { parseISO,  isValid } from "date-fns";
 
 import { differenceInDays } from "date-fns";
-
+import ModalIntegrationCode from "@components/modals/modalIntegrationCode";
 
 import ErrorIcon from '@mui/icons-material/Error'; // o cualquier otro ícono de error
 
 export default function BillSelector ({values, setFieldValue, errors, touched, index, factura, dataBills, setFieldTouched, setFieldError, cargarFraccionFactura}) {
+const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+    const [selectedFacturaForModal, setSelectedFacturaForModal] = useState(null);
+    const [newValueForModal, setNewValueForModal] = useState(null);
 
+      const handleConfirmIntegrationCode = () => {
+        setShowConfirmationModal(false);
+        // Filtrar facturas con el mismo integrationCode
+        const filteredIntegrationCodeBills = values?.takedBills.filter(
+            (f) => f.integrationCode === selectedFacturaForModal.integrationCode
+        );
+        
+        // Continuar con la lógica original usando newValueForModal
+        processSelectedBill(newValueForModal);
+    };
     return (
         <>
         <Autocomplete
@@ -23,7 +36,7 @@ export default function BillSelector ({values, setFieldValue, errors, touched, i
                 options={(values?.takedBills || [])
                 .filter((factura) => factura.currentBalance > 0) // Filtrar facturas con balance > 0
                 .map((factura) => ({
-                label: String(factura.billId),
+                label: `${String(factura.billId)}-${String(factura.integrationCode)}` || `${String(factura.billId)}`,
                 value: String(factura.billId),
                 id: String(factura.id),
                 integrationCode: factura.integrationCode ? factura.integrationCode : "",
@@ -37,6 +50,7 @@ export default function BillSelector ({values, setFieldValue, errors, touched, i
                 isOptionEqualToValue={(option, value) => {
                 return option.value === value;
                 }}
+
                 onChange={async (event, newValue) => {
 
                 if (!newValue) {
@@ -154,7 +168,7 @@ export default function BillSelector ({values, setFieldValue, errors, touched, i
                 const selectedFactura = dataBills?.data.find(f => f.billId === newValue.value);
                 if (!selectedFactura) return;
 
-
+             
                function encontrarFacturasDuplicadas(facturas, billId, inversionistaId, currentIndex) {
                   // Validaciones iniciales
                   if (!Array.isArray(facturas)) return [];
@@ -220,31 +234,27 @@ export default function BillSelector ({values, setFieldValue, errors, touched, i
 
                 try {
                   
- // 1. Buscar TODAS las facturas con integrationCode válido
-    const facturasConCodigo = values.facturas.filter(f => 
-        f.integrationCode?.trim() && f.integrationCode !== "no-code"
-    );
+                // 1. Buscar TODAS las facturas con integrationCode válido
+                    const facturasConCodigo = values.facturas.filter(f => 
+                        f.integrationCode?.trim() && f.integrationCode !== "no-code"
+                    );
 
-    // 2. Validación principal
-    if (
-        // Caso 1: Factura nueva tiene código pero no coincide con las existentes
-        (selectedFactura.integrationCode?.trim() && 
-         selectedFactura.integrationCode !== "no-code" &&
-         facturasConCodigo.length > 0 &&
-         !facturasConCodigo.every(f => f.integrationCode === selectedFactura.integrationCode))
-        ||
-        // Caso 2: Factura nueva no tiene código pero existen facturas con código
-        (!selectedFactura.integrationCode?.trim() && 
-         facturasConCodigo.length > 0)
-    ) {
-        // Mostrar error
-        toast.error(facturasConCodigo.length > 0 
-            ? `El código debe coincidir con "${facturasConCodigo[0].integrationCode}"`
-            : "No se permiten facturas sin código cuando otras lo tienen"
-        );
-        setFieldValue(`facturas[${index}].factura`, null);
-        return;
-    } 
+                    // 2. Validación principal
+                    if (
+                        // Caso 1: Factura nueva tiene código pero no coincide con las existentes
+                        (selectedFactura.integrationCode?.trim() && 
+                        selectedFactura.integrationCode !== "no-code" &&
+                        facturasConCodigo.length > 0 &&
+                        !facturasConCodigo.every(f => f.integrationCode === selectedFactura.integrationCode))
+                        ||
+                        // Caso 2: Factura nueva no tiene código pero existen facturas con código
+                        (!selectedFactura.integrationCode?.trim() && 
+                        facturasConCodigo.length > 0)
+                    ) {
+                        setSelectedFacturaForModal(selectedFactura);
+                        setNewValueForModal(newValue);
+                        setShowConfirmationModal(true);
+                    } 
    
                      else {
                 console.log('b')
@@ -590,6 +600,16 @@ export default function BillSelector ({values, setFieldValue, errors, touched, i
                 )}
 
              /> 
+  <ModalIntegrationCode 
+                values={values}
+                showConfirmationModal={showConfirmationModal}
+                setIsIntegrationCode={setShowConfirmationModal}
+                integrationCode={selectedFacturaForModal?.integrationCode || ""}
+                setIsFilterIntegrationActive={() => {}}
+                selectedFactura={selectedFacturaForModal}
+                onConfirm={handleConfirmIntegrationCode}
+            />
+
         </>
  
     )
