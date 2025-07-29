@@ -600,7 +600,7 @@ const parseBackendDate = (dateString) => {
       integrationCode: dataDetails.data?.bill?.integrationCode || ""
     };
 
-    console.log(initialValues2)
+    
   const handleSubmit = async (values, actions) => {
     try {
       await onFormSubmit(values, actions);

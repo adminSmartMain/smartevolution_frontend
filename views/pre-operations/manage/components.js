@@ -1,6 +1,6 @@
 // components/RegisterOperationForm.js
 import React, { useEffect, useState, useContext } from "react";
-import { debounce } from 'lodash';
+import { debounce, set } from 'lodash';
 import { Dialog,
   DialogTitle,
   DialogContent,
@@ -46,6 +46,7 @@ import TasaInversionistaSelector from "@components/selects/preOperationCreate/Ta
 import EmitterBrokerModal from "@components/modals/emitterBrokerModal";
 import EmitterDeleteModal from "@components/modals/emitterDeleteModal";
 import ModalConfirmation from "@components/modals/modalConfirmation";
+import ModalIntegrationCode from "@components/modals/modalIntegrationCode";
 import ProcessModal from "@components/modals/processModal";
 import NoEditModal from "@components/modals/noEditModal";
 import ValorFuturoSelector from "@components/selects/preOperationCreate/valorFuturoSelector";
@@ -210,13 +211,14 @@ export const ManageOperationC = ({
  const [pendingClear, setPendingClear] = useState(false);
   const [showAllPayers, setShowAllPayers] = useState(false);
   const [orchestDisabled, setOrchestDisabled] = useState([{ indice: 0, status: false }])
+  const [orchestIntegrationCode, setOrchestIntegrationCode] = useState([{ indice: 0, billId:'',integrationCode: '' }])
   const [editMode, setEditMode] = useState({});
   const [isSelectedPayer, setIsSelectedPayer] = useState(false)
   const [isModalEmitterAd, setIsModalEmitterAd] = useState(false)
   const [brokeDelete, setBrokeDelete] = useState(false)
   const [isCreatingBill, setIsCreatingBill] = useState(false)
   const [emitterSaved, setEmitterSaved] = useState(false)
-
+  const [isIntegrationCode,setIsIntegrationCode]=useState(false)
 // Estado inicial para manejar múltiples archivos
 const [files, setFiles] = useState([]);
 const [filePreviews, setFilePreviews] = useState([]);
@@ -224,6 +226,7 @@ const [fileUrls, setFileUrls] = useState([]);
 const [openPreview, setOpenPreview] = useState(false);
 const [previewIndex, setPreviewIndex] = useState(null);
 const [isUploading, setIsUploading] = useState(false);
+const [isFilterIntegrationActive, setIsFilterIntegrationActive] = useState(false);
 
   const [openModal, setOpenModal] = React.useState(false);
   const {
@@ -420,7 +423,7 @@ const handleFileChange = (event, setFieldValue, index) => {
         opExpiration: '',
         presentValueInvestor: 0,
         presentValueSF: 0,
-        integrationCode: "",
+        integrationCode: "no-code",
         saldoDisponibleInfo: 0,
         montoDisponibleInfo: 0,
         file:'',
@@ -667,6 +670,8 @@ const renderPreviewContent = () => {
 
   return <Typography>No hay archivo para previsualizar</Typography>;
 };
+
+console.log(orchestIntegrationCode)
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={esLocale}>
       {/* Para mostrar los toast */}
@@ -971,7 +976,7 @@ const renderPreviewContent = () => {
                                       <Grid item xs={10} container alignItems="center" wrap="nowrap" spacing={1}>
                                         <Grid item>
                                           <Typography>
-                                            {factura.billId || `Factura ${index + 1}`}
+                                            { `${factura.billId}${factura.integrationCode && factura.integrationCode !== 'no-code' ? ` - Código de integracion ${factura.integrationCode}` : ''}` || `Factura ${index + 1}`}
                                           </Typography>
                                         </Grid>
                                         {/* Fecha de emisión y vencimiento de la cabecera del acordeon*/}
@@ -1064,16 +1069,7 @@ const renderPreviewContent = () => {
                                               </Typography>
                                             )}
                                             {/* Botón para alternar modos */}
-                                            <IconButton
-                                              size="small"
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                setEditMode(prev => ({ ...prev, [index]: !prev[index] }));
-                                              }}
-                                              disabled={!orchestDisabled.find(item => item.indice === index)?.status}
-                                            >
-                                              {editMode[index] ? <CheckIcon fontSize="small" /> : <EditIcon fontSize="small" />}
-                                            </IconButton>
+                                        
                                           </div>
                                        
                                         </Grid>
@@ -1142,7 +1138,12 @@ const renderPreviewContent = () => {
                                                 setFieldError={setFieldError}
                                                 dataBills={dataBills}
                                                 cargarFraccionFactura={cargarFraccionFactura}
-
+                                                setIsIntegrationCode={setIsIntegrationCode}
+                                                isFilterIntegrationActive={isFilterIntegrationActive}
+                                              setIsFilterIntegrationActive={setIsFilterIntegrationActive}
+                                              isIntegrationCode={isIntegrationCode}
+                                              setOrchestIntegrationCode={setOrchestIntegrationCode}
+                                              orchestIntegrationCode={orchestIntegrationCode}
                                               />
                                          </>
                                             )}
@@ -1653,6 +1654,15 @@ const renderPreviewContent = () => {
                                      
                                       </Grid>
                                     </Grid>
+                                       <ModalIntegrationCode
+                                          showConfirmationModal={isIntegrationCode}
+                                          integrationCode={values.facturas[index]?.integrationCode}
+                                          setIsIntegrationCode={setIsIntegrationCode}
+                                          setIsFilterIntegrationActive={setIsFilterIntegrationActive}
+                                          
+                                          values={values}
+
+                                        />
                                   </AccordionDetails>
                                 </Accordion>
                               </Grid>
@@ -1676,40 +1686,50 @@ const renderPreviewContent = () => {
                                 { indice: nuevoIndice, status: false }
                               ]);
                               // Agregar la nueva factura
-                              push({
-                                is_creada: false,
-                                opDate: values.opDate,
-                                applyGm: false,
-                                amount: 0,
-                                payedAmount: 0,
-                                nombreInversionista: '',
-                                investorProfit: 0,
-                                cuentaInversionista: '',
-                                factura: '',
-                                fraccion: 1,
-                                discountTax:values.discountTax,
-                                valorFuturo: '',
-                                valorFuturoManual: false,
-                                fechaEmision: null,
-                                valorNominal: 0,
-                                porcentajeDescuento: 0,
-                                probableDate:  `${new Date()}`,
-                                investorTax: 0,
-                                nombrePagador: '',
-                                fechaFin:  `${addDays(new Date(),1)}`,
-                                saldoDisponible: 0,
-                                saldoDisponibleInfo: 0,
-                                diasOperaciones: 1,
-                                operationDays: 1,
-                                comisionSF: 0,
-                                gastoMantenimiento: 0,
-                                fechaOperacion: `${new Date().toISOString().substring(0, 10)}`,
-                                fechaExpiracion: `${new Date().toISOString().substring(0, 10)}`,
-                                opExpiration: `${new Date().toISOString().substring(0, 10)}`,
-                                presentValueInvestor: 0,
-                                presentValueSF: 0,
-                                montoDisponibleInfo: 0,
-                              });
+                              push( {opDate: `${new Date()}`, // Fecha actual por defecto
+                                  is_creada: false,
+                                  applyGm: false,
+                                  discountTax:0,
+                                  amount: 0,
+                                  payedAmount: 0,
+                                  isRebuy: false,
+                                  billId: '',
+                                  nombreInversionista: '',
+                                  cuentasDelInversionistaSelected:[],
+                                  investorProfit: 0,
+                                  numbercuentaInversionista: '',
+                                  cuentaInversionista: '',
+                                  idCuentaInversionista: '',
+                                  investorBroker: "",
+                                  investorBrokerName: "",
+                                  tasaInversionistaPR: 0,
+                                  tasaDescuentoPR: 0,
+                                  factura: '',
+                                  fraccion: 1,
+                                  valorFuturo: '',
+                                  valorFuturoManual: false, // Rastrea si el valor futuro ha sido editado manualmente
+                                  fechaEmision: null,
+                                  valorNominal: 0,
+                                  porcentajeDescuento: 0,
+                                  probableDate:  `${new Date()}`,
+                                  investorTax: 0,
+                                  expirationDate: '',
+                                  fechaFin: `${addDays(new Date(),1)}`,
+                                  diasOperaciones: 1,
+                                  operationDays: 1,
+                                  typeBill:'',
+                                  comisionSF: 0,
+                                  gastoMantenimiento: 0,
+                                  fechaOperacion: `${new Date().toISOString().substring(0, 10)}`,
+                                  fechaExpiracion: `${new Date().toISOString().substring(0, 10)}`,
+                                  opExpiration: '',
+                                  presentValueInvestor: 0,
+                                  presentValueSF: 0,
+                                  integrationCode: "no-code",
+                                  saldoDisponibleInfo: 0,
+                                  montoDisponibleInfo: 0,
+                                  file:'',
+                                });
                             }}
                           >
                             Agregar Factura
@@ -1735,6 +1755,8 @@ const renderPreviewContent = () => {
                   values={values}
 
                 />
+
+               
                 <ProcessModal
                   success={success}
                 />

@@ -9,11 +9,11 @@ import { PV } from "@formulajs/formulajs";
 import { parseISO,  isValid } from "date-fns";
 
 import { differenceInDays } from "date-fns";
-
+import ModalIntegrationCode from "@components/modals/modalIntegrationCode";
 
 import ErrorIcon from '@mui/icons-material/Error'; // o cualquier otro ícono de error
 
-export default function BillSelector ({values, setFieldValue, errors, touched, index, factura, dataBills, setFieldTouched, setFieldError, cargarFraccionFactura}) {
+export default function BillSelector ({values, setFieldValue, errors, touched, index, factura, dataBills, setFieldTouched, setFieldError,  orchestIntegrationCode,cargarFraccionFactura,setOrchestIntegrationCode,setIsIntegrationCode,isFilterIntegrationActive,isIntegrationCode,setIsFilterIntegrationActive}) {
 
     return (
         <>
@@ -23,7 +23,7 @@ export default function BillSelector ({values, setFieldValue, errors, touched, i
                 options={(values?.takedBills || [])
                 .filter((factura) => factura.currentBalance > 0) // Filtrar facturas con balance > 0
                 .map((factura) => ({
-                label: String(factura.billId),
+                label: `${String(factura.billId)}-${String(factura.integrationCode)}` || `${String(factura.billId)}`,
                 value: String(factura.billId),
                 id: String(factura.id),
                 integrationCode: factura.integrationCode ? factura.integrationCode : "",
@@ -154,6 +154,39 @@ export default function BillSelector ({values, setFieldValue, errors, touched, i
                 const selectedFactura = dataBills?.data.find(f => f.billId === newValue.value);
                 if (!selectedFactura) return;
 
+              if (selectedFactura.integrationCode) {
+                console.log('Código de integración encontrado:', selectedFactura.integrationCode, 'en índice:', index);
+                
+                setOrchestIntegrationCode(prev => {
+                    // Verificar si el índice ya existe
+                    const existingIndex = prev.findIndex(item => item.indice === index);
+                    
+                    let newState;
+                    if (existingIndex !== -1) {
+                        // Actualizar el elemento existente
+                        newState = prev.map(item =>
+                            item.indice === index 
+                                ? { ...item, billId: selectedFactura.billId, integrationCode: selectedFactura.integrationCode }
+                                : item
+                        );
+                    } else {
+                        // Agregar nuevo elemento si el índice no existe
+                        newState = [
+                            ...prev,
+                            {
+                                indice: index,
+                                billId: selectedFactura.billId,
+                                integrationCode: selectedFactura.integrationCode
+                            }
+                        ];
+                    }
+                    
+                    console.log('Nuevo estado calculado:', newState);
+                    return newState;
+                });
+                
+               
+            }
 
                function encontrarFacturasDuplicadas(facturas, billId, inversionistaId, currentIndex) {
                   // Validaciones iniciales
@@ -176,6 +209,9 @@ export default function BillSelector ({values, setFieldValue, errors, touched, i
                       return mismoBillId && mismoInversionista;
                   });
               }
+
+
+              
 
                 const inversionistaSeleccionado = factura.nombreInversionista// ID del inversionista seleccionado
 
@@ -216,15 +252,35 @@ export default function BillSelector ({values, setFieldValue, errors, touched, i
 
 
                 try {
+                  
+ // 1. Buscar TODAS las facturas con integrationCode válido
+    const facturasConCodigo = values.facturas.filter(f => 
+        f.integrationCode?.trim() && f.integrationCode !== "no-code"
+    );
 
-                if (values.integrationCode != selectedFactura?.integrationCode && values.integrationCode != "") {
-                toast(<div style={{ display: 'flex', alignItems: 'center' }}>
-                <ErrorIcon style={{ marginRight: '10px', color: '#d32f2f' }} />
-                <span>El código de integración debe coincidir con el de la factura previa</span>
-                </div>);
-                setFieldValue(`facturas[${index}].factura`, null);
-                } else {
-
+    // 2. Validación principal
+    if (
+        // Caso 1: Factura nueva tiene código pero no coincide con las existentes
+        (selectedFactura.integrationCode?.trim() && 
+         selectedFactura.integrationCode !== "no-code" &&
+         facturasConCodigo.length > 0 &&
+         !facturasConCodigo.every(f => f.integrationCode === selectedFactura.integrationCode))
+        ||
+        // Caso 2: Factura nueva no tiene código pero existen facturas con código
+        (!selectedFactura.integrationCode?.trim() && 
+         facturasConCodigo.length > 0)
+    ) {
+        // Mostrar error
+        toast.error(facturasConCodigo.length > 0 
+            ? `El código debe coincidir con "${facturasConCodigo[0].integrationCode}"`
+            : "No se permiten facturas sin código cuando otras lo tienen"
+        );
+        setFieldValue(`facturas[${index}].factura`, null);
+        return;
+    } 
+   
+                     else {
+                console.log('b')
                 const facturaActual2 = values?.facturas[index];
                 const billIdAnterior = facturaActual2?.billId;
                 const valorFuturoAnterior = facturaActual2?.valorFuturo || 0;
@@ -567,6 +623,8 @@ export default function BillSelector ({values, setFieldValue, errors, touched, i
                 )}
 
              /> 
+
+
         </>
  
     )

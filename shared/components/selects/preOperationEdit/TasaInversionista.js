@@ -130,6 +130,8 @@ export default function TasaInversionistaSelector({ values, setFieldValue, setFi
         fullWidth
         name="investorTax"
         value={formatDisplayValue(values?.investorTax)}
+        onChange={handleChange}
+        onBlur={handleBlur}
            error={hasError()}
   InputProps={{
    endAdornment: (

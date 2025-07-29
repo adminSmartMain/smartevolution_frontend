@@ -6,7 +6,7 @@ import {  Typography,  Button } from '@mui/material';
 import { Dialog,DialogContent, DialogTitle,DialogActions,} from "@mui/material";
 
 
-export default function ModalConfirmation({ values,showConfirmationModal, setShowConfirmationModal, handleSubmit, actionsFormik, }) {
+export default function ModalIntegrationCode({ values,showConfirmationModal, setIsIntegrationCode,integrationCode,setIsFilterIntegrationActive,selectedFactura}) {
 
     return (
 
@@ -14,7 +14,7 @@ export default function ModalConfirmation({ values,showConfirmationModal, setSho
                          {/* Modal de Confirmación usando Dialog */}
                   <Dialog 
                     open={showConfirmationModal} 
-                    onClose={() => setShowConfirmationModal(false)}
+                    onClose={() => setIsIntegrationCode(false)}
                     PaperProps={{
                       sx: {
                         borderRadius: 2,
@@ -23,16 +23,17 @@ export default function ModalConfirmation({ values,showConfirmationModal, setSho
                       }
                     }}
                   >
-                    <DialogTitle>Confirmar Operación</DialogTitle>
+                    <DialogTitle>Alerta</DialogTitle>
                     <DialogContent>
                       <Typography variant="body1" mb={3}>
-                        ¿Estás seguro de registrar esta operación?
+                        Estás por seleccionar una factura con el código {integrationCode}. Solo podrás elegir otras facturas con el mismo código.
                       </Typography>
                     </DialogContent>
                     <DialogActions>
                       <Button 
                         variant="outlined" 
-                        onClick={() => setShowConfirmationModal(false)}
+                        onClick={() => {  setIsIntegrationCode(false)}
+                      }
                       >
                         Cancelar
                       </Button>
@@ -40,8 +41,12 @@ export default function ModalConfirmation({ values,showConfirmationModal, setSho
                         variant="contained" 
                         color="primary"
                         onClick={() => {
-                          setShowConfirmationModal(false);
-                          handleSubmit(values,actionsFormik); // Usar formik.values o manejar según tu implementación
+                          setIsIntegrationCode(false);
+           
+                          const filteredIntegrationCodeBills= values?.takedBills.filter(
+                        (factura) => factura.integrationCode === selectedFactura.integrationCode)
+                        console.log(filteredIntegrationCodeBills)
+                          //handleSubmit(values,actionsFormik); // Usar formik.values o manejar según tu implementación
                         }}
                       >
                         Confirmar
