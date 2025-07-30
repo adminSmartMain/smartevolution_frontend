@@ -227,6 +227,9 @@ const [openPreview, setOpenPreview] = useState(false);
 const [previewIndex, setPreviewIndex] = useState(null);
 const [isUploading, setIsUploading] = useState(false);
 const [isFilterIntegrationActive, setIsFilterIntegrationActive] = useState(false);
+const [hasShownIntegrationModal, setHasShownIntegrationModal] = useState(false);
+
+
 
   const [openModal, setOpenModal] = React.useState(false);
   const {
@@ -423,7 +426,7 @@ const handleFileChange = (event, setFieldValue, index) => {
         opExpiration: '',
         presentValueInvestor: 0,
         presentValueSF: 0,
-        integrationCode: "no-code",
+        integrationCode: "",
         saldoDisponibleInfo: 0,
         montoDisponibleInfo: 0,
         file:'',
@@ -976,7 +979,7 @@ console.log(orchestIntegrationCode)
                                       <Grid item xs={10} container alignItems="center" wrap="nowrap" spacing={1}>
                                         <Grid item>
                                           <Typography>
-                                            { `${factura.billId}${factura.integrationCode && factura.integrationCode !== 'no-code' ? ` - Código de integracion ${factura.integrationCode}` : ''}` || `Factura ${index + 1}`}
+                                            { `${factura.billId}${factura.integrationCode && factura.integrationCode !== '' ? ` - Código de integracion ${factura.integrationCode}` : ''}` || `Factura ${index + 1}`}
                                           </Typography>
                                         </Grid>
                                         {/* Fecha de emisión y vencimiento de la cabecera del acordeon*/}
@@ -1085,6 +1088,8 @@ console.log(orchestIntegrationCode)
                                       setOrchestDisabledset={setOrchestDisabled}
                                       setIsCreatingBill ={ setIsCreatingBill}
                                       remove={remove}
+                                      setHasShownIntegrationModal={setHasShownIntegrationModal}
+                                      
                                       />
                                    </Grid>
                                   </AccordionSummary>
@@ -1138,7 +1143,8 @@ console.log(orchestIntegrationCode)
                                                 setFieldError={setFieldError}
                                                 dataBills={dataBills}
                                                 cargarFraccionFactura={cargarFraccionFactura}
-                                            
+                                              hasShownModal={hasShownIntegrationModal}
+                                              setHasShownModal={setHasShownIntegrationModal}
                                               />
                                          </>
                                             )}
@@ -1720,7 +1726,7 @@ console.log(orchestIntegrationCode)
                                   opExpiration: '',
                                   presentValueInvestor: 0,
                                   presentValueSF: 0,
-                                  integrationCode: "no-code",
+                                  integrationCode: "",
                                   saldoDisponibleInfo: 0,
                                   montoDisponibleInfo: 0,
                                   file:'',

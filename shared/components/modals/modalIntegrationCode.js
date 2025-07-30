@@ -6,6 +6,7 @@ import {  Typography,  Button } from '@mui/material';
 import { Dialog,DialogContent, DialogTitle,DialogActions,} from "@mui/material";
 
 
+// components/modals/modalIntegrationCode.js
 export default function ModalIntegrationCode({ 
     values,
     showConfirmationModal, 
@@ -13,12 +14,14 @@ export default function ModalIntegrationCode({
     integrationCode,
     setIsFilterIntegrationActive,
     selectedFactura,
-    onConfirm  // Nuevo prop
+    onConfirm,
+    onCancel
 }) {
+
     return (
         <Dialog 
             open={showConfirmationModal} 
-            onClose={() => setIsIntegrationCode(false)}
+            onClose={onCancel}
             PaperProps={{
                 sx: {
                     borderRadius: 2,
@@ -30,21 +33,15 @@ export default function ModalIntegrationCode({
             <DialogTitle>Alerta</DialogTitle>
             <DialogContent>
                 <Typography variant="body1" mb={3}>
-                    Estás por seleccionar una factura con el código {integrationCode}. Solo podrás elegir otras facturas con el mismo código.
+                    Estás por seleccionar una factura con el código {integrationCode}. 
+                    Solo podrás elegir otras facturas con el mismo código.
                 </Typography>
             </DialogContent>
             <DialogActions>
-                <Button 
-                    variant="outlined" 
-                    onClick={() => setIsIntegrationCode(false)}
-                >
+                <Button variant="outlined" onClick={onCancel}>
                     Cancelar
                 </Button>
-                <Button 
-                    variant="contained" 
-                    color="primary"
-                    onClick={onConfirm}  // Usar el prop onConfirm
-                >
+                <Button variant="contained" color="primary" onClick={onConfirm}>
                     Confirmar
                 </Button>
             </DialogActions>

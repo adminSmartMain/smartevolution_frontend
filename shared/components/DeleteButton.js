@@ -5,9 +5,10 @@ import React from "react";
 import { Box, Typography, Grid, IconButton } from '@mui/material';
 
 import DeleteIcon from '@mui/icons-material/Delete';
+import { set } from "date-fns";
 
 
-export default function DeleteButton({f,factura, index, values, setFieldValue, remove, orchestDisabled, setOrchestDisabled, setIsCreatingBill}) {
+export default function DeleteButton({f,factura, index, values, setFieldValue, remove, orchestDisabled, setOrchestDisabled, setIsCreatingBill, setHasShownIntegrationModal}) {
 return (   <Grid item xs={2} container justifyContent="flex-end">
         {factura.is_creada && (
             <Box
@@ -106,6 +107,12 @@ return (   <Grid item xs={2} container justifyContent="flex-end">
             }
             // 4. Finalmente eliminar la factura
             remove(index);
+            console.log(values.facturas.length-1)
+
+            if( values.facturas.length-1 == 0){
+                  setHasShownIntegrationModal(false)
+                  setFieldValue('takedBills',values.takedBillsBeforeFilterIntegration)
+            }
         }}>
             <DeleteIcon />
         </IconButton>
