@@ -318,7 +318,7 @@ const router = useRouter();
             badgeClass = "badge por-aprobar";
             break;
           case 1:
-            statusText = "Aprobada";
+            statusText = "Vigente";
             badgeClass = "badge aprobado";
             break;
           case 2:
@@ -346,7 +346,7 @@ const router = useRouter();
       },
     },
     
-    { field: "opId", headerName: "ID", width: 50 },
+    { field: "opId", headerName: "ID", width: 56},
     //{
      // field: "created_at",
      // headerName: "Creado el",

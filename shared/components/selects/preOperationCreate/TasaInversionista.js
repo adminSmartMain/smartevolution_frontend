@@ -111,7 +111,7 @@ export default function TasaInversionistaSelector({ values, setFieldValue, setFi
 
         setFieldValue(`facturas[${index}].presentValueInvestor`, presentValueInvestor);
            if(factura.applyGm){
-                setFieldValue(`facturas[${index}].gastoMantenimiento`,  presentValueInvestor*0.002);
+                setFieldValue(`facturas[${index}].gastoMantenimiento`,  (presentValueInvestor*0.002).toFixed(0));
             }else{
               setFieldValue(`facturas[${index}].gastoMantenimiento`,0);
             }

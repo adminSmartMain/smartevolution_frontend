@@ -94,7 +94,7 @@ const [inputValue, setInputValue] = useState(
           .map((f, i) => i === index ? {
             ...f,
             presentValueInvestor: newPresentValueInvestor,
-            gastoMantenimiento: values.facturas[index].applyGm ? newPresentValueInvestor * 0.002 : 0
+            gastoMantenimiento: values.facturas[index].applyGm ? (newPresentValueInvestor * 0.002).toFixed(0) : 0
           } : f)
           .filter(f => f.idCuentaInversionista === factura.idCuentaInversionista);
 
