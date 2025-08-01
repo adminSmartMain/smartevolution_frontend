@@ -34,7 +34,7 @@ export default function GastoMantenimiento({values,factura,setFieldValue,formatC
 
                                     // Actualizar estado del GM para esta factura
                                     setFieldValue(`facturas[${index}].applyGm`, isChecked);
-                                    setFieldValue(`facturas[${index}].gastoMantenimiento`, isChecked ? valorGm : 0);
+                                    setFieldValue(`facturas[${index}].gastoMantenimiento`, isChecked ? (valorGm).toFixed(0) : 0);
 
                                     // Calcular nuevo monto disponible SOLO para facturas con el mismo idCuentaInversionista
                                     const currentAccountId = factura.idCuentaInversionista;
@@ -68,7 +68,7 @@ export default function GastoMantenimiento({values,factura,setFieldValue,formatC
                                     const diferencia = nuevoValor - (factura.gastoMantenimiento || 0);
 
                                     // Actualizar valor de GM para esta factura
-                                    setFieldValue(`facturas[${index}].gastoMantenimiento`, nuevoValor);
+                                    setFieldValue(`facturas[${index}].gastoMantenimiento`, (nuevoValor).toFixed(0));
 
                                     // Calcular nuevo monto disponible SOLO para facturas con el mismo idCuentaInversionista
                                     const currentAccountId = factura.idCuentaInversionista;

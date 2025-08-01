@@ -27,7 +27,7 @@ export default function PorcentajeDescuentoSelector({ values, setFieldValue, err
                     return;
                 }
 
-                // Convertir a número y validar rango
+                       // Convertir a número y validar rango
                 let numericValue = Number(inputValue);
                 numericValue = isNaN(numericValue) ? 0 : Math.min(Math.max(numericValue, 0), 100);
 
@@ -36,8 +36,17 @@ export default function PorcentajeDescuentoSelector({ values, setFieldValue, err
                 const shouldClearZero = currentValue === 0 && inputValue.length > 1 && inputValue.startsWith("0");
 
                 // Actualizar el valor en el formulario
-                const finalValue = shouldClearZero ? inputValue.replace(/^0+/, '') : numericValue;
-                setFieldValue(`facturas[${index}].porcentajeDescuento`,  Number(finalValue.toFixed(2)));
+                let finalValue;
+                if (shouldClearZero) {
+                    // Si estamos limpiando ceros iniciales, convertir el string resultante a número
+                    finalValue = Number(inputValue.replace(/^0+/, ''));
+                } else {
+                    finalValue = numericValue;
+                }
+                
+                // Asegurarnos de que es un número antes de usar toFixed
+                const formattedValue = typeof finalValue === 'number' ? Number(finalValue.toFixed(2)) : finalValue;
+                setFieldValue(`facturas[${index}].porcentajeDescuento`, formattedValue)
 
                 // Calcular valores dependientes solo si hay un valor numérico válido
                 if (inputValue !== "" && !isNaN(numericValue)) {
@@ -129,6 +138,22 @@ export default function PorcentajeDescuentoSelector({ values, setFieldValue, err
                 pattern: "[0-9,.]*",
                 inputMode: "decimal",
               }
+
+            }}
+
+             sx={{
+                // Esto quita los spinners en navegadores modernos
+                '& input[type=number]': {
+                    '-moz-appearance': 'textfield',
+                },
+                '& input[type=number]::-webkit-outer-spin-button': {
+                    '-webkit-appearance': 'none',
+                    margin: 0,
+                },
+                '& input[type=number]::-webkit-inner-spin-button': {
+                    '-webkit-appearance': 'none',
+                    margin: 0,
+                },
             }}
         />
         

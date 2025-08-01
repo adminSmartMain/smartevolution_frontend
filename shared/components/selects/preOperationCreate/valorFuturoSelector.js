@@ -118,7 +118,7 @@ export default function ValorFuturoSelector({
       setFieldValue(`facturas[${index}].comisionSF`, presentValueInvestor - presentValueSF || 0);
 
       if (values.facturas[index].applyGm) {
-        setFieldValue(`facturas[${index}].gastoMantenimiento`, presentValueInvestor * 0.002);
+        setFieldValue(`facturas[${index}].gastoMantenimiento`, (presentValueInvestor * 0.002).toFixed(0));
       } else {
         setFieldValue(`facturas[${index}].gastoMantenimiento`, 0);
       }

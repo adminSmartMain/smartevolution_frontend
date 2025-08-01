@@ -88,7 +88,7 @@ export default function InvestorSelector({setFieldTouched,setFieldError,errors, 
                             investorBrokerName: '',
                             montoDisponibleCuenta: -factura.presentValueInvestor-factura.gastoMantenimiento || 0, // Restablecer al máximo
                             montoDisponibleInfo: 0,
-                            gastoMantenimiento: factura.gastoMantenimiento,
+                            gastoMantenimiento: 0,
                             operationDays: factura.operationDays,
                             saldoDisponibleInfo: factura.saldoDisponibleInfo,
                             tasaInversionistaPR: 0,
@@ -130,7 +130,7 @@ export default function InvestorSelector({setFieldTouched,setFieldError,errors, 
                          const valorGm = factura.presentValueInvestor * 0.002;
                          
                         setFieldValue(`facturas[${index}].applyGm`, tasaDescuento?.data?.gmf|| false);
-                         setFieldValue(`facturas[${index}].gastoMantenimiento`,  tasaDescuento?.data?.gmf ? valorGm : 0);
+                         setFieldValue(`facturas[${index}].gastoMantenimiento`,  tasaDescuento?.data?.gmf ? (valorGm).toFixed(0) : 0);
                         const todasFacturasInversionista = values.facturas
                         .map((f, i) => {
                             // Asignación segura del nuevo valor
