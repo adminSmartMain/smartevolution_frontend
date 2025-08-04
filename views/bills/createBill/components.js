@@ -455,7 +455,13 @@ const handleOpenPreview = () => {
     setOpenPreview(false);
   };
 
-
+const formatFileSize = (bytes) => {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
   return (
 
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={esLocale}>
@@ -858,63 +864,66 @@ const handleOpenPreview = () => {
                     />
                   </Grid>
 
-<Grid item xs={8} sx={{ 
-  marginTop: '16px', 
-  backgroundColor: 'grey.100', 
-  p: 2, 
-  borderRadius: 5,
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 1
-}}>
-  <Box display="flex" alignItems="center" gap={2}>
-    <Button
-      component="label"
-      variant="contained"
-      startIcon={<CloudUploadIcon />}
-      sx={{ flexShrink: 0 }}
-    >
-      Seleccionar archivo
-      <VisuallyHiddenInput 
-        type="file" 
-        onChange={(e) => handleFileChange(e, setFieldValue)}
-        accept=".pdf,.jpg,.jpeg,.png"
-      />
-    </Button>
-    
-    <Button
-      variant="outlined"
-      startIcon={<PreviewIcon />}
-      onClick={handleOpenPreview}
-      disabled={!file && !fileUrl}
-      sx={{
-        backgroundColor: (file || fileUrl) ? 'background.paper' : 'grey.300',
-        color: (file || fileUrl) ? 'text.primary' : 'text.disabled',
-        flexShrink: 0,
-        '&:hover': {
-          backgroundColor: (file || fileUrl) ? 'action.hover' : 'grey.300'
-        }
-      }}
-    >
-      Previsualizar
-    </Button>
+                  <Grid item xs={8} sx={{ 
+                    marginTop: '16px', 
+                    backgroundColor: 'grey.100', 
+                    p: 2, 
+                    borderRadius: 5,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 1
+                  }}>
+                    <Box display="flex" alignItems="center" gap={2}>
+                      <Button
+                        component="label"
+                        variant="contained"
+                        startIcon={<CloudUploadIcon />}
+                        sx={{ flexShrink: 0 }}
+                      >
+                        Seleccionar archivo
+                        <VisuallyHiddenInput 
+                          type="file" 
+                          onChange={(e) => handleFileChange(e, setFieldValue)}
+                          accept=".pdf,.jpg,.jpeg,.png"
+                        />
+                      </Button>
+                      
+                      <Button
+                        variant="outlined"
+                        startIcon={<PreviewIcon />}
+                        onClick={handleOpenPreview}
+                        disabled={!file && !fileUrl}
+                        sx={{
+                          backgroundColor: (file || fileUrl) ? 'background.paper' : 'grey.300',
+                          color: (file || fileUrl) ? 'text.primary' : 'text.disabled',
+                          flexShrink: 0,
+                          '&:hover': {
+                            backgroundColor: (file || fileUrl) ? 'action.hover' : 'grey.300'
+                          }
+                        }}
+                      >
+                        Previsualizar
+                      </Button>
 
-    {(file || fileUrl) && (
-      <Typography variant="body2" sx={{ ml: 1, flexGrow: 1, wordBreak: 'break-word' }}>
-        Archivo seleccionado: {file?.name || fileUrl?.split('/').pop()}
-      </Typography>
-    )}
-  </Box>
-  
-  {errors.file && (
-    <Typography 
-      variant="body2"
-      sx={{ color: 'error.main' }}
-    >
-      {'El archivo es obligatorio'}
-    </Typography>
-  )}
-</Grid>
+                      {(file || fileUrl) && (
+                        <Typography variant="body2" sx={{ ml: 1, flexGrow: 1, wordBreak: 'break-word' }}>
+                          Archivo seleccionado: {file?.name || fileUrl?.split('/').pop()}
+                          {file?.size && (
+          <span> ({formatFileSize(file.size)})</span>
+        )}
+                        </Typography>
+                      )}
+                    </Box>
+                    
+                    {errors.file && (
+                      <Typography 
+                        variant="body2"
+                        sx={{ color: 'error.main' }}
+                      >
+                        {'El archivo es obligatorio'}
+                      </Typography>
+                    )}
+                  </Grid>
                 
                 </Grid>
           

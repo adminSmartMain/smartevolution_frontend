@@ -46,58 +46,7 @@ const sectionTitleContainerSx = {
   alignItems: "center",
 };
 
-const filtersContainerSx = {
-  display: "flex",
-  gap: 1,
-};
 
-const entriesGrid = {
-  backgroundColor: "#488B8F",
-  borderRadius: "4px",
-
-  mt: 1,
-
-  pb: 1.5,
-  pr: 1.5,
-};
-
-const entryContainerSx = {
-  display: "flex",
-  justifyContent: "flex-end",
-  alignItems: "center",
-
-  position: "relative",
-};
-
-const titleSx = {
-  letterSpacing: 0,
-  fontSize: 10,
-  fontWeight: "bold",
-  color: "#488B8F",
-  textTransform: "uppercase",
-  textAlign: "right",
-
-  position: "absolute",
-  left: 8,
-  top: 3,
-};
-
-const valueSx = {
-  letterSpacing: 0,
-  color: "#488B8F",
-  fontSize: 14,
-  fontWeight: 600,
-  textAlign: "right",
-
-  border: "1px solid #C7C7C780",
-  borderRadius: "4px",
-
-  backgroundColor: "#ebfaf6",
-  width: "100%",
-  padding: "0.35rem",
-  pt: "0.7rem",
-  pb: "0.1rem",
-};
 
 const tableWrapperSx = {
   marginTop: 2,
@@ -107,37 +56,7 @@ const tableWrapperSx = {
   height: "100%",
 };
 
-const TextFieldSearch = (props) => {
-  const { ...rest } = props;
 
-  return (
-    <MuiTextField
-      type="text"
-      variant="standard"
-      margin="normal"
-      InputProps={{
-        disableUnderline: true,
-        sx: {
-          marginTop: "-5px",
-        },
-        endAdornment: <SearchOutlined sx={{ color: "#5EA3A3" }} />,
-      }}
-      sx={{ m: 0, my: 1 }}
-      {...rest}
-    />
-  );
-};
-
-const Entry = (props) => {
-  const { title, children, sx, ...rest } = props;
-
-  return (
-    <Box sx={{ ...entryContainerSx, ...sx }}>
-      <Typography sx={{ ...titleSx }}>{title}</Typography>
-      <Typography sx={{ ...valueSx }}>{children}</Typography>
-    </Box>
-  );
-};
 
 const SortIcon = () => (
   <Typography fontFamily="icomoon" fontSize="0.7rem">
@@ -145,105 +64,8 @@ const SortIcon = () => (
   </Typography>
 );
 
-const EntryField = styled(StandardTextField)(({ theme }) => ({
-  "& label": {
-    color: "#488B8F",
-    fontWeight: 600,
-    top: 10,
-    left: -5,
-  },
 
-  "& .Mui-focused": {
-    color: "#488B8F",
-    fontWeight: 600,
-  },
 
-  "& fieldset": {
-    display: "none",
-  },
-
-  "& .MuiInputBase-root": {
-    height: 35.78,
-    backgroundColor: "#ebfaf6",
-  },
-
-  "& .MuiOutlinedInput-notchedOutline": {
-    borderColor: "#5EA3A380 !important",
-  },
-
-  "& .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline": {
-    borderColor: "#d32f2f !important",
-  },
-
-  "& .MuiOutlinedInput-input": {
-    textAlign: "right",
-    color: "#488B8F",
-    fontWeight: 600,
-    fontSize: 14,
-  },
-
-  "& .MuiInputAdornment-root": {
-    color: "#5EA3A3",
-  },
-}));
-
-const EditableEntry = (props) => {
-  const { title, value, onChangeMasked, ...rest } = props;
-
-  return (
-    <EntryField
-      notched={true}
-      label={title}
-      InputLabelProps={{ shrink: true }}
-      isMasked
-      thousandSeparator="."
-      decimalSeparator=","
-      decimalScale={2}
-      allowNegative={false}
-      value={value}
-      onChangeMasked={onChangeMasked}
-    />
-  );
-};
-
-const NotificationsButton = (props) => {
-  const { ...rest } = props;
-
-  return (
-    <Link href="/operations/notifications" underline="none">
-      <Button
-        variant="standard"
-        color="primary"
-        size="large"
-        sx={{
-          height: "2.6rem",
-          backgroundColor: "transparent",
-          border: "1.4px solid #63595C",
-          borderRadius: "4px",
-          ml: 1,
-        }}
-      >
-        <Typography
-          letterSpacing={0}
-          fontSize="80%"
-          fontWeight="bold"
-          color="#63595C"
-        >
-          Estado de firma
-        </Typography>
-
-        <Typography
-          fontFamily="icomoon"
-          fontSize="1.5rem"
-          color="#63595C"
-          marginLeft="0.9rem"
-        >
-          &#xe900;
-        </Typography>
-      </Button>
-    </Link>
-  );
-};
 
 export const OperationsComponents = ({
   rows,
