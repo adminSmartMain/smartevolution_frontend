@@ -336,7 +336,7 @@ const transformData = (data) => {
   const processedBillIds = {}; // Para rastrear billIds ya procesados
 
   return data.facturas.map((factura) => {
-
+    console.log(factura.isReBuy)
     const baseStructure = {
       billId: factura.billId,
       is_creada: factura.is_creada || false,
@@ -371,7 +371,7 @@ const transformData = (data) => {
         presentValueSF: factura.presentValueSF,
         probableDate: new Date(factura.probableDate).toISOString().substring(0, 10),
         status: 0,
-        isReBuy: false,
+        isRebuy: factura.isReBuy,
         massive: false,
         saldoInicialFactura: factura.saldoDisponibleInfo, 
         file:factura.file,

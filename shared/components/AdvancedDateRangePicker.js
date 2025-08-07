@@ -131,6 +131,7 @@ function AdvancedDateRangePicker({ onApply,onClean }) {
         startIcon={<CalendarTodayIcon />}
         sx={{
           textTransform: "none",
+          height:'2.2rem',
           borderColor: "var(--primary-color)",
           color: "var(--primary-color)",
           "&:hover": {

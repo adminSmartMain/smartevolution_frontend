@@ -440,7 +440,8 @@ opExpiration: values.opExpiration ? new Date(values.opExpiration).toISOString().
     presentValueSF: Number(values.presentValueSF) || 0,
     state: true,
     status: 0,
-    integrationCode: values.integrationCode || ""
+    integrationCode: values.integrationCode || "",
+    probableDate: values.probableDate ?new Date(values.probableDate).toISOString().substring(0, 10) : new Date().toISOString().substring(0, 10),
   };
 
  

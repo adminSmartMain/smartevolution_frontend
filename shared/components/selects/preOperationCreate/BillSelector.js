@@ -451,13 +451,15 @@ const validarIntegracionFacturas = (facturas, facturaActual, index) => {
                     });
                 }
             }
+            
+console.log(selectedFactura?.reBuyAvailable )
         } catch (error) {
             console.error("Error al cargar los datos:", error);
         }
     };
 
-    console.log(hasShownModal, "hasShownModal");
 
+   
     return (
         <>
             <Autocomplete

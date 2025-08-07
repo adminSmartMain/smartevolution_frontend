@@ -25,6 +25,7 @@ const pathsWithoutDefaultLayout = [
   "/pre-operations/detailPreOp",
   "/pre-operations/editPreOp",
    "/bills/createBill",
+    "/bills/editBill",
 ];
 
 function MyApp({ Component, pageProps }) {

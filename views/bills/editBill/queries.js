@@ -99,66 +99,6 @@ export const CreateBillManually = async (values) => {
   );
   return res.data;
 };
-export const UpdateOperation = async (data, previousValues, previousDeleted) => {
-  let results = [];
-  if (data.length > 1) {
-    data.forEach(async (item) => {
-      if (item.billCode === undefined) {
-        item.billCode = "";
-        if (previousDeleted === "true" && item.status !== 2) {
-          // add previousDeleted attribute to the item
-          item.previousDeleted = "true";
-        }
-        const res = await Axios.patch(
-          `${API_URL}/preOperation/${item.id}`,
-          { ...item },
-          {
-            headers: {
-              authorization: "Bearer " + localStorage.getItem("access-token"),
-            },
-          }
-        );
-        results.push(res.data);
-      } else {
-        if (previousDeleted === "true" && item.status !== 2) {
-          // add previousDeleted attribute to the item
-          item.previousDeleted = 'true';
-        }
-        const res = await Axios.post(
-          `${API_URL}/preOperation/`,
-          {
-            ...item,
-          },
-          {
-            headers: {
-              authorization: "Bearer " + localStorage.getItem("access-token"),
-            },
-          }
-        );
-      }
-    });
-    return results;
-  } else {
-    if (data[0].billCode === undefined) data[0].billCode = "";
-    if (data[0].DateBill === undefined || data[0].DateBill === null) data[0].DateBill = previousValues?.data.DateBill;
-    if (data[0].DateExpiration === undefined || data[0].DateExpiration === null) data[0].DateExpiration = previousValues?.data.DateExpiration;
-    if (data[0].investorProfit === undefined || data[0].investorProfit === null || isNaN(data[0].investorProfit) === true) data[0].investorProfit = previousValues?.data.investorProfit;
-    if (previousDeleted === "true") {
-      // add previousDeleted attribute to the item
-      data[0].previousDeleted = 'true';      
-    }
-    const res = await Axios.patch(
-      `${API_URL}/preOperation/${data[0].id}`,
-      { ...data[0] },
-      {
-        headers: {
-          authorization: "Bearer " + localStorage.getItem("access-token"),
-        },
-      }
-    );
-    return res.data;
-  }
-};
 
 
 export const GetOperationById = async (data) => {
@@ -218,6 +158,21 @@ export const Bills = async (data) => {
   }
 };
 
+export const EditBill = async (data) => {
+  if (!data) throw new Error("Datos requeridos");
+  
+  const res = await Axios.patch(
+    `${API_URL}/bill/${data.bill}`, // Asumo que billId es el identificador
+    data, // Envía todos los datos en el cuerpo
+    {
+      headers: {
+        authorization: "Bearer " + localStorage.getItem("access-token"),
+      },
+    }
+  );
+  return res.data;
+};
+
 export const BillsByOperation = async (data) => {
   const res = await Axios.get(`${API_URL}/bill?opId=${data}`, {
     headers: {
@@ -246,7 +201,7 @@ export const payerByBill = async (data) => {
 };
 
 export const billById = async (data) => {
-  const res = await Axios.get(`${API_URL}/bill?reBuy=${data}`, {
+  const res = await Axios.get(`${API_URL}/bill?billEvent=${data}`, {
     headers: {
       authorization: "Bearer " + localStorage.getItem("access-token"),
     },

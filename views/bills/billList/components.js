@@ -33,7 +33,7 @@ import InputTitles from "@styles/inputTitles";
 import LoadingCircle from "@styles/loading";
 import scrollSx from "@styles/scroll";
 import CustomDataGrid from "@styles/tables";
-
+import EditIcon from '@mui/icons-material/Edit';
 import AdvancedDateRangePicker from "@components/AdvancedDateRangePicker";
 
 import {
@@ -51,6 +51,7 @@ export const BillsComponents = () => {
   const [filter, setFilter] = useState("");
   const [query, setQuery] = useState("");
   const [anchorEl, setAnchorEl] = useState(null);
+    const [anchorElTypeBill, setAnchorElTypeBil] = useState(null);
     const [anchorElChannel, setAnchorElChannel] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [search, setSearch] = useState("");
@@ -389,11 +390,11 @@ const SortIcon = () => (
 
 
   const handleClickTypeBill = (event) => {
-    setAnchorEl(event.currentTarget);
+    setAnchorElTypeBil(event.currentTarget);
   };
 
   const handleCloseTypeBill = () => {
-    setAnchorEl(null);
+    setAnchorElTypeBil(null);
   };
 
 
@@ -428,7 +429,7 @@ const handleDownload = (url, fileName) => {
  {
   field: "typeBill",
   headerName: "Tipo",
-  width: 130,
+  width: 100,
   renderCell: (params) => {
     return (
       <Box 
@@ -520,7 +521,7 @@ const handleDownload = (url, fileName) => {
 }, {
       field: "DateBill",
       headerName: "Emitido",
-      width: 160,
+      width:81,
       renderCell: (params) => {
         return (
           <InputTitles>
@@ -532,7 +533,7 @@ const handleDownload = (url, fileName) => {
     {
       field: "DatePayment",
       headerName: "Vence",
-      width: 160,
+      width:  81,
       renderCell: (params) => {
         return (
           <InputTitles>
@@ -544,7 +545,7 @@ const handleDownload = (url, fileName) => {
     {
       field: "Emitter",
       headerName: "Emisor",
-      width: 180,
+      width: 190,
       renderCell: (params) => {
         return (
           <CustomTooltip
@@ -571,7 +572,7 @@ const handleDownload = (url, fileName) => {
     {
       field: "Payer",
       headerName: "Pagador",
-      width: 180,
+      width: 190,
       renderCell: (params) => {
         return (
           <CustomTooltip
@@ -595,37 +596,11 @@ const handleDownload = (url, fileName) => {
         );
       },
     },
-   {/*  {
-      field: "Subtotal",
-      headerName: "SUBTOTAL",
-      width: 130,
-      renderCell: (params) => {
-        return (
-          <CustomTooltip
-            title={numberFormat.format(params.value)}
-            arrow
-            placement="bottom-start"
-            TransitionComponent={Fade}
-            PopperProps={{
-              modifiers: [
-                {
-                  name: "offset",
-                  options: {
-                    offset: [0, 0],
-                  },
-                },
-              ],
-            }}
-          >
-            <InputTitles>{numberFormat.format(params.value)}</InputTitles>
-          </CustomTooltip>
-        );
-      },
-    },*/},
+   
     {
       field: "Total",
       headerName: "Total",
-      width: 130,
+      width: 150,
       renderCell: (params) => {
         return (
           <CustomTooltip
@@ -650,34 +625,7 @@ const handleDownload = (url, fileName) => {
       },
     },
 
-    {/* {
-      field: "payedBalance",
-      headerName: "VALOR NEGOCIADO",
-      width: 150,
-      renderCell: (params) => {
-        return (
-          <CustomTooltip
-            title={numberFormat.format(params.value)}
-            arrow
-            placement="bottom-start"
-            TransitionComponent={Fade}
-            PopperProps={{
-              modifiers: [
-                {
-                  name: "offset",
-                  options: {
-                    offset: [0, 0],
-                  },
-                },
-              ],
-            }}
-          >
-            <InputTitles>{numberFormat.format(params.value)}</InputTitles>
-          </CustomTooltip>
-        );
-      },
-    } */}
-   ,
+  
    {
       field: "valor_a_recibir",
       headerName: "Valor a recibir",
@@ -735,7 +683,7 @@ const handleDownload = (url, fileName) => {
     {
       field: "associatedOperation",
       headerName: "OpId",
-      width: 150,
+      width: 103,
       renderCell: (params) => {
         return (
           <CustomTooltip
@@ -775,7 +723,29 @@ const handleDownload = (url, fileName) => {
     renderCell: (params) => {
       return (
         <>
-          <CustomTooltip
+        <Box>
+ <CustomTooltip
+            title="Descargar factura"
+            arrow
+            placement="bottom-start"
+          >
+            <IconButton
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDownload(params.row.file, params.row.billId);
+              }}
+              sx={{
+                color: "#999999",
+                "&:hover": {
+                  backgroundColor: "#B5D1C980",
+                  color: "#488B8F",
+                },
+              }}
+            >
+              <DownloadIcon />
+            </IconButton>
+          </CustomTooltip>
+ <CustomTooltip
             title="Acciones"
             arrow
             placement="bottom-start"
@@ -808,6 +778,8 @@ const handleDownload = (url, fileName) => {
               <MoreVertIcon />
             </IconButton>
           </CustomTooltip>
+        </Box>
+         
 
           <Menu
             anchorEl={anchorEl}
@@ -835,16 +807,31 @@ const handleDownload = (url, fileName) => {
             </MenuItem>
 
             <MenuItem
-              onClick={() => {
-                handleDownload(selectedRow.file, selectedRow.billId);
-                setAnchorEl(null);
-              }}
-            >
-              <ListItemIcon>
-                <DownloadIcon fontSize="small" />
-              </ListItemIcon>
-              Descargar factura
-            </MenuItem>
+             onClick={() => {
+    if (selectedRow?.associatedOperation == null) {
+      Toast(
+        "No se puede editar una factura asociada a una operación",
+        "error"
+      );
+    } else {
+      // Navegar a la página de edición con el UUID de la factura
+      window.location.href = `/bills/editBill?id=${selectedRow.id}`;
+    }
+    setAnchorEl(null);
+  }}
+  sx={{
+    // Opcional: cambiar el color cuando está deshabilitado
+    '&.Mui-disabled': {
+      opacity: 0.7,
+    }
+  }}
+  disabled={selectedRow?.associatedOperation == null}
+          >
+            <ListItemIcon>
+              <EditIcon fontSize="small" />
+            </ListItemIcon>
+            Editar factura
+          </MenuItem>
 
             <MenuItem
               onClick={() => {
@@ -1147,7 +1134,7 @@ const handleDownload = (url, fileName) => {
   return (
     <>
      
-      <Box container display="flex" flexDirection="column" mt={3}>
+      <Box container display="flex" flexDirection="column" mt={-3}>
   
 <Box
   display="flex"
@@ -1158,7 +1145,7 @@ const handleDownload = (url, fileName) => {
   gap={3}
   sx={{
     width: '100%',
-    padding: '8px 0'
+    padding: '0px 0'
   }}
 >
   <Box display="flex" alignItems="center" gap={2}>
@@ -1239,7 +1226,7 @@ const handleDownload = (url, fileName) => {
     onClick={handleClickTypeBill}
     endIcon={<ArrowDropDownIcon />}
     sx={{
-      height: "2rem",
+      height: "2.2rem",
       backgroundColor: "transparent",
       border: "1.4px solid #488B8F",
       borderRadius: "4px",
@@ -1284,8 +1271,8 @@ const handleDownload = (url, fileName) => {
     )}
 
   <Menu
-    anchorEl={anchorEl}
-    open={Boolean(anchorEl)}
+    anchorEl={anchorElTypeBill}
+    open={Boolean(anchorElTypeBill)}
     onClose={handleCloseTypeBill}
     anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
     transformOrigin={{ vertical: "top", horizontal: "left" }}
@@ -1336,7 +1323,7 @@ const handleDownload = (url, fileName) => {
     onClick={handleClickChannel}
     endIcon={<ArrowDropDownIcon />}
     sx={{
-      height: "2rem",
+      height: "2.2rem",
       backgroundColor: "transparent",
       border: "1.4px solid #488B8F",
       borderRadius: "4px",
@@ -1439,7 +1426,7 @@ const handleDownload = (url, fileName) => {
             color="primary"
             size="large"
            sx={{
-              height: "2rem",
+              height: "2.2rem",
               backgroundColor: "transparent",
               border: "1.4px solid #488B8F",
               borderRadius: "4px",
@@ -1474,7 +1461,7 @@ const handleDownload = (url, fileName) => {
             color="primary"
             size="large"
             sx={{
-              height: "2rem",
+              height: "2.2rem",
               backgroundColor: "transparent",
               border: "1.4px solid #488B8F",
               borderRadius: "4px",
