@@ -5,7 +5,7 @@ import { TextField } from '@mui/material';
 
 import { toast } from "react-toastify";
 
-export default function BillManualSelector({values, setFieldValue, errors, touched, index, setBillExists, debouncedCheckBill}) {
+export default function BillManualSelector({values, setFieldValue, errors, touched, index, setBillExists, debouncedCheckBill,integrationCode}) {
 
 return (
 <>
@@ -13,7 +13,7 @@ return (
         id="codigoFactura"
         label="Código Factura *"
         fullWidth
-        
+        disabled={integrationCode !== ""}
         value={values?.billId || ''}
         error={ Boolean(errors?.billId)}
         helperText={errors?.billId}

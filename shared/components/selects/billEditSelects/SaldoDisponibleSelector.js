@@ -14,7 +14,7 @@ export default function SaldoDisponibleSelector({
   values,
   setFieldValue,
   formatNumberWithThousandsSeparator,
-  parseFloat
+  parseFloat,
 }) {
   return (
     

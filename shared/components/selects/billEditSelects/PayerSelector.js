@@ -11,7 +11,8 @@ export default function PayerSelector({
   setClientPagador, 
   setIsSelectedPayer,
   touched,
-  orchestDisabled 
+  orchestDisabled,
+  integrationCode
 }) {
   // Función para encontrar el pagador actual basado en payerId
   const getCurrentPayer = () => {
@@ -104,7 +105,8 @@ export default function PayerSelector({
       isOptionEqualToValue={isOptionEqualToValue}
       getOptionLabel={getOptionLabel}
       onChange={handlePayerChange}
-      disabled={orchestDisabled}
+      disabled={integrationCode !== ""}
+      
       renderInput={(params) => (
         <TextField
           {...params}

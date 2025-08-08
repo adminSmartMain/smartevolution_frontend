@@ -7,7 +7,8 @@ export default function TypeBillSelector({
   setFieldValue,
   touched,
   values,
-  dataTypeBill = { data: [] } // Valor por defecto ajustado a tu estructura
+  dataTypeBill = { data: [] } ,// Valor por defecto ajustado a tu estructura
+  integrationCode,
 }) {
   // Extraemos el array de tipos de la propiedad data
   const typeBillOptions = dataTypeBill.data || [];
@@ -24,6 +25,7 @@ export default function TypeBillSelector({
       isOptionEqualToValue={(option, value) => option?.id === value?.id}
       value={typeBillOptions.find(type => type.id === values.typeBill) || null}
       onChange={handleTypeBillChange}
+      disabled={integrationCode !== ""}
       renderInput={(params) => (
         <TextField
           {...params}

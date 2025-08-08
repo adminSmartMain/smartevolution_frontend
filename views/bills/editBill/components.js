@@ -550,6 +550,7 @@ console.log( bill?.bill?.currentBalance)
   };
 
   console.log(initialValues2)
+  console.log(bill)
 const handleOpenPreview = () => {
     if (!file && !fileUrl) {
       toast.warning('No hay archivo para previsualizar');
@@ -586,48 +587,64 @@ const handleOpenPreview = () => {
           >
             Editar Factura
           </Typography>
- <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            {usuarioEncontrado || usuarioEncontradoEdit ? (
-              <Typography variant="subtitle1" sx={{ color: 'text.secondary' }}>
-                {usuarioEncontrado?.id === usuarioEncontradoEdit?.id ? (
-                  <>Creado y editado por: {renderNombreUsuario(usuarioEncontrado)}</>
-                ) : (
-                  <>
-                    {usuarioEncontrado && <>Creado por: {renderNombreUsuario(usuarioEncontrado)}</>}
-                    {usuarioEncontrado && usuarioEncontradoEdit && <br />}
-                    {usuarioEncontradoEdit && <>Editado por: {renderNombreUsuario(usuarioEncontradoEdit)}</>}
-                  </>
-                )}
-              </Typography>
-            ) : (
-              <Typography variant="subtitle1" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
-                Sin información de autoría
-              </Typography>
-            )}
+          <Box sx={{ 
+  display: 'flex', 
+  alignItems: 'center', 
+  gap: 1, // Espacio entre elementos
+  flexWrap: 'wrap', // Permite que los elementos se ajusten en pantallas pequeñas
+}}>
+  {/* Badge "Autogestión" */}
+  {bill.integrationCode && (
+    <Box
+      sx={{
+        backgroundColor: "#488B8F",
+        color: "white",
+        borderRadius: "12px",
+        padding: "2px 8px",
+        fontSize: "0.7rem",
+        fontWeight: "bold",
+        alignSelf: 'center', // Alinea verticalmente con el texto
+        marginTop: 0, // Elimina el margen superior que lo desalineaba
+      }}
+    >
+      Autogestión
+    </Box>
+  )}
 
-            {/* Tooltip pegado al texto */}
-            {(usuarioEncontrado || usuarioEncontradoEdit) && (
-              <Tooltip
-                title={<span style={{ whiteSpace: 'pre-line' }}>{tooltipText}</span>}
-                arrow
-                placement="top"
-                PopperProps={{
-                  modifiers: [
-                    {
-                      name: 'offset',
-                      options: {
-                        offset: [0, 4], // un poco de separación vertical
-                      },
-                    },
-                  ],
-                }}
-              >
-                <IconButton size="small" sx={{ ml: 0.5 }}>
-                  <InfoIcon fontSize="small" color="action" />
-                </IconButton>
-              </Tooltip>
-            )}
-          </Box>
+  {/* Información de autoría */}
+  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+    {usuarioEncontrado || usuarioEncontradoEdit ? (
+      <Typography variant="subtitle1" sx={{ color: 'text.secondary' }}>
+        {usuarioEncontrado?.id === usuarioEncontradoEdit?.id ? (
+          <>Creado y editado por: {renderNombreUsuario(usuarioEncontrado)}</>
+        ) : (
+          <>
+            {usuarioEncontrado && <>Creado por: {renderNombreUsuario(usuarioEncontrado)}</>}
+            {usuarioEncontrado && usuarioEncontradoEdit && <br />}
+            {usuarioEncontradoEdit && <>Editado por: {renderNombreUsuario(usuarioEncontradoEdit)}</>}
+          </>
+        )}
+      </Typography>
+    ) : (
+      <Typography variant="subtitle1" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
+        Sin información de autoría
+      </Typography>
+    )}
+
+    {/* Tooltip (icono de información) */}
+    {(usuarioEncontrado || usuarioEncontradoEdit) && (
+      <Tooltip
+        title={<span style={{ whiteSpace: 'pre-line' }}>{tooltipText}</span>}
+        arrow
+        placement="top"
+      >
+        <IconButton size="small" sx={{ ml: 0.5 }}>
+          <InfoIcon fontSize="small" color="action" />
+        </IconButton>
+      </Tooltip>
+    )}
+  </Box>
+</Box>
         </Box>
         <Formik
           initialValues={initialValues2}
@@ -650,6 +667,7 @@ const handleOpenPreview = () => {
                   touched={touched}
                   values={values}
                   dataTypeBill={dataTypeBill} // Tus datos como los muestras
+                  integrationCode={bill?.integrationCode}
                  
                 />
                   </Grid>
@@ -664,7 +682,7 @@ const handleOpenPreview = () => {
                       dataBills={dataBills}
                       setFieldTouched={setFieldTouched}
                       setFieldError={setFieldError}
-
+                      integrationCode={bill?.integrationCode}
                       debouncedCheckBill={debouncedCheckBill}
                     />
                   </Grid>
@@ -701,6 +719,7 @@ const handleOpenPreview = () => {
                         }}
                         inputFormat="dd/MM/yyyy"
                         mask="__/__/____"
+                        disabled={bill?.integrationCode !== ""}
                         renderInput={(params) => (
                           <TextField
                             {...params}
@@ -760,6 +779,7 @@ const handleOpenPreview = () => {
                           }
                         }}
                         inputFormat="dd/MM/yyyy"
+                        disabled={bill?.integrationCode !== ""}
                         mask="__/__/____"
                         renderInput={(params) => (
                           <TextField
@@ -815,6 +835,7 @@ const handleOpenPreview = () => {
                             {...params}
                             size="small"
                             fullWidth
+                            disabled={bill?.integrationCode !== ""}
                             sx={{
                               '& .MuiInputBase-root': {
                                 height: '56px' // Increased height
@@ -856,7 +877,7 @@ const handleOpenPreview = () => {
                       cargarTasaDescuento={cargarTasaDescuento}
                       setClientWithoutBroker={setClientWithoutBroker}
                       setOpenEmitterBrokerModal={setOpenEmitterBrokerModal}
-                      
+                      integrationCode={bill?.integrationCode}
                     />
                   </Grid>
 
@@ -880,6 +901,7 @@ const handleOpenPreview = () => {
                       touched={touched}
                       setClientPagador={setClientPagador}
                       setIsSelectedPayer={setIsSelectedPayer}
+                      integrationCode={bill?.integrationCode}
                     />
  </div>
                    {/* Botón para alternar entre todos los payers y los filtrados */}
@@ -925,7 +947,7 @@ const handleOpenPreview = () => {
                       errors={errors
 
                       }
-
+                      integrationCode={bill?.integrationCode}
                       formatNumberWithThousandsSeparator={formatNumberWithThousandsSeparator}
                       parseFloat={parseFloat}
 
@@ -936,7 +958,7 @@ const handleOpenPreview = () => {
                     <IvaSelector
                       values={values}
                       setFieldValue={setFieldValue}
-
+                      integrationCode={bill?.integrationCode}
 
                       formatNumberWithThousandsSeparator={formatNumberWithThousandsSeparator}
                       parseFloat={parseFloat}
@@ -947,8 +969,7 @@ const handleOpenPreview = () => {
                     <TotalSelector
                       values={values}
                       setFieldValue={setFieldValue}
-
-
+          
                       formatNumberWithThousandsSeparator={formatNumberWithThousandsSeparator}
                       parseFloat={parseFloat}
 
@@ -959,7 +980,7 @@ const handleOpenPreview = () => {
                       values={values}
                       setFieldValue={setFieldValue}
 
-
+                   
                       formatNumberWithThousandsSeparator={formatNumberWithThousandsSeparator}
                       parseFloat={parseFloat}
 
@@ -970,7 +991,7 @@ const handleOpenPreview = () => {
                     <RetIcaSelector
                       values={values}
                       setFieldValue={setFieldValue}
-
+                      integrationCode={bill?.integrationCode}
 
                       formatNumberWithThousandsSeparator={formatNumberWithThousandsSeparator}
                       parseFloat={parseFloat}
@@ -981,7 +1002,7 @@ const handleOpenPreview = () => {
                     <RetFteSelector
                       values={values}
                       setFieldValue={setFieldValue}
-
+                      integrationCode={bill?.integrationCode}
 
                       formatNumberWithThousandsSeparator={formatNumberWithThousandsSeparator}
                       parseFloat={parseFloat}
@@ -1083,56 +1104,7 @@ const handleOpenPreview = () => {
                 </Grid>
               </Grid>
 
-               <Grid item xs={12} style={{ marginTop: '16px' }}>
-              <Typography variant="subtitle1" gutterBottom>
-                Adjuntar factura
-              </Typography>
-              
-              <Box display="flex" alignItems="center" gap={2}>
-                <Button
-                  component="label"
-                  variant="contained"
-                  startIcon={<CloudUploadIcon />}
-                >
-                  Seleccionar archivo
-                  <VisuallyHiddenInput 
-                    type="file" 
-                    onChange={(e) => handleFileChange(e, setFieldValue)}
-                    accept=".pdf,.jpg,.jpeg,.png"
-                  />
-                </Button>
-                
-                {(file || fileUrl) && (
-                  <>
-                    <Button
-                      variant="outlined"
-                      startIcon={<PreviewIcon />}
-                      onClick={handleOpenPreview}
-                    >
-                      Previsualizar
-                    </Button>
-                    
-                  
-                  </>
-                )}
-              </Box>
-
-              {(file || fileUrl) && (
-                <Typography variant="body2" mt={1}>
-                  Archivo seleccionado: {file?.name || fileUrl?.split('/').pop()}
-                </Typography>
-              )}
-             
-                {errors.file && (
-                <Typography 
-                  variant="body2" 
-                  mt={1}
-                  sx={{ color: 'error.main' }} // Esto aplica el color rojo del tema
-                >
-                  {'El archivo es obligatorio'}
-                </Typography>
-              )}
-            </Grid>
+        
 
               {process.env.NODE_ENV === 'development' && (
                 <div style={{ marginTop: 20 }}>

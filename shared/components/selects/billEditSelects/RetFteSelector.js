@@ -6,13 +6,14 @@ import AttachMoneyIcon from "@mui/icons-material/AttachMoney"; // Icono del dól
 
 
 
-export default function RetFteSelector({values, setFieldValue,formatNumberWithThousandsSeparator,parseFloat}) {
+export default function RetFteSelector({values, setFieldValue,formatNumberWithThousandsSeparator,parseFloat,integrationCode}) {
 
     return (<TextField
         id={`RetFte`}
         data-testid="campo-RetFte"
         label="RET FTE"
         fullWidth
+        disabled={integrationCode !== ""}
         type='text'
         value={
            values?.ret_fte

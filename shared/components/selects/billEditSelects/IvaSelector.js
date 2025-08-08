@@ -6,7 +6,7 @@ import AttachMoneyIcon from "@mui/icons-material/AttachMoney"; // Icono del dól
 
 
 
-export default function IvaSelector({values, setFieldValue,formatNumberWithThousandsSeparator,parseFloat}) {
+export default function IvaSelector({values, setFieldValue,formatNumberWithThousandsSeparator,parseFloat,integrationCode}) {
 
     return (<TextField
         id={`Iva`}
@@ -14,6 +14,7 @@ export default function IvaSelector({values, setFieldValue,formatNumberWithThous
         label="IVA"
         fullWidth
         type='text'
+        disabled={integrationCode !== ""}
         value={
            values?.iva
         }

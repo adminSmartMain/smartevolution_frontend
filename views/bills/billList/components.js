@@ -808,7 +808,7 @@ const handleDownload = (url, fileName) => {
 
             <MenuItem
              onClick={() => {
-    if (selectedRow?.associatedOperation == null) {
+    if (selectedRow?.associatedOperation != null) {
       Toast(
         "No se puede editar una factura asociada a una operación",
         "error"
@@ -825,7 +825,7 @@ const handleDownload = (url, fileName) => {
       opacity: 0.7,
     }
   }}
-  disabled={selectedRow?.associatedOperation == null}
+  disabled={selectedRow?.associatedOperation != null}
           >
             <ListItemIcon>
               <EditIcon fontSize="small" />
@@ -835,7 +835,7 @@ const handleDownload = (url, fileName) => {
 
             <MenuItem
               onClick={() => {
-                if (selectedRow.associatedOperation !== null) {
+                if (selectedRow.associatedOperation != null) {
                   Toast(
                     "No se puede eliminar una factura asociada a una operación",
                     "error"
@@ -1130,7 +1130,14 @@ const handleDownload = (url, fileName) => {
 
 
 
-  console.log(selectedOptionTypeBill)
+  const tableWrapperSx = {
+    marginTop: 2,
+    display: "flex",
+    flexDirection: "column",
+    width: "100%",
+    height: "100%",
+  };
+  
   return (
     <>
      
@@ -1149,7 +1156,10 @@ const handleDownload = (url, fileName) => {
   }}
 >
   <Box display="flex" alignItems="center" gap={2}>
-    <HomeOutlinedIcon 
+  
+  <Link href="/dashboard" underline="none">
+  <a>
+  <HomeOutlinedIcon 
       fontSize="large" 
       sx={{ 
         color: '#488b8f',
@@ -1157,6 +1167,11 @@ const handleDownload = (url, fileName) => {
         strokeWidth: 1, // Grosor del contorno
       }} 
     />
+
+  </a>
+  
+  </Link>
+  
     <InputTitles sx={{ 
   fontSize: '2rem', 
   fontWeight: 'normal',
@@ -1220,37 +1235,13 @@ const handleDownload = (url, fileName) => {
   }}
 />
 {/*BOTON DE POR TIPO */}
-  <Button
-    variant="standard"
-    size="medium"
-    onClick={handleClickTypeBill}
-    endIcon={<ArrowDropDownIcon />}
-    sx={{
-      height: "2.2rem",
-      backgroundColor: "transparent",
-      border: "1.4px solid #488B8F",
-      borderRadius: "4px",
-      marginRight: "0.3rem",
-      minWidth: "120px",
-      ...(selectedOptionTypeBill && { 
-        borderWidth: 3,
-        backgroundColor: "#488B8F10"
-      }),
-      '&:hover': {
-        backgroundColor: "#488B8F15"
-      }
-    }}
-  >
-    <Typography
-      letterSpacing={0}
-      fontSize="85%"
-      fontWeight="600"
-      color="#488B8F"
-      textTransform="none"
-    >
-      {selectedOptionTypeBill?.label || "Por Tipo"}
-    </Typography>
-  </Button>
+<button
+  onClick={handleClickTypeBill}
+  className="button-header-bill button-header-bill-primary"
+>
+  {selectedOptionTypeBill?.label || "Por Tipo"}
+  <ArrowDropDownIcon sx={{ fontSize: "16px" }}/>  {/* Icono al final del texto */}
+</button>
 
   {selectedOptionTypeBill && (
       <IconButton
@@ -1317,37 +1308,15 @@ const handleDownload = (url, fileName) => {
   </Menu>
 
   {/*BOTON DE POR CANAL */}
-         <Button
-    variant="standard"
-    size="medium"
+         <button
+   
     onClick={handleClickChannel}
-    endIcon={<ArrowDropDownIcon />}
-    sx={{
-      height: "2.2rem",
-      backgroundColor: "transparent",
-      border: "1.4px solid #488B8F",
-      borderRadius: "4px",
-      marginRight: "0.3rem",
-      minWidth: "120px",
-      ...(selectedOptionChannel && { 
-        borderWidth: 3,
-        backgroundColor: "#488B8F10"
-      }),
-      '&:hover': {
-        backgroundColor: "#488B8F15"
-      }
-    }}
+   className="button-header-bill button-header-bill-primary"
   >
-    <Typography
-      letterSpacing={0}
-      fontSize="85%"
-      fontWeight="600"
-      color="#488B8F"
-      textTransform="none"
-    >
+ 
       {selectedOptionChannel?.label || "Por Canal"}
-    </Typography>
-  </Button>
+      <ArrowDropDownIcon sx={{ fontSize: "16px" }}/>  {/* Icono al final del texto */}
+  </button>
 
   {selectedOptionChannel  && (
       <IconButton
@@ -1421,74 +1390,42 @@ const handleDownload = (url, fileName) => {
       
     />
        <Link href="/bills?=register" underline="none">
-          <Button
-            variant="standard"
-            color="primary"
-            size="large"
-           sx={{
-              height: "2.2rem",
-              backgroundColor: "transparent",
-              border: "1.4px solid #488B8F",
-              borderRadius: "4px",
-              marginRight: "0.3rem",
-              ...(filter === "payer" && { borderWidth: 3 }),
-            }}
-          >
-           <Typography
-              letterSpacing={0}
-              fontSize="85%"
-              fontWeight="600"
-              color="#488B8F"
-              textTransform="none"
-            >
-              Extraer Facturas
-            </Typography>
-
-            <Typography
-              fontFamily="icomoon"
-              fontSize="1.2rem"
-              color="#488B8F"
-              marginLeft="0.9rem"
-            >
-              &#xe927;
-            </Typography>
-          </Button>
+       <button
+  className="button-header-bill button-header-bill-primary"
+  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+>
+  Extraer Facturas
+  <span 
+    style={{ 
+      fontFamily: 'icomoon', 
+      fontSize: '1rem', 
+      color: '#FFF' 
+    }}
+  >
+    &#xe927;
+  </span>
+</button>
         </Link>
 
 
-             <Button
-            variant="standard"
-            color="primary"
-            size="large"
-            sx={{
-              height: "2.2rem",
-              backgroundColor: "transparent",
-              border: "1.4px solid #488B8F",
-              borderRadius: "4px",
-              marginRight: "0.3rem",
-              ...(filter === "payer" && { borderWidth: 3 }),
-            }}
+        <button
+  className="button-header-bill button-header-bill-primary"
+  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
             onClick={handleOpenRegisterOperation}
           >
-            <Typography
-              letterSpacing={0}
-              fontSize="85%"
-              fontWeight="600"
-              color="#488B8F"
-              textTransform="none"
-            >
-              Registrar Factura Manual
-            </Typography>
+          Registrar Factura Manual
+      
 
-            <Typography
-              fontFamily="icomoon"
-              fontSize="1.2rem"
-              color="#488B8F"
-              marginLeft="0.9rem"
-            >
-              &#xe927;
-            </Typography>
-          </Button>
+          <span 
+    style={{ 
+      fontFamily: 'icomoon', 
+      fontSize: '1rem', 
+      color: '#FFF' 
+    }}
+  >
+    &#xe927;
+  </span>
+          </button>
            <IconButton onClick={handleMenuClickCSV} className="context-menu">
       <MoreVertIcon />
     </IconButton>
@@ -1497,6 +1434,9 @@ const handleDownload = (url, fileName) => {
     </Menu>
         </Box>
       </Box>
+
+
+      
       <Box
         container
         marginTop={4}
@@ -1504,6 +1444,7 @@ const handleDownload = (url, fileName) => {
         flexDirection="column"
         width="100%"
         height="100%"
+        sx={{ ...tableWrapperSx }}
       >
         <CustomDataGrid
           rows={bill}
@@ -1512,70 +1453,72 @@ const handleDownload = (url, fileName) => {
           rowsPerPageOptions={[5]}
           disableSelectionOnClick
           disableColumnMenu
-               sx={{
-    border: '1px solid #e0e0e0',
-    // Estilo para el texto en las celdas
-    
-    '& .MuiDataGrid-cell': {
-      borderRight: '1px solid #f0f0f0',
-       color: '#000000ff',
-         // Gris oscuro estándar
-      '& .MuiTypography-root, & .InputTitles': { // Afecta tanto a Typography como a componentes personalizados
-        fontWeight: 400, // 400 = normal (300 es light, 500 medium, 600 semibold)
-          color: 'inherit' // Hereda el color de la celda
-      }
-    },
-    // Estilo para los encabezados de columna
-    '& .MuiDataGrid-columnHeaders': {
-      backgroundColor: '#f5f5f5',
-      
-      borderBottom: '2px solid #e0e0e0',
-      '& .MuiDataGrid-columnHeaderTitle': {
-        fontWeight: 600, // Un poco más grueso que el contenido pero no bold (600+)
-         color: '#000000ff',
-        fontSize: '0.85rem'
-      }
-    },
-            '& .MuiDataGrid-columnHeader': {
-              borderRight: '1px solid #e0e0e0', // Bordes entre columnas
-            },
-            '& .MuiDataGrid-row': {
-              '&:nth-of-type(even)': {
-                backgroundColor: '#fafafa', // Color filas pares
-              },
-              '&:hover': {
-                backgroundColor: '#f0f0f0', // Color al pasar el mouse
-              },
-            },
-            '& .MuiDataGrid-footerContainer': {
-              borderTop: '1px solid #e0e0e0', // Borde superior del footer
-            },
-            '& .MuiDataGrid-virtualScroller': {
-              overflowX: 'auto', // Oculta el scroll horizontal si no es necesario
-            },
-          filter: loading ? 'blur(2px)' : 'none', // Efecto de desenfoque
-          transition: 'filter 0.3s ease-out' // Transición suave
+
+          
+          sx={{
+            border: '1px solid #e0e0e0',
+            // Estilo para el texto en las celdas
             
-          }}
+            '& .MuiDataGrid-cell': {
+              borderRight: '1px solid #f0f0f0',
+               color: '#000000ff',
+                 // Gris oscuro estándar
+              '& .MuiTypography-root, & .InputTitles': { // Afecta tanto a Typography como a componentes personalizados
+                fontWeight: 400, // 400 = normal (300 es light, 500 medium, 600 semibold)
+                  color: 'inherit' // Hereda el color de la celda
+              }
+            },
+            // Estilo para los encabezados de columna
+            '& .MuiDataGrid-columnHeaders': {
+              backgroundColor: '#f5f5f5',
+              
+              borderBottom: '2px solid #e0e0e0',
+              '& .MuiDataGrid-columnHeaderTitle': {
+                fontWeight: 600, // Un poco más grueso que el contenido pero no bold (600+)
+                 color: '#808080',
+                fontSize: '0.85rem'
+              }
+            },
+                    '& .MuiDataGrid-columnHeader': {
+                      borderRight: '1px solid #e0e0e0', // Bordes entre columnas
+                    },
+                    '& .MuiDataGrid-row': {
+                      '&:nth-of-type(even)': {
+                        backgroundColor: '#fafafa', // Color filas pares
+                      },
+                      '&:hover': {
+                        backgroundColor: '#f0f0f0', // Color al pasar el mouse
+                      },
+                    },
+                    '& .MuiDataGrid-footerContainer': {
+                      borderTop: '1px solid #e0e0e0', // Borde superior del footer
+                    },
+                    '& .MuiDataGrid-virtualScroller': {
+                      overflowX: 'auto', // Oculta el scroll horizontal si no es necesario
+                    },
+                  filter: loading ? 'blur(2px)' : 'none', // Efecto de desenfoque
+                  transition: 'filter 0.3s ease-out' // Transición suave
+                    
+                  }}
           components={{
                      ColumnSortedAscendingIcon: SortIcon,
                      ColumnSortedDescendingIcon: SortIcon,
                      NoRowsOverlay: () => (
-                       <Typography
-                         fontSize="0.9rem"
-                         fontWeight="600"
-                         color="#488B8F"
-                         height="100%"
-                         display="flex"
-                         alignItems="center"
-                         justifyContent="center"
-                         sx={{
-                           border: '1px dashed #e0e0e0', // Borde para el área vacía
-                           margin: '0 16px 16px 16px',
-                           borderRadius: '4px',
-                           
-                         }}
-                       >
+                      <Typography
+                      fontSize="0.9rem"
+                      fontWeight="600 "
+                      color="#488B8F"
+                      height="100%"
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="center"
+                      sx={{
+                        border: '1px dashed #e0e0e0', // Borde para el área vacía
+                        margin: '0 16px 16px 16px',
+                        borderRadius: '4px',
+                        
+                      }}
+                    >
                          No hay facturas registradas
                        </Typography>
                      ),

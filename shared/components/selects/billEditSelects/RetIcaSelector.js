@@ -6,13 +6,14 @@ import AttachMoneyIcon from "@mui/icons-material/AttachMoney"; // Icono del dól
 
 
 
-export default function RetIcaSelector({values, setFieldValue,formatNumberWithThousandsSeparator,parseFloat}) {
+export default function RetIcaSelector({values, setFieldValue,formatNumberWithThousandsSeparator,parseFloat,integrationCode}) {
 
     return (<TextField
         id={`RetIca`}
         data-testid="campo-RetIca"
         label="RET ICA"
         fullWidth
+        disabled={integrationCode !== ""}
         type='text'
         value={
            values?.ret_ica

@@ -15,6 +15,7 @@ export default function EmitterSelector({
   fetchBrokerByClient,
   setClientWithoutBroker,
   setOpenEmitterBrokerModal,payers,
+  integrationCode
 }) {
   const handleEmitterChange = async (event, newValue) => {
     try {
@@ -130,6 +131,7 @@ export default function EmitterSelector({
       getOptionLabel={getOptionLabel}
       value={getCurrentValue()}
       onChange={handleEmitterChange}
+      disabled={integrationCode !== ""}
       renderInput={(params) => (
         <TextField
           {...params}

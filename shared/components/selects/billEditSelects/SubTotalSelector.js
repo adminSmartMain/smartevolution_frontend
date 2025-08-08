@@ -6,7 +6,7 @@ import AttachMoneyIcon from "@mui/icons-material/AttachMoney"; // Icono del dól
 
 
 
-export default function SubTotalSelector({values, setFieldValue,formatNumberWithThousandsSeparator,parseFloat,errors}) {
+export default function SubTotalSelector({values, setFieldValue,formatNumberWithThousandsSeparator,parseFloat,errors,integrationCode}) {
 
     return (<TextField
         id={`SubTotal`}
@@ -14,6 +14,7 @@ export default function SubTotalSelector({values, setFieldValue,formatNumberWith
         label="Subtotal"
         fullWidth
         type='text'
+        disabled={integrationCode !== ""}
         value={
            values?.subTotal
         }

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ToastContainer } from "react-toastify";
 import Link from "next/link";
 import { SearchOutlined } from "@mui/icons-material";
+import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
 import { Box, Button, Fade, FormControl, Grid, IconButton, InputLabel,Menu, MenuItem, InputAdornment , Select, TextField, Typography } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import Modal from "@components/modals/modal";
@@ -1020,17 +1021,35 @@ const handleTextFieldChange = (evt) => {
   return (
     <>
     
-      <BackButton path="/dashboard" />
+      
       <Box sx={{ ...sectionTitleContainerSx }}>
-        <Typography
-          letterSpacing={0}
-          fontSize="1.7rem"
-          fontWeight="regular"
-          marginBottom="0.7rem"
-          color="#5EA3A3"
-        >
-          Pre-operaciones
-        </Typography>
+
+<Box display="flex" alignItems="center">
+<Link href="/dashboard" underline="none">
+          <a>
+          <HomeOutlinedIcon 
+              fontSize="large" 
+              sx={{ 
+                color: '#488b8f',
+                opacity: 0.8, // Ajusta la transparencia (0.8 = 80% visible)
+                strokeWidth: 1, // Grosor del contorno
+              }} 
+            />
+        
+          </a>
+          
+          </Link>
+         <InputTitles sx={{ 
+  fontSize: '2rem', 
+  fontWeight: 'normal',
+  color: '#488b8f',
+  textTransform: 'none', // Esto evita que se transforme a mayúsculas
+  fontFamily: 'inherit' // Mantiene la fuente por defecto
+}}>
+           - Pre-operaciones
+          </InputTitles>
+</Box>
+       
         <Box sx={{ ...sectionTitleContainerSx }}>
         <Link href="/operations" passHref>
   <button className="button-header-preop-title">

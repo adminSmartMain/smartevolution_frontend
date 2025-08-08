@@ -15,6 +15,7 @@ export default function TotalSelector({values, setFieldValue,formatNumberWithTho
         disabled
         fullWidth
         type='text'
+        
         value={
            values?.total
         }
