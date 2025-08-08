@@ -1172,15 +1172,16 @@ const handleDownload = (url, fileName) => {
   
   </Link>
   
-    <InputTitles sx={{ 
-  fontSize: '2rem', 
-  fontWeight: 'normal',
-  color: '#488b8f',
-  textTransform: 'none', // Esto evita que se transforme a mayúsculas
-  fontFamily: 'inherit' // Mantiene la fuente por defecto
-}}>
+   <Typography
+          letterSpacing={0}
+          fontSize="1.7rem"
+          fontWeight="regular"
+          marginBottom="0.7rem"
+          marginTop='0.7rem'
+          color="#5EA3A3"
+        >
   - Consulta de facturas
-</InputTitles>
+  </Typography>
   </Box>
   
   {/* Tus otros elementos aquí */}
