@@ -105,8 +105,7 @@ export default function PayerSelector({
       isOptionEqualToValue={isOptionEqualToValue}
       getOptionLabel={getOptionLabel}
       onChange={handlePayerChange}
-      disabled={integrationCode !== ""}
-      
+      disabled={integrationCode != null}
       renderInput={(params) => (
         <TextField
           {...params}

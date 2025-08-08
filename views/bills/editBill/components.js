@@ -719,7 +719,7 @@ const handleOpenPreview = () => {
                         }}
                         inputFormat="dd/MM/yyyy"
                         mask="__/__/____"
-                        disabled={bill?.integrationCode !== ""}
+                        disabled={bill.integrationCode != null}
                         renderInput={(params) => (
                           <TextField
                             {...params}
@@ -779,7 +779,7 @@ const handleOpenPreview = () => {
                           }
                         }}
                         inputFormat="dd/MM/yyyy"
-                        disabled={bill?.integrationCode !== ""}
+                        disabled={bill.integrationCode != null}
                         mask="__/__/____"
                         renderInput={(params) => (
                           <TextField
@@ -835,7 +835,7 @@ const handleOpenPreview = () => {
                             {...params}
                             size="small"
                             fullWidth
-                            disabled={bill?.integrationCode !== ""}
+                            disabled={bill.integrationCode != null}
                             sx={{
                               '& .MuiInputBase-root': {
                                 height: '56px' // Increased height

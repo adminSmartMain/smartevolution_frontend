@@ -13,7 +13,7 @@ export default function RetIcaSelector({values, setFieldValue,formatNumberWithTh
         data-testid="campo-RetIca"
         label="RET ICA"
         fullWidth
-        disabled={integrationCode !== ""}
+        disabled={integrationCode != null}
         type='text'
         value={
            values?.ret_ica

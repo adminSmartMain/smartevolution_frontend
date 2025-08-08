@@ -13,7 +13,7 @@ return (
         id="codigoFactura"
         label="Código Factura *"
         fullWidth
-        disabled={integrationCode !== ""}
+        disabled={integrationCode != null}
         value={values?.billId || ''}
         error={ Boolean(errors?.billId)}
         helperText={errors?.billId}

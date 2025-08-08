@@ -121,7 +121,7 @@ export default function EmitterSelector({
       emisor?.data?.id === values.emitterId
     ) || null;
   };
-
+  console.log(integrationCode,integrationCode != "")
   return (
     <Autocomplete
       id="emitter-name"
@@ -131,7 +131,7 @@ export default function EmitterSelector({
       getOptionLabel={getOptionLabel}
       value={getCurrentValue()}
       onChange={handleEmitterChange}
-      disabled={integrationCode !== ""}
+      disabled={integrationCode != null}
       renderInput={(params) => (
         <TextField
           {...params}

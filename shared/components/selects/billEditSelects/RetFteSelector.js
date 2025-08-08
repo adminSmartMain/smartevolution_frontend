@@ -13,7 +13,7 @@ export default function RetFteSelector({values, setFieldValue,formatNumberWithTh
         data-testid="campo-RetFte"
         label="RET FTE"
         fullWidth
-        disabled={integrationCode !== ""}
+        disabled={integrationCode != null}
         type='text'
         value={
            values?.ret_fte

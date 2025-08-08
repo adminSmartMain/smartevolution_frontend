@@ -25,7 +25,7 @@ export default function TypeBillSelector({
       isOptionEqualToValue={(option, value) => option?.id === value?.id}
       value={typeBillOptions.find(type => type.id === values.typeBill) || null}
       onChange={handleTypeBillChange}
-      disabled={integrationCode !== ""}
+      disabled={integrationCode != null}
       renderInput={(params) => (
         <TextField
           {...params}

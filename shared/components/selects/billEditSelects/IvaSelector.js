@@ -14,7 +14,7 @@ export default function IvaSelector({values, setFieldValue,formatNumberWithThous
         label="IVA"
         fullWidth
         type='text'
-        disabled={integrationCode !== ""}
+        disabled={integrationCode != null}
         value={
            values?.iva
         }

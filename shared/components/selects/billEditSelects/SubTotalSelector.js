@@ -14,7 +14,7 @@ export default function SubTotalSelector({values, setFieldValue,formatNumberWith
         label="Subtotal"
         fullWidth
         type='text'
-        disabled={integrationCode !== ""}
+        disabled={integrationCode != null}
         value={
            values?.subTotal
         }
