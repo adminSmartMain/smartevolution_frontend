@@ -436,7 +436,7 @@ const handleTextFieldChange = (evt) => {
 
   return (
     <>
-      <BackButton path="/dashboard" />
+     
       <Box sx={{ ...sectionTitleContainerSx }}>
         <Box  display="flex" alignItems="center" gap={2}>
 

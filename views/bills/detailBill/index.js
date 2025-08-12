@@ -23,7 +23,7 @@ import {
 } from "./queries";
 import BillCreationComponent from "./components";
 import { Bills, billById, payerByBill,EditBill } from "./queries";
-export default function BillEdition() {
+export default function BillDetail() {
 // States
   const [created, setCreated] = useState(0);
   const [updated, setUpdated] = useState(0);
@@ -416,7 +416,6 @@ const handleConfirm = async (values,actions) => {
        isFinished={isFinished}
        users={users}
        bill={bill}
-       id={id}
       />
     </>
   );

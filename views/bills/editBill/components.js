@@ -1,5 +1,6 @@
 import { useEffect, useState, useContext, useMemo } from "react";
 import { ToastContainer, toast } from "react-toastify";
+import axios from 'axios';
 import { 
   Box, 
   Button, 
@@ -180,7 +181,7 @@ onFormSubmit,
   validationSchema2,
 users,
 bill,
-
+id
  
 
 }) => {
@@ -197,6 +198,7 @@ bill,
   const [fileUrl, setFileUrl] = useState(null);
   const [openPreview, setOpenPreview] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+const [previewUrl, setPreviewUrl] = useState(null);
 
 const [showAllPayers, setShowAllPayers] = useState(false);
 
@@ -312,54 +314,6 @@ const debouncedCheckBill = debounce(async (billNumber, callback) => {
   }
 
 
-  const handleFileChange = (event,setFieldValue) => {
-  const selectedFile = event.target?.files[0];
-  console.log(selectedFile);
-  
-  if (selectedFile) {
-    // Validar tipo de archivo
-    const validTypes = ['application/pdf', 'image/jpeg', 'image/png'];
-    if (!validTypes.includes(selectedFile.type)) {
-      toast.error('Solo se permiten archivos PDF, JPEG o PNG');
-      return;
-    }
-
-    // Validar tamaño (20MB máximo)
-    if (selectedFile.size > 20 * 1024 * 1024) {
-      toast.error('El archivo no debe exceder los 20MB');
-      return;
-    }
-
-    const reader = new FileReader();
-    
-    reader.onload = (e) => {
-      // Extraemos solo la parte base64 (sin el prefijo data:application/pdf;base64,)
- 
-      
-      // Guardamos el archivo original para previsualización
-      setFile(selectedFile);
-      
-      // Actualizamos Formik con el formato que espera el backend
-     setFieldValue('file', e.target.result); // Solo el string base64 sin prefijo
-      
-      // Crear vista previa si es una imagen
-      if (selectedFile.type.includes('image')) {
-        setFilePreview(e.target.result); // Aquí usamos el resultado completo con prefijo
-      } else {
-        setFilePreview(null);
-      }
-    };
-    
-    reader.onerror = (error) => {
-      console.error('Error al leer el archivo:', error);
-      toast.error('Error al procesar el archivo');
-    };
-    
-    reader.readAsDataURL(selectedFile);
-  }
-};
-
-   
 
 
   const cargarTasaDescuento = async (emisor) => {
@@ -551,17 +505,109 @@ console.log( bill?.bill?.currentBalance)
 
   console.log(initialValues2)
   console.log(bill)
-const handleOpenPreview = () => {
-    if (!file && !fileUrl) {
-      toast.warning('No hay archivo para previsualizar');
+// Dentro de tu componente:
+
+
+
+const handleClosePreview = () => {
+  // Liberar recursos si es un objeto URL creado con URL.createObjectURL
+  if (file && previewUrl) {
+    URL.revokeObjectURL(previewUrl);
+  }
+  setOpenPreview(false);
+  setPreviewUrl(null);
+};
+
+  const handleFileChange = (event,setFieldValue) => {
+  const selectedFile = event.target?.files[0];
+  console.log(selectedFile);
+  
+  if (selectedFile) {
+    // Validar tipo de archivo
+    const validTypes = ['application/pdf', 'image/jpeg', 'image/png'];
+    if (!validTypes.includes(selectedFile.type)) {
+      toast.error('Solo se permiten archivos PDF, JPEG o PNG');
       return;
     }
-    setOpenPreview(true);
-  };
 
-  const handleClosePreview = () => {
-    setOpenPreview(false);
-  };
+    // Validar tamaño (20MB máximo)
+    if (selectedFile.size > 20 * 1024 * 1024) {
+      toast.error('El archivo no debe exceder los 20MB');
+      return;
+    }
+
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+      // Extraemos solo la parte base64 (sin el prefijo data:application/pdf;base64,)
+ 
+      
+      // Guardamos el archivo original para previsualización
+      setFile(selectedFile);
+      
+      // Actualizamos Formik con el formato que espera el backend
+     setFieldValue('file', e.target.result); // Solo el string base64 sin prefijo
+      
+      // Crear vista previa si es una imagen
+      if (selectedFile.type.includes('image')) {
+        setFilePreview(e.target.result); // Aquí usamos el resultado completo con prefijo
+      } else {
+        setFilePreview(null);
+      }
+    };
+    
+    reader.onerror = (error) => {
+      console.error('Error al leer el archivo:', error);
+      toast.error('Error al procesar el archivo');
+    };
+    
+    reader.readAsDataURL(selectedFile);
+  }
+};
+
+   
+
+const handleOpenPreview = async () => {
+  try {
+    let urlToPreview = null;
+    
+    if (file) {
+      // Archivo nuevo subido
+      urlToPreview = URL.createObjectURL(file);
+    } else if (bill?.file_presigned_url) {
+      // Archivo existente en S3
+      urlToPreview = bill.file_presigned_url;
+    } else if (bill?.file) {
+      // Intento alternativo para obtener la URL
+      try {
+      
+        const response = await Axios.get(`${process.env.NEXT_PUBLIC_API_URL}/bill/?billEvent=${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("access-token")}`,
+          },
+          timeout: 10000,
+        });
+        if (response.data.error === false) {
+          urlToPreview = response.data.url;
+        }
+      } catch (error) {
+        console.error("Error al obtener URL pre-firmada:", error);
+      }
+    }
+
+    if (!urlToPreview) {
+      throw new Error("No se pudo obtener la URL de previsualización");
+    }
+
+    setPreviewUrl(urlToPreview);
+    setOpenPreview(true);
+  } catch (error) {
+    console.error("Error en previsualización:", error);
+    alert("No se pudo cargar la previsualización del archivo");
+  }
+};
+  
   return (
 
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={esLocale}>
@@ -1021,68 +1067,93 @@ const handleOpenPreview = () => {
                     />
                   </Grid>
 
-                  <Grid item xs={8} sx={{ 
-                    marginTop: '16px', 
-                    backgroundColor: 'grey.100', 
-                    p: 2, 
-                    borderRadius: 5,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 1
-                  }}>
-                    <Box display="flex" alignItems="center" gap={2}>
-                      <Button
-                        component="label"
-                        variant="contained"
-                        startIcon={<CloudUploadIcon />}
-                        sx={{ flexShrink: 0 }}
-                      >
-                        Seleccionar archivo
-                        <VisuallyHiddenInput 
-                          type="file" 
-                          onChange={(e) => handleFileChange(e, setFieldValue)}
-                          accept=".pdf,.jpg,.jpeg,.png"
-                        />
-                      </Button>
-                      
-                      <Button
-                        variant="outlined"
-                        startIcon={<PreviewIcon />}
-                        onClick={handleOpenPreview}
-                        disabled={!file && !fileUrl}
-                        sx={{
-                          backgroundColor: (file || fileUrl) ? 'background.paper' : 'grey.300',
-                          color: (file || fileUrl) ? 'text.primary' : 'text.disabled',
-                          flexShrink: 0,
-                          '&:hover': {
-                            backgroundColor: (file || fileUrl) ? 'action.hover' : 'grey.300'
-                          }
-                        }}
-                      >
-                        Previsualizar
-                      </Button>
-
-                      {(file || fileUrl) && (
-                        <Typography variant="body2" sx={{ ml: 1, flexGrow: 1, wordBreak: 'break-word' }}>
-                          Archivo seleccionado: {file?.name || fileUrl?.split('/').pop()}
-                          {file?.size && (
-          <span> ({formatFileSize(file.size)})</span>
-        )}
-                        </Typography>
-                      )}
-                    </Box>
-                    
-                    {errors.file && (
-                      <Typography 
-                        variant="body2"
-                        sx={{ color: 'error.main' }}
-                      >
-                        {'El archivo es obligatorio'}
-                      </Typography>
-                    )}
-                  </Grid>
+                        <Grid item xs={8} sx={{ 
+              marginTop: '16px', 
+              backgroundColor: 'grey.100', 
+              p: 2, 
+              borderRadius: 5,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 1
+            }}>
+              <Box display="flex" alignItems="center" gap={2}>
+                <Button
+                  component="label"
+                  variant="contained"
+                  startIcon={<CloudUploadIcon />}
+                  sx={{ flexShrink: 0 }}
+                >
+                  Seleccionar archivo
+                  <VisuallyHiddenInput 
+                    type="file" 
+                    onChange={(e) => handleFileChange(e, setFieldValue)}
+                    accept=".pdf,.jpg,.jpeg,.png"
+                  />
+                </Button>
                 
-                </Grid>
+                <Button
+                  variant="outlined"
+                  startIcon={<PreviewIcon />}
+                  onClick={handleOpenPreview}
+                  disabled={!file && !values.file}
+                  sx={{
+                    backgroundColor: (file || values.file) ? 'background.paper' : 'grey.300',
+                    color: (file || values.file) ? 'text.primary' : 'text.disabled',
+                    flexShrink: 0,
+                    '&:hover': {
+                      backgroundColor: (file || values.file) ? 'action.hover' : 'grey.300'
+                    }
+                  }}
+                >
+                  Previsualizar
+                </Button>
+
+                {(file || values.file) && (
+                  <Typography variant="body2" sx={{ ml: 1, flexGrow: 1, wordBreak: 'break-word' }}>
+                    Archivo seleccionado: {file?.name || values.file?.split('/').pop()}
+                    {file?.size && (
+                      <span> ({formatFileSize(file.size)})</span>
+                    )}
+                  </Typography>
+                )}
+              </Box>
+              
+              {errors.file && (
+                <Typography 
+                  variant="body2"
+                  sx={{ color: 'error.main' }}
+                >
+                  {'El archivo es obligatorio'}
+                </Typography>
+              )}
+            </Grid>
+
+            {/* Modal de previsualización */}
+            <Dialog open={openPreview} onClose={handleClosePreview} maxWidth="md" fullWidth>
+              <DialogTitle>Previsualización del archivo</DialogTitle>
+              <DialogContent>
+                {previewUrl?.endsWith('.pdf') ? (
+                  <iframe 
+                    src={previewUrl} 
+                    width="100%" 
+                    height="600px" 
+                    style={{ border: 'none' }}
+                    title="Vista previa del PDF"
+                  />
+                ) : (
+                  <img 
+                    src={previewUrl} 
+                    alt="Vista previa" 
+                    style={{ maxWidth: '100%', maxHeight: '600px', display: 'block', margin: '0 auto' }}
+                  />
+                )}
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={handleClosePreview}>Cerrar</Button>
+              </DialogActions>
+            </Dialog>
+                            
+                            </Grid>
                 <Grid container item xs={12} spacing={2}>
 
 

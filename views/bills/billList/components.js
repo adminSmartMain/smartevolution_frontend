@@ -17,6 +17,7 @@ import CheckIcon from "@mui/icons-material/Check";
 import Modal from "@components/modals/modal";
 import TitleModal from "@components/modals/titleModal";
 import { Toast } from "@components/toast";
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from "@mui/material";
 
 import DateFormat from "@formats/DateFormat";
 
@@ -340,6 +341,22 @@ console.log(filters)
   } else {
     // Si la ventana no está abierta, la abrimos y guardamos la referencia
     const newWindow = window.open("/bills/createBill", "_blank", "width=800, height=600");
+    setOpenWindow(newWindow); // Guardamos la referencia de la ventana
+    // Escuchar el evento de cierre de la ventana
+    newWindow.onbeforeunload = () => {
+      setOpenWindow(null); // Restablecer la referencia cuando la ventana se cierre
+    };
+  }
+};
+
+
+  const handleOpenDetailBill = (id) => {
+  if (openWindow && !openWindow.closed) {
+    // Si la ventana ya está abierta, solo le damos el foco (la trae al frente)
+    openWindow.focus();
+  } else {
+    // Si la ventana no está abierta, la abrimos y guardamos la referencia
+    const newWindow = window.open(`/bills/detailBill?id=${id}`, "_blank", "width=800, height=600");
     setOpenWindow(newWindow); // Guardamos la referencia de la ventana
     // Escuchar el evento de cierre de la ventana
     newWindow.onbeforeunload = () => {
@@ -796,8 +813,8 @@ const handleDownload = (url, fileName) => {
           >
             <MenuItem
               onClick={() => {
-                handleOpenEvents(selectedRow.id);
-                setAnchorEl(null);
+                handleOpenDetailBill(selectedRow.id);
+               
               }}
             >
               <ListItemIcon>
@@ -853,113 +870,7 @@ const handleDownload = (url, fileName) => {
             </MenuItem>
           </Menu>
 
-          {/* Modales */}
-          <TitleModal
-            open={openEvents[0]}
-            handleClose={handleCloseEvents}
-            containerSx={{
-              width: "50%",
-              height: "60%",
-            }}
-            title={"Datos y eventos de la factura"}
-          >
-            {!loadingGetBillEvents ? (
-              <Box
-                display="flex"
-                flexDirection="column"
-                mt={5}
-                sx={{ ...scrollSx }}
-                height="50vh"
-                alignItems="center"
-              >
-                <Typography
-                  letterSpacing={0}
-                  fontSize="1rem"
-                  fontWeight="medium"
-                  color="#63595C"
-                  width={"100%"}
-                  pb={2}
-                  borderBottom="1px solid #B5D1C9"
-                >
-                  <b>ID de la factura:</b> {dataGetBillEvents?.data?.billId} <br />
-                  <b>Nombre del emisor:</b> {dataGetBillEvents?.data?.emitterName} <br />
-                  <b>ID del emisor:</b> {dataGetBillEvents?.data?.emitterId} <br />
-                  <b>Nombre del pagador:</b> {dataGetBillEvents?.data?.payerName} <br />
-                  <b>ID del pagador:</b> {dataGetBillEvents?.data?.payerId} <br />
-                  <b>Nombre del legítimo tenedor:</b> {dataGetBillEvents?.data?.currentOwnerName} <br />
-                  <b>Fecha de creación:</b> {dataGetBillEvents?.data?.dateBill} <br />
-                  <b>Fecha de expiración:</b> {dataGetBillEvents?.data?.datePayment} <br />
-                  <b>Valor:</b> {numberFormat.format(dataGetBillEvents?.data?.billValue)} <br />
-                  <b>CUFE:</b> {addLineBreaks(dataGetBillEvents?.data?.cufe, 50) ?? ""} <br />
-                  <br />
-                </Typography>
-                {dataGetBillEvents?.data?.events
-                  ?.sort((a, b) => a.code - b.code)
-                  .map((item, index) => {
-                    return (
-                      <Box
-                        key={index}
-                        display="flex"
-                        flexDirection="column"
-                        width="100%"
-                        alignItems="center"
-                        pt={2}
-                      >
-                        <Box
-                          display="flex"
-                          flexDirection="column"
-                          width="100%"
-                          alignItems="center"
-                          mb={3}
-                        >
-                          <Box
-                            display="flex"
-                            flexDirection="column"
-                            width="100%"
-                            alignItems="center"
-                            mb={3}
-                          >
-                            <Typography
-                              color="#488B8F"
-                              fontWeight="bold"
-                              fontSize="1.2rem"
-                            >
-                              Código: {item.code}
-                            </Typography>
-                            <Typography
-                              color="#488B8F"
-                              fontWeight="600"
-                              fontSize="1.2rem"
-                            >
-                              Fecha: {item.date}
-                            </Typography>
-                          </Box>
-                          <Box
-                            display="flex"
-                            flexDirection="column"
-                            width="100%"
-                            alignItems="center"
-                            mb={3}
-                          >
-                            <Typography
-                              color="#3"
-                              fontWeight="500"
-                              fontSize="1.2rem"
-                            >
-                              Evento: {item.event}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      </Box>
-                    );
-                  })}
-              </Box>
-            ) : (
-              <Box display="flex" justifyContent="center" mt={5}>
-                <LoadingCircle />
-              </Box>
-            )}
-          </TitleModal>
+         
 
           <Modal open={openDelete[0]} handleClose={handleCloseDelete}>
             <Box
