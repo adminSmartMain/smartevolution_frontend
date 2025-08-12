@@ -447,6 +447,7 @@ const handleDownload = (url, fileName) => {
   field: "typeBill",
   headerName: "Tipo",
   width: 100,
+  flex: 1,     // Desactiva el crecimiento flexible
   renderCell: (params) => {
     return (
       <Box 
@@ -493,6 +494,7 @@ const handleDownload = (url, fileName) => {
   field: "billId",
   headerName: "ID",
   width: 110,
+   flex: 1,    // Desactiva el crecimiento flexible
   renderCell: (params) => {
     return (
       <Box display="flex" flexDirection="column">
@@ -539,6 +541,7 @@ const handleDownload = (url, fileName) => {
       field: "DateBill",
       headerName: "Emitido",
       width:81,
+       flex: 1,     // Desactiva el crecimiento flexible
       renderCell: (params) => {
         return (
           <InputTitles>
@@ -551,6 +554,7 @@ const handleDownload = (url, fileName) => {
       field: "DatePayment",
       headerName: "Vence",
       width:  81,
+       flex: 1,     // Desactiva el crecimiento flexible
       renderCell: (params) => {
         return (
           <InputTitles>
@@ -562,7 +566,8 @@ const handleDownload = (url, fileName) => {
     {
       field: "Emitter",
       headerName: "Emisor",
-      width: 190,
+      width: 200,
+       flex: 1,     // Desactiva el crecimiento flexible
       renderCell: (params) => {
         return (
           <CustomTooltip
@@ -589,7 +594,8 @@ const handleDownload = (url, fileName) => {
     {
       field: "Payer",
       headerName: "Pagador",
-      width: 190,
+      width: 200,
+       flex: 1,     // Desactiva el crecimiento flexible
       renderCell: (params) => {
         return (
           <CustomTooltip
@@ -618,6 +624,7 @@ const handleDownload = (url, fileName) => {
       field: "Total",
       headerName: "Total",
       width: 150,
+       flex: 1,     // Desactiva el crecimiento flexible
       renderCell: (params) => {
         return (
           <CustomTooltip
@@ -647,6 +654,7 @@ const handleDownload = (url, fileName) => {
       field: "valor_a_recibir",
       headerName: "Valor a recibir",
       width: 150,
+       flex: 1,     // Desactiva el crecimiento flexible
       renderCell: (params) => {
         return (
           <CustomTooltip
@@ -674,6 +682,7 @@ const handleDownload = (url, fileName) => {
       field: "currentBalance",
       headerName: "Saldo Disponible",
       width: 150,
+       flex: 1,     // Desactiva el crecimiento flexible
       renderCell: (params) => {
         return (
           <CustomTooltip
@@ -701,6 +710,7 @@ const handleDownload = (url, fileName) => {
       field: "associatedOperation",
       headerName: "OpId",
       width: 103,
+       flex: 1,     // Desactiva el crecimiento flexible
       renderCell: (params) => {
         return (
           <CustomTooltip
@@ -734,13 +744,21 @@ const handleDownload = (url, fileName) => {
     {
     field: "actions",
     headerName: "Acciones",
-    width: 80,
+   width: 100, // Aumenté el ancho para mejor visualización
+  flex: 0,    // Desactiva el crecimiento flexible
     sortable: false,
     filterable: false,
+    
     renderCell: (params) => {
       return (
         <>
-        <Box>
+        <Box  sx={{
+          width: '100%',
+          display: 'flex',
+          justifyContent: 'center', // Centrado horizontal
+          alignItems: 'center',   // Centrado vertical
+          gap: '8px'             // Espacio entre iconos
+        }}> 
  <CustomTooltip
             title="Descargar factura"
             arrow
@@ -1049,6 +1067,11 @@ const handleDownload = (url, fileName) => {
     height: "100%",
   };
   
+
+
+
+
+  const totalWidth = columns.reduce((sum, column) => sum + (column.width || 0), 0);
   return (
     <>
      

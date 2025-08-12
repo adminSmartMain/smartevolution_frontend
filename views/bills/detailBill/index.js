@@ -416,6 +416,7 @@ const handleConfirm = async (values,actions) => {
        isFinished={isFinished}
        users={users}
        bill={bill}
+       id={id}
       />
     </>
   );

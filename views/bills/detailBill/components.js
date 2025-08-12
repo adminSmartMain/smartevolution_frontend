@@ -138,34 +138,8 @@ const FilePreviewModal = ({ open, onClose, file, fileUrl }) => {
   };
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="md"
-      fullWidth
-      PaperProps={{
-        sx: {
-          height: '80vh'
-        }
-      }}
-    >
-      <DialogTitle>
-        <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h6">Previsualización del Documento</Typography>
-          <IconButton onClick={onClose}>
-            <CloseIcon />
-          </IconButton>
-        </Box>
-      </DialogTitle>
-      <DialogContent dividers>
-        {renderPreviewContent()}
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} variant="contained" color="primary">
-          Cerrar
-        </Button>
-      </DialogActions>
-    </Dialog>
+   <>
+   </>
   );
 };
 
@@ -260,6 +234,7 @@ onFormSubmit,
   validationSchema2,
 users,
 bill,
+id,
 
  
 
@@ -281,6 +256,7 @@ bill,
   const [showAllPayers, setShowAllPayers] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(15);
+  const [previewUrl, setPreviewUrl] = useState(null);
   const usuarioEncontrado = users?.data?.find(user => user.id ===  bill?.user_created_at);
   const usuarioEncontradoEdit = users?.data?.find(user => user.id === bill?.user_updated_at);
   console.log(users,usuarioEncontrado,usuarioEncontradoEdit)
@@ -435,52 +411,7 @@ const debouncedCheckBill = debounce(async (billNumber, callback) => {
   }
 
 
-  const handleFileChange = (event,setFieldValue) => {
-  const selectedFile = event.target?.files[0];
-  console.log(selectedFile);
-  
-  if (selectedFile) {
-    // Validar tipo de archivo
-    const validTypes = ['application/pdf', 'image/jpeg', 'image/png'];
-    if (!validTypes.includes(selectedFile.type)) {
-      toast.error('Solo se permiten archivos PDF, JPEG o PNG');
-      return;
-    }
 
-    // Validar tamaño (20MB máximo)
-    if (selectedFile.size > 20 * 1024 * 1024) {
-      toast.error('El archivo no debe exceder los 20MB');
-      return;
-    }
-
-    const reader = new FileReader();
-    
-    reader.onload = (e) => {
-      // Extraemos solo la parte base64 (sin el prefijo data:application/pdf;base64,)
- 
-      
-      // Guardamos el archivo original para previsualización
-      setFile(selectedFile);
-      
-      // Actualizamos Formik con el formato que espera el backend
-     setFieldValue('file', e.target.result); // Solo el string base64 sin prefijo
-      
-      // Crear vista previa si es una imagen
-      if (selectedFile.type.includes('image')) {
-        setFilePreview(e.target.result); // Aquí usamos el resultado completo con prefijo
-      } else {
-        setFilePreview(null);
-      }
-    };
-    
-    reader.onerror = (error) => {
-      console.error('Error al leer el archivo:', error);
-      toast.error('Error al procesar el archivo');
-    };
-    
-    reader.readAsDataURL(selectedFile);
-  }
-};
 
    
 
@@ -674,17 +605,124 @@ console.log( bill?.bill?.currentBalance)
 
   console.log(initialValues2)
   console.log(bill)
-const handleOpenPreview = () => {
-    if (!file && !fileUrl) {
-      toast.warning('No hay archivo para previsualizar');
+const handleClosePreview = () => {
+  // Liberar recursos si es un objeto URL creado con URL.createObjectURL
+  if (file && previewUrl) {
+    URL.revokeObjectURL(previewUrl);
+  }
+  setOpenPreview(false);
+  setPreviewUrl(null);
+};
+
+  const handleFileChange = (event,setFieldValue) => {
+  const selectedFile = event.target?.files[0];
+  console.log(selectedFile);
+  
+  if (selectedFile) {
+    // Validar tipo de archivo
+    const validTypes = ['application/pdf', 'image/jpeg', 'image/png'];
+    if (!validTypes.includes(selectedFile.type)) {
+      toast.error('Solo se permiten archivos PDF, JPEG o PNG');
       return;
     }
-    setOpenPreview(true);
-  };
 
-  const handleClosePreview = () => {
-    setOpenPreview(false);
-  };
+    // Validar tamaño (20MB máximo)
+    if (selectedFile.size > 20 * 1024 * 1024) {
+      toast.error('El archivo no debe exceder los 20MB');
+      return;
+    }
+
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+      // Extraemos solo la parte base64 (sin el prefijo data:application/pdf;base64,)
+ 
+      
+      // Guardamos el archivo original para previsualización
+      setFile(selectedFile);
+      
+      // Actualizamos Formik con el formato que espera el backend
+     setFieldValue('file', e.target.result); // Solo el string base64 sin prefijo
+      
+      // Crear vista previa si es una imagen
+      if (selectedFile.type.includes('image')) {
+        setFilePreview(e.target.result); // Aquí usamos el resultado completo con prefijo
+      } else {
+        setFilePreview(null);
+      }
+    };
+    
+    reader.onerror = (error) => {
+      console.error('Error al leer el archivo:', error);
+      toast.error('Error al procesar el archivo');
+    };
+    
+    reader.readAsDataURL(selectedFile);
+  }
+};
+
+   
+const handleOpenPreview = async () => {
+  try {
+    if (file) {
+      // Si es un archivo recién subido
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+      setOpenPreview(true);
+    } else if (bill?.file_content) {
+      // 1. Crear el Blob desde base64
+      const byteCharacters = atob(bill.file_content);
+      const byteArrays = [];
+      
+      for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+        const slice = byteCharacters.slice(offset, offset + 512);
+        const byteNumbers = new Array(slice.length);
+        
+        for (let i = 0; i < slice.length; i++) {
+          byteNumbers[i] = slice.charCodeAt(i);
+        }
+        
+        const byteArray = new Uint8Array(byteNumbers);
+        byteArrays.push(byteArray);
+      }
+      
+      const blob = new Blob(byteArrays, { type: bill.file_content_type });
+      
+      // 2. Crear URL del Blob
+      const url = URL.createObjectURL(blob);
+      
+      // 3. Verificar si el Blob es válido
+      const blobIsValid = await verifyBlob(blob);
+      
+      if (!blobIsValid) {
+        throw new Error("El archivo PDF está corrupto o incompleto");
+      }
+      
+      setPreviewUrl(url);
+      setOpenPreview(true);
+    }
+  } catch (error) {
+    console.error("Error en previsualización:", error);
+    toast.error("No se pudo cargar la previsualización: " + error.message);
+  }
+};
+
+// Función para verificar el Blob
+const verifyBlob = async (blob) => {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    
+    reader.onloadend = () => {
+      // Verificamos que los primeros bytes sean un PDF válido
+      const arr = new Uint8Array(reader.result).subarray(0, 4);
+      const header = Array.from(arr).map(b => b.toString(16)).join('');
+      resolve(header === '25504446'); // '%PDF' en hexadecimal
+    };
+    
+    reader.onerror = () => resolve(false);
+    reader.readAsArrayBuffer(blob.slice(0, 4)); // Solo leemos los primeros bytes
+  });
+};
   return (
   <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={esLocale}>
     {/* Para mostrar los toast */}
@@ -1137,52 +1175,132 @@ const handleOpenPreview = () => {
                         />
                       </Grid>
 
-                      <Grid item xs={8} sx={{ 
-                        marginTop: '16px', 
-                        backgroundColor: 'grey.100', 
-                        p: 2, 
-                        borderRadius: 5,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: 1
-                      }}>
-                        <Box display="flex" alignItems="center" gap={2}>
-                          <Button
-                            variant="outlined"
-                            startIcon={<PreviewIcon />}
-                            onClick={handleOpenPreview}
-                            disabled={!file && !fileUrl}
-                            sx={{
-                              backgroundColor: (file || fileUrl) ? 'background.paper' : 'grey.300',
-                              color: (file || fileUrl) ? 'text.primary' : 'text.disabled',
-                              flexShrink: 0,
-                              '&:hover': {
-                                backgroundColor: (file || fileUrl) ? 'action.hover' : 'grey.300'
-                              }
-                            }}
-                          >
-                            Previsualizar
-                          </Button>
+                              <Grid item xs={8} sx={{ 
+              marginTop: '16px', 
+              backgroundColor: 'grey.100', 
+              p: 2, 
+              borderRadius: 5,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 1
+            }}>
+              <Box display="flex" alignItems="center" gap={2}>
+                
+                
+                <Button
+                  variant="outlined"
+                  startIcon={<PreviewIcon />}
+                  onClick={handleOpenPreview}
+                  disabled={!file && !values.file}
+                  sx={{
+                    backgroundColor: (file || values.file) ? 'background.paper' : 'grey.300',
+                    color: (file || values.file) ? 'text.primary' : 'text.disabled',
+                    flexShrink: 0,
+                    '&:hover': {
+                      backgroundColor: (file || values.file) ? 'action.hover' : 'grey.300'
+                    }
+                  }}
+                >
+                  Previsualizar
+                </Button>
 
-                          {(file || fileUrl) && (
-                            <Typography variant="body2" sx={{ ml: 1, flexGrow: 1, wordBreak: 'break-word' }}>
-                              Archivo seleccionado: {file?.name || fileUrl?.split('/').pop()}
-                              {file?.size && (
-                                <span> ({formatFileSize(file.size)})</span>
-                              )}
-                            </Typography>
-                          )}
-                        </Box>
-                        
-                        {errors.file && (
-                          <Typography 
-                            variant="body2"
-                            sx={{ color: 'error.main' }}
-                          >
-                            {'El archivo es obligatorio'}
-                          </Typography>
-                        )}
-                      </Grid>
+                {(file || values.file) && (
+                  <Typography variant="body2" sx={{ ml: 1, flexGrow: 1, wordBreak: 'break-word' }}>
+                    Archivo seleccionado: {file?.name || values.file?.split('/').pop()}
+                    {file?.size && (
+                      <span> ({formatFileSize(file.size)})</span>
+                    )}
+                  </Typography>
+                )}
+              </Box>
+              
+              {errors.file && (
+                <Typography 
+                  variant="body2"
+                  sx={{ color: 'error.main' }}
+                >
+                  {'El archivo es obligatorio'}
+                </Typography>
+              )}
+            </Grid>
+<Dialog 
+  open={openPreview} 
+  onClose={handleClosePreview} 
+  maxWidth="md" 
+  fullWidth
+  sx={{ '& .MuiDialog-paper': { overflow: 'hidden' } }}
+>
+  <DialogTitle>Previsualización del archivo</DialogTitle>
+  <DialogContent sx={{ p: 0, height: '80vh', display: 'flex', justifyContent: 'center' }}>
+    {!previewUrl ? (
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+        <Typography color="error">No se pudo cargar el archivo</Typography>
+      </Box>
+    ) : (
+      <>
+        {bill?.file_content_type === 'application/pdf' && (
+          <iframe
+            key={`pdf-${previewUrl}`} // Forzar recreación al cambiar URL
+            src={`${previewUrl}#view=fitH`}
+            width="100%"
+            height="100%"
+            style={{ border: 'none' }}
+            title="Vista previa del PDF"
+            loading="lazy"
+            onError={(e) => {
+              console.error("Error en iframe:", e);
+              toast.error("No se pudo cargar el PDF");
+            }}
+          />
+        )}
+        
+        {bill?.file_content_type?.includes('image/') && (
+          <img
+            key={`img-${previewUrl}`} // Forzar recreación al cambiar URL
+            src={previewUrl}
+            alt="Vista previa"
+            style={{ 
+              maxWidth: '100%', 
+              maxHeight: '100%', 
+              objectFit: 'contain',
+              display: 'block'
+            }}
+            onError={(e) => {
+              console.error("Error en imagen:", e);
+              toast.error("No se pudo cargar la imagen");
+            }}
+          />
+        )}
+      </>
+    )}
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={handleClosePreview}>Cerrar</Button>
+    {previewUrl && (
+      <Button
+        onClick={() => {
+          const fileName = bill?.file?.split('/').pop() || 
+                         `documento.${bill?.file_content_type?.split('/')[1] || 'pdf'}`;
+          
+          const link = document.createElement('a');
+          link.href = previewUrl;
+          link.download = fileName;
+          document.body.appendChild(link);
+          link.click();
+          setTimeout(() => {
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+          }, 100);
+        }}
+        color="primary"
+      >
+        Descargar
+      </Button>
+    )}
+  </DialogActions>
+</Dialog>
+                            
+                            
                     </Grid>
                   </Grid>
 

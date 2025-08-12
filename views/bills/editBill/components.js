@@ -23,6 +23,7 @@ import Axios from "axios";
 import authContext from "@context/authContext";
 import "react-toastify/dist/ReactToastify.css";
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import PreviewIcon from '@mui/icons-material/Preview';
 import CloseIcon from '@mui/icons-material/Close';
 import { styled } from '@mui/material/styles';
@@ -110,34 +111,8 @@ const FilePreviewModal = ({ open, onClose, file, fileUrl }) => {
   };
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="md"
-      fullWidth
-      PaperProps={{
-        sx: {
-          height: '80vh'
-        }
-      }}
-    >
-      <DialogTitle>
-        <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h6">Previsualización del Documento</Typography>
-          <IconButton onClick={onClose}>
-            <CloseIcon />
-          </IconButton>
-        </Box>
-      </DialogTitle>
-      <DialogContent dividers>
-        {renderPreviewContent()}
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} variant="contained" color="primary">
-          Cerrar
-        </Button>
-      </DialogActions>
-    </Dialog>
+   <>
+   </>
   );
 };
 
@@ -566,48 +541,67 @@ const handleClosePreview = () => {
 };
 
    
-
 const handleOpenPreview = async () => {
   try {
-    let urlToPreview = null;
-    
     if (file) {
-      // Archivo nuevo subido
-      urlToPreview = URL.createObjectURL(file);
-    } else if (bill?.file_presigned_url) {
-      // Archivo existente en S3
-      urlToPreview = bill.file_presigned_url;
-    } else if (bill?.file) {
-      // Intento alternativo para obtener la URL
-      try {
+      // Si es un archivo recién subido
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+      setOpenPreview(true);
+    } else if (bill?.file_content) {
+      // 1. Crear el Blob desde base64
+      const byteCharacters = atob(bill.file_content);
+      const byteArrays = [];
       
-        const response = await Axios.get(`${process.env.NEXT_PUBLIC_API_URL}/bill/?billEvent=${id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("access-token")}`,
-          },
-          timeout: 10000,
-        });
-        if (response.data.error === false) {
-          urlToPreview = response.data.url;
+      for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+        const slice = byteCharacters.slice(offset, offset + 512);
+        const byteNumbers = new Array(slice.length);
+        
+        for (let i = 0; i < slice.length; i++) {
+          byteNumbers[i] = slice.charCodeAt(i);
         }
-      } catch (error) {
-        console.error("Error al obtener URL pre-firmada:", error);
+        
+        const byteArray = new Uint8Array(byteNumbers);
+        byteArrays.push(byteArray);
       }
+      
+      const blob = new Blob(byteArrays, { type: bill.file_content_type });
+      
+      // 2. Crear URL del Blob
+      const url = URL.createObjectURL(blob);
+      
+      // 3. Verificar si el Blob es válido
+      const blobIsValid = await verifyBlob(blob);
+      
+      if (!blobIsValid) {
+        throw new Error("El archivo PDF está corrupto o incompleto");
+      }
+      
+      setPreviewUrl(url);
+      setOpenPreview(true);
     }
-
-    if (!urlToPreview) {
-      throw new Error("No se pudo obtener la URL de previsualización");
-    }
-
-    setPreviewUrl(urlToPreview);
-    setOpenPreview(true);
   } catch (error) {
     console.error("Error en previsualización:", error);
-    alert("No se pudo cargar la previsualización del archivo");
+    toast.error("No se pudo cargar la previsualización: " + error.message);
   }
 };
-  
+
+// Función para verificar el Blob
+const verifyBlob = async (blob) => {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    
+    reader.onloadend = () => {
+      // Verificamos que los primeros bytes sean un PDF válido
+      const arr = new Uint8Array(reader.result).subarray(0, 4);
+      const header = Array.from(arr).map(b => b.toString(16)).join('');
+      resolve(header === '25504446'); // '%PDF' en hexadecimal
+    };
+    
+    reader.onerror = () => resolve(false);
+    reader.readAsArrayBuffer(blob.slice(0, 4)); // Solo leemos los primeros bytes
+  });
+};
   return (
 
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={esLocale}>
@@ -1127,31 +1121,82 @@ const handleOpenPreview = async () => {
                 </Typography>
               )}
             </Grid>
-
-            {/* Modal de previsualización */}
-            <Dialog open={openPreview} onClose={handleClosePreview} maxWidth="md" fullWidth>
-              <DialogTitle>Previsualización del archivo</DialogTitle>
-              <DialogContent>
-                {previewUrl?.endsWith('.pdf') ? (
-                  <iframe 
-                    src={previewUrl} 
-                    width="100%" 
-                    height="600px" 
-                    style={{ border: 'none' }}
-                    title="Vista previa del PDF"
-                  />
-                ) : (
-                  <img 
-                    src={previewUrl} 
-                    alt="Vista previa" 
-                    style={{ maxWidth: '100%', maxHeight: '600px', display: 'block', margin: '0 auto' }}
-                  />
-                )}
-              </DialogContent>
-              <DialogActions>
-                <Button onClick={handleClosePreview}>Cerrar</Button>
-              </DialogActions>
-            </Dialog>
+<Dialog 
+  open={openPreview} 
+  onClose={handleClosePreview} 
+  maxWidth="md" 
+  fullWidth
+  sx={{ '& .MuiDialog-paper': { overflow: 'hidden' } }}
+>
+  <DialogTitle>Previsualización del archivo</DialogTitle>
+  <DialogContent sx={{ p: 0, height: '80vh', display: 'flex', justifyContent: 'center' }}>
+    {!previewUrl ? (
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+        <Typography color="error">No se pudo cargar el archivo</Typography>
+      </Box>
+    ) : (
+      <>
+        {bill?.file_content_type === 'application/pdf' && (
+          <iframe
+            key={`pdf-${previewUrl}`} // Forzar recreación al cambiar URL
+            src={`${previewUrl}#view=fitH`}
+            width="100%"
+            height="100%"
+            style={{ border: 'none' }}
+            title="Vista previa del PDF"
+            loading="lazy"
+            onError={(e) => {
+              console.error("Error en iframe:", e);
+              toast.error("No se pudo cargar el PDF");
+            }}
+          />
+        )}
+        
+        {bill?.file_content_type?.includes('image/') && (
+          <img
+            key={`img-${previewUrl}`} // Forzar recreación al cambiar URL
+            src={previewUrl}
+            alt="Vista previa"
+            style={{ 
+              maxWidth: '100%', 
+              maxHeight: '100%', 
+              objectFit: 'contain',
+              display: 'block'
+            }}
+            onError={(e) => {
+              console.error("Error en imagen:", e);
+              toast.error("No se pudo cargar la imagen");
+            }}
+          />
+        )}
+      </>
+    )}
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={handleClosePreview}>Cerrar</Button>
+    {previewUrl && (
+      <Button
+        onClick={() => {
+          const fileName = bill?.file?.split('/').pop() || 
+                         `documento.${bill?.file_content_type?.split('/')[1] || 'pdf'}`;
+          
+          const link = document.createElement('a');
+          link.href = previewUrl;
+          link.download = fileName;
+          document.body.appendChild(link);
+          link.click();
+          setTimeout(() => {
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+          }, 100);
+        }}
+        color="primary"
+      >
+        Descargar
+      </Button>
+    )}
+  </DialogActions>
+</Dialog>
                             
                             </Grid>
                 <Grid container item xs={12} spacing={2}>
