@@ -337,7 +337,7 @@ const onSubmit = async (values, { setSubmitting }) => {
   setIsModalOpen(true);
   setSubmitting(true);
   setSuccessA(null);
-  console.log(values.fechaEmision,values.DateExpiration,values.datePayment)
+  console.log(values.dateBill,values.expirationDate,values.datePayment)
   const operationData = {
     
     currentBalance: Number(values.currentBalance) || 0,

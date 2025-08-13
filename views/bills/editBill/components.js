@@ -174,7 +174,7 @@ id
   const [openPreview, setOpenPreview] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 const [previewUrl, setPreviewUrl] = useState(null);
-
+const [loadingPayers, setLoadingPayers] = useState(true);
 const [showAllPayers, setShowAllPayers] = useState(false);
 
 const usuarioEncontrado = users?.data?.find(user => user.id ===  bill?.user_created_at);
@@ -385,6 +385,7 @@ const handleConfirm = async (values, actions) => {
  
      }
      const loadFilteredPayers = async () => {
+      setLoadingPayers(true);
        const emitterId = bill?.emitterId;
  
        if (!emitterId) {
@@ -424,10 +425,13 @@ const handleConfirm = async (values, actions) => {
        } catch (error) {
          console.error('Error en loadFilteredPayers:', error);
          setFilteredPayers([]);
-       }
+       }  finally {
+      setLoadingPayers(false);
+    }
      };
  
      loadFilteredPayers();
+     
    }, [ bill?.emitterId, payers]); // Dependencias específicas
  
    // Combinar el pagador inicial con los filtrados
@@ -585,7 +589,13 @@ const handleOpenPreview = async () => {
     toast.error("No se pudo cargar la previsualización: " + error.message);
   }
 };
-
+const formatFileSize = (bytes) => {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
 // Función para verificar el Blob
 const verifyBlob = async (blob) => {
   return new Promise((resolve) => {
@@ -759,7 +769,7 @@ const verifyBlob = async (blob) => {
                         }}
                         inputFormat="dd/MM/yyyy"
                         mask="__/__/____"
-                        disabled={bill.integrationCode != null}
+                        disabled={bill.integrationCode != null|| loadingPayers}
                         renderInput={(params) => (
                           <TextField
                             {...params}
@@ -819,7 +829,7 @@ const verifyBlob = async (blob) => {
                           }
                         }}
                         inputFormat="dd/MM/yyyy"
-                        disabled={bill.integrationCode != null}
+                        disabled={bill.integrationCode != null|| loadingPayers}
                         mask="__/__/____"
                         renderInput={(params) => (
                           <TextField
@@ -875,7 +885,7 @@ const verifyBlob = async (blob) => {
                             {...params}
                             size="small"
                             fullWidth
-                            disabled={bill.integrationCode != null}
+                            disabled={bill.integrationCode != null|| loadingPayers}
                             sx={{
                               '& .MuiInputBase-root': {
                                 height: '56px' // Increased height
@@ -1061,66 +1071,112 @@ const verifyBlob = async (blob) => {
                     />
                   </Grid>
 
-                        <Grid item xs={8} sx={{ 
-              marginTop: '16px', 
-              backgroundColor: 'grey.100', 
-              p: 2, 
-              borderRadius: 5,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 1
-            }}>
-              <Box display="flex" alignItems="center" gap={2}>
-                <Button
-                  component="label"
-                  variant="contained"
-                  startIcon={<CloudUploadIcon />}
-                  sx={{ flexShrink: 0 }}
-                >
-                  Seleccionar archivo
-                  <VisuallyHiddenInput 
-                    type="file" 
-                    onChange={(e) => handleFileChange(e, setFieldValue)}
-                    accept=".pdf,.jpg,.jpeg,.png"
-                  />
-                </Button>
-                
-                <Button
-                  variant="outlined"
-                  startIcon={<PreviewIcon />}
-                  onClick={handleOpenPreview}
-                  disabled={!file && !values.file}
-                  sx={{
-                    backgroundColor: (file || values.file) ? 'background.paper' : 'grey.300',
-                    color: (file || values.file) ? 'text.primary' : 'text.disabled',
-                    flexShrink: 0,
-                    '&:hover': {
-                      backgroundColor: (file || values.file) ? 'action.hover' : 'grey.300'
-                    }
-                  }}
-                >
-                  Previsualizar
-                </Button>
+<Grid item xs={8} sx={{ 
+  marginTop: '16px', 
+  backgroundColor: 'grey.100', 
+  p: 2, 
+  borderRadius: 5,
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 1
+}}>
+  {/* Contenedor principal (igual que antes) */}
+  <Box 
+    display="flex" 
+    alignItems="center"
+    gap={2}
+    sx={{
+      flexWrap: 'wrap',
+      rowGap: 1,
+    }}
+  >
+    {/* Botones (sin cambios) */}
+   <Button
+  component="label"
+  variant="contained"
+  startIcon={<CloudUploadIcon />}
+ sx={{ 
+  flexShrink: 0, 
+  order: 1,
+  '&.Mui-disabled': {
+    backgroundColor: '#e0e0e0', // Gris claro hexadecimal
+    color: '#757575' // Texto gris
+  }
+}}
+  disabled={loadingPayers}
+>
+  Seleccionar archivo
+  <VisuallyHiddenInput 
+    type="file" 
+    onChange={(e) => handleFileChange(e, setFieldValue)}
+    accept=".pdf,.jpg,.jpeg,.png"
+    disabled={loadingPayers}
+  />
+</Button>
+    
+    <Button
+      variant="outlined"
+      startIcon={<PreviewIcon />}
+      onClick={handleOpenPreview}
+      disabled={!file && !values.file}
+      sx={{
+        backgroundColor: (file || values.file) ? 'background.paper' : 'grey.300',
+        color: (file || values.file) ? 'text.primary' : 'text.disabled',
+        flexShrink: 0,
+        order: 2,
+        '&:hover': {
+          backgroundColor: (file || values.file) ? 'action.hover' : 'grey.300'
+        }
+      }}
+    >
+      Previsualizar
+    </Button>
 
-                {(file || values.file) && (
-                  <Typography variant="body2" sx={{ ml: 1, flexGrow: 1, wordBreak: 'break-word' }}>
-                    Archivo seleccionado: {file?.name || values.file?.split('/').pop()}
-                    {file?.size && (
-                      <span> ({formatFileSize(file.size)})</span>
-                    )}
-                  </Typography>
-                )}
-              </Box>
-              
-              {errors.file && (
-                <Typography 
-                  variant="body2"
-                  sx={{ color: 'error.main' }}
-                >
-                  {'El archivo es obligatorio'}
-                </Typography>
-              )}
-            </Grid>
+    {/* Nombre del archivo - CON TOOLTIP AGREGADO */}
+    {(file || values.file) && (
+      <Tooltip 
+        title={`${file?.name || values.file?.split('/').pop()}${file?.size ? ` (${formatFileSize(file.size)})` : ''}`}
+        arrow
+        placement="bottom-start"
+      >
+        <Box 
+          sx={{ 
+            flex: '1 1 auto', 
+            minWidth: 'min(100%, 200px)',
+            order: 3,
+            mt: { xs: 1, sm: 0 }
+          }}
+        >
+          <Typography 
+            variant="body2" 
+            sx={{
+              display: 'block',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              '@media (max-width: 500px)': {
+                whiteSpace: 'normal',
+                wordBreak: 'break-word',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical'
+              }
+            }}
+          >
+            Archivo seleccionado: {file?.name || values.file?.split('/').pop()}
+            {file?.size && <span> ({formatFileSize(file.size)})</span>}
+          </Typography>
+        </Box>
+      </Tooltip>
+    )}
+  </Box>
+  
+  {errors.file && (
+    <Typography variant="body2" sx={{ color: 'error.main' }}>
+      {'El archivo es obligatorio'}
+    </Typography>
+  )}
+</Grid>
 <Dialog 
   open={openPreview} 
   onClose={handleClosePreview} 

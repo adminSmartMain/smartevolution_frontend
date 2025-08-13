@@ -365,6 +365,22 @@ console.log(filters)
   }
 };
 
+
+
+  const handleOpenEditBill = (id) => {
+  if (openWindow && !openWindow.closed) {
+    // Si la ventana ya está abierta, solo le damos el foco (la trae al frente)
+    openWindow.focus();
+  } else {
+    // Si la ventana no está abierta, la abrimos y guardamos la referencia
+    const newWindow = window.open(`/bills/editBill?id=${id}`, "_blank", "width=800, height=600");
+    setOpenWindow(newWindow); // Guardamos la referencia de la ventana
+    // Escuchar el evento de cierre de la ventana
+    newWindow.onbeforeunload = () => {
+      setOpenWindow(null); // Restablecer la referencia cuando la ventana se cierre
+    };
+  }
+};
 const SortIcon = () => (
   <Typography fontFamily="icomoon" fontSize="0.7rem">
     &#xe908;
@@ -551,7 +567,7 @@ const handleDownload = (url, fileName) => {
       },
     },
     {
-      field: "DatePayment",
+      field: "expirationDate",
       headerName: "Vence",
       width:  81,
        flex: 1,     // Desactiva el crecimiento flexible
@@ -843,6 +859,7 @@ const handleDownload = (url, fileName) => {
 
             <MenuItem
              onClick={() => {
+             
     if (selectedRow?.associatedOperation != null) {
       Toast(
         "No se puede editar una factura asociada a una operación",
@@ -850,7 +867,7 @@ const handleDownload = (url, fileName) => {
       );
     } else {
       // Navegar a la página de edición con el UUID de la factura
-      window.location.href = `/bills/editBill?id=${selectedRow.id}`;
+    handleOpenEditBill(selectedRow.id)
     }
     setAnchorEl(null);
   }}
@@ -880,6 +897,7 @@ const handleDownload = (url, fileName) => {
                 }
                 setAnchorEl(null);
               }}
+                disabled={selectedRow?.associatedOperation != null}
             >
               <ListItemIcon>
                 <DeleteIcon fontSize="small" />
@@ -977,6 +995,7 @@ const handleDownload = (url, fileName) => {
         typeBill: bill.typeBill,
         DateBill: bill.dateBill,
         DatePayment: bill.datePayment,
+        expirationDate:bill.expirationDate,
         currentBalance: bill.currentBalance,
         integrationCode: bill.integrationCode,
         payedBalance: bill.associatedOperation?.payedAmount
