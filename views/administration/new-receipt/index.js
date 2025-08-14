@@ -24,7 +24,7 @@ export default function Receipt() {
     date: `${new Date().toISOString().substring(0, 10)}`,
     typeReceipt: "",
     payedAmount: 0,
-    pendingAmount: 0,
+    opPendingAmount: 0,
     operation: "",
     additionalDays: 0,
     additionalInterests: 0,
@@ -78,6 +78,7 @@ export default function Receipt() {
       setSuccess(null); // Asegura que el modal de carga se muestre
       try {
         console.log("Enviando datos...");
+        console.log(values)
         await fetchRegisterReceipt({ ...values, presentValueInvestor });
         setSuccess(true);
         
@@ -107,7 +108,7 @@ export default function Receipt() {
   
         // Espera 2.5s antes de redirigir
         setTimeout(() => {
-          router.push("/operations");
+          //router.push("/operations");
           setLoading(false);
         },6000);
     }
@@ -132,7 +133,7 @@ export default function Receipt() {
       formik.setFieldValue("client", data?.data?.investor.id);
       formik.setFieldValue("account", data?.data?.clientAccount.id);
       formik.setFieldValue("payedAmount", 0);
-      formik.setFieldValue("pendingAmount", 0);
+      formik.setFieldValue("opPendingAmount", 0);
       formik.setFieldValue("interest", data?.receipts?.interest);
       formik.setFieldValue("lastDate", data?.receipts?.lastDate);
       formik.setFieldValue("previousPayedAmount", data?.receipts?.payedAmount);
@@ -202,10 +203,20 @@ export default function Receipt() {
     
 
     let pendingAmount = data?.data?.amount -(formik.values.payedAmount - formik.values.additionalInterests);
+     setPendingAmount(Math.round(pendingAmount));
+    console.log(Math.round(pendingAmount))
+    console.log('aqui esta data para el pending amount',data)
+    console.log('lastDate',data?.receipts.lastDate)
     if (data?.receipts.lastDate) {
       pendingAmount = pendingAmount - (data?.receipts.payedAmount - data?.receipts.interest);
+      setPendingAmount(Math.round(pendingAmount));
+      
+    } 
+    else if (formik.values.payedAmount-formik.values.additionalInterests>data?.data?.opPendingAmount){
+      console.log('entramos al condicional de pending amount 0')
+      setPendingAmount(0)
     }
-    setPendingAmount(Math.round(pendingAmount));
+    
     
 
     //if (
@@ -272,10 +283,14 @@ export default function Receipt() {
           formik.setFieldValue("additionalInterestsSM", 0);
           formik.setFieldValue("investorInterests", 0);
           formik.setFieldValue("additionalDays", 0);
-          if (data?.data?.payedPercent < 100 && formik.values.receiptStatus !== "ea8518e8-168a-46d7-b56a-1286bf0037cd") {
+          if (formik.values.payedAmount-formik.values.additionalInterests>data?.data?.opPendingAmount && formik.values.receiptStatus !== "ea8518e8-168a-46d7-b56a-1286bf0037cd") {
+          console.log( 'a',data?.data?.amount,data?.data?.payedAmount)
+          console.log(formik.values.payedAmount,formik.values.additionalInterests,data?.data?.opPendingAmount)
+          console.log(data?.data)
+           console.log( 'resta a',formik.values.payedAmount-formik.values.additionalInterests-data?.data?.opPendingAmount)
           formik.setFieldValue(
             "remaining",
-            data?.data?.amount - data?.data?.payedAmount
+            formik.values.payedAmount-formik.values.additionalInterests-data?.data?.opPendingAmount
           );
       }
           break;
@@ -358,6 +373,7 @@ export default function Receipt() {
           formik.setFieldValue("futureValueRecalculation", 0);
           formik.setFieldValue("tableRemaining", 0);
                 if (data?.data?.payedPercent < 100 && formik.values.receiptStatus !== "ea8518e8-168a-46d7-b56a-1286bf0037cd") {
+                   console.log( 'b',data?.data?.amount,data?.data?.payedAmount)
         formik.setFieldValue(
           "remaining",
           data?.data?.amount - data?.data?.payedAmount
@@ -377,6 +393,7 @@ export default function Receipt() {
           formik.setFieldValue("additionalInterestsSM", 0);
           formik.setFieldValue("additionalDays", 0);
                 if (data?.data?.payedPercent < 100 && formik.values.receiptStatus !== "ea8518e8-168a-46d7-b56a-1286bf0037cd") {
+                  console.log( 'c',data?.data?.amount,data?.data?.payedAmount)
         formik.setFieldValue(
           "remaining",
           data?.data?.amount - data?.data?.payedAmount
@@ -568,6 +585,7 @@ export default function Receipt() {
 
   useEffect(() => {
     setCounter(counter + 1);
+    console.log('contador ')
     if (Math.floor(pendingAmount) <= 0) {
       setCanceled(true);
     } else {
@@ -577,6 +595,8 @@ export default function Receipt() {
 
   useEffect(() => {
     if (counter == 4) {
+      
+      console.log('monto aplicacion','contador',counter)
       formik.setFieldValue("payedAmount", pendingAmount);
     }
   }, [counter]);

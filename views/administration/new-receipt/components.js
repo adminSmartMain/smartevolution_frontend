@@ -326,9 +326,9 @@ export const ReceiptC = ({ formik, data, pendingAmount, presentValueInvestor,loa
                       width: "18.5vw",
                     },
                   }}
-                  id="pendingAmount"
+                  id="opPendingAmount"
                   placeholder=""
-                  name="pendingAmount"
+                  name="opPendingAmount"
                   isMasked
                   value={pendingAmount}
                   thousandSeparator="."
@@ -337,11 +337,11 @@ export const ReceiptC = ({ formik, data, pendingAmount, presentValueInvestor,loa
                   allowNegative={false}
                   disabled={true}
                   error={
-                    formik.touched.pendingAmount &&
-                    Boolean(formik.errors.pendingAmount)
+                    formik.touched.opPendingAmount &&
+                    Boolean(formik.errors.opPendingAmount)
                   }
                   onChangeMasked={(values) => {
-                    formik.setFieldValue("pendingAmount", values.floatValue);
+                    formik.setFieldValue("opPendingAmount", values.floatValue);
                   }}
                 />
               </Box>
@@ -386,12 +386,12 @@ export const ReceiptC = ({ formik, data, pendingAmount, presentValueInvestor,loa
                   allowNegative={false}
                   disabled={true}
                   error={
-                    formik.touched.pendingAmount &&
-                    Boolean(formik.errors.pendingAmount)
+                    formik.touched.opPendingAmount &&
+                    Boolean(formik.errors.opPendingAmount)
                   }
                   onChangeMasked={(values) => {
                     console.log(values,'values')
-                    formik.setFieldValue("pendingAmount", values.floatValue);
+                    formik.setFieldValue("opPendingAmount", values.floatValue);
                   }}
                 />
               </Box>
