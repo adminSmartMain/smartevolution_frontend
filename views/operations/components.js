@@ -84,6 +84,7 @@ export const OperationsComponents = ({
   const [anchorElCSV, setAnchorElCSV] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
   const openMenuCSV = Boolean(anchorElCSV);
+    const [openWindow, setOpenWindow] = useState(null); 
   const formatOptions = {
     style: "currency",
     currency: "USD",
@@ -119,9 +120,30 @@ const router = useRouter();
     setOpenModal(false);
   };
 
+const handleOpenWindow = (url, windowFeatures = "width=800, height=600") => {
+  if (openWindow && !openWindow.closed) {
+    // Si la ventana ya está abierta, solo le damos el foco
+    openWindow.focus();
+    return openWindow;
+  } else {
+    // Si la ventana no está abierta, la abrimos y guardamos la referencia
+    const newWindow = window.open(url, "_blank", windowFeatures);
+    setOpenWindow(newWindow);
+    
+    // Escuchar el evento de cierre de la ventana
+    newWindow.onbeforeunload = () => {
+      setOpenWindow(null);
+    };
+    
+    return newWindow;
+  }
+};
 
 
-
+// Funciones específicas que usan la función genérica
+const handleOpenRegisterReceipt = (id) => {
+  handleOpenWindow(`/administration/new-receipt?id=${id}`);
+};
 
 
   const columns = [
@@ -265,7 +287,7 @@ const router = useRouter();
     }}
     onClick={() => {
       if (params.row.status !== 4) {
-        router.push(`/administration/new-receipt?id=${params.row.id}`);
+       handleOpenRegisterReceipt(params.row.id);
       }
     }}
   >

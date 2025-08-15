@@ -331,55 +331,37 @@ console.log(filters)
 
 // Fin codigo filtro
 
-
-
-
-  const handleOpenRegisterOperation = () => {
+const handleOpenWindow = (url, windowFeatures = "width=800, height=600") => {
   if (openWindow && !openWindow.closed) {
-    // Si la ventana ya está abierta, solo le damos el foco (la trae al frente)
+    // Si la ventana ya está abierta, solo le damos el foco
     openWindow.focus();
+    return openWindow;
   } else {
     // Si la ventana no está abierta, la abrimos y guardamos la referencia
-    const newWindow = window.open("/bills/createBill", "_blank", "width=800, height=600");
-    setOpenWindow(newWindow); // Guardamos la referencia de la ventana
+    const newWindow = window.open(url, "_blank", windowFeatures);
+    setOpenWindow(newWindow);
+    
     // Escuchar el evento de cierre de la ventana
     newWindow.onbeforeunload = () => {
-      setOpenWindow(null); // Restablecer la referencia cuando la ventana se cierre
+      setOpenWindow(null);
     };
+    
+    return newWindow;
   }
 };
 
 
-  const handleOpenDetailBill = (id) => {
-  if (openWindow && !openWindow.closed) {
-    // Si la ventana ya está abierta, solo le damos el foco (la trae al frente)
-    openWindow.focus();
-  } else {
-    // Si la ventana no está abierta, la abrimos y guardamos la referencia
-    const newWindow = window.open(`/bills/detailBill?id=${id}`, "_blank", "width=800, height=600");
-    setOpenWindow(newWindow); // Guardamos la referencia de la ventana
-    // Escuchar el evento de cierre de la ventana
-    newWindow.onbeforeunload = () => {
-      setOpenWindow(null); // Restablecer la referencia cuando la ventana se cierre
-    };
-  }
+// Funciones específicas que usan la función genérica
+const handleOpenRegisterOperation = () => {
+  handleOpenWindow("/bills/createBill");
 };
 
+const handleOpenDetailBill = (id) => {
+  handleOpenWindow(`/bills/detailBill?id=${id}`);
+};
 
-
-  const handleOpenEditBill = (id) => {
-  if (openWindow && !openWindow.closed) {
-    // Si la ventana ya está abierta, solo le damos el foco (la trae al frente)
-    openWindow.focus();
-  } else {
-    // Si la ventana no está abierta, la abrimos y guardamos la referencia
-    const newWindow = window.open(`/bills/editBill?id=${id}`, "_blank", "width=800, height=600");
-    setOpenWindow(newWindow); // Guardamos la referencia de la ventana
-    // Escuchar el evento de cierre de la ventana
-    newWindow.onbeforeunload = () => {
-      setOpenWindow(null); // Restablecer la referencia cuando la ventana se cierre
-    };
-  }
+const handleOpenEditBill = (id) => {
+  handleOpenWindow(`/bills/editBill?id=${id}`);
 };
 const SortIcon = () => (
   <Typography fontFamily="icomoon" fontSize="0.7rem">

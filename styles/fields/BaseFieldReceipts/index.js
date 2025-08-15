@@ -6,7 +6,7 @@ import { styled } from "@mui/material/styles";
 import responsiveFontSize from "@lib/responsiveFontSize";
 
 const DefaultTextField = (props) => (
-  <TextField variant="outlined" {...props} />
+  <TextField  {...props} />
 );
 
 export const StandardTextField = (props) => {
@@ -38,27 +38,7 @@ export const StandardTextField = (props) => {
 };
 
 const BaseField = styled(StandardTextField)(({ theme }) => ({
-  "& .MuiInputBase-root": {
-    backgroundColor: "#ffffffff",
-  },
 
-  "& .MuiOutlinedInput-notchedOutline": {
-    borderColor: "#a0a0a080 !important",
-  },
-
-  "& .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline": {
-    borderColor: "#d32f2f !important",
-  },
-
-  "& .MuiOutlinedInput-input": {
-    color: "#575757",
-    fontWeight: 500,
-    fontSize: responsiveFontSize(16, 0.8205, 2),
-  },
-
-  "& .MuiInputAdornment-root": {
-    color: "#5EA3A3",
-  },
 }));
 
 export default BaseField;

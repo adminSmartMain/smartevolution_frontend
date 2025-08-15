@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState,useContext } from "react";
 import { ToastContainer } from "react-toastify";
 import { useRouter } from "next/router";
 import { Box, Typography } from "@mui/material";
+import { Toast } from "@components/toast";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DesktopDatePicker } from "@mui/x-date-pickers/DesktopDatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -14,1033 +15,529 @@ import TypeReceiptSelect from "@components/selects/typeReceiptSelect";
 import BackButton from "@styles/buttons/BackButton";
 import MuiButton from "@styles/buttons/button";
 import MuiTextField from "@styles/fields";
-import BaseField from "@styles/fields/BaseField";
+import BaseField from "@styles/fields/BaseFieldReceipts";
 import HelperText from "@styles/helperText";
 import InputTitles from "@styles/inputTitles";
 import scrollSx from "@styles/scroll";
 import dayjs from "dayjs";
-
-import { Dialog,DialogContent, CircularProgress} from "@mui/material";
+import InfoIcon from '@mui/icons-material/Info';
+import { Dialog,DialogContent, CircularProgress,Grid,TextField,Divider,Tooltip, IconButton} from "@mui/material";
 import { CheckCircle, Error } from "@mui/icons-material";
-const aSx = {
-  border: "1.4px solid #E6643180",
-  marginTop: "0px",
-  marginLeft: "3rem",
-  width: "17vw",
-  "@media (max-height: 900px)": {
-    width: "17vw",
-  },
-};
+import ModalConfirmation from "@components/modals/receiptBillModals/modalConfirmation";
 
-const bSx = {
-  border: "1.4px solid #5EA3A3",
-  marginTop: "0px",
-  width: "17vw",
-  marginLeft: "3rem",
-  "@media (max-height: 900px)": {
-    width: "17vw",
-  },
-};
-
-const cSx = {
-  border: "1.4px solid #E6643180",
-  marginTop: "0px",
-  marginLeft: "3rem",
-  width: "17vw",
-  "@media (max-height: 900px)": {
-    width: "17vw",
-  },
-};
-
-const dSx = {
-  border: "1.4px solid #5EA3A3",
-  marginTop: "0px",
-  width: "17vw",
-  marginLeft: "0.2rem",
-  "@media (max-height: 900px)": {
-    width: "17vw",
-  },
-};
-
-export const ReceiptC = ({ formik, data, pendingAmount, presentValueInvestor,loading,success,isModalOpen }) => {
+import ProcessModal from "@components/modals/receiptBillModals/processModal"
+import authContext from "@context/authContext";
+export const ReceiptC = ({ formik, 
+                            data, 
+                            pendingAmount,
+                            presentValueInvestor,
+                            loading,
+                            success,
+                            isModalOpen,
+                            setIsModalOpen,
+                            showConfirmationModal,
+                            setShowConfirmationModal }) => {
   
   const [valueD, setValue] = useState(dayjs("2014-08-18T21:11:54"));
   const [valueDate, setValueDate] = useState(dayjs("2014-08-18T21:11:54"));
- 
+   const { user, logout } = useContext(authContext);
 
+
+console.log(data)
   const handleChange = (newValue) => {
     setValue(newValue);
   };
   const handleChange2 = (newValue) => {
     setValueDate(newValue);
   };
+  const renderNombreUsuario = (usuario) => (
+    <Box component="span" sx={{ color: 'text.primary', fontWeight: 500 }}>
+      {usuario?.name}
+    </Box>
+  );
 
+    const handleSubmitWithConfirmation = () => {
+    if (formik.values.payedAmount <= 0) {
+      Toast("Debe ingresar un valor a pagar", "error");
+      return;
+    }
+
+    if (formik.values.receiptStatus === "") {
+      Toast("Debe seleccionar un tipo de recaudo", "error");
+      return;
+    }
+
+    setShowConfirmationModal(true);
+  };
   return (
     <>
-      <Box
-        display="flex"
-        flexDirection="column"
-        sx={{ ...scrollSx, flexFlow: "column nowrap" }}
-      >
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
+      <Box sx={{ padding: 5, backgroundColor: 'white', borderRadius: 1, boxShadow: 1 }}>
         <form onSubmit={formik.onSubmit}>
-          <BackButton path="/administration/new-receipt/receiptList" />
-          <Box display="flex" flexDirection="column" alignItems="left">
+
+           <Box sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 3,
+                    paddingBottom: 2,
+                    borderBottom: '1px solid #e0e0e0'
+                  }}> 
             <Typography
               letterSpacing={0}
               fontSize="1.7rem"
               fontWeight="regular"
               marginBottom="3%"
               color="#5EA3A3"
+              sx={{ mb: 0.5 }} 
             >
-              Registrar Recaudo
+              Registrar Recaudo  Op : {data?.opId}
             </Typography>
-            <Box display="flex" flexDirection="row" alignItems="center">
-              <Box ml={0} mb={2} width="17vw">
-                <InputTitles>Fecha Aplicación</InputTitles>
-                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                  <DesktopDatePicker
-                    label="Date desktop"
-                    inputFormat="DD/MM/YYYY"
-                    value={valueD}
-                    onChange={handleChange}
-                    renderInput={(params) => (
-                      <MuiTextField
-                        id="date"
-                        placeholder="Ingresa la fecha"
-                        name="date"
-                        type="date"
-                        variant="standard"
-                        margin="normal"
-                        fullWidth
-                        value={formik.values.date}
-                        InputProps={{
-                          disableUnderline: true,
-                          sx: {
-                            marginTop: "-5px",
-                          },
-                        }}
-                        onChange={formik.handleChange}
-                        error={
-                          formik.touched.date && Boolean(formik.errors.date)
-                        }
-                        sx={
-                          formik.touched.date && Boolean(formik.errors.date)
-                            ? { border: "1.4px solid #E6643180" }
-                            : null
-                        }
-                      />
-                    )}
-                  />
-                </LocalizationProvider>
+            {user ? (
+                        <Typography variant="subtitle1" sx={{ color: 'text.secondary' }}>
+                          Creado por: {renderNombreUsuario(user)}
+                        </Typography>
+                      ) : (
+                        <Typography variant="subtitle1" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
+                          Sin información de autoría
+                        </Typography>
+                      )}
+              </Box>
+         
+ 
+      {/* Primera fila con 4 campos */}<Grid container rowSpacing={2} columnSpacing={4} alignItems="flex-start">
+        <Grid item xs={12} md={2}>
+          <DesktopDatePicker
+            label="Date desktop"
+            inputFormat="DD/MM/YYYY"
+            value={valueD}
+            onChange={handleChange}
+            renderInput={(params) => (
+              <TextField
+                id="date"
+                placeholder="Ingresa la fecha"
+                name="date"
+                type="date"
+              label="Fecha de aplicación"
+                fullWidth
+                value={formik.values.date}
+                
+                onChange={formik.handleChange}
+                error={formik.touched.date && Boolean(formik.errors.date)}
+                sx={formik.touched.date && Boolean(formik.errors.date) ? 
+                  { border: "1.4px solid #E6643180" } : null}
+              />
+            )}
+          />
+          <HelperText>
+            {formik.touched.date && formik.errors.date}
+          </HelperText>
+        </Grid>
 
-                <HelperText>
-                  {formik.touched.date && formik.errors.date}
-                </HelperText>
-              </Box>
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  marginTop: "-1rem",
-                }}
-              >
-                <InputTitles marginBottom={2} marginLeft={6}>
-                  Dias Reales
-                </InputTitles>
-                <MuiTextField
-                  id="realDays"
-                  placeholder=""
-                  name="realDays"
-                  type="number"
-                  variant="standard"
-                  margin="normal"
-                  value={formik.values.realDays}
-                  disabled={true}
-                  InputProps={{
-                    disableUnderline: true,
-                    sx: {
-                      marginTop: "-5px",
-                    },
-                  }}
-                  onChange={formik.handleChange}
-                  error={
-                    formik.touched.realDays && Boolean(formik.errors.realDays)
-                  }
-                  sx={
-                    formik.touched.realDays && Boolean(formik.errors.realDays)
-                      ? aSx
-                      : bSx
-                  }
-                />
-              </Box>
-            </Box>
-            <Box
-              display="flex"
-              flexDirection="row"
-              alignItems="center"
-              marginBottom={2}
-            >
-              <TypeReceiptSelect formik={formik} disabled={true} />
-              <ReceiptStatusSelect
-                formik={formik}
-                disabled={false}
-                ml={"3rem"}
-              />
-            </Box>
-            <Box display="flex" flexDirection="row" alignItems="center">
-              <ClientSelect
-                formik={formik}
-                disabled={true}
-                customer={"inversionista"}
-              />
-              <AccountSelect
-                formik={formik}
-                disabled={true}
-                marginLeft={"3rem"}
-              />
-            </Box>
-            <Box display="flex" flexDirection="row" alignItems="center">
-              <Box>
-                <InputTitles marginBottom={2} marginTop={3} marginLeft={0.5}>
-                  Monto Aplicación
-                </InputTitles>
-                <BaseField
-                  InputProps={{
-                    disableUnderline: true,
-                    sx: {
-                      marginTop: "-5px",
-                    },
-                    startAdornment: (
-                      <i
-                        style={{
-                          color: "#5EA3A3",
-                          marginRight: "0.7vw",
-                          fontSize: "1.1vw",
-                        }}
-                        className="far fa-dollar-sign"
-                      ></i>
-                    ),
-                  }}
-                  sx={{
-                    marginTop: "6px",
-                    width: "18.2vw",
-                    marginLeft: "0.1rem",
-                    "@media (max-height: 900px)": {
-                      width: "18.5vw",
-                    },
-                  }}
-                  id="payedAmount"
-                  placeholder=""
-                  name="payedAmount"
-                  isMasked
-                  value={formik.values.payedAmount}
-                  thousandSeparator="."
-                  decimalSeparator=","
-                  decimalScale={0}
-                  allowNegative={false}
-                  error={
-                    formik.touched.payedAmount &&
-                    Boolean(formik.errors.payedAmount)
-                  }
-                  onChangeMasked={(values) => {
+        <Grid item xs={12} md={2}>
+          <ReceiptStatusSelect
+            formik={formik}
+            disabled={false}
+          />
+        </Grid>
+
+    
+    <Grid item xs={12} md={1}>
+  <TextField
+    id="calculatedDays"
+    placeholder="Días Cálculo"
+    name="calculatedDays"
+    type="number"
+    label="Días Cálculo"
+    value={formik.values.calculatedDays}
+    fullWidth
+    InputProps={{
+      endAdornment: (
+        <Tooltip
+          title="Este campo se completa automáticamente con los dias reales calculados, pero puedes modificarlo manualmente"
+          placement="top-end"
+          arrow
+        >
+          <IconButton edge="end" size="small" aria-label="Información">
+            <InfoIcon style={{ fontSize: '1rem', color: 'rgb(94, 163, 163)' }} />
+          </IconButton>
+        </Tooltip>
+      ),
+    }}
+    onChange={formik.handleChange}
+    error={formik.touched.calculatedDays && Boolean(formik.errors.calculatedDays)}
+  />
+</Grid>
+<Grid item xs={12} md={4}>
+  <BaseField
+    fullWidth
+    InputProps={{
+      startAdornment: (
+        <i
+          style={{
+            color: "#5EA3A3",
+            marginRight: "0.7vw",
+            fontSize: "1.1vw",
+          }}
+          className="far fa-dollar-sign"
+        ></i>
+      ),
+      endAdornment: (
+        <Tooltip
+          title="Debe ser el monto registrado en el banco"
+          placement="top-end"
+          arrow
+        >
+          <IconButton edge="end" size="small" aria-label="Información">
+            <InfoIcon style={{ fontSize: '1rem', color: 'rgb(94, 163, 163)' }} />
+          </IconButton>
+        </Tooltip>
+      ),
+    }}
+    id="payedAmount"
+    name="payedAmount"
+    label="Monto Aplicación"
+    value={formik.values.payedAmount}
+    thousandSeparator="."
+    decimalSeparator=","
+    decimalScale={0}
+    allowNegative={false}
+    isMasked
+    error={formik.touched.payedAmount && Boolean(formik.errors.payedAmount)}
+    onChangeMasked={(values) => {
                     formik.setFieldValue("payedAmount", values.floatValue);
                   }}
-                />
-              </Box>
-              <Box>
-                <InputTitles marginBottom={2} marginTop={3} marginLeft={3.5}>
-                  Remanente
-                </InputTitles>
-                <BaseField
-                  InputProps={{
-                    disableUnderline: true,
-                    sx: {
-                      marginTop: "-5px",
-                    },
-                    startAdornment: (
-                      <i
-                        style={{
-                          color: "#5EA3A3",
-                          marginRight: "0.7vw",
-                          fontSize: "1.1vw",
-                        }}
-                        className="far fa-dollar-sign"
-                      ></i>
-                    ),
-                  }}
-                  sx={{
-                    marginTop: "6px",
-                    width: "18.2vw",
-                    marginLeft: "1.7rem",
-                    "@media (max-height: 900px)": {
-                      width: "18.5vw",
-                      marginLeft: "1.7rem",
-                    },
-                  }}
-                  id="remaining"
-                  placeholder="Remanente"
-                  name="remaining"
-                  isMasked
-                  value={formik.values.remaining}
-                  thousandSeparator="."
-                  decimalSeparator=","
-                  decimalScale={0}
-                  allowNegative={false}
-                  disabled={true}
-                  error={
-                    formik.touched.remaining && Boolean(formik.errors.remaining)
-                  }
-                  onChangeMasked={(values) => {
-                    formik.setFieldValue("remaining", values.floatValue);
-                  }}
-                />
-              </Box>
-            </Box>
-            <Box display="flex" flexDirection="row" alignItems="center">
-              <Box>
-                <InputTitles marginBottom={2} marginTop={3} marginLeft={0.5}>
-                  Pendiente Por Cobrar
-                </InputTitles>
-                <BaseField
-                  InputProps={{
-                    disableUnderline: true,
-                    sx: {
-                      marginTop: "-5px",
-                    },
-                    startAdornment: (
-                      <i
-                        style={{
-                          color: "#5EA3A3",
-                          marginRight: "0.7vw",
-                          fontSize: "1.1vw",
-                        }}
-                        className="far fa-dollar-sign"
-                      ></i>
-                    ),
-                  }}
-                  sx={{
-                    marginTop: "6px",
-                    width: "18.2vw",
-                    marginLeft: "0.1rem",
-                    "@media (max-height: 900px)": {
-                      width: "18.5vw",
-                    },
-                  }}
-                  id="opPendingAmount"
-                  placeholder=""
-                  name="opPendingAmount"
-                  isMasked
-                  value={pendingAmount}
-                  thousandSeparator="."
-                  decimalSeparator=","
-                  decimalScale={0}
-                  allowNegative={false}
-                  disabled={true}
-                  error={
-                    formik.touched.opPendingAmount &&
-                    Boolean(formik.errors.opPendingAmount)
-                  }
-                  onChangeMasked={(values) => {
-                    formik.setFieldValue("opPendingAmount", values.floatValue);
-                  }}
-                />
-              </Box>
-                            <Box>
-                <InputTitles marginBottom={2} marginTop={3} marginLeft={3.5}>
-                  valor presente inversionista
-                </InputTitles>
-                <BaseField
-                  InputProps={{
-                    disableUnderline: true,
-                    sx: {
-                      marginTop: "-5px",
-                    },
-                    startAdornment: (
-                      <i
-                        style={{
-                          color: "#5EA3A3",
-                          marginRight: "0.7vw",
-                          fontSize: "1.1vw",
-                        }}
-                        className="far fa-dollar-sign"
-                      ></i>
-                    ),
-                  }}
-                  sx={{
-                    marginTop: "6px",
-                    width: "18.2vw",
-                    marginLeft: "1.7rem",
-                    "@media (max-height: 900px)": {
-                      width: "18.5vw",
-                      marginLeft: "1.7rem",
-                    },
-                  }}
-                  id="presentValueInvestor"
-                  placeholder=""
-                  name="presentValueInvestor"
-                  isMasked
-                  value={presentValueInvestor}
-                  thousandSeparator="."
-                  decimalSeparator=","
-                  decimalScale={0}
-                  allowNegative={false}
-                  disabled={true}
-                  error={
-                    formik.touched.opPendingAmount &&
-                    Boolean(formik.errors.opPendingAmount)
-                  }
-                  onChangeMasked={(values) => {
-                    console.log(values,'values')
-                    formik.setFieldValue("opPendingAmount", values.floatValue);
-                  }}
-                />
-              </Box>
-            </Box>
-            <Box display="flex" flexDirection="row" alignItems="center">
-              <Box>
-                <InputTitles marginBottom={2} marginTop={3} marginLeft={0.5}>
-                  Dias Calculo
-                </InputTitles>
-                <MuiTextField
-                  id="calculatedDays"
-                  placeholder=""
-                  name="calculatedDays"
-                  type="number"
-                  variant="standard"
-                  margin="normal"
-                  value={formik.values.calculatedDays}
-                  InputProps={{
-                    disableUnderline: true,
-                    sx: {
-                      marginTop: "-5px",
-                    },
-                  }}
-                  onChange={formik.handleChange}
-                  error={
-                    formik.touched.calculatedDays &&
-                    Boolean(formik.errors.calculatedDays)
-                  }
-                  sx={
-                    formik.touched.calculatedDays &&
-                    Boolean(formik.errors.calculatedDays)
-                      ? cSx
-                      : dSx
-                  }
-                />
-              </Box>
-            </Box>
-            <Box display="flex" flexDirection="row" alignItems="center">
-              <Box>
-                <InputTitles marginTop={3} marginBottom={2}>
-                  Valor Futuro Recalculado
-                </InputTitles>
-                <BaseField
-                  InputProps={{
-                    disableUnderline: true,
-                    sx: {
-                      marginTop: "-5px",
-                    },
-                    startAdornment: (
-                      <i
-                        style={{
-                          color: "#5EA3A3",
-                          marginRight: "0.7vw",
-                          fontSize: "1.1vw",
-                        }}
-                        className="far fa-dollar-sign"
-                      ></i>
-                    ),
-                  }}
-                  sx={{
-                    marginTop: "6px",
-                    width: "18.2vw",
-                    marginLeft: "0.1rem",
-                    "@media (max-height: 900px)": {
-                      width: "18.5vw",
-                    },
-                  }}
-                  id="futureValueRecalculation"
-                  placeholder=""
-                  name="futureValueRecalculation"
-                  isMasked
-                  value={formik.values.futureValueRecalculation}
-                  thousandSeparator="."
-                  decimalSeparator=","
-                  decimalScale={0}
-                  allowNegative={false}
-                  disabled={true}
-                  error={
-                    formik.touched.futureValueRecalculation &&
-                    Boolean(formik.errors.futureValueRecalculation)
-                  }
-                  onChangeMasked={(values) => {
-                    formik.setFieldValue(
-                      "futureValueRecalculation",
-                      values.floatValue
-                    );
-                  }}
-                />
-              </Box>
+  />
+</Grid>
 
-              <Box>
-                <InputTitles marginBottom={2} marginTop={3} marginLeft={3.5}>
-                  Remanente Mesa
-                </InputTitles>
-                <BaseField
-                  InputProps={{
-                    disableUnderline: true,
-                    sx: {
-                      marginTop: "-5px",
-                    },
-                    startAdornment: (
-                      <i
-                        style={{
-                          color: "#5EA3A3",
-                          marginRight: "0.7vw",
-                          fontSize: "1.1vw",
-                        }}
-                        className="far fa-dollar-sign"
-                      ></i>
-                    ),
-                  }}
-                  sx={{
-                    marginTop: "6px",
-                    width: "18.2vw",
-                    marginLeft: "1.7rem",
-                    "@media (max-height: 900px)": {
-                      width: "18.5vw",
-                      marginLeft: "1.7rem",
-                    },
-                  }}
-                  id="tableRemaining"
-                  placeholder=""
-                  name="tableRemaining"
-                  isMasked
-                  value={formik.values.tableRemaining}
-                  thousandSeparator="."
-                  decimalSeparator=","
-                  decimalScale={0}
-                  allowNegative={false}
-                  disabled={true}
-                  error={
-                    formik.touched.tableRemaining &&
-                    Boolean(formik.errors.tableRemaining)
-                  }
-                  onChangeMasked={(values) => {
-                    formik.setFieldValue("tableRemaining", values.floatValue);
-                  }}
-                />
-              </Box>
-            </Box>
-            <Box display="flex" flexDirection="row" alignItems="center">
-              <Box>
-                <InputTitles marginTop={2} marginBottom={4}>
-                  Intereses Adicionales
-                </InputTitles>
-                <BaseField
-                  InputProps={{
-                    disableUnderline: true,
-                    sx: {
-                      marginTop: "-5px",
-                    },
-                    startAdornment: (
-                      <i
-                        style={{
-                          color: "#5EA3A3",
-                          marginRight: "0.7vw",
-                          fontSize: "1.1vw",
-                        }}
-                        className="far fa-dollar-sign"
-                      ></i>
-                    ),
-                  }}
-                  sx={{
-                    width: "18.2vw",
-                    marginLeft: "0.1rem",
-                    "@media (max-height: 900px)": {
-                      width: "18.5vw",
-                    },
-                  }}
-                  id="additionalInterests"
-                  placeholder=""
-                  name="additionalInterests"
-                  isMasked
-                  value={formik.values.additionalInterests}
-                  thousandSeparator="."
-                  decimalSeparator=","
-                  decimalScale={0}
-                  allowNegative={false}
-                  disabled={true}
-                  error={
-                    formik.touched.additionalInterests &&
-                    Boolean(formik.errors.additionalInterests)
-                  }
-                  onChangeMasked={(values) => {
-                    formik.setFieldValue(
-                      "additionalInterests",
-                      values.floatValue
-                    );
-                  }}
-                />
-              </Box>
+  
 
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  marginTop: "1.5rem",
-                }}
-              >
-                <InputTitles marginBottom={2} marginLeft={3.5}>
-                  Dias Adicionales
-                </InputTitles>
-                <MuiTextField
-                  id="additionalDays"
-                  placeholder=""
-                  name="additionalDays"
-                  type="number"
-                  variant="standard"
-                  margin="normal"
-                  value={formik.values.additionalDays}
-                  disabled={true}
-                  InputProps={{
-                    disableUnderline: true,
-                    sx: {
-                      marginTop: "-5px",
-                    },
-                  }}
-                  onChange={formik.handleChange}
-                  error={
-                    formik.touched.additionalDays &&
-                    Boolean(formik.errors.additionalDays)
-                  }
-                  sx={
-                    formik.touched.additionalDays &&
-                    Boolean(formik.errors.additionalDays)
-                      ? { ...aSx, marginTop: "6px" }
-                      : { ...bSx, marginTop: "6px", marginLeft: "1.7rem" }
-                  }
-                />
-              </Box>
-            </Box>
-            <Box display="flex" flexDirection="row" alignItems="center">
-              <Box>
-                <InputTitles marginTop={3} marginBottom={2} marginLeft={0.3}>
-                  Intereses Adicionales SM
-                </InputTitles>
-                <BaseField
-                  InputProps={{
-                    disableUnderline: true,
-                    sx: {
-                      marginTop: "-5px",
-                    },
-                    startAdornment: (
-                      <i
-                        style={{
-                          color: "#5EA3A3",
-                          marginRight: "0.7vw",
-                          fontSize: "1.1vw",
-                        }}
-                        className="far fa-dollar-sign"
-                      ></i>
-                    ),
-                  }}
-                  sx={{
-                    marginTop: "6px",
-                    width: "18.2vw",
-                    marginLeft: "0.1rem",
-                    "@media (max-height: 900px)": {
-                      width: "18.5vw",
-                    },
-                  }}
-                  id="additionalInterestsSM"
-                  placeholder=""
-                  name="additionalInterestsSM"
-                  isMasked
-                  value={formik.values.additionalInterestsSM}
-                  thousandSeparator="."
-                  decimalSeparator=","
-                  decimalScale={0}
-                  allowNegative={false}
-                  disabled={true}
-                  error={
-                    formik.touched.additionalInterestsSM &&
-                    Boolean(formik.errors.additionalInterestsSM)
-                  }
-                  onChangeMasked={(values) => {
-                    formik.setFieldValue(
-                      "additionalInterestsSM",
-                      values.floatValue
-                    );
-                  }}
-                />
-              </Box>
 
-              <Box>
-                <InputTitles marginBottom={2} marginTop={3} marginLeft={3.5}>
-                  Intereses Adicionales inv
-                </InputTitles>
-                <BaseField
-                  InputProps={{
-                    disableUnderline: true,
-                    sx: {
-                      marginTop: "-5px",
-                    },
-                    startAdornment: (
-                      <i
-                        style={{
-                          color: "#5EA3A3",
-                          marginRight: "0.7vw",
-                          fontSize: "1.1vw",
-                        }}
-                        className="far fa-dollar-sign"
-                      ></i>
-                    ),
-                  }}
-                  sx={{
-                    marginTop: "6px",
-                    width: "18.2vw",
-                    marginLeft: "1.7rem",
-                    "@media (max-height: 900px)": {
-                      width: "18.5vw",
-                      marginLeft: "1.7rem",
-                    },
-                  }}
-                  id="investorInterests"
-                  placeholder=""
-                  name="investorInterests"
-                  isMasked
-                  value={formik.values.investorInterests}
-                  thousandSeparator="."
-                  decimalSeparator=","
-                  decimalScale={0}
-                  allowNegative={false}
-                  disabled={true}
-                  error={
-                    formik.touched.investorInterests &&
-                    Boolean(formik.errors.investorInterests)
-                  }
-                  onChangeMasked={(values) => {
-                    formik.setFieldValue(
-                      "investorInterests",
-                      values.floatValue
-                    );
-                  }}
-                />
-              </Box>
-            </Box>
+  
+ <Grid item xs={12} md={2}>
+      <TypeReceiptSelect formik={formik} disabled={true} />
+    </Grid>
+
+  <Grid item xs={12} md={1}> {/* Contenedor flex */}
+     <TextField
+        id="additionalDays"
+        placeholder="Días adicionales"
+        label="Días adicionales"
+        name="additionalDays"
+        type="number"
+       fullWidth
+        value={formik.values.additionalDays}
+        disabled={true}
+        
+        onChange={formik.handleChange}
+        error={formik.touched.additionalDays && Boolean(formik.errors.additionalDays)}
+        
+      />
+    </Grid>
+      </Grid>
+
+
+
+   
+  
+
+
+                    {/* Contenedores de datos operacion y recuados */}
+<Grid container spacing={2}>
+ <Grid container spacing={2} mt={7} ml={2.5}>
+  <Box sx={{ width: '100%' }}>
+    <Typography
+      letterSpacing={0}
+      fontSize="1.7rem"
+      fontWeight="regular"
+      color="#5EA3A3"
+      sx={{ mb: 0.5 }}  // Reduje el marginBottom a 0.5 (4px)
+    >
+      Datos de la Operación
+
+    </Typography>
+    
+    <Divider 
+      sx={{ 
+        backgroundColor: '#5EA3A3', 
+        height: '1px',
+        width: '100%',
+        mt: 0.5,  // Margen superior reducido
+        mb: 5     // Margen inferior normal
+      }} 
+    />
+
+    
+  </Box>
+
+ 
+<Grid container spacing={2}>
+  {/* Nombre del inversionista */}
+  <Grid item xs={12} md={6}>
+    <Typography variant="body1">
+      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Nombre inversionista:</Box>
+      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
+        {data?.investor?.social_reason || `${data?.investor?.first_name || ''} ${data?.investor?.last_name || ''}`.trim()}
+      </Box>
+    </Typography>
+  </Grid>
+
+  {/* NIT del inversionista */}
+  <Grid item xs={12} md={6}>
+    <Typography variant="body1">
+      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">NIT inversionista:</Box>
+      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
+        {data?.investor?.document_number}
+      </Box>
+    </Typography>
+  </Grid>
+
+  
+
+  {/* Cuenta de inversionista */}
+  <Grid item xs={12} md={6}>
+    <Typography variant="body1">
+      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Cuenta de Inversionista:</Box>
+      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
+        {data?.clientAccount?.account_number}
+      </Box>
+    </Typography>
+  </Grid>
+
+  {/* Factura asociada */}
+  <Grid item xs={12} md={6}>
+    <Typography variant="body1">
+      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Factura asociada:</Box>
+      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
+        {data?.bill?.billId}
+      </Box>
+    </Typography>
+  </Grid>
+</Grid>
+</Grid>
+                
+                
+  <Grid container spacing={2} mt={7} ml={2.5}>
+  <Box sx={{ width: '100%' }}>
+    <Typography
+      letterSpacing={0}
+      fontSize="1.7rem"
+      fontWeight="regular"
+      color="#5EA3A3"
+      sx={{ mb: 0.5 }}  // Reduje el marginBottom a 0.5 (4px)
+    >
+      Datos de Recaudos
+    </Typography>
+    
+    <Divider 
+      sx={{ 
+        backgroundColor: '#5EA3A3', 
+        height: '1px',
+        width: '100%',
+        mt: 0.5,  // Margen superior reducido
+        mb: 2     // Margen inferior normal
+      }} 
+    />
+  </Box>
+
+  <Grid container spacing={2}>
+  {/* Días reales */}
+  <Grid item xs={12} md={6}>
+    <Typography variant="body1">
+      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Dias reales</Box>
+      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
+        {formik.values.realDays}
+        
+      </Box>
+    </Typography>
+  </Grid>
+
+  {/* Valor futuro Recalculado */}
+  <Grid item xs={12} md={6}>
+    <Typography variant="body1">
+      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Valor futuro Recalculado</Box>
+      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
+        {formik.values.futureValueRecalculation?.toFixed(0)}
+      </Box>
+    </Typography>
+  </Grid>
+  <Grid item xs={12}>
+    <Divider sx={{ borderColor: '#d8d7d7ff' }} />
+  </Grid>
+
+    {/* Pendiente por cobrar  */}
+  <Grid item xs={12} md={6}>
+    <Typography variant="body1">
+      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Pendiente por cobrar  <Tooltip 
+        title="Muestra el saldo pendiente después de descontar el monto aplicado y los intereses adicionales al valor nominal de la factura."
+        placement="top-end"
+        arrow
+      >
+        <IconButton edge="end" size="small" aria-label="Información">
+          <InfoIcon style={{ fontSize: '1rem', color: 'rgb(94, 163, 163)' }} />
+        </IconButton>
+      </Tooltip></Box>
+      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
+        {pendingAmount}
+
+        
+      </Box>
+    </Typography>
+  </Grid>
+
+  {/* Intereses adicionales totales  */}
+  <Grid item xs={12} md={6}>
+    <Typography variant="body1">
+      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Intereses adicionales totales </Box>
+      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
+        {formik.values.additionalInterests?.toFixed(0)}
+      </Box>
+    </Typography>
+  </Grid>
+ <Grid item xs={12}>
+    <Divider sx={{ borderColor:'#d8d7d7ff' }} />
+  </Grid>
+
+    {/* Remanente Emisor    */}
+    <Grid item xs={12} md={6}>
+    <Typography variant="body1">
+      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Remanente Emisor   <Tooltip 
+        title={<p>Este campo se calcula automáticamente cuando el <strong>monto neto del recaudo</strong> (Monto aplicación -  Intereses adicionales) es mayor que el valor pendiente de pago</p>}
+        placement="top-end"
+        arrow
+      >
+        <IconButton edge="end" size="small" aria-label="Información">
+          <InfoIcon style={{ fontSize: '1rem', color: 'rgb(94, 163, 163)' }} />
+        </IconButton>
+      </Tooltip></Box>
+      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
+        {formik.values.remaining?.toFixed(0)}
+      </Box>
+    </Typography>
+  </Grid>
+
+  {/* Intereses adicionales Inv. */}
+  <Grid item xs={12} md={6}>
+    <Typography variant="body1">
+      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Intereses adicionales Inv. </Box>
+      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
+        {formik.values.investorInterests?.toFixed(0)}
+      </Box>
+    </Typography>
+  </Grid>
+
+   <Grid item xs={12}>
+    <Divider sx={{ borderColor: '#d8d7d7ff' }} />
+  </Grid>
+
+  {/* Valor presente Inversionista */}
+  <Grid item xs={12} md={6}>
+    <Typography variant="body1">
+      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Valor presente Inversionista :</Box>
+      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
+        {presentValueInvestor?.toFixed(0)}
+      </Box>
+    </Typography>
+  </Grid>
+
+  {/* Intereses adicionales mesa */}
+  <Grid item xs={12} md={6}>
+    <Typography variant="body1">
+      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Intereses adicionales mesa :</Box>
+      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
+        {formik.values.additionalInterestsSM?.toFixed(0)}
+      </Box>
+    </Typography>
+  </Grid>
+</Grid>
+
+ <Grid item xs={12}>
+    <Divider sx={{ borderColor: '#d8d7d7ff' }} />
+  </Grid>
+
+</Grid>
+          
+   
+           
+          
+           
+            
             {formik.values.lastDate && (
               <>
-                <Box display="flex" flexDirection="row" alignItems="center">
-                  <Box mr={2} mt={4} width="17vw">
-                    <InputTitles>Fecha Último Recaudo</InputTitles>
-                    <LocalizationProvider dateAdapter={AdapterDayjs}>
-                      <DesktopDatePicker
-                        label="Date desktop"
-                        inputFormat="DD/MM/YYYY"
-                        value={valueDate}
-                        onChange={handleChange2}
-                        renderInput={(params) => (
-                          <MuiTextField
-                            id="lastDate"
-                            placeholder="Ingresa la fecha"
-                            name="lastDate"
-                            type="date"
-                            variant="standard"
-                            margin="normal"
-                            fullWidth
-                            disabled
-                            value={formik.values.lastDate}
-                            InputProps={{
-                              disableUnderline: true,
-                              sx: {
-                                marginTop: "-5px",
-                              },
-                            }}
-                            onChange={formik.handleChange}
-                            error={
-                              formik.touched.lastDate &&
-                              Boolean(formik.errors.lastDate)
-                            }
-                            sx={
-                              formik.touched.lastDate &&
-                              Boolean(formik.errors.lastDate)
-                                ? { border: "1.4px solid #E6643180" }
-                                : null
-                            }
-                          />
-                        )}
-                      />
-                    </LocalizationProvider>
-                  </Box>
-                </Box>
-                <Box
-                  display="flex"
-                  flexDirection="row"
-                  alignItems="center"
-                  mb={2}
-                >
-                  <Box>
-                    <InputTitles
-                      marginTop={3}
-                      marginBottom={2}
-                      marginLeft={0.3}
-                    >
-                      Monto Recaudos Previos
-                    </InputTitles>
-                    <BaseField
-                      InputProps={{
-                        disableUnderline: true,
-                        sx: {
-                          marginTop: "-5px",
-                        },
-                        startAdornment: (
-                          <i
-                            style={{
-                              color: "#5EA3A3",
-                              marginRight: "0.7vw",
-                              fontSize: "1.1vw",
-                            }}
-                            className="far fa-dollar-sign"
-                          ></i>
-                        ),
-                      }}
-                      sx={{
-                        marginTop: "6px",
-                        width: "18.2vw",
-                        marginLeft: "0.1rem",
-                        "@media (max-height: 900px)": {
-                          width: "18.5vw",
-                        },
-                      }}
-                      id="previousPayedAmount"
-                      placeholder=""
-                      name="previousPayedAmount"
-                      isMasked
-                      value={formik.values.previousPayedAmount}
-                      thousandSeparator="."
-                      decimalSeparator=","
-                      decimalScale={0}
-                      allowNegative={false}
-                      disabled={true}
-                      error={
-                        formik.touched.previousPayedAmount &&
-                        Boolean(formik.errors.previousPayedAmount)
-                      }
-                      onChangeMasked={(values) => {
-                        formik.setFieldValue(
-                          "previousPayedAmount",
-                          values.floatValue
-                        );
-                      }}
-                    />
-                  </Box>
 
-                  <Box>
-                    <InputTitles
-                      marginBottom={2}
-                      marginTop={3}
-                      marginLeft={3.5}
-                    >
-                      Intereses
-                    </InputTitles>
-                    <BaseField
-                      InputProps={{
-                        disableUnderline: true,
-                        sx: {
-                          marginTop: "-5px",
-                        },
-                        startAdornment: (
-                          <i
-                            style={{
-                              color: "#5EA3A3",
-                              marginRight: "0.7vw",
-                              fontSize: "1.1vw",
-                            }}
-                            className="far fa-dollar-sign"
-                          ></i>
-                        ),
-                      }}
-                      sx={{
-                        marginTop: "6px",
-                        width: "18.2vw",
-                        marginLeft: "1.7rem",
-                        "@media (max-height: 900px)": {
-                          width: "18.5vw",
-                          marginLeft: "1.7rem",
-                        },
-                      }}
-                      id="interest"
-                      placeholder=""
-                      name="interest"
-                      isMasked
-                      value={formik.values.interest}
-                      thousandSeparator="."
-                      decimalSeparator=","
-                      decimalScale={0}
-                      allowNegative={false}
-                      disabled={true}
-                      error={
-                        formik.touched.interest &&
-                        Boolean(formik.errors.interest)
-                      }
-                      onChangeMasked={(values) => {
-                        formik.setFieldValue("interest", values.floatValue);
-                      }}
-                    />
-                  </Box>
-                </Box>
+               {/* Fecha Último Recaudo */}
+               <Grid item xs={12} md={6}>
+    <Typography variant="body1">
+      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Fecha Último Recaudo</Box>
+      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
+        {formik.values.lastDate}
+      </Box>
+    </Typography>
+  </Grid>
+
+   {/* Monto Recaudos Previos< */}
+   <Grid item xs={12} md={6}>
+    <Typography variant="body1">
+      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Monto Recaudos Previos</Box>
+      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
+        {formik.values.previousPayedAmount}
+      </Box>
+    </Typography>
+  </Grid>
+ <Grid item xs={12}>
+    <Divider sx={{ borderColor: '#d8d7d7ff'}} />
+  </Grid>
+
+   {/* Intereses */}
+   <Grid item xs={12} md={6}>
+    <Typography variant="body1">
+      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem"> Intereses</Box>
+      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
+        {formik.values.interest}
+      </Box>
+    </Typography>
+  </Grid>
+        <Grid item xs={12}>
+    <Divider sx={{ borderColor: '#d8d7d7ff' }} />
+  </Grid>
+       
               </>
             )}
 
             {data?.previousOperationBill && (
               <>
-                <Box display="flex" flexDirection="row" alignItems="center">
-                  <Box mr={2} mt={4} width="17vw">
-                    <InputTitles>Fecha Radicación</InputTitles>
-                    <LocalizationProvider dateAdapter={AdapterDayjs}>
-                      <DesktopDatePicker
-                        label="Date desktop"
-                        inputFormat="DD/MM/YYYY"
-                        value={formik.values.previousOpDate}
-                        onChange={handleChange2}
-                        renderInput={(params) => (
-                          <MuiTextField
-                            id="previousOpDate"
-                            placeholder="Ingresa la fecha"
-                            name="previousOpDate"
-                            type="date"
-                            variant="standard"
-                            margin="normal"
-                            fullWidth
-                            disabled
-                            value={formik.values.previousOpDate}
-                            InputProps={{
-                              disableUnderline: true,
-                              sx: {
-                                marginTop: "-5px",
-                              },
-                            }}
-                            onChange={formik.handleChange}
-                            error={
-                              formik.touched.lastDate &&
-                              Boolean(formik.errors.lastDate)
-                            }
-                            sx={
-                              formik.touched.lastDate &&
-                              Boolean(formik.errors.lastDate)
-                                ? { border: "1.4px solid #E6643180" }
-                                : null
-                            }
-                          />
-                        )}
-                      />
-                    </LocalizationProvider>
-                  </Box>
-                </Box>
-                <Box
-                  display="flex"
-                  flexDirection="row"
-                  alignItems="center"
-                  mb={2}
-                >
-                  <Box>
-                    <InputTitles
-                      marginTop={3}
-                      marginBottom={2}
-                      marginLeft={0.3}
-                    >
-                      Tasa Descuento
-                    </InputTitles>
-                    <BaseField
-                      InputProps={{
-                        disableUnderline: true,
-                        sx: {
-                          marginTop: "-5px",
-                        },
-                        endAdornment: (
-                          <i
-                            style={{
-                              color: "#5EA3A3",
-                            }}
-                            className="fa-light fa-percent"
-                          ></i>
-                        ),
-                      }}
-                      sx={{
-                        marginTop: "6px",
-                        width: "18.2vw",
-                        marginLeft: "0.1rem",
-                        "@media (max-height: 900px)": {
-                          width: "18.5vw",
-                        },
-                      }}
-                      id="previousDiscountTax"
-                      placeholder=""
-                      name="previousDiscountTax"
-                      isMasked
-                      value={formik.values.previousDiscountTax}
-                      thousandSeparator="."
-                      decimalSeparator=","
-                      decimalScale={2}
-                      allowNegative={false}
-                      disabled={true}
-                      onChangeMasked={(values) => {
-                        formik.setFieldValue(
-                          "previousDiscountTax",
-                          values.floatValue
-                        );
-                      }}
-                    />
-                  </Box>
+              <Grid item xs={12} md={6}>
+    <Typography variant="body1">
+      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem"> Fecha Radicación</Box>
+      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
+        {formik.values.previousOpDate}
+      </Box>
+    </Typography>
+  </Grid>
+  <Grid item xs={12} md={6}>
+    <Typography variant="body1">
+      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">  Tasa Descuento</Box>
+      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
+        {formik.values.previousDiscountTax}
+      </Box>
+    </Typography>
+  </Grid>
+   <Grid item xs={12}>
+    <Divider sx={{ borderColor: '#d8d7d7ff' }} />
+  </Grid>
 
-                  <Box>
-                    <InputTitles
-                      marginBottom={2}
-                      marginTop={3}
-                      marginLeft={3.5}
-                    >
-                      Nro Operacion
-                    </InputTitles>
-                    <BaseField
-                      InputProps={{
-                        disableUnderline: true,
-                        sx: {
-                          marginTop: "-5px",
-                        },
-                      }}
-                      sx={{
-                        marginTop: "6px",
-                        width: "18.2vw",
-                        marginLeft: "1.7rem",
-                        "@media (max-height: 900px)": {
-                          width: "18.5vw",
-                          marginLeft: "1.7rem",
-                        },
-                      }}
-                      id="previousOpNumber"
-                      placeholder=""
-                      name="previousOpNumber"
-                      isMasked
-                      value={formik.values.previousOpNumber}
-                      thousandSeparator="."
-                      decimalSeparator=","
-                      decimalScale={0}
-                      allowNegative={false}
-                      disabled={true}
-                      error={
-                        formik.touched.previousOpNumber &&
-                        Boolean(formik.errors.previousOpNumber)
-                      }
-                      onChangeMasked={(values) => {
-                        formik.setFieldValue(
-                          "previousOpNumber",
-                          values.floatValue
-                        );
-                      }}
-                    />
-                  </Box>
-                </Box>
+  <Grid item xs={12} md={6}>
+    <Typography variant="body1">
+      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">  Nro Operacion</Box>
+      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
+       {formik.values.previousOpNumber}
+      </Box>
+    </Typography>
+  </Grid>
+          <Grid item xs={12}>
+    <Divider sx={{ borderColor: '#d8d7d7ff' }} />
+  </Grid>
+     
               </>
             )}
 
@@ -1052,28 +549,9 @@ export const ReceiptC = ({ formik, data, pendingAmount, presentValueInvestor,loa
                 justifyContent: "flex-end",
               }}
             ></Box>
-            <MuiButton
-      type="submit"
-      variant="contained"
-      onClick={formik.handleSubmit}
-      disabled={formik.isSubmitting || loading} // Deshabilita el botón correctamente
-      sx={{
-        mb: 2,
-        boxShadow: "none",
-        borderRadius: "4px",
-        position: "absolute",
-        bottom: "10%",
-        right: "10%",
-      }}
-    >
-      <Typography fontSize="90%" fontWeight="bold">Registrar</Typography>
-      <Typography
-        fontFamily="icomoon"
-        sx={{ color: "#fff", ml: 2, fontSize: "medium" }}
-      >
-        &#xe91f;
-      </Typography>
-    </MuiButton>
+
+          
+          
 
     {/* MODAL DE PROCESO */}
     <Dialog  open={isModalOpen} PaperProps={{ sx: { borderRadius: "10px", textAlign: "center", p: 3 } }}>
@@ -1096,9 +574,51 @@ export const ReceiptC = ({ formik, data, pendingAmount, presentValueInvestor,loa
         )}
       </DialogContent>
     </Dialog>
-          </Box>
+   
+
+     <Grid item xs={12}>
+            <MuiButton
+              type="button"
+              variant="contained"
+              onClick={handleSubmitWithConfirmation}
+              disabled={formik.isSubmitting || loading}
+              sx={{
+                mb: 2,
+                mt: 2,
+                ml: 2,
+                boxShadow: "none",
+                borderRadius: "4px",
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                width: '20rem',
+              }}
+            >
+              <Typography fontWeight="bold" sx={{ textAlign: 'center' }}>
+                Registrar
+              </Typography>
+            </MuiButton>
+          </Grid> 
+
+               </Grid>
+               
+
+
         </form>
-      </Box>
+       {/* Modal de Confirmación */}
+        <ModalConfirmation
+            values={formik.values}
+            showConfirmationModal={showConfirmationModal}
+            setShowConfirmationModal={setShowConfirmationModal}
+            handleSubmit={formik.handleSubmit}
+          />
+
+          <ProcessModal
+            open={isModalOpen}
+            success={success}
+            onClose={() => setIsModalOpen(false)}
+          />
+
       <ToastContainer
         position="top-right"
         autoClose={2000}
@@ -1110,6 +630,9 @@ export const ReceiptC = ({ formik, data, pendingAmount, presentValueInvestor,loa
         draggable
         pauseOnHover
       />
+        </Box>  
+        </LocalizationProvider>
+           
     </>
   );
 };

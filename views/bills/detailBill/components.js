@@ -614,63 +614,28 @@ const handleClosePreview = () => {
   setPreviewUrl(null);
 };
 
-  const handleFileChange = (event,setFieldValue) => {
-  const selectedFile = event.target?.files[0];
-  console.log(selectedFile);
-  
-  if (selectedFile) {
-    // Validar tipo de archivo
-    const validTypes = ['application/pdf', 'image/jpeg', 'image/png'];
-    if (!validTypes.includes(selectedFile.type)) {
-      toast.error('Solo se permiten archivos PDF, JPEG o PNG');
-      return;
-    }
 
-    // Validar tamaño (20MB máximo)
-    if (selectedFile.size > 20 * 1024 * 1024) {
-      toast.error('El archivo no debe exceder los 20MB');
-      return;
-    }
-
-    const reader = new FileReader();
-    
-    reader.onload = (e) => {
-      // Extraemos solo la parte base64 (sin el prefijo data:application/pdf;base64,)
- 
-      
-      // Guardamos el archivo original para previsualización
-      setFile(selectedFile);
-      
-      // Actualizamos Formik con el formato que espera el backend
-     setFieldValue('file', e.target.result); // Solo el string base64 sin prefijo
-      
-      // Crear vista previa si es una imagen
-      if (selectedFile.type.includes('image')) {
-        setFilePreview(e.target.result); // Aquí usamos el resultado completo con prefijo
-      } else {
-        setFilePreview(null);
-      }
-    };
-    
-    reader.onerror = (error) => {
-      console.error('Error al leer el archivo:', error);
-      toast.error('Error al procesar el archivo');
-    };
-    
-    reader.readAsDataURL(selectedFile);
-  }
-};
-
-   
+// Modifica la función handleOpenPreview para manejar XML
 const handleOpenPreview = async () => {
   try {
     if (file) {
       // Si es un archivo recién subido
+      if (file.name.endsWith('.xml') || file.type.includes('xml')) {
+        toast.warning('La previsualización no está disponible para archivos XML');
+        return;
+      }
+      
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
       setOpenPreview(true);
     } else if (bill?.file_content) {
-      // 1. Crear el Blob desde base64
+      // Si el contenido es XML
+      if (bill?.file_content_type?.includes('xml')) {
+        toast.warning('La previsualización no está disponible para archivos XML');
+        return;
+      }
+
+      // 1. Crear el Blob desde base64 (solo para PDF o imágenes)
       const byteCharacters = atob(bill.file_content);
       const byteArrays = [];
       
@@ -695,7 +660,7 @@ const handleOpenPreview = async () => {
       const blobIsValid = await verifyBlob(blob);
       
       if (!blobIsValid) {
-        throw new Error("El archivo PDF está corrupto o incompleto");
+        throw new Error("El archivo está corrupto o incompleto");
       }
       
       setPreviewUrl(url);
@@ -706,6 +671,8 @@ const handleOpenPreview = async () => {
     toast.error("No se pudo cargar la previsualización: " + error.message);
   }
 };
+
+// El resto del componente permanece exactamente igual
 
 // Función para verificar el Blob
 const verifyBlob = async (blob) => {
@@ -1175,54 +1142,62 @@ const verifyBlob = async (blob) => {
                         />
                       </Grid>
 
-                              <Grid item xs={8} sx={{ 
-              marginTop: '16px', 
-              backgroundColor: 'grey.100', 
-              p: 2, 
-              borderRadius: 5,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 1
-            }}>
-              <Box display="flex" alignItems="center" gap={2}>
-                
-                
-                <Button
-                  variant="outlined"
-                  startIcon={<PreviewIcon />}
-                  onClick={handleOpenPreview}
-                  disabled={!file && !values.file}
-                  sx={{
-                    backgroundColor: (file || values.file) ? 'background.paper' : 'grey.300',
-                    color: (file || values.file) ? 'text.primary' : 'text.disabled',
-                    flexShrink: 0,
-                    '&:hover': {
-                      backgroundColor: (file || values.file) ? 'action.hover' : 'grey.300'
-                    }
-                  }}
-                >
-                  Previsualizar
-                </Button>
+               <Grid item xs={8} sx={{ 
+  marginTop: '16px', 
+  backgroundColor: 'grey.100', 
+  p: 2, 
+  borderRadius: 5,
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 1
+}}>
+  <Box display="flex" alignItems="center" gap={2}>
+    <Button
+      variant="outlined"
+      startIcon={<PreviewIcon />}
+      onClick={() => {
+        // Verificar si es XML antes de abrir
+        const fileName = file?.name || values.file?.split('/').pop() || '';
+        if (fileName.endsWith('.xml') || 
+            file?.type?.includes('xml') || 
+            bill?.file_content_type?.includes('xml')) {
+          toast.warning('La previsualización no está disponible para archivos XML');
+        } else {
+          handleOpenPreview();
+        }
+      }}
+      disabled={!file && !values.file}
+      sx={{
+        backgroundColor: (file || values.file) ? 'background.paper' : 'grey.300',
+        color: (file || values.file) ? 'text.primary' : 'text.disabled',
+        flexShrink: 0,
+        '&:hover': {
+          backgroundColor: (file || values.file) ? 'action.hover' : 'grey.300'
+        }
+      }}
+    >
+      Previsualizar
+    </Button>
 
-                {(file || values.file) && (
-                  <Typography variant="body2" sx={{ ml: 1, flexGrow: 1, wordBreak: 'break-word' }}>
-                    Archivo seleccionado: {file?.name || values.file?.split('/').pop()}
-                    {file?.size && (
-                      <span> ({formatFileSize(file.size)})</span>
-                    )}
-                  </Typography>
-                )}
-              </Box>
-              
-              {errors.file && (
-                <Typography 
-                  variant="body2"
-                  sx={{ color: 'error.main' }}
-                >
-                  {'El archivo es obligatorio'}
-                </Typography>
-              )}
-            </Grid>
+    {(file || values.file) && (
+      <Typography variant="body2" sx={{ ml: 1, flexGrow: 1, wordBreak: 'break-word' }}>
+        Archivo seleccionado: {file?.name || values.file?.split('/').pop()}
+        {file?.size && (
+          <span> ({formatFileSize(file.size)})</span>
+        )}
+      </Typography>
+    )}
+  </Box>
+  
+  {errors.file && (
+    <Typography 
+      variant="body2"
+      sx={{ color: 'error.main' }}
+    >
+      {'El archivo es obligatorio'}
+    </Typography>
+  )}
+</Grid>
 <Dialog 
   open={openPreview} 
   onClose={handleClosePreview} 

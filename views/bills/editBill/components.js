@@ -549,11 +549,22 @@ const handleOpenPreview = async () => {
   try {
     if (file) {
       // Si es un archivo recién subido
+      if (file.name.endsWith('.xml') || file.type.includes('xml')) {
+        toast.warning('La previsualización no está disponible para archivos XML');
+        return;
+      }
+      
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
       setOpenPreview(true);
     } else if (bill?.file_content) {
-      // 1. Crear el Blob desde base64
+      // Si el contenido es XML
+      if (bill?.file_content_type?.includes('xml')) {
+        toast.warning('La previsualización no está disponible para archivos XML');
+        return;
+      }
+
+      // 1. Crear el Blob desde base64 (solo para PDF o imágenes)
       const byteCharacters = atob(bill.file_content);
       const byteArrays = [];
       
@@ -578,7 +589,7 @@ const handleOpenPreview = async () => {
       const blobIsValid = await verifyBlob(blob);
       
       if (!blobIsValid) {
-        throw new Error("El archivo PDF está corrupto o incompleto");
+        throw new Error("El archivo está corrupto o incompleto");
       }
       
       setPreviewUrl(url);
@@ -1070,7 +1081,6 @@ const verifyBlob = async (blob) => {
 
                     />
                   </Grid>
-
 <Grid item xs={8} sx={{ 
   marginTop: '16px', 
   backgroundColor: 'grey.100', 
@@ -1091,33 +1101,43 @@ const verifyBlob = async (blob) => {
     }}
   >
     {/* Botones (sin cambios) */}
-   <Button
-  component="label"
-  variant="contained"
-  startIcon={<CloudUploadIcon />}
- sx={{ 
-  flexShrink: 0, 
-  order: 1,
-  '&.Mui-disabled': {
-    backgroundColor: '#e0e0e0', // Gris claro hexadecimal
-    color: '#757575' // Texto gris
-  }
-}}
-  disabled={loadingPayers}
->
-  Seleccionar archivo
-  <VisuallyHiddenInput 
-    type="file" 
-    onChange={(e) => handleFileChange(e, setFieldValue)}
-    accept=".pdf,.jpg,.jpeg,.png"
-    disabled={loadingPayers}
-  />
-</Button>
+    <Button
+      component="label"
+      variant="contained"
+      startIcon={<CloudUploadIcon />}
+      sx={{ 
+        flexShrink: 0, 
+        order: 1,
+        '&.Mui-disabled': {
+          backgroundColor: '#e0e0e0', // Gris claro hexadecimal
+          color: '#757575' // Texto gris
+        }
+      }}
+      disabled={loadingPayers}
+    >
+      Seleccionar archivo
+      <VisuallyHiddenInput 
+        type="file" 
+        onChange={(e) => handleFileChange(e, setFieldValue)}
+        accept=".pdf,.jpg,.jpeg,.png"
+        disabled={loadingPayers}
+      />
+    </Button>
     
     <Button
       variant="outlined"
       startIcon={<PreviewIcon />}
-      onClick={handleOpenPreview}
+      onClick={() => {
+        // Verificar si es XML antes de abrir
+        const fileName = file?.name || values.file?.split('/').pop() || '';
+        if (fileName.endsWith('.xml') || 
+            file?.type?.includes('xml') || 
+            bill?.file_content_type?.includes('xml')) {
+          toast.warning('La previsualización no está disponible para archivos XML');
+        } else {
+          handleOpenPreview();
+        }
+      }}
       disabled={!file && !values.file}
       sx={{
         backgroundColor: (file || values.file) ? 'background.paper' : 'grey.300',

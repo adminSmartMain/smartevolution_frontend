@@ -16,9 +16,10 @@ export default function Receipt() {
   const [pendingAmount, setPendingAmount] = useState(0);
   const [presentValueInvestor, setPresentValueInvestor] = useState(0);
   const [counter, setCounter] = useState(0);
-  const [loading, setLoading] = useState(false);
+   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
 
   const initialValues = {
     date: `${new Date().toISOString().substring(0, 10)}`,
@@ -54,48 +55,36 @@ export default function Receipt() {
     data: dataRegisterReceipt,
   } = useFetch({ service: RegisterReceipt, init: false });
 
-  const formik = useFormik({
+    const formik = useFormik({
     initialValues: initialValues,
-    onSubmit: async (values, { setSubmitting }) => {
+    onSubmit: async (values, actions) => {
+      setShowConfirmationModal(false); // Cierra el modal de confirmación
       setLoading(true);
-      setSubmitting(true); // 🔥 Deshabilita el botón antes de cualquier validación
-      setSuccess(null); 
-      setIsModalOpen(true); // Abrir el modal
-      if (values.payedAmount <= 0) {
-        Toast("Debe ingresar un valor a pagar", "error");
-        setLoading(false);
-        setSubmitting(false); // 🔥 Rehabilita el botón si hay error
-        return;
-      }
-  
-      if (values.receiptStatus === "") {
-        Toast("Debe seleccionar un tipo de recaudo", "error");
-        setLoading(false);
-        setSubmitting(false); // 🔥 Rehabilita el botón si hay error
-        return;
-      }
-  
-      setSuccess(null); // Asegura que el modal de carga se muestre
+      setIsModalOpen(true);
+      setSuccess(null);
+      
       try {
-        console.log("Enviando datos...");
-        console.log(values)
+        console.log("Enviando datos...", values);
         await fetchRegisterReceipt({ ...values, presentValueInvestor });
         setSuccess(true);
-        
         Toast("Registro exitoso", "success");
-  
-      
+        // Cerrar la ventana después de 4 segundos
+      setTimeout(() => {
+        setIsModalOpen(false);
+        window.close(); // Cierra la ventana actual
+      }, 4000);
+
       } catch (error) {
         setSuccess(false);
-        setLoading(false);
-        setTimeout(() => {
-          setIsModalOpen(false)
-        }, 4000);
-        
         Toast("Hubo un error al registrar", "error");
+      } finally {
+        setLoading(false);
+        actions.setSubmitting(false);
+        setTimeout(() => setIsModalOpen(false), 4000);
       }
-    },
+    }
   });
+
 
   useEffect(() => {
     if (errorRegisterReceipt) Toast("Error al registrar recaudo", "error");
@@ -627,15 +616,18 @@ function calcAdditionalInterests(payedAmount, discountTax, additionalDays, inves
   return Number(generateInterest.toFixed(2));
 }
 
-  return (
+ return (
     <ReceiptC
       formik={formik}
       data={data?.data}
       pendingAmount={pendingAmount}
       presentValueInvestor={presentValueInvestor}
-      loading={loadingRegisterReceipt}
+      loading={loading}
       success={success}
       isModalOpen={isModalOpen}
+      setIsModalOpen={setIsModalOpen}
+      showConfirmationModal={showConfirmationModal}
+      setShowConfirmationModal={setShowConfirmationModal}
     />
   );
 }
