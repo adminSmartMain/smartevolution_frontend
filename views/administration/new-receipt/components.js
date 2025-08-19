@@ -21,7 +21,7 @@ import InputTitles from "@styles/inputTitles";
 import scrollSx from "@styles/scroll";
 import dayjs from "dayjs";
 import InfoIcon from '@mui/icons-material/Info';
-import { Dialog,DialogContent, CircularProgress,Grid,TextField,Divider,Tooltip, IconButton} from "@mui/material";
+import { Dialog,DialogContent, CircularProgress,Grid,TextField,Divider,Tooltip, ClickAwayListener, IconButton} from "@mui/material";
 import { CheckCircle, Error } from "@mui/icons-material";
 import ModalConfirmation from "@components/modals/receiptBillModals/modalConfirmation";
 
@@ -42,6 +42,45 @@ export const ReceiptC = ({ formik,
   const [valueDate, setValueDate] = useState(dayjs("2014-08-18T21:11:54"));
    const { user, logout } = useContext(authContext);
 
+
+
+
+   //tooltip adaptativo a moviles/escritorio
+
+   const AdaptiveTooltip = ({ title, placement = '', children }) => {
+  const [open, setOpen] = useState(false);
+
+  const handleTooltipOpen = () => {
+    setOpen(true);
+  };
+
+  const handleTooltipClose = () => {
+    setOpen(false);
+  };
+
+  return (
+    <ClickAwayListener onClickAway={handleTooltipClose}>
+      
+        <Tooltip
+          title={title}
+          placement={placement}
+          arrow
+          open={open}
+          onClose={handleTooltipClose}
+          disableFocusListener
+          disableHoverListener
+          disableTouchListener
+        >
+          <div onClick={handleTooltipOpen} style={{ display: 'inline-block' }}>
+            {children}
+          </div>
+        </Tooltip>
+
+    </ClickAwayListener>
+  );
+};
+
+//fin codigo tooltip adaptativo
 
 console.log(data)
   const handleChange = (newValue) => {
@@ -75,25 +114,29 @@ console.log(data)
       <Box sx={{ padding: 5, backgroundColor: 'white', borderRadius: 1, boxShadow: 1 }}>
         <form onSubmit={formik.onSubmit}>
 
-           <Box sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    marginBottom: 3,
-                    paddingBottom: 2,
-                    borderBottom: '1px solid #e0e0e0'
-                  }}> 
-            <Typography
-              letterSpacing={0}
-              fontSize="1.7rem"
-              fontWeight="regular"
-              marginBottom="3%"
-              color="#5EA3A3"
-              sx={{ mb: 0.5 }} 
-            >
-              Registrar Recaudo  Op : {data?.opId}
-            </Typography>
-            {user ? (
+  
+
+                 <Grid container justifyContent="space-between" alignItems="center">
+                    {/* Título - Ocupa toda la fila en móviles, 6/12 en pantallas más grandes */}
+                    <Grid item xs={12} md={6}>
+                      <Typography
+                        letterSpacing={0}
+                        fontSize="1.7rem"
+                        fontWeight="regular"
+                        marginBottom="0.7rem"
+                        color="#5EA3A3"
+                      >
+                          Registrar Recaudo  Op : {data?.opId}
+                      </Typography>
+                    </Grid>
+                    
+                    {/* Información del usuario - Ocupa toda la fila en móviles, 6/12 en pantallas más grandes */}
+                    <Grid item xs={12} md={6} sx={{ 
+                      textAlign: { xs: 'left', md: 'right' },
+                      marginTop: { xs: '0.2rem', md: 0 },
+                      marginBottom: { xs: '1rem', md: 0 }
+                    }}>
+                      {user ? (
                         <Typography variant="subtitle1" sx={{ color: 'text.secondary' }}>
                           Creado por: {renderNombreUsuario(user)}
                         </Typography>
@@ -102,7 +145,8 @@ console.log(data)
                           Sin información de autoría
                         </Typography>
                       )}
-              </Box>
+                    </Grid>
+                  </Grid>
          
  
       {/* Primera fila con 4 campos */}<Grid container rowSpacing={2} columnSpacing={4} alignItems="flex-start">
@@ -153,15 +197,14 @@ console.log(data)
     fullWidth
     InputProps={{
       endAdornment: (
-        <Tooltip
-          title="Este campo se completa automáticamente con los dias reales calculados, pero puedes modificarlo manualmente"
-          placement="top-end"
-          arrow
-        >
-          <IconButton edge="end" size="small" aria-label="Información">
-            <InfoIcon style={{ fontSize: '1rem', color: 'rgb(94, 163, 163)' }} />
-          </IconButton>
-        </Tooltip>
+     <AdaptiveTooltip
+  title="Este campo se completa automáticamente con los dias reales calculados, pero puedes modificarlo manualmente"
+  placement="top-end"
+>
+  <IconButton edge="end" size="small" aria-label="Información">
+    <InfoIcon style={{ fontSize: '1rem', color: 'rgb(94, 163, 163)' }} />
+  </IconButton>
+</AdaptiveTooltip>
       ),
     }}
     onChange={formik.handleChange}
@@ -183,7 +226,7 @@ console.log(data)
         ></i>
       ),
       endAdornment: (
-        <Tooltip
+        <AdaptiveTooltip
           title="Debe ser el monto registrado en el banco"
           placement="top-end"
           arrow
@@ -191,7 +234,7 @@ console.log(data)
           <IconButton edge="end" size="small" aria-label="Información">
             <InfoIcon style={{ fontSize: '1rem', color: 'rgb(94, 163, 163)' }} />
           </IconButton>
-        </Tooltip>
+       </AdaptiveTooltip>
       ),
     }}
     id="payedAmount"
@@ -368,7 +411,8 @@ console.log(data)
     {/* Pendiente por cobrar  */}
   <Grid item xs={12} md={6}>
     <Typography variant="body1">
-      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Pendiente por cobrar  <Tooltip 
+      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Pendiente por cobrar    
+        <AdaptiveTooltip
         title="Muestra el saldo pendiente después de descontar el monto aplicado y los intereses adicionales al valor nominal de la factura."
         placement="top-end"
         arrow
@@ -376,7 +420,7 @@ console.log(data)
         <IconButton edge="end" size="small" aria-label="Información">
           <InfoIcon style={{ fontSize: '1rem', color: 'rgb(94, 163, 163)' }} />
         </IconButton>
-      </Tooltip></Box>
+       </AdaptiveTooltip></Box>
       <Box component="span" color="#5EA3A3" fontSize="1.1rem">
         {pendingAmount}
 
@@ -401,7 +445,7 @@ console.log(data)
     {/* Remanente Emisor    */}
     <Grid item xs={12} md={6}>
     <Typography variant="body1">
-      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Remanente Emisor   <Tooltip 
+      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Remanente Emisor   <AdaptiveTooltip
         title={<p>Este campo se calcula automáticamente cuando el <strong>monto neto del recaudo</strong> (Monto aplicación -  Intereses adicionales) es mayor que el valor pendiente de pago</p>}
         placement="top-end"
         arrow
@@ -409,7 +453,7 @@ console.log(data)
         <IconButton edge="end" size="small" aria-label="Información">
           <InfoIcon style={{ fontSize: '1rem', color: 'rgb(94, 163, 163)' }} />
         </IconButton>
-      </Tooltip></Box>
+        </AdaptiveTooltip></Box>
       <Box component="span" color="#5EA3A3" fontSize="1.1rem">
         {formik.values.remaining?.toFixed(0)}
       </Box>

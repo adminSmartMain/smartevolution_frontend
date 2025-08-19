@@ -633,80 +633,132 @@ const verifyBlob = async (blob) => {
 
 
       <Box sx={{ padding: 5, backgroundColor: 'white', borderRadius: 1, boxShadow: 1 }}>
-        <Box
-          container
-          display="flex"
-          flexDirection="row"
-          justifyContent="space-between"
-        >
-          <Typography
-            letterSpacing={0}
-            fontSize="1.7rem"
-            fontWeight="regular"
-            marginBottom="0.7rem"
-            color="#5EA3A3"
-          >
-            Editar Factura
-          </Typography>
-          <Box sx={{ 
-  display: 'flex', 
-  alignItems: 'center', 
-  gap: 1, // Espacio entre elementos
-  flexWrap: 'wrap', // Permite que los elementos se ajusten en pantallas pequeñas
-}}>
-  {/* Badge "Autogestión" */}
-  {bill.integrationCode && (
-    <Box
-      sx={{
-        backgroundColor: "#488B8F",
-        color: "white",
-        borderRadius: "12px",
-        padding: "2px 8px",
-        fontSize: "0.7rem",
-        fontWeight: "bold",
-        alignSelf: 'center', // Alinea verticalmente con el texto
-        marginTop: 0, // Elimina el margen superior que lo desalineaba
-      }}
+<Box
+  sx={{
+    display: 'flex',
+    flexDirection: { xs: 'column', sm: 'row' },
+    justifyContent: 'space-between',
+    alignItems: { xs: 'flex-start', sm: 'center' },
+    gap: { xs: 1, sm: 2 },
+    marginBottom: 2
+  }}
+>
+  {/* Título y Badge en misma línea en móviles */}
+  <Box sx={{ 
+    display: 'flex', 
+    alignItems: 'center', 
+    flexWrap: 'wrap',
+    gap: 1,
+    marginBottom: { xs: 1, sm: 0 }
+  }}>
+    <Typography
+      letterSpacing={0}
+      fontSize={{ xs: '1.5rem', sm: '1.7rem' }}
+      fontWeight="regular"
+      color="#5EA3A3"
+      sx={{ marginRight: 1, marginBottom: { xs: '0.7rem', sm: 0 } }}
     >
-      Autogestión
-    </Box>
-  )}
+      Editar Factura
+    </Typography>
+    
+    {/* Badge "Autogestión" */}
+    {bill.integrationCode && (
+      <Box
+        sx={{
+          backgroundColor: "#488B8F",
+          color: "white",
+          borderRadius: "12px",
+          padding: "2px 8px",
+          fontSize: "0.7rem",
+          fontWeight: "bold",
+          alignSelf: 'center',
+          marginTop: { xs: '-0.5rem', sm: 0 }, // Compensa el margen del título en móviles
+          marginBottom: { xs: '0.7rem', sm: 0 }
+        }}
+      >
+        Autogestión
+      </Box>
+    )}
+  </Box>
 
-  {/* Información de autoría */}
-  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+  {/* Información de autoría - Se mueve debajo en móviles */}
+  <Box sx={{ 
+    display: 'flex', 
+    alignItems: 'center', 
+    gap: 1,
+    flexWrap: 'wrap',
+    justifyContent: { xs: 'flex-start', sm: 'flex-end' },
+    width: { xs: '100%', sm: 'auto' }
+  }}>
     {usuarioEncontrado || usuarioEncontradoEdit ? (
-      <Typography variant="subtitle1" sx={{ color: 'text.secondary' }}>
-        {usuarioEncontrado?.id === usuarioEncontradoEdit?.id ? (
-          <>Creado y editado por: {renderNombreUsuario(usuarioEncontrado)}</>
-        ) : (
-          <>
-            {usuarioEncontrado && <>Creado por: {renderNombreUsuario(usuarioEncontrado)}</>}
-            {usuarioEncontrado && usuarioEncontradoEdit && <br />}
-            {usuarioEncontradoEdit && <>Editado por: {renderNombreUsuario(usuarioEncontradoEdit)}</>}
-          </>
-        )}
-      </Typography>
+      <Box sx={{ 
+        display: 'flex', 
+        alignItems: 'center',
+        flexDirection: { xs: 'column', sm: 'row' },
+        alignItems: { xs: 'flex-start', sm: 'center' },
+        gap: { xs: 0.5, sm: 1 }
+      }}>
+        <Typography variant="subtitle1" sx={{ 
+          color: 'text.secondary', 
+          textAlign: { xs: 'left', sm: 'right' },
+          fontSize: { xs: '0.9rem', sm: '1rem' }
+        }}>
+          {usuarioEncontrado?.id === usuarioEncontradoEdit?.id ? (
+            <>Creado y editado por: {renderNombreUsuario(usuarioEncontrado)}</>
+          ) : (
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: { xs: 'column', sm: 'row' },
+              gap: { xs: 0, sm: 1 },
+              alignItems: { xs: 'flex-start', sm: 'center' }
+            }}>
+              {usuarioEncontrado && (
+                <Box component="span">
+                  Creado por: {renderNombreUsuario(usuarioEncontrado)}
+                </Box>
+              )}
+              {usuarioEncontrado && usuarioEncontradoEdit && (
+                <Box component="span" sx={{ 
+                  display: { xs: 'none', sm: 'block' },
+                  color: 'text.secondary'
+                }}>
+                  •
+                </Box>
+              )}
+              {usuarioEncontradoEdit && (
+                <Box component="span">
+                  Editado por: {renderNombreUsuario(usuarioEncontradoEdit)}
+                </Box>
+              )}
+            </Box>
+          )}
+        </Typography>
+
+        {/* Tooltip (icono de información) */}
+        <Tooltip
+          title={<span style={{ whiteSpace: 'pre-line' }}>{tooltipText}</span>}
+          arrow
+          placement="top"
+        >
+          <IconButton size="small" sx={{ 
+            ml: { xs: 0, sm: 0.5 },
+            alignSelf: { xs: 'flex-start', sm: 'center' }
+          }}>
+            <InfoIcon fontSize="small" color="action" />
+          </IconButton>
+        </Tooltip>
+      </Box>
     ) : (
-      <Typography variant="subtitle1" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
+      <Typography variant="subtitle1" sx={{ 
+        color: 'text.secondary', 
+        fontStyle: 'italic',
+        fontSize: { xs: '0.9rem', sm: '1rem' }
+      }}>
         Sin información de autoría
       </Typography>
     )}
-
-    {/* Tooltip (icono de información) */}
-    {(usuarioEncontrado || usuarioEncontradoEdit) && (
-      <Tooltip
-        title={<span style={{ whiteSpace: 'pre-line' }}>{tooltipText}</span>}
-        arrow
-        placement="top"
-      >
-        <IconButton size="small" sx={{ ml: 0.5 }}>
-          <InfoIcon fontSize="small" color="action" />
-        </IconButton>
-      </Tooltip>
-    )}
   </Box>
 </Box>
-        </Box>
         <Formik
           initialValues={initialValues2}
           validationSchema={validationSchema2}
@@ -1081,26 +1133,26 @@ const verifyBlob = async (blob) => {
 
                     />
                   </Grid>
-<Grid item xs={8} sx={{ 
+<Grid item xs={12} md={8} sx={{ 
   marginTop: '16px', 
   backgroundColor: 'grey.100', 
   p: 2, 
   borderRadius: 5,
   display: 'flex',
   flexDirection: 'column',
-  gap: 1
+  gap: 2
 }}>
-  {/* Contenedor principal (igual que antes) */}
+  {/* Contenedor principal con diseño responsive */}
   <Box 
     display="flex" 
-    alignItems="center"
-    gap={2}
+    flexDirection={{ xs: 'column', sm: 'row' }}
+    alignItems={{ xs: 'stretch', sm: 'center' }}
+    gap={{ xs: 2, sm: 2 }}
     sx={{
-      flexWrap: 'wrap',
-      rowGap: 1,
+      flexWrap: { xs: 'nowrap', sm: 'wrap' },
     }}
   >
-    {/* Botones (sin cambios) */}
+    {/* Botón Seleccionar archivo */}
     <Button
       component="label"
       variant="contained"
@@ -1108,9 +1160,10 @@ const verifyBlob = async (blob) => {
       sx={{ 
         flexShrink: 0, 
         order: 1,
+        width: { xs: '100%', sm: 'auto' },
         '&.Mui-disabled': {
-          backgroundColor: '#e0e0e0', // Gris claro hexadecimal
-          color: '#757575' // Texto gris
+          backgroundColor: '#e0e0e0',
+          color: '#757575'
         }
       }}
       disabled={loadingPayers}
@@ -1124,11 +1177,11 @@ const verifyBlob = async (blob) => {
       />
     </Button>
     
+    {/* Botón Previsualizar */}
     <Button
       variant="outlined"
       startIcon={<PreviewIcon />}
       onClick={() => {
-        // Verificar si es XML antes de abrir
         const fileName = file?.name || values.file?.split('/').pop() || '';
         if (fileName.endsWith('.xml') || 
             file?.type?.includes('xml') || 
@@ -1144,6 +1197,7 @@ const verifyBlob = async (blob) => {
         color: (file || values.file) ? 'text.primary' : 'text.disabled',
         flexShrink: 0,
         order: 2,
+        width: { xs: '100%', sm: 'auto' },
         '&:hover': {
           backgroundColor: (file || values.file) ? 'action.hover' : 'grey.300'
         }
@@ -1152,7 +1206,7 @@ const verifyBlob = async (blob) => {
       Previsualizar
     </Button>
 
-    {/* Nombre del archivo - CON TOOLTIP AGREGADO */}
+    {/* Nombre del archivo con Tooltip */}
     {(file || values.file) && (
       <Tooltip 
         title={`${file?.name || values.file?.split('/').pop()}${file?.size ? ` (${formatFileSize(file.size)})` : ''}`}
@@ -1162,9 +1216,9 @@ const verifyBlob = async (blob) => {
         <Box 
           sx={{ 
             flex: '1 1 auto', 
-            minWidth: 'min(100%, 200px)',
-            order: 3,
-            mt: { xs: 1, sm: 0 }
+            minWidth: { xs: '100%', sm: '200px', md: '300px' },
+            order: { xs: 3, sm: 3 },
+            mt: { xs: 0, sm: 0 }
           }}
         >
           <Typography 
@@ -1174,6 +1228,12 @@ const verifyBlob = async (blob) => {
               whiteSpace: 'nowrap',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
+              backgroundColor: 'white',
+              p: 1.5,
+              borderRadius: 1,
+              border: '1px solid',
+              borderColor: 'divider',
+              textAlign: { xs: 'center', sm: 'left' },
               '@media (max-width: 500px)': {
                 whiteSpace: 'normal',
                 wordBreak: 'break-word',
@@ -1183,16 +1243,33 @@ const verifyBlob = async (blob) => {
               }
             }}
           >
-            Archivo seleccionado: {file?.name || values.file?.split('/').pop()}
-            {file?.size && <span> ({formatFileSize(file.size)})</span>}
+            <Box component="span" sx={{ fontWeight: 'bold', display: 'block', mb: 0.5 }}>
+              Archivo seleccionado:
+            </Box>
+            {file?.name || values.file?.split('/').pop()}
+            {file?.size && (
+              <Box component="span" sx={{ display: 'block', mt: 0.5, color: 'text.secondary', fontSize: '0.8rem' }}>
+                Tamaño: {formatFileSize(file.size)}
+              </Box>
+            )}
           </Typography>
         </Box>
       </Tooltip>
     )}
   </Box>
   
+  {/* Mensaje de error */}
   {errors.file && (
-    <Typography variant="body2" sx={{ color: 'error.main' }}>
+    <Typography 
+      variant="body2" 
+      sx={{ 
+        color: 'error.main',
+        textAlign: 'center',
+        backgroundColor: 'error.light',
+        p: 1,
+        borderRadius: 1
+      }}
+    >
       {'El archivo es obligatorio'}
     </Typography>
   )}
