@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 
 import { SearchOutlined } from "@mui/icons-material";
-import { Button, Fade, IconButton, Typography } from "@mui/material";
+import { Button, Fade, IconButton, Typography,CircularProgress, } from "@mui/material";
 import { Box } from "@mui/system";
 
 import Modal from "@components/modals/modal";
@@ -420,6 +420,8 @@ export const RefundListC = () => {
     handleOpen();
   };
 
+  console.log(dataRefundReceipt)
+
   return (
     <>
       <BackButton path="/administration" />
@@ -711,9 +713,12 @@ export const RefundListC = () => {
           height="50vh"
           alignItems="center"
         >
-          {dataRefundReceipt && dataRefundReceipt?.data?.pdf && (
+          {loadingRefundReceipt&& (
+                        <CircularProgress style={{ color: "#488B8F" }} />
+                      )}
+          {dataRefundReceipt && dataRefundReceipt?.pdf && (
             <iframe
-              src={`data:application/pdf;base64,${dataRefundReceipt?.data?.pdf}`}
+              src={`data:application/pdf;base64,${dataRefundReceipt?.pdf}`}
               width="100%"
               height="100%"
             />
