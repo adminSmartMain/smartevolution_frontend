@@ -166,46 +166,6 @@ const parseBackendDate = (dateString) => {
   // Ajustamos por zona horaria
   return new Date(date.getTime() + date.getTimezoneOffset() * 60000);
 };
-  const initialValues = {
-    amount: 0,
-    applyGm: false,
-    bill: "",
-    billFraction: 0,
-    client: "",
-    clientAccount: "",
-    commissionSF: 0,
-    filtroEmitterPagador: { emitter: "", payer: "" },
-    takedBills: "",
-    filteredPayers: "",
-    DateBill: `${new Date()}`,
-    DateExpiration: `${new Date()}`,
-    discountTax: 0,
-    emitter: "",
-    emitterBroker: "",
-    cuentaInversionista: '',
-    GM: 0,
-    id: "",
-    investor: "",
-    investorBroker: "",
-    investorProfit: 0,
-    investorTax: 0,
-    opDate: `${new Date()}`,
-    operationDays: 0,
-    opExpiration: `${new Date()}`,
-    opId: null,
-    opType: "",
-    payedAmount: 0,
-    payedPercent: 0,
-    payer: "",
-    presentValueInvestor: 0,
-    presentValueSF: 0,
-    probableDate: `${new Date()}`,
-    status: 0,
-    billCode: "",
-    isReBuy: false,
-    massive: false,
-    integrationCode: ""
-  };
 
 
 
