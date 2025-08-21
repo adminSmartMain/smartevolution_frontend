@@ -333,7 +333,7 @@ const onSubmit = async (values, { setSubmitting }) => {
     billValue:values.subTotal,
     subTotal:values.total,
     total:values.currentBalance,
-    emitterId: values.emitter,
+    emitterId: values.emitterId,
     payerName:values.payerName,
     payerId: values.filtroEmitterPagador.payer,
     emitterName:values.emitterName,
@@ -363,7 +363,10 @@ const onSubmit = async (values, { setSubmitting }) => {
    setLoading(false);
     setSubmitting(false);
     setIsFinished(true)   
-
+ setTimeout(() => {
+      window.close();
+    }, 1500); // 1.5 segundos para que el usuario vea el mensaje de éxito
+    
   } catch (error) {
     setSuccess(false);
     console.error("Error detallado:", error);

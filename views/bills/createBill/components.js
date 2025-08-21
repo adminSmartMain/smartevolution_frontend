@@ -11,6 +11,7 @@ import {
   DialogActions,
   IconButton, Tooltip,
 } from "@mui/material";
+import EditIcon from '@mui/icons-material/Edit';
 import { useFetch } from "@hooks/useFetch";
 import { debounce } from 'lodash';
 import { TextField, Grid } from '@mui/material';
@@ -389,8 +390,6 @@ const [showAllPayers, setShowAllPayers] = useState(false);
 
 
   const [filteredPayers, setFilteredPayers] = useState([]);
-  const [filteredPayersBills, setFilteredPayerBills] = useState([]);
-  const [filteredAcountsInvestor, setAcountsInvestor] = useState([]);
 
 
   // Combinar el pagador inicial con los filtrados

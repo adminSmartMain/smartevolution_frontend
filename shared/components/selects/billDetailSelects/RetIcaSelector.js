@@ -16,7 +16,7 @@ export default function RetIcaSelector({values, setFieldValue,formatNumberWithTh
         disabled
         type='text'
         value={
-           values?.ret_ica
+          formatNumberWithThousandsSeparator( values?.ret_ica)
         }
     
         onChange={(e) => {

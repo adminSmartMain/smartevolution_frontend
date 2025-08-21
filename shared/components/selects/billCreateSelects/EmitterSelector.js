@@ -60,8 +60,13 @@ setFieldValue('billdId', values.factura);
             console.log('h')
         await loadEmitterInvoices(newValue.data.id);
           
-          setFieldValue('emitterName', newValue.label);
+           // CAMBIO AQUÍ: Usar solo el nombre social/reason sin el documento
+        const emitterName = newValue.data.social_reason || 
+                           `${newValue.data.first_name || ''} ${newValue.data.last_name || ''}`.trim();
+        
+        setFieldValue('emitterName', emitterName);
          setFieldValue('emitter', newValue.data.id);
+          setFieldValue('emitterId', newValue.data.document_number);
       }
 
     } catch (error) {

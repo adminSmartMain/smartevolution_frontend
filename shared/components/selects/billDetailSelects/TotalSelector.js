@@ -17,7 +17,7 @@ export default function TotalSelector({values, setFieldValue,formatNumberWithTho
         type='text'
         
         value={
-           values?.total
+          formatNumberWithThousandsSeparator( values?.total)
         }
     
         onChange={(e) => {

@@ -469,8 +469,11 @@ opExpiration: values.opExpiration ? new Date(values.opExpiration).toISOString().
     // 5. Manejar éxito
     setSuccessA(true); // ✅ Actualizar estado de éxito
     Toast("Operación completada con éxito", "success");
-    setTimeout(() => console.log('ya'), 5000);
-
+    
+ setTimeout(() => {
+      window.close();
+    }, 1500); // 1.5 segundos para que el usuario vea el mensaje de éxito
+    
   } catch (error) {
     
     console.error("Error detallado:", error);

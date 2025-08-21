@@ -25,11 +25,11 @@ export default function IvaSelector({values, setFieldValue,formatNumberWithThous
                 
 
                 const total=Number(values.subTotal)+Number(rawValue)
-                const ret_iva=Number(rawValue* 0.05).toFixed(2)
-                const valor_recibir= (Number(values.subTotal) +Number(rawValue))-(Number(ret_iva) + Number(values.ret_ica) + Number(values.ret_fte) + Number(values.other_ret));
+
+                const valor_recibir= (Number(values.subTotal) +Number(rawValue))-(Number(values.ret_iva) + Number(values.ret_ica) + Number(values.ret_fte) + Number(values.other_ret));
                 console.log("Valor a recibir:", valor_recibir, "IVA:", rawValue, "SubTotal:", values.subTotal, "Retención IVA:", ret_iva, "Retención ICA:", values.ret_ica, "Retención FTE:", values.ret_fte, "Otras Retenciones:", values.other_ret);
                 setFieldValue(`iva`, parseFloat(rawValue));
-                setFieldValue('ret_iva', parseFloat( ret_iva)); // Asumiendo un 5% de retención de IVA
+               
                 setFieldValue('currentBalance', parseFloat(valor_recibir)); // Asumiendo un 5% de retención de IVA
                  setFieldValue(`total`, parseFloat(total));
         }}

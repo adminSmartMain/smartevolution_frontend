@@ -16,7 +16,7 @@ export default function RetFteSelector({values, setFieldValue,formatNumberWithTh
         disabled
         type='text'
         value={
-           values?.ret_fte
+           formatNumberWithThousandsSeparator(values?.ret_fte)
         }
     
         onChange={(e) => {
@@ -24,7 +24,7 @@ export default function RetFteSelector({values, setFieldValue,formatNumberWithTh
 
 
                const valor_recibir= (Number(values.subTotal) +Number(values.iva))-(Number(values.ret_iva) + Number(values.ret_ica) + Number(rawValue) + Number(values.other_ret));
-                setFieldValue(`ret_fte`, parseFloat(rawValue));
+                setFieldValue(`ret_fte`, formatNumberWithThousandsSeparator(parseFloat(rawValue)));
                 setFieldValue(`currentBalance`, parseFloat(valor_recibir));
           
         }}

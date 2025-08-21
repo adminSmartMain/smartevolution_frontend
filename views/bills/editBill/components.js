@@ -1359,15 +1359,30 @@ const verifyBlob = async (blob) => {
 
                 </Grid>
                 {/* Botón de submit */}
-                <Grid item xs={12} style={{ marginTop: '16px' }}>
-                  <Button
-       
-                type="submit"
-                variant="contained"
-                color="primary"
-                fullWidth
-                size="large"
-              >
+            <Grid 
+  item 
+  xs={12} 
+  sm={3} 
+  md={2} 
+  style={{ 
+    marginTop: '16px', 
+    display: 'flex', 
+    justifyContent: 'center',
+    padding: '8px'
+  }}
+>
+                <Button
+    type="submit"
+    variant="contained"
+    color="primary"
+    fullWidth
+    disabled={isSubmitting || isFinished}
+    sx={{
+      minWidth: { xs: '100%', sm: '120px' },
+      fontSize: { xs: '0.875rem', sm: '0.9rem' },
+      py: { xs: 1, sm: 1.2 }
+    }}
+  >
                 {isSubmitting ? 'Enviando...' : 'Editar Factura'}
               </Button>
                 </Grid>

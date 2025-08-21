@@ -479,7 +479,10 @@ const onSubmit = async (values, { setSubmitting }) => {
     await new Promise(resolve => setTimeout(resolve, 5000));
     setIsModalOpen(false);
 
-
+ setTimeout(() => {
+      window.close();
+    }, 1500); // 1.5 segundos para que el usuario vea el mensaje de éxito
+    
  
     
   } catch (error) {

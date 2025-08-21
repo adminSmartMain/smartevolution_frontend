@@ -376,6 +376,10 @@ const onSubmit = async (values, { setSubmitting }) => {
     setSuccessA(true);
     Toast("Operación completada con éxito", "success");
     setIsModalOpen(false); // Cierra el modal inmediatamente
+    // Cerrar la ventana después de un breve delay
+    setTimeout(() => {
+      window.close();
+    }, 1500); // 1.5 segundos para que el usuario vea el mensaje de éxito
     
   } catch (error) {
     console.error("Error detallado:", error);

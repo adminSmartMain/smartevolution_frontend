@@ -13,7 +13,7 @@ export default function RetIvaSelector({values, setFieldValue,formatNumberWithTh
         data-testid="campo-RetIva"
         label="RETIVA"
         fullWidth
-        disabled
+       
         type='text'
         value={
            values?.ret_iva
@@ -25,6 +25,10 @@ export default function RetIvaSelector({values, setFieldValue,formatNumberWithTh
 
   
                 setFieldValue(`ret_iva`, parseFloat(rawValue));
+                 const valor_recibir= (Number(values.subTotal) +Number(values.iva))-(Number(rawValue) + Number(values.ret_ica) + Number(values.ret_fte) + Number(values.other_ret));
+
+
+                setFieldValue('currentBalance', parseFloat(valor_recibir)); // Asumiendo un 5% de retención de IVA
           
         }}
         onFocus={(e) => {
