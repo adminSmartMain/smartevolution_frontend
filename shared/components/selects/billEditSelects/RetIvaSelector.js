@@ -19,7 +19,7 @@ export default function RetIvaSelector({values, setFieldValue,formatNumberWithTh
            values?.ret_iva
         }
     
-        onChange={(e) => {
+              onChange={(e) => {
             const rawValue = e.target.value.replace(/[^\d]/g, "");
                 
               const numericValue = parseFloat(rawValue) || 0;

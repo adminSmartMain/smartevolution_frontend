@@ -1,5 +1,6 @@
 import { useEffect, useState, useContext, useMemo } from "react";
 import { ToastContainer, toast } from "react-toastify";
+import axios from 'axios';
 import { 
   Box, 
   Button, 
@@ -9,7 +10,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  IconButton
+  IconButton,Tooltip,
 } from "@mui/material";
 import { useFetch } from "@hooks/useFetch";
 import { debounce } from 'lodash';
@@ -22,23 +23,36 @@ import Axios from "axios";
 import authContext from "@context/authContext";
 import "react-toastify/dist/ReactToastify.css";
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import PreviewIcon from '@mui/icons-material/Preview';
 import CloseIcon from '@mui/icons-material/Close';
 import { styled } from '@mui/material/styles';
 import Image from 'next/image';
 import "react-toastify/dist/ReactToastify.css";
 
+import "react-toastify/dist/ReactToastify.css";
+import FilterAltIcon from '@mui/icons-material/FilterAlt';
+import FilterAltOffIcon from '@mui/icons-material/FilterAltOff';
 import { Bills, GetBillFraction, GetRiskProfile, BrokerByClient, AccountsFromClient,getTypeBill } from "./queries";
 import { parseISO } from "date-fns";
+import InfoIcon from '@mui/icons-material/Info';
 
-import EmitterSelector from "@components/selects/billCreateSelects/EmitterSelector";
-import PayerSelector from "@components/selects/billCreateSelects/PayerSelector";
-import BillManualSelector from "@components/selects/billCreateSelects/BillManualSelector";
+import EmitterSelector from "@components/selects/billEditSelects/EmitterSelector";
+import PayerSelector from "@components/selects/billEditSelects/PayerSelector";
+import BillManualSelector from "@components/selects/billEditSelects/BillManualSelector";
 
-
-import SaldoDisponibleSelector from "@components/selects/billCreateSelects/SaldoDisponibleSelector";
-import TypeBillSelector from "@components/selects/billCreateSelects/TypeBillSelector";
+import SaldoDisponibleSelector from "@components/selects/billEditSelects/SaldoDisponibleSelector";
+import TypeBillSelector from "@components/selects/billEditSelects/TypeBillSelector";
+import SubTotalSelector from "@components/selects/billEditSelects/SubTotalSelector";
+import TotalSelector from "@components/selects/billEditSelects/TotalSelector";
+import RetFteSelector from "@components/selects/billEditSelects/RetFteSelector";
+import RetIcaSelector from "@components/selects/billEditSelects/RetIcaSelector";
+import RetIvaSelector from "@components/selects/billEditSelects/RetIvaSelector";
+import IvaSelector from "@components/selects/billEditSelects/IvaSelector";
+import OtrasRetSelector from "@components/selects/billEditSelects/OtrasRetSelector";
 import fileToBase64 from "@lib/fileToBase64";
+import ModalConfirmation from "@components/modals/createBillModals/modalConfirmation";
+import ProcessModal from "@components/modals/createBillModals/processModal";
 
 const FilePreviewModal = ({ open, onClose, file, fileUrl }) => {
   const renderPreviewContent = () => {
@@ -97,34 +111,8 @@ const FilePreviewModal = ({ open, onClose, file, fileUrl }) => {
   };
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="md"
-      fullWidth
-      PaperProps={{
-        sx: {
-          height: '80vh'
-        }
-      }}
-    >
-      <DialogTitle>
-        <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h6">Previsualización del Documento</Typography>
-          <IconButton onClick={onClose}>
-            <CloseIcon />
-          </IconButton>
-        </Box>
-      </DialogTitle>
-      <DialogContent dividers>
-        {renderPreviewContent()}
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} variant="contained" color="primary">
-          Cerrar
-        </Button>
-      </DialogActions>
-    </Dialog>
+   <>
+   </>
   );
 };
 
@@ -167,7 +155,8 @@ onFormSubmit,
   isFinished,
   validationSchema2,
 users,
-
+bill,
+id
  
 
 }) => {
@@ -184,11 +173,31 @@ users,
   const [fileUrl, setFileUrl] = useState(null);
   const [openPreview, setOpenPreview] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const { user, logout } = useContext(authContext);
+const [previewUrl, setPreviewUrl] = useState(null);
+const [loadingPayers, setLoadingPayers] = useState(true);
+const [showAllPayers, setShowAllPayers] = useState(false);
+
+const usuarioEncontrado = users?.data?.find(user => user.id ===  bill?.user_created_at);
+const usuarioEncontradoEdit = users?.data?.find(user => user.id === bill?.user_updated_at);
+console.log(users,usuarioEncontrado,usuarioEncontradoEdit)
+
+  const opcionesFormato = {
+    dateStyle: 'short',
+    timeStyle: 'medium'
+  };
+const createdAt = new Date(bill?.created_at);
+  const updatedAt = bill?.updated_at ? new Date(bill?.updated_at) : null;
+  const zonaHoraria = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  const createdAtLocal = createdAt.toLocaleString(undefined, opcionesFormato);
+  const updatedAtLocal = updatedAt ? updatedAt.toLocaleString(undefined, opcionesFormato) : null;
 
 
-
-  const debouncedCheckBill = debounce(async (billNumber, callback) => {
+    const tooltipText = `
+🕒 Creado el: ${createdAtLocal} (${zonaHoraria})
+🛠️ Última actualización: ${updatedAtLocal ? `${updatedAtLocal} (${zonaHoraria})` : 'No ha sido actualizado'}
+`;
+const debouncedCheckBill = debounce(async (billNumber, callback) => {
     try {
       const response = await Axios.get(
         `${process.env.NEXT_PUBLIC_API_URL}/bill/${billNumber}`,
@@ -207,6 +216,7 @@ users,
       callback(false);
     }
   }, 500); // Espera 500ms después de la última escritura
+
   const {
     fetch: fetchBills,
     loading: loadingBills,
@@ -215,9 +225,11 @@ users,
   } = useFetch({ service: Bills, init: false });
 
   const renderNombreUsuario = (usuario) => (
-    <Box component="span" sx={{ color: 'text.primary', fontWeight: 500 }}>
-      {usuario?.name}
-    </Box>
+    
+  <Box component="span" sx={{ color: 'text.primary', fontWeight: 500 }}>
+  {usuario?.social_reason || 
+   `${usuario?.first_name || ''} ${usuario?.last_name || ''}`.trim()}
+</Box>
   );
     const {
       fetch: fetchTypeBill,
@@ -253,8 +265,16 @@ users,
   // Función para formatear el número con separadores de miles
   const formatNumberWithThousandsSeparator = (value) => {
     if (value === undefined || value === null) return '';
-    return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  };
+    
+    // Convert to string and split into integer and decimal parts
+    const [integerPart, decimalPart] = value.toString().split('.');
+    
+    // Format only the integer part with commas
+    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    
+    // Combine with decimal part if it exists
+    return decimalPart ? `${formattedInteger}.${decimalPart}` : formattedInteger;
+};
 
   console.log(dataTypeBill)
 
@@ -269,66 +289,7 @@ users,
   }
 
 
-  const handleFileChange = (event,setFieldValue) => {
-  const selectedFile = event.target?.files[0];
-  console.log(selectedFile);
-  
-  if (selectedFile) {
-    // Validar tipo de archivo
-    const validTypes = ['application/pdf', 'image/jpeg', 'image/png'];
-    if (!validTypes.includes(selectedFile.type)) {
-      toast.error('Solo se permiten archivos PDF, JPEG o PNG');
-      return;
-    }
 
-    // Validar tamaño (20MB máximo)
-    if (selectedFile.size > 20 * 1024 * 1024) {
-      toast.error('El archivo no debe exceder los 20MB');
-      return;
-    }
-
-    const reader = new FileReader();
-    
-    reader.onload = (e) => {
-      // Extraemos solo la parte base64 (sin el prefijo data:application/pdf;base64,)
- 
-      
-      // Guardamos el archivo original para previsualización
-      setFile(selectedFile);
-      
-      // Actualizamos Formik con el formato que espera el backend
-     setFieldValue('file', e.target.result); // Solo el string base64 sin prefijo
-      
-      // Crear vista previa si es una imagen
-      if (selectedFile.type.includes('image')) {
-        setFilePreview(e.target.result); // Aquí usamos el resultado completo con prefijo
-      } else {
-        setFilePreview(null);
-      }
-    };
-    
-    reader.onerror = (error) => {
-      console.error('Error al leer el archivo:', error);
-      toast.error('Error al procesar el archivo');
-    };
-    
-    reader.readAsDataURL(selectedFile);
-  }
-};
-
-   
-  // Función para cargar cuentas cuando se selecciona un inversionista
-  const cargarCuentas = async (inversionista) => {
-    if (!inversionista) return null; // Retorna null si no hay inversionista
-
-    try {
-      const cuentas = await fetchAccountFromClient(inversionista);
-      return cuentas; // 🔹 Devuelve las cuentas obtenidas
-    } catch (error) {
-      console.error("Error al cargar cuentas:", error);
-      return null; // Retorna null en caso de error
-    }
-  };
 
   const cargarTasaDescuento = async (emisor) => {
     if (!emisor) return null; // Retorna null si no hay emisor
@@ -387,16 +348,6 @@ users,
   const [filteredAcountsInvestor, setAcountsInvestor] = useState([]);
 
 
-  // Combinar el pagador inicial con los filtrados
-  const allPayers = useMemo(() => {
-    if (!initialPayer) return filteredPayers;
-    // Evitar duplicados
-    const existsInFiltered = filteredPayers.some(p =>
-      p.data.document_number === initialPayer.data.document_number
-    );
-    return existsInFiltered ? filteredPayers : [initialPayer, ...filteredPayers];
-  }, [initialPayer, filteredPayers]);
-
 
   // Combinar el pagador inicial con los filtrados
 
@@ -412,36 +363,266 @@ const handleConfirm = async (values, actions) => {
     actions.setSubmitting(false);
   }
 };
+  console.log(bill)
 
+
+
+ // Efecto para cargar pagadores filtrados
+   useEffect(() => {
+   
+     // 1. Establecer el pagador inicial inmediatamente si existe en dataDetails
+     if (bill?.payer) {
+       const payerFromDetails = {
+         id:  bill.payerId,
+         data: {
+           document_number: bill.payer.document_number,
+           social_reason: bill.payer.social_reason,
+           first_name: bill.payer.first_name,
+           last_name: bill.payer.last_name
+         }
+       };
+       setInitialPayer(payerFromDetails);
+ 
+     }
+     const loadFilteredPayers = async () => {
+      setLoadingPayers(true);
+       const emitterId = bill?.emitterId;
+ 
+       if (!emitterId) {
+  
+         setFilteredPayers([]);
+         return;
+       }
+ 
+       try {
+        
+         const facturasEmisor = await cargarFacturas(emitterId);
+         
+ 
+         if (!facturasEmisor?.data?.length) {
+        
+           setFilteredPayers([]);
+           return;
+         }
+ 
+         const facturasConSaldo = facturasEmisor.data.filter(
+           f => Number(f.currentBalance) >= 0
+         );
+         
+ 
+         const payerIdsUnicos = [...new Set(
+           facturasConSaldo.map(f => f.payerId).filter(Boolean)
+         )];
+ 
+ 
+         const pagadoresFiltrados = payers?.filter(p =>
+           p?.data?.document_number &&
+           payerIdsUnicos.includes(p.data.document_number)
+         ) || [];
+ 
+         setFilteredPayers(pagadoresFiltrados);
+ 
+       } catch (error) {
+         console.error('Error en loadFilteredPayers:', error);
+         setFilteredPayers([]);
+       }  finally {
+      setLoadingPayers(false);
+    }
+     };
+ 
+     loadFilteredPayers();
+     
+   }, [ bill?.emitterId, payers]); // Dependencias específicas
+ 
+   // Combinar el pagador inicial con los filtrados
+   const allPayers = useMemo(() => {
+     if (!initialPayer) return filteredPayers;
+     // Evitar duplicados
+     const existsInFiltered = filteredPayers.some(p =>
+       p.data.document_number === initialPayer.data.document_number
+     );
+     return existsInFiltered ? filteredPayers : [initialPayer, ...filteredPayers];
+   }, [initialPayer, filteredPayers]);
+ console.log(allPayers)
+
+const parseBackendDate = (dateString) => {
+  if (!dateString) return null;
+  // Parseamos la fecha ISO del backend
+  const date = parseISO(dateString);
+  // Ajustamos por zona horaria
+  return new Date(date.getTime() + date.getTimezoneOffset() * 60000);
+};
+
+console.log( bill?.bill?.currentBalance)
+ 
   const initialValues2 = {
-    emitter: '',
-    nombrePagador: '',
+    emitter:  bill?.emitterName,
+    nombrePagador:  bill?.payerName,
     filtroEmitterPagador: { emitter: "", payer: "" },
-    currentBalance: 0,
+    currentBalance: bill?.currentBalance,
     filteredPayers: "",
-    billId: '',
-    factura: '',
-    DateBill: `${new Date()}`,
-    emitterId:'',
-    payerName:'',
-    payerId:'',
-    datePayment:`${new Date()}`,
-    typeBill:'',
-   expirationDate: `${new Date()}`,
-    file: null,
+    billId: bill?.billId,
+    factura: bill?.billId,
+    emitterId:bill?.emitterId,
+    payerName:bill?.payerName,
+    payerId:bill?.payerId,
+    DateBill: parseBackendDate(bill?.dateBill),
+    datePayment:parseBackendDate(bill?.datePayment),
+    expirationDate:  parseBackendDate(bill?.expirationDate),
+    typeBill:bill?.typeBill,
+    file:  bill?.file,
+    ret_fte:bill?.ret_fte,
+    ret_ica:bill?.ret_ica,
+    ret_iva:bill?.ret_iva,
+    subTotal:bill?.billValue,
+    iva:bill?.iva,
+    total:bill?.total,
+    other_ret:bill?.other_ret,
+    arrayPayers:allPayers,
 
   };
-const handleOpenPreview = () => {
-    if (!file && !fileUrl) {
-      toast.warning('No hay archivo para previsualizar');
+
+  console.log(initialValues2)
+  console.log(bill)
+// Dentro de tu componente:
+
+
+
+const handleClosePreview = () => {
+  // Liberar recursos si es un objeto URL creado con URL.createObjectURL
+  if (file && previewUrl) {
+    URL.revokeObjectURL(previewUrl);
+  }
+  setOpenPreview(false);
+  setPreviewUrl(null);
+};
+
+  const handleFileChange = (event,setFieldValue) => {
+  const selectedFile = event.target?.files[0];
+  console.log(selectedFile);
+  
+  if (selectedFile) {
+    // Validar tipo de archivo
+    const validTypes = ['application/pdf', 'image/jpeg', 'image/png'];
+    if (!validTypes.includes(selectedFile.type)) {
+      toast.error('Solo se permiten archivos PDF, JPEG o PNG');
       return;
     }
-    setOpenPreview(true);
-  };
 
-  const handleClosePreview = () => {
-    setOpenPreview(false);
-  };
+    // Validar tamaño (20MB máximo)
+    if (selectedFile.size > 20 * 1024 * 1024) {
+      toast.error('El archivo no debe exceder los 20MB');
+      return;
+    }
+
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+      // Extraemos solo la parte base64 (sin el prefijo data:application/pdf;base64,)
+ 
+      
+      // Guardamos el archivo original para previsualización
+      setFile(selectedFile);
+      
+      // Actualizamos Formik con el formato que espera el backend
+     setFieldValue('file', e.target.result); // Solo el string base64 sin prefijo
+      
+      // Crear vista previa si es una imagen
+      if (selectedFile.type.includes('image')) {
+        setFilePreview(e.target.result); // Aquí usamos el resultado completo con prefijo
+      } else {
+        setFilePreview(null);
+      }
+    };
+    
+    reader.onerror = (error) => {
+      console.error('Error al leer el archivo:', error);
+      toast.error('Error al procesar el archivo');
+    };
+    
+    reader.readAsDataURL(selectedFile);
+  }
+};
+
+   
+const handleOpenPreview = async () => {
+  try {
+    if (file) {
+      // Si es un archivo recién subido
+      if (file.name.endsWith('.xml') || file.type.includes('xml')) {
+        toast.warning('La previsualización no está disponible para archivos XML');
+        return;
+      }
+      
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+      setOpenPreview(true);
+    } else if (bill?.file_content) {
+      // Si el contenido es XML
+      if (bill?.file_content_type?.includes('xml')) {
+        toast.warning('La previsualización no está disponible para archivos XML');
+        return;
+      }
+
+      // 1. Crear el Blob desde base64 (solo para PDF o imágenes)
+      const byteCharacters = atob(bill.file_content);
+      const byteArrays = [];
+      
+      for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+        const slice = byteCharacters.slice(offset, offset + 512);
+        const byteNumbers = new Array(slice.length);
+        
+        for (let i = 0; i < slice.length; i++) {
+          byteNumbers[i] = slice.charCodeAt(i);
+        }
+        
+        const byteArray = new Uint8Array(byteNumbers);
+        byteArrays.push(byteArray);
+      }
+      
+      const blob = new Blob(byteArrays, { type: bill.file_content_type });
+      
+      // 2. Crear URL del Blob
+      const url = URL.createObjectURL(blob);
+      
+      // 3. Verificar si el Blob es válido
+      const blobIsValid = await verifyBlob(blob);
+      
+      if (!blobIsValid) {
+        throw new Error("El archivo está corrupto o incompleto");
+      }
+      
+      setPreviewUrl(url);
+      setOpenPreview(true);
+    }
+  } catch (error) {
+    console.error("Error en previsualización:", error);
+    toast.error("No se pudo cargar la previsualización: " + error.message);
+  }
+};
+const formatFileSize = (bytes) => {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
+// Función para verificar el Blob
+const verifyBlob = async (blob) => {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    
+    reader.onloadend = () => {
+      // Verificamos que los primeros bytes sean un PDF válido
+      const arr = new Uint8Array(reader.result).subarray(0, 4);
+      const header = Array.from(arr).map(b => b.toString(16)).join('');
+      resolve(header === '25504446'); // '%PDF' en hexadecimal
+    };
+    
+    reader.onerror = () => resolve(false);
+    reader.readAsArrayBuffer(blob.slice(0, 4)); // Solo leemos los primeros bytes
+  });
+};
   return (
 
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={esLocale}>
@@ -452,36 +633,138 @@ const handleOpenPreview = () => {
 
 
       <Box sx={{ padding: 5, backgroundColor: 'white', borderRadius: 1, boxShadow: 1 }}>
-        <Box
-          container
-          display="flex"
-          flexDirection="row"
-          justifyContent="space-between"
-        >
-          <Typography
-            letterSpacing={0}
-            fontSize="1.7rem"
-            fontWeight="regular"
-            marginBottom="0.7rem"
-            color="#5EA3A3"
-          >
-            Editar Factura
-          </Typography>
- {user ? (
-            <Typography variant="subtitle1" sx={{ color: 'text.secondary' }}>
-              Creado por: {renderNombreUsuario(user)}
-            </Typography>
+<Box
+  sx={{
+    display: 'flex',
+    flexDirection: { xs: 'column', sm: 'row' },
+    justifyContent: 'space-between',
+    alignItems: { xs: 'flex-start', sm: 'center' },
+    gap: { xs: 1, sm: 2 },
+    marginBottom: 2
+  }}
+>
+  {/* Título y Badge en misma línea en móviles */}
+  <Box sx={{ 
+    display: 'flex', 
+    alignItems: 'center', 
+    flexWrap: 'wrap',
+    gap: 1,
+    marginBottom: { xs: 1, sm: 0 }
+  }}>
+    <Typography
+      letterSpacing={0}
+      fontSize={{ xs: '1.5rem', sm: '1.7rem' }}
+      fontWeight="regular"
+      color="#5EA3A3"
+      sx={{ marginRight: 1, marginBottom: { xs: '0.7rem', sm: 0 } }}
+    >
+      Editar Factura
+    </Typography>
+    
+    {/* Badge "Autogestión" */}
+    {bill.integrationCode && (
+      <Box
+        sx={{
+          backgroundColor: "#488B8F",
+          color: "white",
+          borderRadius: "12px",
+          padding: "2px 8px",
+          fontSize: "0.7rem",
+          fontWeight: "bold",
+          alignSelf: 'center',
+          marginTop: { xs: '-0.5rem', sm: 0 }, // Compensa el margen del título en móviles
+          marginBottom: { xs: '0.7rem', sm: 0 }
+        }}
+      >
+        Autogestión
+      </Box>
+    )}
+  </Box>
+
+  {/* Información de autoría - Se mueve debajo en móviles */}
+  <Box sx={{ 
+    display: 'flex', 
+    alignItems: 'center', 
+    gap: 1,
+    flexWrap: 'wrap',
+    justifyContent: { xs: 'flex-start', sm: 'flex-end' },
+    width: { xs: '100%', sm: 'auto' }
+  }}>
+    {usuarioEncontrado || usuarioEncontradoEdit ? (
+      <Box sx={{ 
+        display: 'flex', 
+        alignItems: 'center',
+        flexDirection: { xs: 'column', sm: 'row' },
+        alignItems: { xs: 'flex-start', sm: 'center' },
+        gap: { xs: 0.5, sm: 1 }
+      }}>
+        <Typography variant="subtitle1" sx={{ 
+          color: 'text.secondary', 
+          textAlign: { xs: 'left', sm: 'right' },
+          fontSize: { xs: '0.9rem', sm: '1rem' }
+        }}>
+          {usuarioEncontrado?.id === usuarioEncontradoEdit?.id ? (
+            <>Creado y editado por: {renderNombreUsuario(usuarioEncontrado)}</>
           ) : (
-            <Typography variant="subtitle1" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
-              Sin información de autoría
-            </Typography>
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: { xs: 'column', sm: 'row' },
+              gap: { xs: 0, sm: 1 },
+              alignItems: { xs: 'flex-start', sm: 'center' }
+            }}>
+              {usuarioEncontrado && (
+                <Box component="span">
+                  Creado por: {renderNombreUsuario(usuarioEncontrado)}
+                </Box>
+              )}
+              {usuarioEncontrado && usuarioEncontradoEdit && (
+                <Box component="span" sx={{ 
+                  display: { xs: 'none', sm: 'block' },
+                  color: 'text.secondary'
+                }}>
+                  •
+                </Box>
+              )}
+              {usuarioEncontradoEdit && (
+                <Box component="span">
+                  Editado por: {renderNombreUsuario(usuarioEncontradoEdit)}
+                </Box>
+              )}
+            </Box>
           )}
-        </Box>
+        </Typography>
+
+        {/* Tooltip (icono de información) */}
+        <Tooltip
+          title={<span style={{ whiteSpace: 'pre-line' }}>{tooltipText}</span>}
+          arrow
+          placement="top"
+        >
+          <IconButton size="small" sx={{ 
+            ml: { xs: 0, sm: 0.5 },
+            alignSelf: { xs: 'flex-start', sm: 'center' }
+          }}>
+            <InfoIcon fontSize="small" color="action" />
+          </IconButton>
+        </Tooltip>
+      </Box>
+    ) : (
+      <Typography variant="subtitle1" sx={{ 
+        color: 'text.secondary', 
+        fontStyle: 'italic',
+        fontSize: { xs: '0.9rem', sm: '1rem' }
+      }}>
+        Sin información de autoría
+      </Typography>
+    )}
+  </Box>
+</Box>
         <Formik
           initialValues={initialValues2}
           validationSchema={validationSchema2}
           onSubmit={handleConfirm}
-           >
+          enableReinitialize={true} // Esto permite que Formik se reinicialice cuando cambian las props
+        >
           {({ values, setFieldValue, touched, errors, handleBlur, setTouched, setFieldTouched, setFieldError,isValid, isSubmitting  }) => {
           return(
               <Form translate="no" onChange={handleOnChange}>
@@ -489,18 +772,59 @@ const handleOpenPreview = () => {
               <Grid container spacing={2}>
 
 
-                <Grid item xs={12} md={6}>
+                  <Grid item xs={12} md={4}>
+                       <TypeBillSelector 
+                  errors={errors}
+                  setFieldTouched={setFieldTouched}
+                  setFieldValue={setFieldValue}
+                  touched={touched}
+                  values={values}
+                  dataTypeBill={dataTypeBill} // Tus datos como los muestras
+                  integrationCode={bill?.integrationCode}
+                 
+                />
+                  </Grid>
+
+                     <Grid item xs={12} md={4}>
+
+                    <BillManualSelector
+                      values={values}
+                      setFieldValue={setFieldValue}
+                      touched={touched}
+                      orchestDisabled={orchestDisabled}
+                      dataBills={dataBills}
+                      setFieldTouched={setFieldTouched}
+                      setFieldError={setFieldError}
+                      integrationCode={bill?.integrationCode}
+                      debouncedCheckBill={debouncedCheckBill}
+                    />
+                  </Grid>
+                  
+                    <Grid item xs={12} md={4} >
+                    <SaldoDisponibleSelector
+                      values={values}
+                      setFieldValue={setFieldValue}
+
+
+                      formatNumberWithThousandsSeparator={formatNumberWithThousandsSeparator}
+                      parseFloat={parseFloat}
+
+                    />
+                  </Grid>
+
+                <Grid item xs={12} md={2}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
 
 
                     <div style={{ display: 'flex', gap: '10px', flex: 1 }}>
-                      <DatePicker
+                         <DatePicker
                         label="Emisión"
                         maxDate={new Date()} // Esto limita a fechas hasta hoy
-                        value={values.DateBill ? parseISO(values.DateBill) : null}
+                        value={values.DateBill ? values.DateBill : null}
                         onChange={(newValue) => {
                           if (newValue) {
-                            const formattedDate = newValue.toISOString().substring(0, 10);
+                            const formattedDate = newValue ? new Date(newValue) : null;
+                            if (!formattedDate) return;
                             setFieldValue('DateBill', formattedDate);
                           } else {
                             setFieldValue('DateBill', null);
@@ -508,6 +832,7 @@ const handleOpenPreview = () => {
                         }}
                         inputFormat="dd/MM/yyyy"
                         mask="__/__/____"
+                        disabled={bill.integrationCode != null|| loadingPayers}
                         renderInput={(params) => (
                           <TextField
                             {...params}
@@ -520,7 +845,12 @@ const handleOpenPreview = () => {
                             }}
                             error={touched.DateBill && Boolean(errors.DateBill)}
                             helperText={touched.DateBill && errors.DateBill}
-                            onKeyDown={(e) => e.stopPropagation()}
+                           onKeyDown={(e) => {
+                        if (!/[0-9/]/.test(e.key) && 
+                            !['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) {
+                            e.preventDefault();
+                        }
+                    }}
                             onClick={(e) => {
                               e.stopPropagation();
                               e.preventDefault();
@@ -539,27 +869,30 @@ const handleOpenPreview = () => {
 
                 </Grid>
 
-                <Grid item xs={12} md={6}>
+                <Grid item xs={12} md={2}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
 
 
                     <div style={{ display: 'flex', gap: '10px', flex: 1 }}>
 
 
+                      
                       <DatePicker
                         label="Vencimiento"
-                        value={values.expirationDate ? parseISO(values.expirationDate) : null}
-                         
+                        value={values.expirationDate ? values.expirationDate : null}
+                        min={parseISO(values.DateBill)} // Esto limita a fechas hasta hoy
                         onChange={(newValue) => {
                           if (newValue) {
-                            const formattedDate = newValue.toISOString().substring(0, 10);
+                            const formattedDate = newValue ? new Date(newValue) : null;
+                            if (!formattedDate) return;
                             setFieldValue('expirationDate', formattedDate);
-                            setFieldValue('datePayment', formattedDate);
+                          
                           } else {
                             setFieldValue('expirationDate', null);
                           }
                         }}
                         inputFormat="dd/MM/yyyy"
+                        disabled={bill.integrationCode != null|| loadingPayers}
                         mask="__/__/____"
                         renderInput={(params) => (
                           <TextField
@@ -590,26 +923,22 @@ const handleOpenPreview = () => {
 
                 </Grid>
 
-
-
-
-                {/* fila typeBill */}
-                 <Grid container item xs={12} spacing={2}>
-                  <Grid item xs={12} md={6}>
+<Grid item xs={12} md={2}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
 
 
                     <div style={{ display: 'flex', gap: '10px', flex: 1 }}>
-                      <DatePicker
+                       <DatePicker
                         label="Fecha de pago"
-                        value={values.datePayement ? parseISO(values.datePayement ) : null}
+                        value={values.datePayment ?values.datePayment  : null}
                         
                         onChange={(newValue) => {
                           if (newValue) {
-                            const formattedDate = newValue.toISOString().substring(0, 10);
-                            setFieldValue('datePayement', formattedDate);
+                             const formattedDate = newValue ? new Date(newValue) : null;
+                            if (!formattedDate) return;
+                            setFieldValue('datePayment', formattedDate);
                           } else {
-                            setFieldValue('datePayement', null);
+                            setFieldValue('datePayment', null);
                           }
                         }}
                         inputFormat="dd/MM/yyyy"
@@ -619,6 +948,7 @@ const handleOpenPreview = () => {
                             {...params}
                             size="small"
                             fullWidth
+                            disabled={bill.integrationCode != null|| loadingPayers}
                             sx={{
                               '& .MuiInputBase-root': {
                                 height: '56px' // Increased height
@@ -644,24 +974,7 @@ const handleOpenPreview = () => {
                   </div>
 
                 </Grid>
-
-                  <Grid item xs={12} md={6}>
-                       <TypeBillSelector 
-                  errors={errors}
-                  setFieldTouched={setFieldTouched}
-                  setFieldValue={setFieldValue}
-                  touched={touched}
-                  values={values}
-                  dataTypeBill={dataTypeBill} // Tus datos como los muestras
-                 
-                />
-                  </Grid>
-
-                </Grid>
-                <Grid container item xs={12} spacing={2}>
-
-
-                  <Grid item xs={12} md={6}>
+<Grid item xs={12} md={6}>
 
                     <EmitterSelector
                       errors={errors}
@@ -677,42 +990,140 @@ const handleOpenPreview = () => {
                       cargarTasaDescuento={cargarTasaDescuento}
                       setClientWithoutBroker={setClientWithoutBroker}
                       setOpenEmitterBrokerModal={setOpenEmitterBrokerModal}
+                      integrationCode={bill?.integrationCode}
                     />
                   </Grid>
 
-                  <Grid item xs={12} md={6}>
 
-                    <BillManualSelector
-                      values={values}
-                      setFieldValue={setFieldValue}
-                      touched={touched}
-                      orchestDisabled={orchestDisabled}
-                      dataBills={dataBills}
-                      setFieldTouched={setFieldTouched}
-                      setFieldError={setFieldError}
-
-                      debouncedCheckBill={debouncedCheckBill}
-                    />
-                  </Grid>
-                </Grid>
+              
+               
 
                 {/* Segunda fila */}
-                <Grid container item xs={12} spacing={2}>
+                                 <Grid container item xs={12} spacing={2}>
                   <Grid item xs={12} md={6}>
-                    <PayerSelector
+<div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                      <div style={{ flex: 1 }}> {/* Este div ocupa el espacio restante */}
+
+                        <PayerSelector
                       errors={errors}
                       dataBills={dataBills}
+                      showAllPayers={showAllPayers}
+                      payers={payers}
                       values={values}
                       setFieldValue={setFieldValue}
                       touched={touched}
                       setClientPagador={setClientPagador}
                       setIsSelectedPayer={setIsSelectedPayer}
+                      integrationCode={bill?.integrationCode}
                     />
+ </div>
+                   {/* Botón para alternar entre todos los payers y los filtrados */}
+                      <Tooltip title={showAllPayers ? "Mostrar solo pagadores filtrados" : "Mostrar todos los pagadores"}>
+                        <IconButton
+                          size="small"
+                          onClick={() => setShowAllPayers(!showAllPayers)}
+                          color={showAllPayers ? "primary" : "default"}
+                          style={{ marginTop: '8px' }}
+                        >
+                          {showAllPayers ? <FilterAltOffIcon /> : <FilterAltIcon />}
+                        </IconButton>
+                      </Tooltip>
+                      {clientPagador && (
+                        <IconButton
+                          color="primary"
+                          onClick={() => {
+                            window.open(`${window.location.origin}/customers?modify=${clientPagador}`, '_blank');
+                          }}
+                          sx={{
+                            marginTop: '15px',
+                            height: '20px',
+                            width: '20px',
+                            color: '#488F88', // Aquí sí funciona
+                            '&:hover': {
+                              color: '#3a726c', // Color más oscuro para hover
+                              backgroundColor: 'rgba(72, 143, 136, 0.1)' // Fondo sutil al hacer hover
+                            }
+                          }}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      )}
+                    </div>    
+                    
 
                   </Grid>
 
                   <Grid item xs={12} md={6}>
-                    <SaldoDisponibleSelector
+                    <SubTotalSelector
+                      values={values}
+                      setFieldValue={setFieldValue}
+                      errors={errors
+
+                      }
+                      integrationCode={bill?.integrationCode}
+                      formatNumberWithThousandsSeparator={formatNumberWithThousandsSeparator}
+                      parseFloat={parseFloat}
+
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} md={4}>
+                    <IvaSelector
+                      values={values}
+                      setFieldValue={setFieldValue}
+                      integrationCode={bill?.integrationCode}
+
+                      formatNumberWithThousandsSeparator={formatNumberWithThousandsSeparator}
+                      parseFloat={parseFloat}
+
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <TotalSelector
+                      values={values}
+                      setFieldValue={setFieldValue}
+          
+                      formatNumberWithThousandsSeparator={formatNumberWithThousandsSeparator}
+                      parseFloat={parseFloat}
+
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <RetIvaSelector
+                      values={values}
+                      setFieldValue={setFieldValue}
+
+                   
+                      formatNumberWithThousandsSeparator={formatNumberWithThousandsSeparator}
+                      parseFloat={parseFloat}
+
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} md={4}>
+                    <RetIcaSelector
+                      values={values}
+                      setFieldValue={setFieldValue}
+                      integrationCode={bill?.integrationCode}
+
+                      formatNumberWithThousandsSeparator={formatNumberWithThousandsSeparator}
+                      parseFloat={parseFloat}
+
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <RetFteSelector
+                      values={values}
+                      setFieldValue={setFieldValue}
+                      integrationCode={bill?.integrationCode}
+
+                      formatNumberWithThousandsSeparator={formatNumberWithThousandsSeparator}
+                      parseFloat={parseFloat}
+
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <OtrasRetSelector
                       values={values}
                       setFieldValue={setFieldValue}
 
@@ -722,9 +1133,225 @@ const handleOpenPreview = () => {
 
                     />
                   </Grid>
+<Grid item xs={12} md={8} sx={{ 
+  marginTop: '16px', 
+  backgroundColor: 'grey.100', 
+  p: 2, 
+  borderRadius: 5,
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 2
+}}>
+  {/* Contenedor principal con diseño responsive */}
+  <Box 
+    display="flex" 
+    flexDirection={{ xs: 'column', sm: 'row' }}
+    alignItems={{ xs: 'stretch', sm: 'center' }}
+    gap={{ xs: 2, sm: 2 }}
+    sx={{
+      flexWrap: { xs: 'nowrap', sm: 'wrap' },
+    }}
+  >
+    {/* Botón Seleccionar archivo */}
+    <Button
+      component="label"
+      variant="contained"
+      startIcon={<CloudUploadIcon />}
+      sx={{ 
+        flexShrink: 0, 
+        order: 1,
+        width: { xs: '100%', sm: 'auto' },
+        '&.Mui-disabled': {
+          backgroundColor: '#e0e0e0',
+          color: '#757575'
+        }
+      }}
+      disabled={loadingPayers}
+    >
+      Seleccionar archivo
+      <VisuallyHiddenInput 
+        type="file" 
+        onChange={(e) => handleFileChange(e, setFieldValue)}
+        accept=".pdf,.jpg,.jpeg,.png"
+        disabled={loadingPayers}
+      />
+    </Button>
+    
+    {/* Botón Previsualizar */}
+    <Button
+      variant="outlined"
+      startIcon={<PreviewIcon />}
+      onClick={() => {
+        const fileName = file?.name || values.file?.split('/').pop() || '';
+        if (fileName.endsWith('.xml') || 
+            file?.type?.includes('xml') || 
+            bill?.file_content_type?.includes('xml')) {
+          toast.warning('La previsualización no está disponible para archivos XML');
+        } else {
+          handleOpenPreview();
+        }
+      }}
+      disabled={!file && !values.file}
+      sx={{
+        backgroundColor: (file || values.file) ? 'background.paper' : 'grey.300',
+        color: (file || values.file) ? 'text.primary' : 'text.disabled',
+        flexShrink: 0,
+        order: 2,
+        width: { xs: '100%', sm: 'auto' },
+        '&:hover': {
+          backgroundColor: (file || values.file) ? 'action.hover' : 'grey.300'
+        }
+      }}
+    >
+      Previsualizar
+    </Button>
 
-
-                </Grid>
+    {/* Nombre del archivo con Tooltip */}
+    {(file || values.file) && (
+      <Tooltip 
+        title={`${file?.name || values.file?.split('/').pop()}${file?.size ? ` (${formatFileSize(file.size)})` : ''}`}
+        arrow
+        placement="bottom-start"
+      >
+        <Box 
+          sx={{ 
+            flex: '1 1 auto', 
+            minWidth: { xs: '100%', sm: '200px', md: '300px' },
+            order: { xs: 3, sm: 3 },
+            mt: { xs: 0, sm: 0 }
+          }}
+        >
+          <Typography 
+            variant="body2" 
+            sx={{
+              display: 'block',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              backgroundColor: 'white',
+              p: 1.5,
+              borderRadius: 1,
+              border: '1px solid',
+              borderColor: 'divider',
+              textAlign: { xs: 'center', sm: 'left' },
+              '@media (max-width: 500px)': {
+                whiteSpace: 'normal',
+                wordBreak: 'break-word',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical'
+              }
+            }}
+          >
+            <Box component="span" sx={{ fontWeight: 'bold', display: 'block', mb: 0.5 }}>
+              Archivo seleccionado:
+            </Box>
+            {file?.name || values.file?.split('/').pop()}
+            {file?.size && (
+              <Box component="span" sx={{ display: 'block', mt: 0.5, color: 'text.secondary', fontSize: '0.8rem' }}>
+                Tamaño: {formatFileSize(file.size)}
+              </Box>
+            )}
+          </Typography>
+        </Box>
+      </Tooltip>
+    )}
+  </Box>
+  
+  {/* Mensaje de error */}
+  {errors.file && (
+    <Typography 
+      variant="body2" 
+      sx={{ 
+        color: 'error.main',
+        textAlign: 'center',
+        backgroundColor: 'error.light',
+        p: 1,
+        borderRadius: 1
+      }}
+    >
+      {'El archivo es obligatorio'}
+    </Typography>
+  )}
+</Grid>
+<Dialog 
+  open={openPreview} 
+  onClose={handleClosePreview} 
+  maxWidth="md" 
+  fullWidth
+  sx={{ '& .MuiDialog-paper': { overflow: 'hidden' } }}
+>
+  <DialogTitle>Previsualización del archivo</DialogTitle>
+  <DialogContent sx={{ p: 0, height: '80vh', display: 'flex', justifyContent: 'center' }}>
+    {!previewUrl ? (
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+        <Typography color="error">No se pudo cargar el archivo</Typography>
+      </Box>
+    ) : (
+      <>
+        {bill?.file_content_type === 'application/pdf' && (
+          <iframe
+            key={`pdf-${previewUrl}`} // Forzar recreación al cambiar URL
+            src={`${previewUrl}#view=fitH`}
+            width="100%"
+            height="100%"
+            style={{ border: 'none' }}
+            title="Vista previa del PDF"
+            loading="lazy"
+            onError={(e) => {
+              console.error("Error en iframe:", e);
+              toast.error("No se pudo cargar el PDF");
+            }}
+          />
+        )}
+        
+        {bill?.file_content_type?.includes('image/') && (
+          <img
+            key={`img-${previewUrl}`} // Forzar recreación al cambiar URL
+            src={previewUrl}
+            alt="Vista previa"
+            style={{ 
+              maxWidth: '100%', 
+              maxHeight: '100%', 
+              objectFit: 'contain',
+              display: 'block'
+            }}
+            onError={(e) => {
+              console.error("Error en imagen:", e);
+              toast.error("No se pudo cargar la imagen");
+            }}
+          />
+        )}
+      </>
+    )}
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={handleClosePreview}>Cerrar</Button>
+    {previewUrl && (
+      <Button
+        onClick={() => {
+          const fileName = bill?.file?.split('/').pop() || 
+                         `documento.${bill?.file_content_type?.split('/')[1] || 'pdf'}`;
+          
+          const link = document.createElement('a');
+          link.href = previewUrl;
+          link.download = fileName;
+          document.body.appendChild(link);
+          link.click();
+          setTimeout(() => {
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+          }, 100);
+        }}
+        color="primary"
+      >
+        Descargar
+      </Button>
+    )}
+  </DialogActions>
+</Dialog>
+                            
+                            </Grid>
                 <Grid container item xs={12} spacing={2}>
 
 
@@ -732,70 +1359,36 @@ const handleOpenPreview = () => {
 
                 </Grid>
                 {/* Botón de submit */}
-                <Grid item xs={12} style={{ marginTop: '16px' }}>
-                  <Button
-       
-                type="submit"
-                variant="contained"
-                color="primary"
-                fullWidth
-                size="large"
-              >
-                {isSubmitting ? 'Enviando...' : 'Registrar Facturas'}
+            <Grid 
+  item 
+  xs={12} 
+  sm={3} 
+  md={2} 
+  style={{ 
+    marginTop: '16px', 
+    display: 'flex', 
+    justifyContent: 'center',
+    padding: '8px'
+  }}
+>
+                <Button
+    type="submit"
+    variant="contained"
+    color="primary"
+    fullWidth
+    disabled={isSubmitting || isFinished}
+    sx={{
+      minWidth: { xs: '100%', sm: '120px' },
+      fontSize: { xs: '0.875rem', sm: '0.9rem' },
+      py: { xs: 1, sm: 1.2 }
+    }}
+  >
+                {isSubmitting ? 'Enviando...' : 'Editar Factura'}
               </Button>
                 </Grid>
               </Grid>
 
-               <Grid item xs={12} style={{ marginTop: '16px' }}>
-              <Typography variant="subtitle1" gutterBottom>
-                Adjuntar factura
-              </Typography>
-              
-              <Box display="flex" alignItems="center" gap={2}>
-                <Button
-                  component="label"
-                  variant="contained"
-                  startIcon={<CloudUploadIcon />}
-                >
-                  Seleccionar archivo
-                  <VisuallyHiddenInput 
-                    type="file" 
-                    onChange={(e) => handleFileChange(e, setFieldValue)}
-                    accept=".pdf,.jpg,.jpeg,.png"
-                  />
-                </Button>
-                
-                {(file || fileUrl) && (
-                  <>
-                    <Button
-                      variant="outlined"
-                      startIcon={<PreviewIcon />}
-                      onClick={handleOpenPreview}
-                    >
-                      Previsualizar
-                    </Button>
-                    
-                  
-                  </>
-                )}
-              </Box>
-
-              {(file || fileUrl) && (
-                <Typography variant="body2" mt={1}>
-                  Archivo seleccionado: {file?.name || fileUrl?.split('/').pop()}
-                </Typography>
-              )}
-             
-                {errors.file && (
-                <Typography 
-                  variant="body2" 
-                  mt={1}
-                  sx={{ color: 'error.main' }} // Esto aplica el color rojo del tema
-                >
-                  {'El archivo es obligatorio'}
-                </Typography>
-              )}
-            </Grid>
+        
 
               {process.env.NODE_ENV === 'development' && (
                 <div style={{ marginTop: 20 }}>

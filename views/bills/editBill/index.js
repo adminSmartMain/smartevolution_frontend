@@ -22,7 +22,7 @@ import {
   
 } from "./queries";
 import BillCreationComponent from "./components";
-import { Bills, billById, payerByBill } from "./queries";
+import { Bills, billById, payerByBill,EditBill } from "./queries";
 export default function BillEdition() {
 // States
   const [created, setCreated] = useState(0);
@@ -44,9 +44,26 @@ export default function BillEdition() {
   const [actions,  setActions] = useState('');
   const [loading2, setLoading] = useState(false);
   const [operations, setOperations] = useState([]);
-  
+  const [bill,setDataBill]=useState("")
   // Router
   const router = useRouter();
+  // Detect when the user is editing an operation
+    useEffect(() => {
+      if (router && router.query) {
+        
+        if (router.query.id) {
+      
+          setId(router.query.id);
+        }
+  
+        if (router.query.previousDeleted) {
+          
+        }
+      }
+    }, [router.query]);
+  
+  
+  console.log(id)
 
   // Queries
 
@@ -96,12 +113,6 @@ export default function BillEdition() {
     data: dataGetLastId,
   } = useFetch({ service: GetLastOperationId, init: true });
 
-  const {
-    fetch: getOperationByIdFetch,
-    loading: loadingGetOperationById,
-    error: errorGetOperationById,
-    data: dataGetOperationById,
-  } = useFetch({ service: GetOperationById, init: false });
 
   const {
     fetch: createOperationFetch,
@@ -146,7 +157,13 @@ export default function BillEdition() {
   } = useFetch({ service: CreateBillManually, init: false });
 
 
-  
+    const {
+    fetch: editBillManuallyFetch,
+    loading: loadingEditBillManually,
+    error: errorEditBillManually,
+    data: dataEditBillManually,
+  } = useFetch({ service: EditBill, init: false });
+
   // Hooks
       const {
         fetch: fetchTypeIdSelect,
@@ -155,36 +172,31 @@ export default function BillEdition() {
         data: dataTypeIdSelect,
       } =  useFetch({ service: TypeOperation, init: true });
 
-    // Detect when the user is editing an operation
-    useEffect(() => {
-      if (router && router.query) {
-        
-        if (router.query.id) {
-      
-          setId(router.query.id);
-        }
-  
-        if (router.query.previousDeleted) {
+
+      useEffect(
+
+      ()=>{
+
+        if (id){
+
+          fetchBill(id)
           
         }
-      }
-    }, [router.query]);
 
+      }, [id])
+
+      console.log(dataBill)
+
+    useEffect(() => {
+      if (dataBill) {
+          setDataBill(dataBill.data);
+      }
+    }, [dataBill]); // Espera a que los datos lleguen
+
+
+
+    console.log(bill)
   
-    useEffect(() => {
-      if (id) {
-        getOperationByIdFetch(id); // Hace la consulta
-        setIsEditing(true);
-      }
-    }, [id]);
-    
-    useEffect(() => {
-      if (dataGetOperationById) {
-        setOperation(dataGetOperationById);
-      }
-    }, [dataGetOperationById]); // Espera a que los datos lleguen
-
-
     useEffect(() => {
       if (dataAllUsers) {
         setUsers(dataAllUsers);
@@ -269,22 +281,37 @@ useEffect(() => {
   
 const validationSchema2 = Yup.object({
   emitter: Yup.string().required('Emisor es obligatorio'),
-  bill: Yup.string().when('massive', {
-    is: false,
-    then: Yup.string().required('Factura es obligatoria')
-  }),
-  DateBill: Yup.date().required('Fecha de factura es obligatoria'),
-    datePayment: Yup.date().required('Fecha de factura es obligatoria'),
-    expirationDate: Yup.date().required('Fecha de vencimiento es obligatoria'),
+  payerName: Yup.string().required('Pagador es obligatorio'),
+
+  billId: Yup.string().required('Código de factura es obligatorio'),
+  DateBill: Yup.date()
+  .required('La fecha de emisión es obligatoria')
+  .max(new Date(), 'La fecha de emisión no puede ser futura'),
+
+datePayment: Yup.date()
+  .required('La fecha de pago es obligatoria')
+  .min(
+    Yup.ref('DateBill'), 
+    'La fecha de pago no puede ser anterior a la fecha de emisión'
+  ),
+
+expirationDate: Yup.date()
+  .required('La fecha de vencimiento es obligatoria')
+  .min(
+    Yup.ref('DateBill'), 
+    'La fecha de vencimiento no puede ser anterior a la fecha de emisión'
+  ),
+    
+   
     typeBill: Yup.string().required('tipo de factura es obligatorio'),
   currentBalance: Yup.number()
     .required('Monto a pagar es obligatorio')
     .min(0, 'No puede ser negativo'),
-  arrayPayers: Yup.array()
-    .min(1, 'Debe seleccionar al menos un pagador')
-    .required('Debe seleccionar al menos un pagador'),
-    file: Yup.string().required('Emisor es obligatorio'),
-});
+  subTotal: Yup.number()
+  .required('Monto a pagar es obligatorio')
+  .min(0, 'No puede ser negativo')
+  .moreThan(0, 'El monto no puede ser cero'), // Asegura que sea mayor que 0
+  });
 
 // Efecto para manejar la alerta de saldo insuficiente
 useEffect(() => {
@@ -296,61 +323,60 @@ useEffect(() => {
   }
 }, [dataUpdateOperation]); // Se ejecutará cada vez que dataCreateOperation cambie
 
-
+function formatDate(date) {
+  if (!date) return '';
+  const d = new Date(date);
+  return d.toISOString().split('T')[0]; // "YYYY-MM-DD"
+}
 const onSubmit = async (values, { setSubmitting }) => {
   setIsModalOpen(true);
-  setLoading(true);
   setSubmitting(true);
-  setSuccessA(null); // Estado inicial
-  console.log(values.payer)
+  setSuccessA(null);
+  console.log(values.dateBill,values.expirationDate,values.datePayment)
   const operationData = {
-  
-    dateBill: values.fechaEmision || new Date().toISOString().substring(0, 10),
-    expirationDate: values.DateExpiration || new Date().toISOString().substring(0, 10),
+    
     currentBalance: Number(values.currentBalance) || 0,
     billId: values.factura,
-    bill: values.factura,
-    typeBill:values.typeBill,
-    datePayment:values.datePayment,
-    billValue:values.currentBalance,
-    subTotal:values.currentBalance,
-    total:values.currentBalance,
-    emitterId: values.emitter,
-    payerName:values.filtroEmitterPagador.payer,
-    payerId: values.filtroEmitterPagador.payer,
-    emitterName:values.emitter,
-    file:values.file,
+    bill: id,
+    typeBill: values.typeBill,
+     dateBill: formatDate(values.DateBill),
+  expirationDate: formatDate(values.expirationDate),
+  datePayment: formatDate(values.datePayment),
+    billValue: values.currentBalance,
+    subTotal: values.currentBalance,
+    total: values.currentBalance,
+    emitterId: values.emitterId,
+    payerName: values.payerName,
+    payerId: values.payerId,
+    emitterName: values.emitter,
+    file: values.file,
+    ret_fte: values.ret_fte,
+    ret_ica: values.ret_ica,
+    ret_iva: values.ret_iva,
+    subTotal: values.subTotal,
+    iva: values.iva,
+    total: values.total,
+    other_ret: values.other_ret,
   };
 
- 
   try {
     await validationSchema2.validate(values, { abortEarly: false });
-    const data = operationData ;
-   
-    const response = await createBillManuallyFetch(data);
+    
+    const response = await editBillManuallyFetch(operationData);
 
-    // 4. Verificar respuesta
     if (response?.error) {
       throw new Error(response.error.message || "Error en el servidor");
     }
 
-
-     
-    
-      Toast("Todas las operaciones se completaron con éxito", "success");
-      
-      setTimeout(() => {
-        setIsModalOpen(false);
-        
-      }, 5000);
-   
-    // 5. Manejar éxito
-    setSuccessA(true); // ✅ Actualizar estado de éxito
+    setSuccessA(true);
     Toast("Operación completada con éxito", "success");
-    setTimeout(() => console.log('ya'), 5000);
-
-  } catch (error) {
+    setIsModalOpen(false); // Cierra el modal inmediatamente
+    // Cerrar la ventana después de un breve delay
+    setTimeout(() => {
+      window.close();
+    }, 1500); // 1.5 segundos para que el usuario vea el mensaje de éxito
     
+  } catch (error) {
     console.error("Error detallado:", error);
     
     const errorMessage = error.name === 'ValidationError' 
@@ -359,10 +385,7 @@ const onSubmit = async (values, { setSubmitting }) => {
     
     Toast(errorMessage, "error");
   } finally {
-    setLoading(false);
     setSubmitting(false);
-    setIsModalOpen(false);
-    // No necesitas setTimeout aquí si usas el modal para mostrar resultados
   }
 };
 
@@ -391,6 +414,8 @@ const handleConfirm = async (values,actions) => {
       actionsFormik={actions}
        isFinished={isFinished}
        users={users}
+       bill={bill}
+       id={id}
       />
     </>
   );

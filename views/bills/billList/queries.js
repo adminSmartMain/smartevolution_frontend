@@ -2,7 +2,7 @@ import Axios from "axios";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-export const GetBillList = async (params) => {
+export const GetBillList = async (params={}) => {
   const res = await Axios.get(`${API_URL}/bill/`, {
     headers: {
       authorization: "Bearer " + localStorage.getItem("access-token"),
@@ -47,4 +47,12 @@ export const GetBillEvents = async (id) => {
     console.error("Error during GetBillEvents request:", error);  // Log para ver si hay algún error en la petición
     throw error;  // Re-lanzar el error para que sea manejado por el código llamante si es necesario
   }
+};
+export const getTypeBill = async () => {
+  const res = await Axios.get(`${API_URL}/type_bill/`, {
+    headers: {
+      authorization: "Bearer " + localStorage.getItem("access-token"),
+    },
+  });
+  return res.data;
 };

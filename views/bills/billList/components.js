@@ -1,21 +1,30 @@
 import { useEffect, useState } from "react";
 import { ToastContainer } from "react-toastify";
-
+import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import DownloadIcon from '@mui/icons-material/Download';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { ListItemIcon } from '@mui/material';
+import ClearIcon from "@mui/icons-material/Clear";
 import Link from "next/link";
-
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import { SearchOutlined } from "@mui/icons-material";
-import { Box, Button, Fade, Typography } from "@mui/material";
-
+import { Box, Button, Fade, FormControl, Grid,ListItemText, IconButton, InputLabel,Menu, MenuItem, InputAdornment , Select, TextField, Typography,CircularProgress ,Tooltip} from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import CheckIcon from "@mui/icons-material/Check";
 import Modal from "@components/modals/modal";
 import TitleModal from "@components/modals/titleModal";
 import { Toast } from "@components/toast";
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from "@mui/material";
 
 import DateFormat from "@formats/DateFormat";
 
 import { useFetch } from "@hooks/useFetch";
 
 import downloadFile from "@lib/downloadFile";
-
+import axios from 'axios';
 import BackButton from "@styles/buttons/BackButton";
 import RedButtonModal from "@styles/buttons/noButtonModal";
 import GreenButtonModal from "@styles/buttons/yesButtonModal";
@@ -25,12 +34,14 @@ import InputTitles from "@styles/inputTitles";
 import LoadingCircle from "@styles/loading";
 import scrollSx from "@styles/scroll";
 import CustomDataGrid from "@styles/tables";
+import EditIcon from '@mui/icons-material/Edit';
+import AdvancedDateRangePicker from "@components/AdvancedDateRangePicker";
 
 import {
   DeleteBillById,
   GetBillEvents,
   GetBillList,
-  GetBillListByQuery,
+  GetBillListByQuery,getTypeBill
 } from "./queries";
 
 import FileSaver, { saveAs } from "file-saver";
@@ -40,37 +51,387 @@ import moment from "moment";
 export const BillsComponents = () => {
   const [filter, setFilter] = useState("");
   const [query, setQuery] = useState("");
+  const [anchorEl, setAnchorEl] = useState(null);
+    const [anchorElTypeBill, setAnchorElTypeBil] = useState(null);
+    const [anchorElChannel, setAnchorElChannel] = useState(null);
+  const [selectedRow, setSelectedRow] = useState(null);
+  const [search, setSearch] = useState("");
+  const [optionsTypeBill,setOptionsTypeBill]= useState("");
+     const [page, setPage] = useState(1);
   const formatOptions = {
     style: "currency",
     currency: "USD",
   };
+  const [anchorElCSV, setAnchorElCSV] = useState(null);
+    const openMenuCSV = Boolean(anchorElCSV);
   const numberFormat = new Intl.NumberFormat("en-US", formatOptions);
- const [openWindow, setOpenWindow] = useState(null); 
- const handleOpenRegisterOperation = () => {
-  if (openWindow && !openWindow.closed) {
-    // Si la ventana ya está abierta, solo le damos el foco (la trae al frente)
-    openWindow.focus();
-  } else {
-    // Si la ventana no está abierta, la abrimos y guardamos la referencia
-    const newWindow = window.open("/bills/createBill", "_blank", "width=800, height=600");
-    setOpenWindow(newWindow); // Guardamos la referencia de la ventana
-    // Escuchar el evento de cierre de la ventana
-    newWindow.onbeforeunload = () => {
-      setOpenWindow(null); // Restablecer la referencia cuando la ventana se cierre
+  const [openWindow, setOpenWindow] = useState(null); 
+  
+//Type bill button
+  const [selectedOptionTypeBill, setSelectedOptionTypeBill] = useState(null);
+ const [selectedOptionChannel, setSelectedOptionChannel] = useState(null);
+
+
+  // Hooks
+  const {
+    fetch: fetchBillList,
+    loading: loading,
+    error: error,
+    data: data,
+  } = useFetch({
+    service: (args) => GetBillList({ ...filters, page }),
+    init: true,
+  });
+
+  const {
+    fetch: fetchDeleteBillById,
+    loading: loadingDeleteBillById,
+    error: errorDeleteBillById,
+    data: dataDeleteBillById,
+  } = useFetch({ service: DeleteBillById, init: false });
+
+  const {
+    fetch: fetchGetBillEvents,
+    loading: loadingGetBillEvents,
+    error: errorGetBillEvents,
+    data: dataGetBillEvents,
+  } = useFetch({ service: GetBillEvents, init: false });
+
+
+
+
+
+// Filters
+
+
+const [filters, setFilters] = useState({
+  operation: "",
+  mode: 'intelligent_query',
+  emitter_or_payer_or_billId: "",
+  typeBill: "",       // Añade este campo
+  channel: "",        // Añade este campo
+  startDate: "",
+  endDate: ""
+});
+
+  const filtersHandlers = {
+    value: filters,
+    set: setFilters,
+    get: fetchBillList,
+    loading: loading,
+    error:  error,
+    data: data?.results || {},
+  };
+
+ const [tempFilters, setTempFilters] = useState({ ...filtersHandlers.value });
+useEffect(() => {
+  fetchBillList();
+}, [
+  filters.operation, 
+  filters.emitter_or_payer_or_billId,
+  filters.mode,
+  filters.startDate, 
+  filters.endDate,
+  filters.typeBill,    // Añade esta dependencia
+  filters.channel,     // Añade esta dependencia
+  page
+]);
+
+  const handleClearSearch = () => {
+    console.log(filtersHandlers.value)
+    const newFilters = {
+      ...filtersHandlers.value,  // Mantiene todos los filtros actuales
+      operation: "",                  // Limpia solo estos campos
+      mode:'intelligent_query',
+      emitter_or_payer_or_billId: "",
+    
     };
+    
+    filtersHandlers.set(newFilters);  // Actualiza el estado conservando las fechas
+    setSearch("");                    // Limpia el estado local de búsqueda si existe
+  };
+
+const handleTextFieldChange = (evt) => {
+  const value = evt.target.value;
+  setSearch(value);
+  
+  // Si el campo queda vacío, actualizar filtros automáticamente
+  if (value === "") {
+    updateFilters("", "multi");
   }
 };
 
 
 
-  const handleDownload = (url, fileName) => {
-    // Download XML from url
-    fetch(url)
-      .then((response) => response.blob())
-      .then((blob) => {
-        FileSaver.saveAs(blob, fileName);
-      });
+
+//CODIGO FILTRO FECHAS
+  const handleDateRangeApply = (dateRange) => {
+    // Actualiza solo las fechas manteniendo otros filtros
+
+    filtersHandlers.set({
+      ...filtersHandlers.value,
+      startDate: dateRange.startDate,
+      endDate: dateRange.endDate
+    });
+ setPage(1)
+
   };
+
+  const handleClear = () => {
+    
+    // Limpiar solo fechas en los filtros globales
+    filtersHandlers.set({
+      ...filtersHandlers.value,
+      startDate: "",
+      endDate: ""
+    });
+  };
+
+
+
+ const optionByChannel=[{label:'Autogestion',value:'autogestion'},{label:'Manual',value:'no-autogestion'}]
+
+  // CODIGO DE MANEJO FILTRO POR CANAL
+ 
+ const handleSelectChannel = (option) => {
+  setSelectedOptionChannel(option);
+  handleCloseChannel();
+  
+  // Actualiza los filtros globales
+  filtersHandlers.set({
+    ...filtersHandlers.value,
+    channel: option?.value || "", // Usa option.value o cadena vacía
+    page: 1 // Resetear a primera página
+  });
+};
+
+
+    
+  const handleClearByChannel = () => {
+    setSelectedOptionChannel(null);
+    // Limpiar solo fechas en los filtros globales
+    filtersHandlers.set({
+      ...filtersHandlers.value,
+     channel: "",
+       page: 1
+    });
+  };
+
+
+
+ const handleSelectTypeBill = (option) => {
+  setSelectedOptionTypeBill(option);
+  handleCloseTypeBill();
+  
+  // Actualiza los filtros globales
+  filtersHandlers.set({
+    ...filtersHandlers.value,
+    typeBill: option?.id || "", // Usa option.value o cadena vacía
+    page: 1 // Resetear a primera página
+  });
+};
+
+const handleClearTypeBill = () => {
+  setSelectedOptionTypeBill(null);
+  filtersHandlers.set({
+    ...filtersHandlers.value,
+    typeBill: "",
+    page: 1
+  });
+};
+
+
+
+
+
+
+ const [filterApplied, setFilterApplied] = useState(false);
+  const updateFilters = (value, field) => {
+     if (field !== "multi") {
+      const newFilters = { 
+        ...tempFilters, 
+        [field]: value,
+        startDate: tempFilters.startDate,
+        endDate: tempFilters.endDate,
+        typeBill:tempFilters.typeBill,
+        channel:tempFilters.channel
+      };
+      
+      filtersHandlers.set(newFilters);
+
+      // Si el valor es diferente al filtro actual, marcamos como filtro aplicado
+      if (tempFilters[field] !== value) {
+        setFilterApplied(true);
+      }
+      return;
+    }
+
+ const onlyDigits = /^\d{3,4}$/; // Operación: 3-4 dígitos
+    const alphaNumeric = /^[a-zA-Z0-9]{3,10}$/; // Factura: Alfanumérico de 3-10 caracteres
+    const hasLetters = /[a-zA-Z]/.test(value); // Si tiene letras
+    const hasSpaces = /\s/.test(value); // Si tiene espacios
+  
+    // Inicializamos los filtros vacíos
+      // Resto de tu lógica existente...
+  const newFilters = { 
+    operation: "",
+    emitter_or_payer_or_billId: "",
+    mode: "",
+    startDate: "", 
+    endDate: "",
+    typeBill: tempFilters.typeBill,    // Conserva el filtro de tipo
+    channel: tempFilters.channel       // Conserva el filtro de canal
+  };
+    // Clasificación más precisa
+    if (onlyDigits.test(value)) {
+      // Asignamos opId solo si tiene 3-4 dígitos
+      newFilters.operation = value; // Asignar a opId si es una operación
+      
+    } else if (alphaNumeric.test(value) && !hasLetters && value.length >= 3 && value.length <= 10) {
+      // Asignamos billId solo si es alfanumérico de 3-10 caracteres y no tiene letras
+      newFilters.billId = value;
+      newFilters.mode="intelligent_query"
+    } else if (hasLetters || hasSpaces || value.length > 4) {
+      // Si tiene letras o espacios, es un nombre de inversionista
+      newFilters.emitter_or_payer_or_billId = value;
+      newFilters.mode="intelligent_query"
+    } else {
+      // Por defecto lo tratamos como inversionista
+      newFilters.emitter_or_payer_or_billId = value;
+      newFilters.mode="intelligent_query"
+    }
+  
+    // Si las fechas no están vacías, las agregamos
+    if (tempFilters.startDate && tempFilters.endDate) {
+      newFilters.startDate = tempFilters.startDate;
+      newFilters.endDate = tempFilters.endDate;
+    }
+
+
+
+     // Si las fechas no están vacías, las agregamos
+    if (tempFilters.typeBill) {
+      newFilters.typeBill = tempFilters.typeBill;
+   
+    }
+    // Filtramos y actualizamos los filtros
+    filtersHandlers.set({
+      ...tempFilters,
+      ...newFilters,
+      startDate: tempFilters.startDate, // Conserva fechas
+      endDate: tempFilters.endDate,
+      typeBill: tempFilters.typeBill,
+    });
+
+        setFilterApplied(true);
+              setPage(1)
+  };
+  
+console.log(filters)
+
+// Fin codigo filtro
+
+const handleOpenWindow = (url, windowFeatures = "width=800, height=600") => {
+  if (openWindow && !openWindow.closed) {
+    // Si la ventana ya está abierta, solo le damos el foco
+    openWindow.focus();
+    return openWindow;
+  } else {
+    // Si la ventana no está abierta, la abrimos y guardamos la referencia
+    const newWindow = window.open(url, "_blank", windowFeatures);
+    setOpenWindow(newWindow);
+    
+    // Escuchar el evento de cierre de la ventana
+    newWindow.onbeforeunload = () => {
+      setOpenWindow(null);
+    };
+    
+    return newWindow;
+  }
+};
+
+
+// Funciones específicas que usan la función genérica
+const handleOpenRegisterOperation = () => {
+  handleOpenWindow("/bills/createBill");
+};
+
+const handleOpenDetailBill = (id) => {
+  handleOpenWindow(`/bills/detailBill?id=${id}`);
+};
+
+const handleOpenEditBill = (id) => {
+  handleOpenWindow(`/bills/editBill?id=${id}`);
+};
+const SortIcon = () => (
+  <Typography fontFamily="icomoon" fontSize="0.7rem">
+    &#xe908;
+  </Typography>
+);
+ const {
+    fetch: fetchTypeBill,
+    loading: loadingTypeBill,
+    error: errorTypeBill,
+    data: dataTypeBill,
+  } = useFetch({ service: getTypeBill, init: true });
+
+  // Llamada única al montar (opcional si init: true ya lo hace)
+  useEffect(() => {
+    if (!dataTypeBill) {
+      fetchTypeBill();
+    }
+  }, []);
+
+  // Transformación segura de los datos
+  useEffect(() => {
+    if (dataTypeBill?.data) {
+      try {
+        const options = Array.isArray(dataTypeBill.data) 
+          ? dataTypeBill.data.map((typeBill) => ({
+              id: typeBill.id,
+              label: typeBill.description,
+              value: typeBill.description,
+            }))
+          : [];
+        setOptionsTypeBill(options);
+      } catch (error) {
+        console.error("Error al procesar datos:", error);
+        setOptionsTypeBill([]);
+      }
+    } else {
+      setOptionsTypeBill([]);
+    }
+  }, [dataTypeBill]);
+
+
+  const handleClickTypeBill = (event) => {
+    setAnchorElTypeBil(event.currentTarget);
+  };
+
+  const handleCloseTypeBill = () => {
+    setAnchorElTypeBil(null);
+  };
+
+
+    const handleClickChannel = (event) => {
+    setAnchorElChannel(event.currentTarget);
+  };
+
+  const handleCloseChannel = () => {
+    setAnchorElChannel(null);
+  };
+
+
+
+const handleDownload = (url, fileName) => {
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;  // Fuerza la descarga en lugar de abrir el PDF
+  link.target = '_blank';   // Opcional: abre en nueva pestaña
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
 
   const addLineBreaks = (text, lineLength) => {
     const regex = new RegExp(`.{1,${lineLength}}`, "g");
@@ -80,37 +441,131 @@ export const BillsComponents = () => {
   };
 
   const columns = [
-    {
-      field: "billId",
-      headerName: "Nro Factura",
-      width: 110,
-      renderCell: (params) => {
-        return (
-          <CustomTooltip
-            title={params.value}
-            arrow
-            placement="bottom-start"
-            TransitionComponent={Fade}
-            PopperProps={{
-              modifiers: [
-                {
-                  name: "offset",
-                  options: {
-                    offset: [0, 0],
-                  },
+ {
+  field: "typeBill",
+  headerName: "Tipo",
+  width: 100,
+  flex: 1,     // Desactiva el crecimiento flexible
+  renderCell: (params) => {
+    return (
+      <Box 
+        sx={{
+          width: '100%',
+          display: 'flex',
+          justifyContent: 'center', // Centrado horizontal
+          alignItems: 'center'    // Centrado vertical (opcional)
+        }}
+      >
+
+<Typography
+        sx={{
+          fontSize: "100%",
+          color: "#488B8F !important",  // !important para forzar prioridad
+          fontWeight: "500 !important",
+          textTransform: "uppercase",
+          // Reset de estilos no deseados
+          backgroundColor: "transparent !important",
+          border: "none !important",
+          padding: "0 !important",
+          width: "auto !important",
+          textAlign: "center !important"
+        }}
+      >
+        {params.value}
+      </Typography>
+      </Box>
+      
+    );
+  },
+  valueGetter: (params) => {
+    switch (params.value) {
+      case "a7c70741-8c1a-4485-8ed4-5297e54a978a":
+        return "FV-TV";
+      case "29113618-6ab8-4633-aa8e-b3d6f242e8a4":
+        return "ENDOSADO";
+      default:
+        return "FV";
+    }
+  },
+},
+ {
+  field: "billId",
+  headerName: "ID",
+  width: 110,
+   flex: 1,    // Desactiva el crecimiento flexible
+  renderCell: (params) => {
+    return (
+      <Box display="flex" flexDirection="column">
+        <CustomTooltip
+          title={params.value}
+          arrow
+          placement="bottom-start"
+          TransitionComponent={Fade}
+          PopperProps={{
+            modifiers: [
+              {
+                name: "offset",
+                options: {
+                  offset: [0, 0],
                 },
-              ],
+              },
+            ],
+          }}
+        >
+          <InputTitles>{params.value}</InputTitles>
+        </CustomTooltip>
+        
+        {params.row.integrationCode && (
+          <Box
+            sx={{
+              backgroundColor: "#488B8F",
+              color: "white",
+              borderRadius: "12px",
+              padding: "2px 8px",
+              fontSize: "0.7rem",
+              fontWeight: "bold",
+              marginTop: "4px",
+              display: "inline-block",
+              alignSelf: "flex-start",
             }}
           >
-            <InputTitles>{params.value}</InputTitles>
-          </CustomTooltip>
+            Autogestión
+          </Box>
+        )}
+      </Box>
+    );
+  },
+}, {
+      field: "DateBill",
+      headerName: "Emitido",
+      width:81,
+       flex: 1,     // Desactiva el crecimiento flexible
+      renderCell: (params) => {
+        return (
+          <InputTitles>
+            {params.value ? moment(params.value).format("DD/MM/YYYY") : ""}
+          </InputTitles>
+        );
+      },
+    },
+    {
+      field: "expirationDate",
+      headerName: "Vence",
+      width:  81,
+       flex: 1,     // Desactiva el crecimiento flexible
+      renderCell: (params) => {
+        return (
+          <InputTitles>
+            {params.value ? moment(params.value).format("DD/MM/YYYY") : ""}
+          </InputTitles>
         );
       },
     },
     {
       field: "Emitter",
-      headerName: "EMISOR",
-      width: 180,
+      headerName: "Emisor",
+      width: 200,
+       flex: 1,     // Desactiva el crecimiento flexible
       renderCell: (params) => {
         return (
           <CustomTooltip
@@ -136,8 +591,9 @@ export const BillsComponents = () => {
     },
     {
       field: "Payer",
-      headerName: "PAGADOR",
-      width: 180,
+      headerName: "Pagador",
+      width: 200,
+       flex: 1,     // Desactiva el crecimiento flexible
       renderCell: (params) => {
         return (
           <CustomTooltip
@@ -161,37 +617,12 @@ export const BillsComponents = () => {
         );
       },
     },
-    {
-      field: "Subtotal",
-      headerName: "SUBTOTAL",
-      width: 130,
-      renderCell: (params) => {
-        return (
-          <CustomTooltip
-            title={numberFormat.format(params.value)}
-            arrow
-            placement="bottom-start"
-            TransitionComponent={Fade}
-            PopperProps={{
-              modifiers: [
-                {
-                  name: "offset",
-                  options: {
-                    offset: [0, 0],
-                  },
-                },
-              ],
-            }}
-          >
-            <InputTitles>{numberFormat.format(params.value)}</InputTitles>
-          </CustomTooltip>
-        );
-      },
-    },
+   
     {
       field: "Total",
-      headerName: "TOTAL",
-      width: 130,
+      headerName: "Total",
+      width: 150,
+       flex: 1,     // Desactiva el crecimiento flexible
       renderCell: (params) => {
         return (
           <CustomTooltip
@@ -215,10 +646,13 @@ export const BillsComponents = () => {
         );
       },
     },
-    {
-      field: "payedBalance",
-      headerName: "VALOR NEGOCIADO",
+
+  
+   {
+      field: "valor_a_recibir",
+      headerName: "Valor a recibir",
       width: 150,
+       flex: 1,     // Desactiva el crecimiento flexible
       renderCell: (params) => {
         return (
           <CustomTooltip
@@ -244,8 +678,9 @@ export const BillsComponents = () => {
     },
     {
       field: "currentBalance",
-      headerName: "VALOR DISPONIBLE",
+      headerName: "Saldo Disponible",
       width: 150,
+       flex: 1,     // Desactiva el crecimiento flexible
       renderCell: (params) => {
         return (
           <CustomTooltip
@@ -269,14 +704,81 @@ export const BillsComponents = () => {
         );
       },
     },
+{
+    field: "associatedOperation",
+    headerName: "OpId",
+    width: 130,
+    flex: 1,
+    renderCell: (params) => {
+      const displayValue = params.value !== null ? params.value : "NO ASOCIADA";
+      const tooltipTitle = params.value !== null ? params.value : "NO ASOCIADA";
+
+      return (
+        <Tooltip
+          title={tooltipTitle}
+          arrow
+          placement="bottom-start"
+          TransitionComponent={Fade}
+          PopperProps={{
+            modifiers: [
+              {
+                name: "offset",
+                options: {
+                  offset: [0, 0],
+                },
+              },
+            ],
+          }}
+        >
+          <InputTitles>{displayValue}</InputTitles>
+        </Tooltip>
+      );
+    },
+  },
+    
+   
+
     {
-      field: "associatedOperation",
-      headerName: "OPERACION ASOCIADA",
-      width: 150,
-      renderCell: (params) => {
-        return (
-          <CustomTooltip
-            title={params.value}
+    field: "actions",
+    headerName: "Acciones",
+   width: 100, // Aumenté el ancho para mejor visualización
+  flex: 0,    // Desactiva el crecimiento flexible
+    sortable: false,
+    filterable: false,
+    
+    renderCell: (params) => {
+      return (
+        <>
+        <Box  sx={{
+          width: '100%',
+          display: 'flex',
+          justifyContent: 'center', // Centrado horizontal
+          alignItems: 'center',   // Centrado vertical
+          gap: '8px'             // Espacio entre iconos
+        }}> 
+ <CustomTooltip
+            title="Descargar factura"
+            arrow
+            placement="bottom-start"
+          >
+            <IconButton
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDownload(params.row.file, params.row.billId);
+              }}
+              sx={{
+                color: "#999999",
+                "&:hover": {
+                  backgroundColor: "#B5D1C980",
+                  color: "#488B8F",
+                },
+              }}
+            >
+              <DownloadIcon />
+            </IconButton>
+          </CustomTooltip>
+ <CustomTooltip
+            title="Acciones"
             arrow
             placement="bottom-start"
             TransitionComponent={Fade}
@@ -285,423 +787,165 @@ export const BillsComponents = () => {
                 {
                   name: "offset",
                   options: {
-                    offset: [0, 0],
+                    offset: [0, -15],
                   },
                 },
               ],
             }}
           >
-            {params.value !== null ? (
-              <InputTitles>{params.value}</InputTitles>
-            ) : (
-              <InputTitles>NO ASOCIADA</InputTitles>
-            )}
+            <IconButton
+              onClick={(e) => {
+                e.stopPropagation();
+                setAnchorEl(e.currentTarget);
+                setSelectedRow(params.row);
+              }}
+              sx={{
+                color: "#999999",
+                "&:hover": {
+                  backgroundColor: "#B5D1C980",
+                  color: "#488B8F",
+                },
+              }}
+            >
+              <MoreVertIcon />
+            </IconButton>
           </CustomTooltip>
-        );
-      },
-    },
-    {
-      field: "typeBill",
-      headerName: "TIPO DE FACTURA",
-      width: 130,
-      renderCell: (params) => {
-        return (
-          <Typography
-            fontSize="80%"
-            width="100%"
-            fontWeight="bold"
-            color="white"
-            backgroundColor="#488B8F"
-            textTransform="uppercase"
-            textAlign="center"
-            padding="5.5% 8%"
-            border="1.4px solid #B5D1C9"
-            borderRadius="4px"
-          >
-            {params.value}
-          </Typography>
-        );
-      },
-      valueGetter: (params) => {
-        switch (params.value) {
-          case "a7c70741-8c1a-4485-8ed4-5297e54a978a":
-            return "FV-TV";
-          case "29113618-6ab8-4633-aa8e-b3d6f242e8a4":
-            return "ENDOSADO";
-          default:
-            return "FV";
-        }
-      },
-    },
-    {
-      field: "DateBill",
-      headerName: "FECHA CREACIÓN",
-      width: 160,
-      renderCell: (params) => {
-        return (
-          <InputTitles>
-            {params.value ? moment(params.value).format("DD/MM/YYYY") : ""}
-          </InputTitles>
-        );
-      },
-    },
-    {
-      field: "DatePayment",
-      headerName: "FECHA EXPIRACIÓN",
-      width: 160,
-      renderCell: (params) => {
-        return (
-          <InputTitles>
-            {params.value ? moment(params.value).format("DD/MM/YYYY") : ""}
-          </InputTitles>
-        );
-      },
-    },
+        </Box>
+         
 
-    //Iconos de acciones
-    {
-      field: "Ver factura",
-      headerName: "",
-      width: 50,
-      sortable: false,
-      filterable: false,
-      renderCell: (params) => {
-        return (
-          <>
-            <CustomTooltip
-              title="Ver factura"
-              arrow
-              placement="bottom-start"
-              TransitionComponent={Fade}
-              PopperProps={{
-                modifiers: [
-                  {
-                    name: "offset",
-                    options: {
-                      offset: [0, -15],
-                    },
-                  },
-                ],
+          <Menu
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl) && selectedRow?.id === params.row.id}
+            onClose={() => setAnchorEl(null)}
+            anchorOrigin={{
+              vertical: "bottom",
+              horizontal: "right",
+            }}
+            transformOrigin={{
+              vertical: "top",
+              horizontal: "right",
+            }}
+          >
+            <MenuItem
+              onClick={() => {
+                handleOpenDetailBill(selectedRow.id);
+               
               }}
+            >
+              <ListItemIcon>
+                <VisibilityIcon fontSize="small" />
+              </ListItemIcon>
+              Ver factura
+            </MenuItem>
+
+            <MenuItem
+             onClick={() => {
+             
+    if (selectedRow?.associatedOperation != null) {
+      Toast(
+        "No se puede editar una factura asociada a una operación",
+        "error"
+      );
+    } else {
+      // Navegar a la página de edición con el UUID de la factura
+    handleOpenEditBill(selectedRow.id)
+    }
+    setAnchorEl(null);
+  }}
+  sx={{
+    // Opcional: cambiar el color cuando está deshabilitado
+    '&.Mui-disabled': {
+      opacity: 0.7,
+    }
+  }}
+  disabled={selectedRow?.associatedOperation != null}
+          >
+            <ListItemIcon>
+              <EditIcon fontSize="small" />
+            </ListItemIcon>
+            Editar factura
+          </MenuItem>
+
+            <MenuItem
+              onClick={() => {
+                if (selectedRow.associatedOperation != null) {
+                  Toast(
+                    "No se puede eliminar una factura asociada a una operación",
+                    "error"
+                  );
+                } else {
+                  handleOpenDelete(selectedRow.id);
+                }
+                setAnchorEl(null);
+              }}
+                disabled={selectedRow?.associatedOperation != null}
+            >
+              <ListItemIcon>
+                <DeleteIcon fontSize="small" />
+              </ListItemIcon>
+              Eliminar
+            </MenuItem>
+          </Menu>
+
+         
+
+          <Modal open={openDelete[0]} handleClose={handleCloseDelete}>
+            <Box
+              display="flex"
+              flexDirection="column"
+              alignItems="center"
+              justifyContent="center"
+              height="100%"
+              width="100%"
             >
               <Typography
-                fontFamily="icomoon"
-                fontSize="1.9rem"
-                color="#999999"
-                borderRadius="5px"
-                sx={{
-                  "&:hover": {
-                    backgroundColor: "#B5D1C980",
-                    color: "#488B8F",
-                  },
-                  cursor: "pointer",
-                }}
-                onClick={() => handleOpenEvents(params.row.id)}
+                letterSpacing={0}
+                fontSize="1vw"
+                fontWeight="medium"
+                color="#63595C"
               >
-                &#xe922;
+                ¿Estás seguro que deseas eliminar
               </Typography>
-            </CustomTooltip>
-            <TitleModal
-              open={openEvents[0]}
-              handleClose={handleCloseEvents}
-              containerSx={{
-                width: "50%",
-                height: "60%",
-              }}
-              title={"Datos y eventos de la factura"}
-            >
-              {!loadingGetBillEvents ? (
-                <Box
-                  display="flex"
-                  flexDirection="column"
-                  mt={5}
-                  sx={{ ...scrollSx }}
-                  height="50vh"
-                  alignItems="center"
-                >
-                  <Typography
-                    letterSpacing={0}
-                    fontSize="1rem"
-                    fontWeight="medium"
-                    color="#63595C"
-                    width={"100%"}
-                    pb={2}
-                    borderBottom="1px solid #B5D1C9"
-                  >
-                    <b>ID de la factura:</b> {dataGetBillEvents?.data?.billId}{" "}
-                    <br />
-                    <b>Nombre del emisor:</b>{" "}
-                    {dataGetBillEvents?.data?.emitterName} <br />
-                    <b>ID del emisor:</b> {dataGetBillEvents?.data?.emitterId}{" "}
-                    <br />
-                    <b>Nombre del pagador:</b>{" "}
-                    {dataGetBillEvents?.data?.payerName} <br />
-                    <b>ID del pagador:</b> {dataGetBillEvents?.data?.payerId}{" "}
-                    <br />
-                    <b>Nombre del legítimo tenedor:</b>{" "}
-                    {dataGetBillEvents?.data?.currentOwnerName} <br />
-                    <b>Fecha de creación:</b>{" "}
-                    {dataGetBillEvents?.data?.dateBill} <br />
-                    <b>Fecha de expiración:</b>{" "}
-                    {dataGetBillEvents?.data?.datePayment} <br />
-                    <b>Valor:</b>{" "}
-                    {numberFormat.format(dataGetBillEvents?.data?.billValue)}{" "}
-                    <br />
-                    <b>CUFE:</b>{" "}
-                    {addLineBreaks(dataGetBillEvents?.data?.cufe, 50) ?? ""}{" "}
-                    <br />
-                    <br />
-                  </Typography>
-                  {dataGetBillEvents?.data?.events
-                    ?.sort((a, b) => a.code - b.code)
-                    .map((item, index) => {
-                      return (
-                        <Box
-                          key={index}
-                          display="flex"
-                          flexDirection="column"
-                          width="100%"
-                          alignItems="center"
-                          pt={2}
-                        >
-                          <Box
-                            display="flex"
-                            flexDirection="column"
-                            width="100%"
-                            alignItems="center"
-                            mb={3}
-                          >
-                            <Box
-                              display="flex"
-                              flexDirection="column"
-                              width="100%"
-                              alignItems="center"
-                              mb={3}
-                            >
-                              <Typography
-                                color="#488B8F"
-                                fontWeight="bold"
-                                fontSize="1.2rem"
-                              >
-                                Código: {item.code}
-                              </Typography>
-                              <Typography
-                                color="#488B8F"
-                                fontWeight="600"
-                                fontSize="1.2rem"
-                              >
-                                Fecha: {item.date}
-                              </Typography>
-                            </Box>
-                            <Box
-                              display="flex"
-                              flexDirection="column"
-                              width="100%"
-                              alignItems="center"
-                              mb={3}
-                            >
-                              <Typography
-                                color="#3"
-                                fontWeight="500"
-                                fontSize="1.2rem"
-                              >
-                                Evento: {item.event}
-                              </Typography>
-                            </Box>
-                          </Box>
-                        </Box>
-                      );
-                    })}
-                </Box>
-              ) : (
-                <Box display="flex" justifyContent="center" mt={5}>
-                  <LoadingCircle />
-                </Box>
-              )}
-            </TitleModal>
-          </>
-        );
-      },
-    },
-    {
-      field: "file",
-      headerName: "",
-      width: 50,
-      sortable: false,
-      filterable: false,
-      renderCell: (params) => {
-        return (
-          <>
-            <CustomTooltip
-              title="Descargar factura"
-              arrow
-              placement="bottom-start"
-              TransitionComponent={Fade}
-              PopperProps={{
-                modifiers: [
-                  {
-                    name: "offset",
-                    options: {
-                      offset: [0, -15],
-                    },
-                  },
-                ],
-              }}
-            >
+
               <Typography
-                fontFamily="icomoon"
-                fontSize="1.9rem"
-                color="#999999"
-                borderRadius="5px"
-                sx={{
-                  "&:hover": {
-                    backgroundColor: "#B5D1C980",
-                    color: "#488B8F",
-                  },
-                  cursor: "pointer",
-                }}
-                onClick={() => handleDownload(params.value, params.row.billId)}
+                letterSpacing={0}
+                fontSize="1vw"
+                fontWeight="medium"
+                color="#63595C"
+                mt={2}
               >
-                &#xe902;
+                esta factura?
               </Typography>
-            </CustomTooltip>
-          </>
-        );
-      },
-    },
-    {
-      field: "Eliminar",
-      headerName: "",
-      width: 50,
-      sortable: false,
-      filterable: false,
-      renderCell: (params) => {
-        return (
-          <>
-            <CustomTooltip
-              title="Eliminar"
-              arrow
-              placement="bottom-start"
-              TransitionComponent={Fade}
-              PopperProps={{
-                modifiers: [
-                  {
-                    name: "offset",
-                    options: {
-                      offset: [0, -15],
-                    },
-                  },
-                ],
-              }}
-            >
-              <Typography
-                fontFamily="icomoon"
-                fontSize="1.9rem"
-                color="#999999"
-                borderRadius="5px"
-                sx={{
-                  "&:hover": {
-                    backgroundColor: "#B5D1C980",
-                    color: "#488B8F",
-                  },
-                  cursor: "pointer",
-                }}
-                //Delete bill by id
-                onClick={() => {
-                  if (params.row.associatedOperation !== null) {
-                    Toast(
-                      "No se puede eliminar una factura asociada a una operación",
-                      "error"
-                    );
-                  } else {
-                    handleOpenDelete(params.row.id);
-                  }
-                }}
-              >
-                &#xe901;
-              </Typography>
-            </CustomTooltip>
-            <Modal open={openDelete[0]} handleClose={handleCloseDelete}>
+
               <Box
                 display="flex"
-                flexDirection="column"
+                flexDirection="row"
                 alignItems="center"
                 justifyContent="center"
-                height="100%"
-                width="100%"
+                mt={4}
               >
-                <Typography
-                  letterSpacing={0}
-                  fontSize="1vw"
-                  fontWeight="medium"
-                  color="#63595C"
+                <GreenButtonModal onClick={handleCloseDelete}>
+                  Volver
+                </GreenButtonModal>
+                <RedButtonModal
+                  sx={{
+                    ml: 2,
+                  }}
+                  onClick={() => {
+                    handleDelete(openDelete[1]);
+                  }}
                 >
-                  ¿Estás seguro que deseas eliminar
-                </Typography>
-
-                <Typography
-                  letterSpacing={0}
-                  fontSize="1vw"
-                  fontWeight="medium"
-                  color="#63595C"
-                  mt={2}
-                >
-                  esta factura?
-                </Typography>
-
-                <Box
-                  display="flex"
-                  flexDirection="row"
-                  alignItems="center"
-                  justifyContent="center"
-                  mt={4}
-                >
-                  <GreenButtonModal onClick={handleCloseDelete}>
-                    Volver
-                  </GreenButtonModal>
-                  <RedButtonModal
-                    sx={{
-                      ml: 2,
-                    }}
-                    onClick={() => {
-                      handleDelete(openDelete[1]);
-                    }}
-                  >
-                    Eliminar
-                  </RedButtonModal>
-                </Box>
+                  Eliminar
+                </RedButtonModal>
               </Box>
-            </Modal>
-          </>
-        );
-      },
+            </Box>
+          </Modal>
+        </>
+      );
     },
+  },
   ];
 
-  // Hooks
-  const {
-    fetch: fetchBillList,
-    loading: loading,
-    error: error,
-    data: data,
-  } = useFetch({
-    service: (args) => GetBillList({ page, ...args }),
-    init: true,
-  });
-
-  const {
-    fetch: fetchDeleteBillById,
-    loading: loadingDeleteBillById,
-    error: errorDeleteBillById,
-    data: dataDeleteBillById,
-  } = useFetch({ service: DeleteBillById, init: false });
-
-  const {
-    fetch: fetchGetBillEvents,
-    loading: loadingGetBillEvents,
-    error: errorGetBillEvents,
-    data: dataGetBillEvents,
-  } = useFetch({ service: GetBillEvents, init: false });
 
   useEffect(() => {
     if (dataDeleteBillById) {
@@ -716,7 +960,7 @@ export const BillsComponents = () => {
 
   const dataCount = data?.count || 0;
 
-  const [page, setPage] = useState(1);
+
   const [bill, setBill] = useState([]);
 
   useEffect(() => {
@@ -732,7 +976,9 @@ export const BillsComponents = () => {
         typeBill: bill.typeBill,
         DateBill: bill.dateBill,
         DatePayment: bill.datePayment,
+        expirationDate:bill.expirationDate,
         currentBalance: bill.currentBalance,
+        integrationCode: bill.integrationCode,
         payedBalance: bill.associatedOperation?.payedAmount
           ? Number(bill.associatedOperation?.payedAmount)
           : 0,
@@ -740,6 +986,7 @@ export const BillsComponents = () => {
           ? bill.associatedOperation?.opId
           : null,
         file: bill.file,
+        valor_a_recibir: (bill.subTotal + bill.iva) - (bill.ret_iva + bill.ret_ica + bill.ret_fte + bill.other_ret)
       })) || [];
     setBill(bill);
   }, [data]);
@@ -754,7 +1001,7 @@ export const BillsComponents = () => {
       setBill(bill.filter((bill) => bill.id !== id));
     }, 1000);
   };
-  console.log(dataGetBillEvents)
+
   const [openEvents, setOpenEvents] = useState([false, null]);
   const handleOpenEvents = (id) => handleEvents(id);
   const handleCloseEvents = () => setOpenEvents([false, null]);
@@ -762,227 +1009,389 @@ export const BillsComponents = () => {
     fetchGetBillEvents(id);
     setOpenEvents([true, id]);
   };
+  
 
+
+  //EXPORT TABLE TO EXCEL
+    const handleCloseMenuCSV = () => {
+    setAnchorElCSV(null);
+  };
+
+    const handleMenuClickCSV = (event) => {
+    setAnchorElCSV(event.currentTarget);
+  };
+
+
+    /* Experimento para exportar los datos del data grid a un archivo csv que pueda ser leido por Excel*/
+  const handleExportExcel = () => {
+    // Obtener los datos de las filas visibles en la página actual del DataGrid
+    const currentRows = bill; // Aquí, rows son los datos actuales de la página.
+  
+    // Generar los encabezados de las columnas
+    const columnHeaders = columns.map(col => col.headerName);
+  
+    // Convertir las filas de datos en formato CSV
+    const csvContent = [
+      columnHeaders.join(","), // Cabecera de las columnas
+      ...currentRows.map(row =>
+        columns.map(col => row[col.field] ? row[col.field] : "").join(",") // Filas de datos
+      ),
+    ].join("\n");
+  
+    // Crear un Blob con el contenido CSV
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  
+    // Crear un enlace de descarga
+    const link = document.createElement("a");
+  
+    // Crear un URL para el Blob
+    const url = URL.createObjectURL(blob);
+    
+    // Configurar el enlace para que descargue el archivo CSV
+    link.setAttribute("href", url);
+    link.setAttribute("download", "datos_exportados.csv"); // Nombre del archivo
+  
+    // Simular un clic en el enlace para iniciar la descarga
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+
+
+  const tableWrapperSx = {
+    marginTop: 2,
+    display: "flex",
+    flexDirection: "column",
+    width: "100%",
+    height: "100%",
+  };
+  
+
+
+
+
+  const totalWidth = columns.reduce((sum, column) => sum + (column.width || 0), 0);
   return (
     <>
-      <BackButton path="/dashboard" />
-      <Box
-        container
-        display="flex"
-        flexDirection="row"
-        justifyContent="space-between"
-      >
-        <Typography
+     
+      <Box container display="flex" flexDirection="column" mt={-3}>
+  
+<Box
+  display="flex"
+  flexDirection="row"
+  mt={2}
+  alignItems="center"
+  justifyContent="space-between"
+  gap={3}
+  sx={{
+    width: '100%',
+    padding: '0px 0'
+  }}
+>
+  <Box display="flex" alignItems="center" gap={2}>
+  
+  <Link href="/dashboard" underline="none">
+  <a>
+  <HomeOutlinedIcon 
+      fontSize="large" 
+      sx={{ 
+        color: '#488b8f',
+        opacity: 0.8, // Ajusta la transparencia (0.8 = 80% visible)
+        strokeWidth: 1, // Grosor del contorno
+      }} 
+    />
+
+  </a>
+  
+  </Link>
+  
+   <Typography
           letterSpacing={0}
           fontSize="1.7rem"
           fontWeight="regular"
           marginBottom="0.7rem"
+          marginTop='0.7rem'
           color="#5EA3A3"
         >
-          Consulta de Facturas
-        </Typography>
-        
-        <Box display="flex" gap="1rem">
-<Link href="/bills?=register" underline="none">
-          <Button
-            variant="standard"
-            color="primary"
-            size="large"
-            sx={{
-              height: "2.6rem",
-              backgroundColor: "transparent",
-              border: "1.4px solid #63595C",
-              borderRadius: "4px",
-            }}
-          >
-            <Typography
-              letterSpacing={0}
-              fontSize="80%"
-              fontWeight="bold"
-              color="#63595C"
-            >
-              Extraer nueva factura
-            </Typography>
-
-            <Typography
-              fontFamily="icomoon"
-              fontSize="1.2rem"
-              color="#63595C"
-              marginLeft="0.9rem"
-            >
-              &#xe927;
-            </Typography>
-          </Button>
-        </Link>
-
-        
-          <Button
-            variant="standard"
-            color="primary"
-            size="large"
-            sx={{
-              height: "2.6rem",
-              backgroundColor: "transparent",
-              border: "1.4px solid #63595C",
-              borderRadius: "4px",
-            }}
-            onClick={handleOpenRegisterOperation}
-          >
-            <Typography
-              letterSpacing={0}
-              fontSize="80%"
-              fontWeight="bold"
-              color="#63595C"
-            >
-              Registrar Factura Manual
-            </Typography>
-
-            <Typography
-              fontFamily="icomoon"
-              fontSize="1.2rem"
-              color="#63595C"
-              marginLeft="0.9rem"
-            >
-              &#xe927;
-            </Typography>
-          </Button>
-       
-        </Box>
-        
-      </Box>
-      <Box container display="flex" flexDirection="column" mt={3}>
-        <InputTitles>Buscar factura</InputTitles>
+  - Consulta de facturas
+  </Typography>
+  </Box>
+  
+  {/* Tus otros elementos aquí */}
+</Box>
         <Box
           container
           display="flex"
           flexDirection="row"
           mt={2}
           alignItems="center"
+          justifyContent="space-between"
         >
-          <Button
-            variant="standard"
-            size="medium"
-            onClick={() => {
-              setFilter(filter === "emitter" ? "" : "emitter");
-            }}
-            sx={{
-              height: "2rem",
-              backgroundColor: "transparent",
-              border: "1.4px solid #5EA3A3",
-              borderRadius: "4px",
-              marginRight: "0.3rem",
-              ...(filter === "emitter" && { borderWidth: 3 }),
-            }}
-          >
-            <Typography
-              letterSpacing={0}
-              fontSize="85%"
-              fontWeight="600"
-              color="#5EA3A3"
-              textTransform="none"
-            >
-              Emisor
-            </Typography>
-          </Button>
-          <Button
-            variant="standard"
-            size="medium"
-            onClick={() => {
-              setFilter(filter === "payer" ? "" : "payer");
-            }}
-            sx={{
-              height: "2rem",
-              backgroundColor: "transparent",
-              border: "1.4px solid #5EA3A3",
-              borderRadius: "4px",
-              marginRight: "0.3rem",
-              ...(filter === "payer" && { borderWidth: 3 }),
-            }}
-          >
-            <Typography
-              letterSpacing={0}
-              fontSize="85%"
-              fontWeight="600"
-              color="#5EA3A3"
-              textTransform="none"
-            >
-              Pagador
-            </Typography>
-          </Button>
+                   <TextField
+  variant="outlined"
+  id="searchBar"
+  size="small"
+  placeholder="Buscar por ID, Emisor, pagador u operacion (OpID)..."
+  value={search}
+ onChange={(evt) => handleTextFieldChange(evt, "investor")}
+  onKeyPress={(event) => {
+    if (event.key === "Enter") {
+      const valueToSearch = search || ""; // Si está vacío, manda cadena vacía
+      updateFilters(valueToSearch, "multi"); // realiza la búsqueda, incluso si el valor está vacío
+    }
+  }}
 
-          <Button
-            variant="standard"
-            size="medium"
-            onClick={() => {
-              setFilter(filter === "bill" ? "" : "bill");
-            }}
-            sx={{
-              height: "2rem",
-              backgroundColor: "transparent",
-              border: "1.4px solid #5EA3A3",
-              borderRadius: "4px",
-              marginRight: "0.3rem",
-              ...(filter === "bill" && { borderWidth: 3 }),
-            }}
-          >
-            <Typography
-              letterSpacing={0}
-              fontSize="85%"
-              fontWeight="600"
-              color="#5EA3A3"
-              textTransform="none"
-            >
-              Nro Factura
-            </Typography>
-          </Button>
-
-          <Button
-            variant="standard"
-            size="medium"
-            onClick={() => {
-              setFilter(filter === "operation" ? "" : "operation");
-            }}
-            sx={{
-              height: "2rem",
-              backgroundColor: "transparent",
-              border: "1.4px solid #5EA3A3",
-              borderRadius: "4px",
-              marginRight: "0.3rem",
-              ...(filter === "operation" && { borderWidth: 3 }),
-            }}
-          >
-            <Typography
-              letterSpacing={0}
-              fontSize="85%"
-              fontWeight="600"
-              color="#5EA3A3"
-              textTransform="none"
-            >
-              Operacion
-            </Typography>
-          </Button>
-
-          <BaseField
-            placeholder="Escriba su respuesta aquí"
-            value={query}
-            onChange={(evt) => {
-              setQuery(evt.target.value);
-            }}
-            onKeyPress={(event) => {
-              if (event.key === "Enter") {
-                fetchBillList({
-                  page: 1,
-                  ...(Boolean(filter) && { [filter]: query }),
-                });
-                setPage(1);
+  sx={{
+    flexGrow: 1,
+    minWidth: '250px',
+    maxWidth: '350px',
+    '& .MuiOutlinedInput-root': {
+      height: 35,
+      fontSize: '14px',
+      paddingRight: 0,
+    },
+    '& .MuiInputBase-input': {
+      padding: '6px 8px',
+    },
+  }}
+  InputProps={{
+    endAdornment: search && (
+      <InputAdornment position="end">
+        <IconButton 
+          onClick={handleClearSearch}
+          size="small"
+          edge="end"
+        >
+          <ClearIcon sx={{ color: "#ffffffff", fontSize: '18px' }} />
+        </IconButton>
+      </InputAdornment>
+    ),
+  }}
+/>
+{/*BOTON DE POR TIPO */}
+<button
+  onClick={handleClickTypeBill}
+  className="button-header-bill button-header-bill-primary"
+  style={{ 
+    display: 'flex', 
+    alignItems: 'center', 
+    gap: '4px',
+    position: 'relative',
+    paddingRight: selectedOptionTypeBill ? '32px' : '8px'
+  }}
+>
+  {selectedOptionTypeBill?.label || "Por Tipo"}
+  
+  {selectedOptionTypeBill ? (
+    <IconButton
+      size="small"
+      onClick={(e) => {
+        e.stopPropagation(); // Evitar que se abra el menú
+        handleClearTypeBill();
+      }}
+      sx={{
+        position: 'absolute',
+        right: '4px',
+        color: "#ffff",
+        '&:hover': {
+          backgroundColor: "#ffffff20"
+        },
+        width: 20,
+        height: 20
+      }}
+    >
+      <CloseIcon fontSize="small" />
+    </IconButton>
+  ) : (
+    <ArrowDropDownIcon sx={{ fontSize: "16px", color: "#ffff" }} />
+  )}
+</button>
+  <Menu
+    anchorEl={anchorElTypeBill}
+    open={Boolean(anchorElTypeBill)}
+    onClose={handleCloseTypeBill}
+    anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+    transformOrigin={{ vertical: "top", horizontal: "left" }}
+    PaperProps={{
+      sx: {
+        maxHeight: 300,
+        width: "250px"
+      }
+    }}
+  >
+    {loadingTypeBill ? (
+      <MenuItem disabled>
+        <CircularProgress size={20} />
+        Cargando opciones...
+      </MenuItem>
+    ) : errorTypeBill ? (
+      <MenuItem disabled sx={{ color: "error.main" }}>
+        Error al cargar opciones
+      </MenuItem>
+    ) : (
+      Array.isArray(optionsTypeBill) && optionsTypeBill.map((option) => (
+        <MenuItem
+          key={option.value}
+          onClick={() => handleSelectTypeBill(option)}
+          selected={selectedOptionTypeBill?.value === option.value}
+          sx={{
+            '&.Mui-selected': {
+              backgroundColor: "#488B8F10",
+              '&:hover': {
+                backgroundColor: "#488B8F15"
               }
-            }}
-            InputProps={{
-              endAdornment: <SearchOutlined sx={{ color: "#5EA3A3" }} />,
-            }}
-          />
+            }
+          }}
+        >
+          <ListItemText primary={option.label} />
+          {selectedOptionTypeBill?.value === option.value && (
+            <CheckIcon fontSize="small" sx={{ ml: 1, color: "#488B8F" }} />
+          )}
+        </MenuItem>
+      ))
+    )}
+  </Menu>
+
+  {/*BOTON DE POR CANAL */}
+        <button
+  onClick={handleClickChannel}
+  className="button-header-bill button-header-bill-primary"
+  style={{ 
+    display: 'flex', 
+    alignItems: 'center', 
+    gap: '4px',
+    position: 'relative',
+    paddingRight: selectedOptionChannel ? '32px' : '8px'
+  }}
+>
+  {selectedOptionChannel?.label || "Por Canal"}
+  
+  {selectedOptionChannel ? (
+    <IconButton
+      size="small"
+      onClick={(e) => {
+        e.stopPropagation(); // Evitar que se abra el menú
+        handleClearByChannel();
+      }}
+      sx={{
+        position: 'absolute',
+        right: '4px',
+        color: "#ffff",
+        '&:hover': {
+          backgroundColor: "#ffffff20"
+        },
+        width: 20,
+        height: 20
+      }}
+    >
+      <CloseIcon fontSize="small" />
+    </IconButton>
+  ) : (
+    <ArrowDropDownIcon sx={{ fontSize: "16px", color: "#ffff" }} />
+  )}
+</button>
+  <Menu
+    anchorEl={anchorElChannel}
+    open={Boolean(anchorElChannel)}
+    onClose={handleCloseChannel}
+    anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+    transformOrigin={{ vertical: "top", horizontal: "left" }}
+    PaperProps={{
+      sx: {
+        maxHeight: 300,
+        width: "250px"
+      }
+    }}
+  >
+    {loadingTypeBill ? (
+      <MenuItem disabled>
+        <CircularProgress size={20} />
+        Cargando opciones...
+      </MenuItem>
+    ) : errorTypeBill ? (
+      <MenuItem disabled sx={{ color: "error.main" }}>
+        Error al cargar opciones
+      </MenuItem>
+    ) : (
+      Array.isArray(optionByChannel) && optionByChannel.map((option) => (
+        <MenuItem
+          key={option.value}
+          onClick={() => handleSelectChannel(option)}
+          selected={selectedOptionChannel ?.value === option.value}
+          sx={{
+            '&.Mui-selected': {
+              backgroundColor: "#488B8F10",
+              '&:hover': {
+                backgroundColor: "#488B8F15"
+              }
+            }
+          }}
+        >
+          <ListItemText primary={option.label} />
+          {selectedOptionChannel ?.value === option.value && (
+            <CheckIcon fontSize="small" sx={{ ml: 1, color: "#488B8F" }} />
+          )}
+        </MenuItem>
+      ))
+    )}
+  </Menu>
+
+    <AdvancedDateRangePicker
+      
+      className="date-picker"
+      onApply={handleDateRangeApply}
+      onClean={handleClear}
+      
+    />
+       <Link href="/bills?=register" underline="none">
+       <button
+  className="button-header-bill button-header-bill-primary"
+  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+>
+  Extraer Facturas
+  <span 
+    style={{ 
+      fontFamily: 'icomoon', 
+      fontSize: '1rem', 
+      color: '#FFF' 
+    }}
+  >
+    &#xe927;
+  </span>
+</button>
+        </Link>
+
+
+        <button
+  className="button-header-bill button-header-bill-primary"
+  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+            onClick={handleOpenRegisterOperation}
+          >
+          Registrar Factura Manual
+      
+
+          <span 
+    style={{ 
+      fontFamily: 'icomoon', 
+      fontSize: '1rem', 
+      color: '#FFF' 
+    }}
+  >
+    &#xe927;
+  </span>
+          </button>
+           <IconButton onClick={handleMenuClickCSV} className="context-menu">
+      <MoreVertIcon />
+    </IconButton>
+    <Menu anchorEl={anchorElCSV} open={openMenuCSV} onClose={handleCloseMenuCSV}>
+      <MenuItem onClick={handleExportExcel}>Exportar a CSV</MenuItem>
+    </Menu>
         </Box>
       </Box>
+
+
+      
       <Box
         container
         marginTop={4}
@@ -990,6 +1399,7 @@ export const BillsComponents = () => {
         flexDirection="column"
         width="100%"
         height="100%"
+        sx={{ ...tableWrapperSx }}
       >
         <CustomDataGrid
           rows={bill}
@@ -998,18 +1408,75 @@ export const BillsComponents = () => {
           rowsPerPageOptions={[5]}
           disableSelectionOnClick
           disableColumnMenu
-          components={{
-            ColumnSortedAscendingIcon: () => (
-              <Typography fontFamily="icomoon" fontSize="0.7rem">
-                &#xe908;
-              </Typography>
-            ),
 
-            ColumnSortedDescendingIcon: () => (
-              <Typography fontFamily="icomoon" fontSize="0.7rem">
-                &#xe908;
-              </Typography>
-            ),
+          
+          sx={{
+            border: '1px solid #e0e0e0',
+            // Estilo para el texto en las celdas
+            
+            '& .MuiDataGrid-cell': {
+              borderRight: '1px solid #f0f0f0',
+               color: '#000000ff',
+                 // Gris oscuro estándar
+              '& .MuiTypography-root, & .InputTitles': { // Afecta tanto a Typography como a componentes personalizados
+                fontWeight: 400, // 400 = normal (300 es light, 500 medium, 600 semibold)
+                  color: 'inherit' // Hereda el color de la celda
+              }
+            },
+            // Estilo para los encabezados de columna
+            '& .MuiDataGrid-columnHeaders': {
+              backgroundColor: '#f5f5f5',
+              
+              borderBottom: '2px solid #e0e0e0',
+              '& .MuiDataGrid-columnHeaderTitle': {
+                fontWeight: 600, // Un poco más grueso que el contenido pero no bold (600+)
+                 color: '#808080',
+                fontSize: '0.85rem'
+              }
+            },
+                    '& .MuiDataGrid-columnHeader': {
+                      borderRight: '1px solid #e0e0e0', // Bordes entre columnas
+                    },
+                    '& .MuiDataGrid-row': {
+                      '&:nth-of-type(even)': {
+                        backgroundColor: '#fafafa', // Color filas pares
+                      },
+                      '&:hover': {
+                        backgroundColor: '#f0f0f0', // Color al pasar el mouse
+                      },
+                    },
+                    '& .MuiDataGrid-footerContainer': {
+                      borderTop: '1px solid #e0e0e0', // Borde superior del footer
+                    },
+                    '& .MuiDataGrid-virtualScroller': {
+                      overflowX: 'auto', // Oculta el scroll horizontal si no es necesario
+                    },
+                  filter: loading ? 'blur(2px)' : 'none', // Efecto de desenfoque
+                  transition: 'filter 0.3s ease-out' // Transición suave
+                    
+                  }}
+          components={{
+                     ColumnSortedAscendingIcon: SortIcon,
+                     ColumnSortedDescendingIcon: SortIcon,
+                     NoRowsOverlay: () => (
+                      <Typography
+                      fontSize="0.9rem"
+                      fontWeight="600 "
+                      color="#488B8F"
+                      height="100%"
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="center"
+                      sx={{
+                        border: '1px dashed #e0e0e0', // Borde para el área vacía
+                        margin: '0 16px 16px 16px',
+                        borderRadius: '4px',
+                        
+                      }}
+                    >
+                         No hay facturas registradas
+                       </Typography>
+                     ),
 
             Pagination: () => (
               <Box
@@ -1040,10 +1507,7 @@ export const BillsComponents = () => {
                     }}
                     onClick={() => {
                       if (page > 1) {
-                        fetchBillList({
-                          page: page - 1,
-                          ...(Boolean(filter) && { [filter]: query }),
-                        });
+                    
                         setPage(page - 1);
                       }
                     }}
@@ -1062,10 +1526,7 @@ export const BillsComponents = () => {
                     }}
                     onClick={() => {
                       if (page < dataCount / 15) {
-                        fetchBillList({
-                          page: page + 1,
-                          ...(Boolean(filter) && { [filter]: query }),
-                        });
+                     
                         setPage(page + 1);
                       }
                     }}

@@ -3,7 +3,7 @@ import React from "react";
 
 import { InputAdornment,  TextField } from '@mui/material';
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney"; // Icono del dólar
-
+import validateRetentions from "@components/validateRet";
 
 
 export default function RetIcaSelector({values, setFieldValue,formatNumberWithThousandsSeparator,parseFloat}) {
@@ -20,7 +20,11 @@ export default function RetIcaSelector({values, setFieldValue,formatNumberWithTh
     
         onChange={(e) => {
             const rawValue = e.target.value.replace(/[^\d]/g, "");
-
+                const numericValue = parseFloat(rawValue) || 0;
+                
+                if (!validateRetentions(values, numericValue, 'ret_ica')) {
+                    return;
+                }
                const valor_recibir= (Number(values.subTotal) +Number(values.iva))-(Number(values.ret_iva) +  Number(rawValue) + Number(values.ret_fte) + Number(values.other_ret));
   
                 setFieldValue(`ret_ica`, parseFloat(rawValue));
@@ -29,7 +33,7 @@ export default function RetIcaSelector({values, setFieldValue,formatNumberWithTh
         onFocus={(e) => {
             // Al hacer foco, removemos el formato para permitir la edición del valor numérico
             e.target.value = values.ret_ica ? values.ret_ica.toString() : "";
-        }}d
+        }}
      
         onBlur={(e) => {
                     // Al perder el foco, aplicar el formato de separadores de miles y asegurarse que sea un número entero

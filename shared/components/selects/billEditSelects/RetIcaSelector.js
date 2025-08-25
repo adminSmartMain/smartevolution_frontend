@@ -3,50 +3,43 @@ import React from "react";
 
 import { InputAdornment,  TextField } from '@mui/material';
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney"; // Icono del dólar
+
 import validateRetentions from "@components/validateRet";
 
-
-export default function RetIvaSelector({values, setFieldValue,formatNumberWithThousandsSeparator,parseFloat}) {
+export default function RetIcaSelector({values, setFieldValue,formatNumberWithThousandsSeparator,parseFloat,integrationCode}) {
 
     return (<TextField
-        id={`RetIva`}
-        data-testid="campo-RetIva"
-        label="RETIVA"
+        id={`RetIca`}
+        data-testid="campo-RetIca"
+        label="RET ICA"
         fullWidth
-       
+        disabled={integrationCode != null}
         type='text'
         value={
-           values?.ret_iva
+           values?.ret_ica
         }
     
         onChange={(e) => {
             const rawValue = e.target.value.replace(/[^\d]/g, "");
+                const numericValue = parseFloat(rawValue) || 0;
                 
-              const numericValue = parseFloat(rawValue) || 0;
+                if (!validateRetentions(values, numericValue, 'ret_ica')) {
+                    return;
+                }
+               const valor_recibir= (Number(values.subTotal) +Number(values.iva))-(Number(values.ret_iva) +  Number(rawValue) + Number(values.ret_fte) + Number(values.other_ret));
   
-            if (!validateRetentions(values, numericValue, 'ret_iva')) {
-                return;
-            }
-  
-                setFieldValue(`ret_iva`, parseFloat(rawValue));
-
-                const valor_recibir= (Number(values.subTotal) +Number(values.iva))-(Number(rawValue) + Number(values.ret_ica) + Number(values.ret_fte) + Number(values.other_ret));
-
-
-                setFieldValue('currentBalance', parseFloat(valor_recibir)); // Asumiendo un 5% de retención de IVA
-               
-          
+                setFieldValue(`ret_ica`, parseFloat(rawValue));
+                setFieldValue(`currentBalance`, parseFloat(valor_recibir));
         }}
         onFocus={(e) => {
             // Al hacer foco, removemos el formato para permitir la edición del valor numérico
-            e.target.value = values.ret_iva ? values.ret_iva.toString() : "";
+            e.target.value = values.ret_ica ? values.ret_ica.toString() : "";
         }}
-     
         onBlur={(e) => {
                     // Al perder el foco, aplicar el formato de separadores de miles y asegurarse que sea un número entero
                     const rawValue = e.target.value.replace(/[^\d]/g, "");
                     const valorFuturoManual = parseFloat(rawValue) || 0;
-                    setFieldValue(`ret_iva`, valorFuturoManual);
+                    setFieldValue(`ret_ica`, valorFuturoManual);
                 }}
 
         InputLabelProps={{

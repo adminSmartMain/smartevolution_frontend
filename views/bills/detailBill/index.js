@@ -22,29 +22,48 @@ import {
   
 } from "./queries";
 import BillCreationComponent from "./components";
-import { Bills, billById, payerByBill } from "./queries";
-export default function BillCreation() {
+import { Bills, billById, payerByBill,EditBill } from "./queries";
+export default function BillDetail() {
 // States
-
+  const [created, setCreated] = useState(0);
+  const [updated, setUpdated] = useState(0);
   const [opId, setOpId] = useState(null);
   const [id, setId] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [operation, setOperation] = useState([]);
-
+  const [isAddingBill, setIsAddingBill] = useState(false);
+  const [isCreatingBill, setIsCreatingBill] = useState(false);
   const [payer, setPayer] = useState([]);
   const [client, setClient] = useState([]);
   const [users, setUsers] = useState([]);
-  const [isFinished,setIsFinished] =useState(null)
-
-
-  const [success, setSuccess] = useState(null);
+  const [investor,setInvestor]=useState([])
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [success, setSuccessA] = useState(null);
   const [typeOp, setTypeOp] = useState([]);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [actions,  setActions] = useState('');
   const [loading2, setLoading] = useState(false);
-
+  const [operations, setOperations] = useState([]);
+  const [bill,setDataBill]=useState("")
   // Router
   const router = useRouter();
+  // Detect when the user is editing an operation
+    useEffect(() => {
+      if (router && router.query) {
+        
+        if (router.query.id) {
+      
+          setId(router.query.id);
+        }
+  
+        if (router.query.previousDeleted) {
+          
+        }
+      }
+    }, [router.query]);
+  
+  
+  console.log(id)
 
   // Queries
 
@@ -94,12 +113,6 @@ export default function BillCreation() {
     data: dataGetLastId,
   } = useFetch({ service: GetLastOperationId, init: true });
 
-  const {
-    fetch: getOperationByIdFetch,
-    loading: loadingGetOperationById,
-    error: errorGetOperationById,
-    data: dataGetOperationById,
-  } = useFetch({ service: GetOperationById, init: false });
 
   const {
     fetch: createOperationFetch,
@@ -143,6 +156,14 @@ export default function BillCreation() {
     data: datacreateBillManually,
   } = useFetch({ service: CreateBillManually, init: false });
 
+
+    const {
+    fetch: editBillManuallyFetch,
+    loading: loadingEditBillManually,
+    error: errorEditBillManually,
+    data: dataEditBillManually,
+  } = useFetch({ service: EditBill, init: false });
+
   // Hooks
       const {
         fetch: fetchTypeIdSelect,
@@ -151,36 +172,31 @@ export default function BillCreation() {
         data: dataTypeIdSelect,
       } =  useFetch({ service: TypeOperation, init: true });
 
-    // Detect when the user is editing an operation
-    useEffect(() => {
-      if (router && router.query) {
-        
-        if (router.query.id) {
-      
-          setId(router.query.id);
-        }
-  
-        if (router.query.previousDeleted) {
+
+      useEffect(
+
+      ()=>{
+
+        if (id){
+
+          fetchBill(id)
           
         }
-      }
-    }, [router.query]);
 
+      }, [id])
+
+      console.log(dataBill)
+
+    useEffect(() => {
+      if (dataBill) {
+          setDataBill(dataBill.data);
+      }
+    }, [dataBill]); // Espera a que los datos lleguen
+
+
+
+    console.log(bill)
   
-    useEffect(() => {
-      if (id) {
-        getOperationByIdFetch(id); // Hace la consulta
-        setIsEditing(true);
-      }
-    }, [id]);
-    
-    useEffect(() => {
-      if (dataGetOperationById) {
-        setOperation(dataGetOperationById);
-      }
-    }, [dataGetOperationById]); // Espera a que los datos lleguen
-
-
     useEffect(() => {
       if (dataAllUsers) {
         setUsers(dataAllUsers);
@@ -296,6 +312,10 @@ expirationDate: Yup.date()
   .min(0, 'No puede ser negativo')
   .moreThan(0, 'El monto no puede ser cero'), // Asegura que sea mayor que 0
     
+  arrayPayers: Yup.array()
+    .min(1, 'Debe seleccionar al menos un pagador')
+    .required('Debe seleccionar al menos un pagador'),
+    file: Yup.string().required('Emisor es obligatorio'),
 });
 
 // Efecto para manejar la alerta de saldo insuficiente
@@ -308,83 +328,77 @@ useEffect(() => {
   }
 }, [dataUpdateOperation]); // Se ejecutará cada vez que dataCreateOperation cambie
 
-
+function formatDate(date) {
+  if (!date) return '';
+  const d = new Date(date);
+  return d.toISOString().split('T')[0]; // "YYYY-MM-DD"
+}
 const onSubmit = async (values, { setSubmitting }) => {
-
-  setLoading(true);
+  setIsModalOpen(true);
   setSubmitting(true);
-  setSuccess(null); // Estado inicial
-  
-    
-
+  setSuccessA(null);
+  console.log(values.fechaEmision,values.DateExpiration,values.datePayment)
   const operationData = {
-  
-    dateBill: new Date(values.DateBill).toISOString().substring(0, 10) || new Date().toISOString().substring(0, 10),
-    expirationDate: new Date(values.expirationDate).toISOString().substring(0, 10) || new Date().toISOString().substring(0, 10),
+    
     currentBalance: Number(values.currentBalance) || 0,
     billId: values.factura,
-    bill: values.factura,
-    typeBill:values.typeBill,
-    datePayment:new Date(values.datePayment).toISOString().substring(0, 10) || new Date().toISOString().substring(0, 10),
-    billValue:values.subTotal,
-    subTotal:values.total,
-    total:values.currentBalance,
+    bill: id,
+    typeBill: values.typeBill,
+     dateBill: formatDate(values.DateBill),
+  expirationDate: formatDate(values.expirationDate),
+  datePayment: formatDate(values.datePayment),
+    billValue: values.currentBalance,
+    subTotal: values.currentBalance,
+    total: values.currentBalance,
     emitterId: values.emitterId,
-    payerName:values.payerName,
-    payerId: values.filtroEmitterPagador.payer,
-    emitterName:values.emitterName,
-    file:values.file,
-    ret_fte: values.ret_fte || 0,
-    ret_ica: values.ret_ica || 0,
-    ret_iva: values.ret_iva || 0,
-    iva: values.iva || 0,
-    other_ret: values.other_ret || 0,
-
+    payerName: values.payerName,
+    payerId: values.payerId,
+    emitterName: values.emitter,
+    file: values.file,
+    ret_fte: values.ret_fte,
+    ret_ica: values.ret_ica,
+    ret_iva: values.ret_iva,
+    subTotal: values.subTotal,
+    iva: values.iva,
+    total: values.total,
+    other_ret: values.other_ret,
   };
 
- 
   try {
     await validationSchema2.validate(values, { abortEarly: false });
-    const data = operationData ;
-   
-    const response = await CreateBillManually(data);
-    console.log("Respuesta del servidor:", response?.data);
-    // 4. Verificar respuesta
+    
+    const response = await editBillManuallyFetch(operationData);
+
     if (response?.error) {
       throw new Error(response.error.message || "Error en el servidor");
     }
-    // 5. Manejar éxito
-    setSuccess(true); // ✅ Actualizar estado de éxito
-    Toast("Registro de factura con éxito", "success");
-   setLoading(false);
-    setSubmitting(false);
-    setIsFinished(true)   
- setTimeout(() => {
-      window.close();
-    }, 1500); // 1.5 segundos para que el usuario vea el mensaje de éxito
+
+    setSuccessA(true);
+    Toast("Operación completada con éxito", "success");
+    setIsModalOpen(false); // Cierra el modal inmediatamente
     
   } catch (error) {
-    setSuccess(false);
     console.error("Error detallado:", error);
     
     const errorMessage = error.name === 'ValidationError' 
       ? `Errores: ${error.errors.join(', ')}`
-      : error?.response?.data?.details.billId || "Error en el proceso";
+      : error.message || "Error en el proceso";
     
     Toast(errorMessage, "error");
-    setIsFinished(false)
-  } 
+  } finally {
+    setSubmitting(false);
+  }
 };
 
 
-  const handleConfirm = async (values,actions) => {
+const handleConfirm = async (values,actions) => {
 
-    setShowConfirmationModal(true);
-    setActions(actions)
+  setShowConfirmationModal(true);
+  setActions(actions)
 
-    // Verifica en React DevTools si el estado realmente cambió
-  };
-
+  // Verifica en React DevTools si el estado realmente cambió
+};
+  const [isFinished,setIsFinished] =useState(null)
   
   return (
     <>
@@ -400,9 +414,9 @@ const onSubmit = async (values, { setSubmitting }) => {
       validationSchema2={validationSchema2}
       actionsFormik={actions}
        isFinished={isFinished}
-       success={success}
-       showConfirmationModal={showConfirmationModal}
-       setShowConfirmationModal={setShowConfirmationModal}
+       users={users}
+       bill={bill}
+       id={id}
       />
     </>
   );

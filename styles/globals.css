@@ -650,6 +650,25 @@ body {
   margin-left: 10px;
 }
 
+
+.button-header-bill {
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'Arial', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid #488B8F; /* Borde azul */
+  background-color: #488B8F;
+  color: white; /* Texto azul */
+  margin-right: 10px; /* Espacio entre botones */
+  transition: background-color 0.3s;
+  margin-left: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px; /* Espacio entre texto e icono
+}
+
 .button-header-preop:hover {
   background-color: #E3F2FD; /* Azul muy claro al pasar mouse */
 }

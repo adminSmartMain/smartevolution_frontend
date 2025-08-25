@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-
+import { Dialog,DialogContent, CircularProgress,Grid,TextField,Divider} from "@mui/material";
 import Clear from "@mui/icons-material/Clear";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import { Autocomplete, Box } from "@mui/material";
@@ -35,15 +35,14 @@ export default function ReceiptStatusSelect({ formik, disabled, ml }) {
 
   return (
     <>
-      <Box position="relative" sx={{
-        marginLeft: ml ? ml : 0
-      }}>
-        <Box width="17vw">
-          <InputTitles marginBottom={2}>Tipo de Recaudo</InputTitles>
+
+         
           <Autocomplete
             disablePortal
             disabled={disabled}
             id="receiptStatus"
+      fullWidth
+            
             options={dataReceiptStatus}
             getOptionLabel={(option) => option.label}
             onChange={(e, value) => {
@@ -53,7 +52,7 @@ export default function ReceiptStatusSelect({ formik, disabled, ml }) {
                 formik.setFieldValue("receiptStatus", null);
               }
             }}
-            color="#5EA3A3"
+          
             value={
               dataReceiptStatus.filter(
                 (option) => option.value === formik.values.receiptStatus
@@ -62,10 +61,11 @@ export default function ReceiptStatusSelect({ formik, disabled, ml }) {
             popupIcon={<KeyboardArrowDownIcon sx={{ color: "#5EA3A3" }} />}
             clearIcon={<Clear sx={{ color: "#5EA3A3" }} />}
             renderInput={(params) => (
-              <MuiTextField
-                variant="standard"
+              <TextField
+              
                 {...params}
                 placeholder="Tipo de Recaudo"
+                label="Tipo de Recaudo"
                 error={
                   formik.touched.receiptStatus &&
                   Boolean(formik.errors.receiptStatus)
@@ -78,19 +78,17 @@ export default function ReceiptStatusSelect({ formik, disabled, ml }) {
                 }
                 InputProps={{
                   ...params.InputProps,
-                  disableUnderline: true,
-                  sx: {
-                    marginTop: "-7px",
-                  },
+                  
+                  
                 }}
               />
             )}
           />
-        </Box>
+       
         <HelperText mt={0.8}>
           {formik.touched.receiptStatus && formik.errors.receiptStatus}
         </HelperText>
-      </Box>
+    
     </>
   );
 }

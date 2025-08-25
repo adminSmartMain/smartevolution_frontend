@@ -11,6 +11,7 @@ import {
   DialogActions,
   IconButton, Tooltip,
 } from "@mui/material";
+import EditIcon from '@mui/icons-material/Edit';
 import { useFetch } from "@hooks/useFetch";
 import { debounce } from 'lodash';
 import { TextField, Grid } from '@mui/material';
@@ -389,8 +390,6 @@ const [showAllPayers, setShowAllPayers] = useState(false);
 
 
   const [filteredPayers, setFilteredPayers] = useState([]);
-  const [filteredPayersBills, setFilteredPayerBills] = useState([]);
-  const [filteredAcountsInvestor, setAcountsInvestor] = useState([]);
 
 
   // Combinar el pagador inicial con los filtrados
@@ -455,7 +454,13 @@ const handleOpenPreview = () => {
     setOpenPreview(false);
   };
 
-
+const formatFileSize = (bytes) => {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
   return (
 
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={esLocale}>
@@ -466,31 +471,37 @@ const handleOpenPreview = () => {
 
 
       <Box sx={{ padding: 5, backgroundColor: 'white', borderRadius: 1, boxShadow: 1 }}>
-        <Box
-          container
-          display="flex"
-          flexDirection="row"
-          justifyContent="space-between"
+            <Grid container justifyContent="space-between" alignItems="center">
+      {/* Título - Ocupa toda la fila en móviles, 6/12 en pantallas más grandes */}
+      <Grid item xs={12} md={6}>
+        <Typography
+          letterSpacing={0}
+          fontSize="1.7rem"
+          fontWeight="regular"
+          marginBottom="0.7rem"
+          color="#5EA3A3"
         >
-          <Typography
-            letterSpacing={0}
-            fontSize="1.7rem"
-            fontWeight="regular"
-            marginBottom="0.7rem"
-            color="#5EA3A3"
-          >
-            Creación de Facturas
+          Creación de Facturas
+        </Typography>
+      </Grid>
+      
+      {/* Información del usuario - Ocupa toda la fila en móviles, 6/12 en pantallas más grandes */}
+      <Grid item xs={12} md={6} sx={{ 
+        textAlign: { xs: 'left', md: 'right' },
+        marginTop: { xs: '0.2rem', md: 0 },
+        marginBottom: { xs: '1rem', md: 0 }
+      }}>
+        {user ? (
+          <Typography variant="subtitle1" sx={{ color: 'text.secondary' }}>
+            Creado por: {renderNombreUsuario(user)}
           </Typography>
- {user ? (
-            <Typography variant="subtitle1" sx={{ color: 'text.secondary' }}>
-              Creado por: {renderNombreUsuario(user)}
-            </Typography>
-          ) : (
-            <Typography variant="subtitle1" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
-              Sin información de autoría
-            </Typography>
-          )}
-        </Box>
+        ) : (
+          <Typography variant="subtitle1" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
+            Sin información de autoría
+          </Typography>
+        )}
+      </Grid>
+    </Grid>
         <Formik
           initialValues={initialValues2}
           validationSchema={validationSchema2}
@@ -858,21 +869,31 @@ const handleOpenPreview = () => {
                     />
                   </Grid>
 
-<Grid item xs={8} sx={{ 
+                <Grid item xs={12} md={8} sx={{ 
   marginTop: '16px', 
   backgroundColor: 'grey.100', 
   p: 2, 
   borderRadius: 5,
   display: 'flex',
   flexDirection: 'column',
-  gap: 1
+  gap: 2
 }}>
-  <Box display="flex" alignItems="center" gap={2}>
+  {/* Contenedor principal que cambia de dirección en móviles */}
+  <Box 
+    display="flex" 
+    flexDirection={{ xs: 'column', sm: 'row' }} 
+    alignItems={{ xs: 'stretch', sm: 'center' }}
+    gap={{ xs: 2, sm: 2 }}
+  >
+    {/* Botón para seleccionar archivo */}
     <Button
       component="label"
       variant="contained"
       startIcon={<CloudUploadIcon />}
-      sx={{ flexShrink: 0 }}
+      sx={{ 
+        flexShrink: 0,
+        width: { xs: '100%', sm: 'auto' }
+      }}
     >
       Seleccionar archivo
       <VisuallyHiddenInput 
@@ -882,6 +903,7 @@ const handleOpenPreview = () => {
       />
     </Button>
     
+    {/* Botón de previsualización */}
     <Button
       variant="outlined"
       startIcon={<PreviewIcon />}
@@ -891,6 +913,7 @@ const handleOpenPreview = () => {
         backgroundColor: (file || fileUrl) ? 'background.paper' : 'grey.300',
         color: (file || fileUrl) ? 'text.primary' : 'text.disabled',
         flexShrink: 0,
+        width: { xs: '100%', sm: 'auto' },
         '&:hover': {
           backgroundColor: (file || fileUrl) ? 'action.hover' : 'grey.300'
         }
@@ -899,13 +922,36 @@ const handleOpenPreview = () => {
       Previsualizar
     </Button>
 
+    {/* Información del archivo - Ocupa el ancho completo en móviles */}
     {(file || fileUrl) && (
-      <Typography variant="body2" sx={{ ml: 1, flexGrow: 1, wordBreak: 'break-word' }}>
-        Archivo seleccionado: {file?.name || fileUrl?.split('/').pop()}
-      </Typography>
+      <Box 
+        sx={{ 
+          flexGrow: 1, 
+          width: { xs: '100%', sm: 'auto' },
+          textAlign: { xs: 'center', sm: 'left' }
+        }}
+      >
+        <Typography 
+          variant="body2" 
+          sx={{ 
+            wordBreak: 'break-word',
+            backgroundColor: 'white',
+            p: 1,
+            borderRadius: 1,
+            border: '1px solid',
+            borderColor: 'divider'
+          }}
+        >
+          Archivo seleccionado: {file?.name || fileUrl?.split('/').pop()}
+          {file?.size && (
+            <span> ({formatFileSize(file.size)})</span>
+          )}
+        </Typography>
+      </Box>
     )}
   </Box>
   
+  {/* Mensaje de error */}
   {errors.file && (
     <Typography 
       variant="body2"
@@ -919,18 +965,33 @@ const handleOpenPreview = () => {
                 </Grid>
           
                 {/* Botón de submit */}
-                <Grid item xs={1.5} style={{ marginTop: '16px' }} alignContent={'center'}>
-               
-<Button
-  type="submit"
-  variant="contained"
-  color="primary"
-  fullWidth
-  disabled={isSubmitting || isFinished} // Se deshabilita en ambos casos
+<Grid 
+  item 
+  xs={12} 
+  sm={3} 
+  md={2} 
+  style={{ 
+    marginTop: '16px', 
+    display: 'flex', 
+    justifyContent: 'center',
+    padding: '8px'
+  }}
 >
-  {isSubmitting ? 'Procesando...' : isFinished ? 'Registro completado' : 'Registrar'}
-</Button>
-                </Grid>
+  <Button
+    type="submit"
+    variant="contained"
+    color="primary"
+    fullWidth
+    disabled={isSubmitting || isFinished}
+    sx={{
+      minWidth: { xs: '100%', sm: '120px' },
+      fontSize: { xs: '0.875rem', sm: '0.9rem' },
+      py: { xs: 1, sm: 1.2 }
+    }}
+  >
+    {isSubmitting ? 'Procesando...' : isFinished ? 'Registro completado' : 'Registrar'}
+  </Button>
+</Grid>
               </Grid>
 
                 <ModalConfirmation
