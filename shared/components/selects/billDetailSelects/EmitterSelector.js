@@ -118,7 +118,7 @@ export default function EmitterSelector({
   const getCurrentValue = () => {
     if (!values.emitterId) return null;
     return emisores.find(emisor => 
-      emisor?.data?.id === values.emitterId
+      emisor?.data?.document_number === values.emitterId
     ) || null;
   };
   console.log(integrationCode,integrationCode != "")
