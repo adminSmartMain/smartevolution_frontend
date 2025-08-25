@@ -1488,10 +1488,7 @@ const handleDownload = (url, fileName) => {
                     }}
                     onClick={() => {
                       if (page > 1) {
-                        fetchBillList({
-                          page: page - 1,
-                          ...(Boolean(filter) && { [filter]: query }),
-                        });
+                    
                         setPage(page - 1);
                       }
                     }}
@@ -1510,10 +1507,7 @@ const handleDownload = (url, fileName) => {
                     }}
                     onClick={() => {
                       if (page < dataCount / 15) {
-                        fetchBillList({
-                          page: page + 1,
-                          ...(Boolean(filter) && { [filter]: query }),
-                        });
+                     
                         setPage(page + 1);
                       }
                     }}
