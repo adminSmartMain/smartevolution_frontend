@@ -1164,7 +1164,7 @@ const handleDownload = (url, fileName) => {
           size="small"
           edge="end"
         >
-          <ClearIcon sx={{ color: "#488b8f", fontSize: '18px' }} />
+          <ClearIcon sx={{ color: "#ffffffff", fontSize: '18px' }} />
         </IconButton>
       </InputAdornment>
     ),
@@ -1174,29 +1174,40 @@ const handleDownload = (url, fileName) => {
 <button
   onClick={handleClickTypeBill}
   className="button-header-bill button-header-bill-primary"
+  style={{ 
+    display: 'flex', 
+    alignItems: 'center', 
+    gap: '4px',
+    position: 'relative',
+    paddingRight: selectedOptionTypeBill ? '32px' : '8px'
+  }}
 >
   {selectedOptionTypeBill?.label || "Por Tipo"}
-  <ArrowDropDownIcon sx={{ fontSize: "16px" }}/>  {/* Icono al final del texto */}
+  
+  {selectedOptionTypeBill ? (
+    <IconButton
+      size="small"
+      onClick={(e) => {
+        e.stopPropagation(); // Evitar que se abra el menú
+        handleClearTypeBill();
+      }}
+      sx={{
+        position: 'absolute',
+        right: '4px',
+        color: "#ffff",
+        '&:hover': {
+          backgroundColor: "#ffffff20"
+        },
+        width: 20,
+        height: 20
+      }}
+    >
+      <CloseIcon fontSize="small" />
+    </IconButton>
+  ) : (
+    <ArrowDropDownIcon sx={{ fontSize: "16px", color: "#ffff" }} />
+  )}
 </button>
-
-  {selectedOptionTypeBill && (
-      <IconButton
-        size="small"
-        onClick={handleClearTypeBill}
-        sx={{
-          position: "relative", // Cambiado de absolute a relative
-          marginLeft: "-30px", // Ajuste de posición
-          zIndex: 1,
-          color: "#488B8F",
-          '&:hover': {
-            backgroundColor: "#488B8F20"
-          }
-        }}
-      >
-        <CloseIcon fontSize="small" />
-      </IconButton>
-    )}
-
   <Menu
     anchorEl={anchorElTypeBill}
     open={Boolean(anchorElTypeBill)}
@@ -1244,34 +1255,43 @@ const handleDownload = (url, fileName) => {
   </Menu>
 
   {/*BOTON DE POR CANAL */}
-         <button
-   
-    onClick={handleClickChannel}
-   className="button-header-bill button-header-bill-primary"
-  >
- 
-      {selectedOptionChannel?.label || "Por Canal"}
-      <ArrowDropDownIcon sx={{ fontSize: "16px" }}/>  {/* Icono al final del texto */}
-  </button>
-
-  {selectedOptionChannel  && (
-      <IconButton
-        size="small"
-        onClick={handleClearByChannel}
-        sx={{
-          position: "relative", // Cambiado de absolute a relative
-          marginLeft: "-30px", // Ajuste de posición
-          zIndex: 1,
-          color: "#488B8F",
-          '&:hover': {
-            backgroundColor: "#488B8F20"
-          }
-        }}
-      >
-        <CloseIcon fontSize="small" />
-      </IconButton>
-    )}
-
+        <button
+  onClick={handleClickChannel}
+  className="button-header-bill button-header-bill-primary"
+  style={{ 
+    display: 'flex', 
+    alignItems: 'center', 
+    gap: '4px',
+    position: 'relative',
+    paddingRight: selectedOptionChannel ? '32px' : '8px'
+  }}
+>
+  {selectedOptionChannel?.label || "Por Canal"}
+  
+  {selectedOptionChannel ? (
+    <IconButton
+      size="small"
+      onClick={(e) => {
+        e.stopPropagation(); // Evitar que se abra el menú
+        handleClearByChannel();
+      }}
+      sx={{
+        position: 'absolute',
+        right: '4px',
+        color: "#ffff",
+        '&:hover': {
+          backgroundColor: "#ffffff20"
+        },
+        width: 20,
+        height: 20
+      }}
+    >
+      <CloseIcon fontSize="small" />
+    </IconButton>
+  ) : (
+    <ArrowDropDownIcon sx={{ fontSize: "16px", color: "#ffff" }} />
+  )}
+</button>
   <Menu
     anchorEl={anchorElChannel}
     open={Boolean(anchorElChannel)}
