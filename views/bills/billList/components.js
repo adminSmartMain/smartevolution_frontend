@@ -10,7 +10,7 @@ import ClearIcon from "@mui/icons-material/Clear";
 import Link from "next/link";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import { SearchOutlined } from "@mui/icons-material";
-import { Box, Button, Fade, FormControl, Grid,ListItemText, IconButton, InputLabel,Menu, MenuItem, InputAdornment , Select, TextField, Typography,CircularProgress } from "@mui/material";
+import { Box, Button, Fade, FormControl, Grid,ListItemText, IconButton, InputLabel,Menu, MenuItem, InputAdornment , Select, TextField, Typography,CircularProgress ,Tooltip} from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import CheckIcon from "@mui/icons-material/Check";
@@ -189,7 +189,7 @@ const handleTextFieldChange = (evt) => {
 
 
 
- const optionByChannel=[{label:'Autogestion',value:'autogestion'},{label:'No-autogestión',value:'no-autogestion'}]
+ const optionByChannel=[{label:'Autogestion',value:'autogestion'},{label:'Manual',value:'no-autogestion'}]
 
   // CODIGO DE MANEJO FILTRO POR CANAL
  
@@ -704,38 +704,37 @@ const handleDownload = (url, fileName) => {
         );
       },
     },
-    {
-      field: "associatedOperation",
-      headerName: "OpId",
-      width: 103,
-       flex: 1,     // Desactiva el crecimiento flexible
-      renderCell: (params) => {
-        return (
-          <CustomTooltip
-            title={params.value}
-            arrow
-            placement="bottom-start"
-            TransitionComponent={Fade}
-            PopperProps={{
-              modifiers: [
-                {
-                  name: "offset",
-                  options: {
-                    offset: [0, 0],
-                  },
+{
+    field: "associatedOperation",
+    headerName: "OpId",
+    width: 130,
+    flex: 1,
+    renderCell: (params) => {
+      const displayValue = params.value !== null ? params.value : "NO ASOCIADA";
+      const tooltipTitle = params.value !== null ? params.value : "NO ASOCIADA";
+
+      return (
+        <Tooltip
+          title={tooltipTitle}
+          arrow
+          placement="bottom-start"
+          TransitionComponent={Fade}
+          PopperProps={{
+            modifiers: [
+              {
+                name: "offset",
+                options: {
+                  offset: [0, 0],
                 },
-              ],
-            }}
-          >
-            {params.value !== null ? (
-              <InputTitles>{params.value}</InputTitles>
-            ) : (
-              <InputTitles>NO ASOCIADA</InputTitles>
-            )}
-          </CustomTooltip>
-        );
-      },
+              },
+            ],
+          }}
+        >
+          <InputTitles>{displayValue}</InputTitles>
+        </Tooltip>
+      );
     },
+  },
     
    
 

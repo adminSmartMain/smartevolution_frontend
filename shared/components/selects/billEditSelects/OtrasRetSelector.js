@@ -4,7 +4,7 @@ import React from "react";
 import { InputAdornment,  TextField } from '@mui/material';
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney"; // Icono del dólar
 
-
+import validateRetentions from "@components/validateRet";
 
 export default function OtrasRetSelector({values, setFieldValue,formatNumberWithThousandsSeparator,parseFloat}) {
 
@@ -18,9 +18,13 @@ export default function OtrasRetSelector({values, setFieldValue,formatNumberWith
            values?.other_ret
         }
     
-        onChange={(e) => {
+       onChange={(e) => {
             const rawValue = e.target.value.replace(/[^\d]/g, "");
-
+             const numericValue = parseFloat(rawValue) || 0;
+  
+            if (!validateRetentions(values, numericValue, 'other_ret')) {
+                return;
+            }
 
                 const valor_recibir= (Number(values.subTotal) +Number(values.iva))-(Number(values.ret_iva )+ Number(values.ret_ica) + Number(values.ret_fte) + Number(rawValue));
                 setFieldValue(`other_ret`, parseFloat(rawValue));

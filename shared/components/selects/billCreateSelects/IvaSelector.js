@@ -3,9 +3,9 @@ import React from "react";
 
 import { InputAdornment,  TextField } from '@mui/material';
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney"; // Icono del dólar
+import validateRetentions from "@components/validateRet";
 
-
-
+import { toast } from 'react-toastify'; // Asegúrate de tener instalada esta librería
 export default function IvaSelector({values, setFieldValue,formatNumberWithThousandsSeparator,parseFloat}) {
 
     return (<TextField
@@ -18,25 +18,34 @@ export default function IvaSelector({values, setFieldValue,formatNumberWithThous
            values?.iva
         }
     
-        onChange={(e) => {
-            const rawValue = e.target.value.replace(/[^\d]/g, "");
-
-                
-                
-
-                const total=Number(values.subTotal)+Number(rawValue)
-
-                const valor_recibir= (Number(values.subTotal) +Number(rawValue))-(Number(values.ret_iva) + Number(values.ret_ica) + Number(values.ret_fte) + Number(values.other_ret));
-                
-                setFieldValue(`iva`, parseFloat(rawValue));
-               
-                setFieldValue('currentBalance', parseFloat(valor_recibir)); // Asumiendo un 5% de retención de IVA
-                 setFieldValue(`total`, parseFloat(total));
-        }}
-        onFocus={(e) => {
-            // Al hacer foco, removemos el formato para permitir la edición del valor numérico
-            e.target.value = values.iva ? values.iva.toString() : "";
-        }}
+onChange={(e) => {
+    const rawValue = e.target.value.replace(/[^\d]/g, "");
+    const newIva = Number(rawValue) || 0;
+    
+    // Validación: El IVA no puede ser mayor que el subtotal
+    if (newIva > Number(values.subTotal)) {
+        toast.error('El IVA no puede ser mayor al subtotal de la factura');
+        return; // Detener la ejecución
+    }
+    
+    // Calcular nuevos valores
+    const newTotal = Number(values.subTotal) + newIva;
+    const totalRetenciones = Number(values.ret_iva || 0) + 
+                            Number(values.ret_ica || 0) + 
+                            Number(values.ret_fte || 0) + 
+                            Number(values.other_ret || 0);
+    
+    const newCurrentBalance = newTotal - totalRetenciones;
+    
+    // Actualizar valores
+    setFieldValue('iva', newIva);
+    setFieldValue('total', newTotal);
+    setFieldValue('currentBalance', newCurrentBalance);
+}}
+onFocus={(e) => {
+    // Al hacer foco, removemos el formato para permitir la edición del valor numérico
+    e.target.value = values.iva ? values.iva.toString() : "";
+}}
      
         onBlur={(e) => {
                     // Al perder el foco, aplicar el formato de separadores de miles y asegurarse que sea un número entero

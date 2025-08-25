@@ -3,7 +3,7 @@ import React from "react";
 
 import { InputAdornment,  TextField } from '@mui/material';
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney"; // Icono del dólar
-
+import validateRetentions from "@components/validateRet";
 
 
 export default function RetFteSelector({values, setFieldValue,formatNumberWithThousandsSeparator,parseFloat,integrationCode}) {
@@ -19,9 +19,14 @@ export default function RetFteSelector({values, setFieldValue,formatNumberWithTh
            values?.ret_fte
         }
     
-        onChange={(e) => {
+         onChange={(e) => {
             const rawValue = e.target.value.replace(/[^\d]/g, "");
-
+            const numericValue = parseFloat(rawValue) || 0;
+  
+            // Validar antes de proceder
+            if (!validateRetentions(values, numericValue, 'ret_fte')) {
+                return; // Detener la ejecución si la validación falla
+            }
 
                const valor_recibir= (Number(values.subTotal) +Number(values.iva))-(Number(values.ret_iva) + Number(values.ret_ica) + Number(rawValue) + Number(values.other_ret));
                 setFieldValue(`ret_fte`, parseFloat(rawValue));

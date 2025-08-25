@@ -3,7 +3,7 @@ import React from "react";
 
 import { InputAdornment,  TextField } from '@mui/material';
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney"; // Icono del dólar
-
+import validateRetentions from "@components/validateRet";
 
 
 export default function RetIvaSelector({values, setFieldValue,formatNumberWithThousandsSeparator,parseFloat}) {
@@ -19,16 +19,22 @@ export default function RetIvaSelector({values, setFieldValue,formatNumberWithTh
            values?.ret_iva
         }
     
-        onChange={(e) => {
+              onChange={(e) => {
             const rawValue = e.target.value.replace(/[^\d]/g, "");
-
-
+                
+              const numericValue = parseFloat(rawValue) || 0;
+  
+            if (!validateRetentions(values, numericValue, 'ret_iva')) {
+                return;
+            }
   
                 setFieldValue(`ret_iva`, parseFloat(rawValue));
-                 const valor_recibir= (Number(values.subTotal) +Number(values.iva))-(Number(rawValue) + Number(values.ret_ica) + Number(values.ret_fte) + Number(values.other_ret));
+
+                const valor_recibir= (Number(values.subTotal) +Number(values.iva))-(Number(rawValue) + Number(values.ret_ica) + Number(values.ret_fte) + Number(values.other_ret));
 
 
                 setFieldValue('currentBalance', parseFloat(valor_recibir)); // Asumiendo un 5% de retención de IVA
+               
           
         }}
         onFocus={(e) => {

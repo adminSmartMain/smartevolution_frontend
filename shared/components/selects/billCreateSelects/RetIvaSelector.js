@@ -3,7 +3,7 @@ import React from "react";
 
 import { InputAdornment,  TextField } from '@mui/material';
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney"; // Icono del dólar
-
+import validateRetentions from "@components/validateRet";
 
 
 export default function RetIvaSelector({values, setFieldValue,formatNumberWithThousandsSeparator,parseFloat}) {
@@ -22,7 +22,11 @@ export default function RetIvaSelector({values, setFieldValue,formatNumberWithTh
         onChange={(e) => {
             const rawValue = e.target.value.replace(/[^\d]/g, "");
                 
-
+              const numericValue = parseFloat(rawValue) || 0;
+  
+            if (!validateRetentions(values, numericValue, 'ret_iva')) {
+                return;
+            }
   
                 setFieldValue(`ret_iva`, parseFloat(rawValue));
 
