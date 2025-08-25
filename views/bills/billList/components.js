@@ -189,7 +189,7 @@ const handleTextFieldChange = (evt) => {
 
 
 
- const optionByChannel=[{label:'Todos',value:'todos'},{label:'Autogestion',value:'autogestion'},{label:'No-autogestión',value:'no-autogestion'}]
+ const optionByChannel=[{label:'Autogestion',value:'autogestion'},{label:'No-autogestión',value:'no-autogestion'}]
 
   // CODIGO DE MANEJO FILTRO POR CANAL
  
