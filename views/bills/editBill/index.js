@@ -311,12 +311,7 @@ expirationDate: Yup.date()
   .required('Monto a pagar es obligatorio')
   .min(0, 'No puede ser negativo')
   .moreThan(0, 'El monto no puede ser cero'), // Asegura que sea mayor que 0
-    
-  arrayPayers: Yup.array()
-    .min(1, 'Debe seleccionar al menos un pagador')
-    .required('Debe seleccionar al menos un pagador'),
-    file: Yup.string().required('Emisor es obligatorio'),
-});
+  });
 
 // Efecto para manejar la alerta de saldo insuficiente
 useEffect(() => {
