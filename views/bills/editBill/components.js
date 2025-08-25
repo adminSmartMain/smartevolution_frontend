@@ -474,7 +474,7 @@ console.log( bill?.bill?.currentBalance)
     ret_fte:bill?.ret_fte,
     ret_ica:bill?.ret_ica,
     ret_iva:bill?.ret_iva,
-    subTotal:bill?.subTotal,
+    subTotal:bill?.billValue,
     iva:bill?.iva,
     total:bill?.total,
     other_ret:bill?.other_ret,
