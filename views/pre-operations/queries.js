@@ -6,7 +6,7 @@ export const getOperationsVersionTwo = async (params = {}) => {
   const res = await Axios.get(
     `${API_URL}/preOperation/params?opId=${params.opId || ""}&billId=${
       params.billId || ""
-    }&investor=${params.investor || ""}&startDate=${params.startDate || ""}&endDate=${params.endDate || ""}&page=${params.page || 1}`,
+    }&investor=${params.investor || ""}&startDate=${params.startDate || ""}&endDate=${params.endDate || ""}&page=${params.page || 1}&status=${params.status ?? ""}`,
     {
       headers: {
         authorization: "Bearer " + localStorage.getItem("access-token"),
@@ -33,7 +33,7 @@ export const GetSummaryList = async (opId) => {
 export const getOperationsVersionTwo2 = async (params = {}) => {
   const res = await Axios.get(
     `${API_URL}/preOperation/params?opId=${params.opId || ""}&billId=${
-      params.billId || ""}&investor=${params.investor || ""}&page=${params.page || 1}&mode=operations&startDate=${params.startDate || ""}&endDate=${params.endDate || ""}&page=${params.page || 1}`,
+      params.billId || ""}&investor=${params.investor || ""}&page=${params.page || 1}&mode=operations&startDate=${params.startDate || ""}&endDate=${params.endDate || ""}&page=${params.page || 1}&status=${params.status ?? ""}`,
     {
       headers: {
         authorization: "Bearer " + localStorage.getItem("access-token"),

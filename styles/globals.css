@@ -505,11 +505,11 @@ body {
   }
   
   .badge.cancelada {
-    background-color: #488B8F; /* rojo  para 'Cancelado' */
+    background-color: #9B9B9B; /* rojo  para 'Cancelado' */
   }
   
   .badge.vencido {
-    background-color: #3f3f3f; /* Gris Naranja para 'Vencido' */
+    background-color: #CA0B0B; /* Gris Naranja para 'Vencido' */
   }
   
 

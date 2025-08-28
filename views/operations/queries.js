@@ -5,7 +5,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 export const getOperationsVersionTwo = async (params = {}) => {
   const res = await Axios.get(
     `${API_URL}/preOperation/params?opId=${params.opId || ""}&billId=${
-      params.billId || ""}&investor=${params.investor || ""}&page=${params.page || 1}&mode=operations&startDate=${params.startDate || ""}&endDate=${params.endDate || ""}&page=${params.page || 1}`,
+      params.billId || ""}&investor=${params.investor || ""}&page=${params.page || 1}&mode=operations&startDate=${params.startDate || ""}&endDate=${params.endDate || ""}&status=${params.status ?? ""}`,
     {
       headers: {
         authorization: "Bearer " + localStorage.getItem("access-token"),

@@ -13,6 +13,7 @@ export default function Operations() {
     opId: "",
     billId: "",
     investor: "",
+     status:"",
   });
 
   const [commission, setCommission] = useState(0);
@@ -41,7 +42,7 @@ export default function Operations() {
 
   useEffect(() => {
     getOperationsFetch();
-  }, [filters.opId, filters.billId, filters.investor,filters.startDate, filters.endDate, page]);
+  }, [filters.opId, filters.billId, filters.investor,filters.startDate, filters.endDate,filters.status, page]);
   
   useEffect(() => {
     if (dataGetOperations) {

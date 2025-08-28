@@ -272,7 +272,7 @@ const handleClearTypeBill = () => {
     const hasSpaces = /\s/.test(value); // Si tiene espacios
   
     // Inicializamos los filtros vacíos
-      // Resto de tu lógica existente...
+      
   const newFilters = { 
     operation: "",
     emitter_or_payer_or_billId: "",
@@ -1169,6 +1169,9 @@ const handleDownload = (url, fileName) => {
     ),
   }}
 />
+
+
+  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
 {/*BOTON DE POR TIPO */}
 <button
   onClick={handleClickTypeBill}
@@ -1387,6 +1390,9 @@ const handleDownload = (url, fileName) => {
     <Menu anchorEl={anchorElCSV} open={openMenuCSV} onClose={handleCloseMenuCSV}>
       <MenuItem onClick={handleExportExcel}>Exportar a CSV</MenuItem>
     </Menu>
+
+  </Box>
+
         </Box>
       </Box>
 

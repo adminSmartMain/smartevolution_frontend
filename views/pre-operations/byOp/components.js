@@ -677,7 +677,7 @@ const handleTextFieldChange = (evt) => {
         />
 
         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
-          <Link href="/pre-operations" underline="none">
+          <Link href="/operations" underline="none">
             <Button sx={buttonHeaderPreop}>Ver por facturas</Button>
           </Link>
 
