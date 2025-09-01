@@ -36,19 +36,17 @@ export default function TypeIDSelect({ formik, mt, ml, disabled }) {
   // Función para obtener el color según el tipo
   const getColorByType = (typeId) => {
     switch(typeId) {
-      case '3d461dea-0545-4a92-a847-31b8327bf033': return '#001F3F';
-      case '62b0ca1e-f999-4a76-a07f-be1fe4f38cfb': return '#4CAF50';
-      case 'edd99cf7-6f47-4c82-a4fd-f13b4c60a0c0': return '#f11000ff';
-      case 'ed85d2bc-1a4b-45ae-b2fd-f931527d9f7f': return '#FFD600';
-      case 'db1d1fa4-e467-4fde-9aee-bbf4008d688b': return '#9C27B0';
-      case 'd40e91b1-fb6c-4c61-9da8-78d4f258181d': return '#2196F3';
+      case '3d461dea-0545-4a92-a847-31b8327bf033' || 'edd99cf7-6f47-4c82-a4fd-f13b4c60a0c0': return '#ff9100ff';//ANTICIPADO
+      case '62b0ca1e-f999-4a76-a07f-be1fe4f38cfb' || 'ed85d2bc-1a4b-45ae-b2fd-f931527d9f7f': return '#c70d0dff';
+      case 'db1d1fa4-e467-4fde-9aee-bbf4008d688b' || 'd40e91b1-fb6c-4c61-9da8-78d4f258181d': return '#4CAF50';//VIGENTE
+      
       default: return '#607D8B';
     }
   };
 
   // Función para determinar el color del texto según el fondo
   const getTextColor = (backgroundColor) => {
-    return backgroundColor === '#FFD600' ? '#000000' : '#FFFFFF';
+    return backgroundColor === '#FFD600' ? '#000000' : '#ffffffff';
   };
 
   const currentColor = formik.values.typeReceipt 
@@ -102,8 +100,9 @@ export default function TypeIDSelect({ formik, mt, ml, disabled }) {
           <Typography 
             sx={{ 
               textAlign: "center",
-              fontWeight: selectedOption ? 'normal' : 'light',
-              fontStyle: selectedOption ? 'normal' : 'italic'
+              fontSize: selectedOption ? '1.3rem' : '2rem',
+              fontWeight: selectedOption ? 'bold' : 'light',
+              fontStyle: selectedOption ? 'bold' : 'italic'
             }}
           >
             {selectedOption ? selectedOption.label : "Estado de Recaudo"}

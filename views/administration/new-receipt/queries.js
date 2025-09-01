@@ -19,3 +19,11 @@ export const RegisterReceipt = async (data) => {
   });
   return res.data;
 };
+export const typeReceipt = async (data) => {
+  const res = await Axios.get(`${API_URL}/type_receipt`, {
+    headers: {
+      authorization: "Bearer " + localStorage.getItem("access-token"),
+    },
+  });
+  return res.data;
+};

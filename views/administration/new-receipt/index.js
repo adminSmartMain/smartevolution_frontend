@@ -188,41 +188,39 @@ export default function Receipt() {
     }
   }, [data, formik.values.date]);
 
-  useEffect(() => {
-    
 
-    let pendingAmount = data?.data?.amount -(formik.values.payedAmount - formik.values.additionalInterests);
-     setPendingAmount(Math.round(pendingAmount));
-    console.log(Math.round(pendingAmount))
-    console.log('aqui esta data para el pending amount',data)
-    console.log('lastDate',data?.receipts.lastDate)
-    if (data?.receipts.lastDate) {
-      pendingAmount = pendingAmount - (data?.receipts.payedAmount - data?.receipts.interest);
-      setPendingAmount(Math.round(pendingAmount));
-      
-    } 
-    else if (formik.values.payedAmount-formik.values.additionalInterests>data?.data?.opPendingAmount){
-      console.log('entramos al condicional de pending amount 0')
-      setPendingAmount(0)
-    }
-    
-    
+  console.log(formik.values.payedAmount-formik.values.additionalInterests>data?.data?.opPendingAmount)
 
-    //if (
-    //  formik.values.receiptStatus === "ea8518e8-168a-46d7-b56a-1286bf0037cd" &&
-    //  data?.data?.bill.reBuyAvailable == false && state !== "vencida"
-    //) {
-    //  formik.setFieldValue("additionalInterests", 0);
-    //  formik.setFieldValue("investorInterests", 0);
-    //  formik.setFieldValue("payedAmount", data?.data?.amount);
-    //  setPendingAmount(data?.data?.amount - formik.values.payedAmount);
-    //}
-  }, [
-    formik.values.payedAmount,
-    formik.values.additionalInterests,
-    data,
-    canceled,
-  ]);
+useEffect(() => {
+  if (!data?.data) return; // Validación inicial
+
+  let pendingAmount = data.data.payedAmount - (formik.values.payedAmount - formik.values.additionalInterests);
+  
+  console.log('Pending amount inicial:', Math.round(pendingAmount));
+  console.log('Data para el pending amount:', data);
+  console.log('Last date:', data?.receipts?.lastDate);
+
+  // Primero verificar si el monto pagado supera el pendiente
+  if (formik.values.payedAmount - formik.values.additionalInterests > data.data.opPendingAmount) {
+    console.log('Entramos al condicional de pending amount 0');
+    setPendingAmount(0);
+  } 
+  // Luego aplicar el ajuste por receipts si existe
+  else if (data?.receipts?.lastDate) {
+    pendingAmount = pendingAmount - (data.receipts.payedAmount - data.receipts.interest);
+    setPendingAmount(Math.round(pendingAmount));
+  } 
+  // Si no hay receipts y no se supera el pendiente, usar el cálculo inicial
+  else {
+    setPendingAmount(Math.round(pendingAmount));
+  }
+
+}, [
+  formik.values.payedAmount,
+  formik.values.additionalInterests,
+  data,
+  canceled,
+]);
 
   useEffect(() => {
     if (canceled) {
@@ -272,7 +270,7 @@ export default function Receipt() {
           formik.setFieldValue("additionalInterestsSM", 0);
           formik.setFieldValue("investorInterests", 0);
           formik.setFieldValue("additionalDays", 0);
-          if (formik.values.payedAmount-formik.values.additionalInterests>data?.data?.opPendingAmount && formik.values.receiptStatus !== "ea8518e8-168a-46d7-b56a-1286bf0037cd") {
+          if (formik.values.payedAmount-formik.values.additionalInterests > data?.data?.opPendingAmount && formik.values.receiptStatus != "ea8518e8-168a-46d7-b56a-1286bf0037cd") {
           console.log( 'a',data?.data?.amount,data?.data?.payedAmount)
           console.log(formik.values.payedAmount,formik.values.additionalInterests,data?.data?.opPendingAmount)
           console.log(data?.data)
@@ -361,11 +359,11 @@ export default function Receipt() {
 
           formik.setFieldValue("futureValueRecalculation", 0);
           formik.setFieldValue("tableRemaining", 0);
-                if (data?.data?.payedPercent < 100 && formik.values.receiptStatus !== "ea8518e8-168a-46d7-b56a-1286bf0037cd") {
+                if (formik.values.payedAmount-formik.values.additionalInterests > data?.data?.opPendingAmount && formik.values.receiptStatus !== "ea8518e8-168a-46d7-b56a-1286bf0037cd") {
                    console.log( 'b',data?.data?.amount,data?.data?.payedAmount)
         formik.setFieldValue(
           "remaining",
-          data?.data?.amount - data?.data?.payedAmount
+         formik.values.payedAmount-formik.values.additionalInterests-data?.data?.opPendingAmount
         );
       }
           break;
@@ -381,11 +379,11 @@ export default function Receipt() {
           formik.setFieldValue("investorInterests", 0);
           formik.setFieldValue("additionalInterestsSM", 0);
           formik.setFieldValue("additionalDays", 0);
-                if (data?.data?.payedPercent < 100 && formik.values.receiptStatus !== "ea8518e8-168a-46d7-b56a-1286bf0037cd") {
+                if (formik.values.payedAmount-formik.values.additionalInterests > data?.data?.opPendingAmount  && formik.values.receiptStatus !== "ea8518e8-168a-46d7-b56a-1286bf0037cd") {
                   console.log( 'c',data?.data?.amount,data?.data?.payedAmount)
         formik.setFieldValue(
           "remaining",
-          data?.data?.amount - data?.data?.payedAmount
+          formik.values.payedAmount-formik.values.additionalInterests-data?.data?.opPendingAmount
         );
       }
       }
@@ -506,9 +504,11 @@ export default function Receipt() {
     }
   }, [formik.values.receiptStatus]);
 
+
+
   useEffect(() => {
     if (canceled) {
-      const calcPendingAmount = formik.values.pendingAmount - formik.values.payedAmount;
+      const calcPendingAmount = formik.values.opPendingAmount - formik.values.payedAmount;
       switch (state) {
         case "anticipada":
           if (formik.values.previousPayedAmount > 0) {
@@ -550,15 +550,28 @@ export default function Receipt() {
     } else {
       switch (state) {
         case "anticipada":
-          setPresentValueInvestor(formik.values.payedAmount);
+          if(formik.values.payedAmount==0){
+            setPresentValueInvestor(0);
+          }else{
+             setPresentValueInvestor(formik.values.payedAmount);
+          }
+         
           break;
         case "vigente":
-          setPresentValueInvestor(formik.values.payedAmount);
+          if(formik.values.payedAmount==0){
+            setPresentValueInvestor(0);
+          } else{
+setPresentValueInvestor(formik.values.payedAmount);
+          }
+          
           break;
         case "vencida":
-          setPresentValueInvestor(
-            formik.values.payedAmount - formik.values.additionalInterests
-          );
+          if(formik.values.payedAmount==0){
+            setPresentValueInvestor(0);
+          }else{
+        setPresentValueInvestor(formik.values.payedAmount - formik.values.additionalInterests);
+          }
+          
       }
     }
   }, [
@@ -571,6 +584,12 @@ export default function Receipt() {
     formik.values.payedAmount,
     formik.values.futureValueRecalculation,
   ]);
+
+
+
+
+
+
 
   useEffect(() => {
     setCounter(counter + 1);

@@ -1,4 +1,4 @@
-import { useState,useContext } from "react";
+import { useEffect,useState,useContext } from "react";
 import { ToastContainer } from "react-toastify";
 import { useRouter } from "next/router";
 import { Box, Typography } from "@mui/material";
@@ -24,9 +24,13 @@ import InfoIcon from '@mui/icons-material/Info';
 import { Dialog,DialogContent, CircularProgress,Grid,TextField,Divider,Tooltip, ClickAwayListener, IconButton} from "@mui/material";
 import { CheckCircle, Error } from "@mui/icons-material";
 import ModalConfirmation from "@components/modals/receiptBillModals/modalConfirmation";
-
+import {typeReceipt} from "./queries";
 import ProcessModal from "@components/modals/receiptBillModals/processModal"
 import authContext from "@context/authContext";
+import { useFetch } from "@hooks/useFetch";
+
+
+
 export const ReceiptC = ({ formik, 
                             data, 
                             pendingAmount,
@@ -42,6 +46,13 @@ export const ReceiptC = ({ formik,
   const [valueDate, setValueDate] = useState(dayjs("2014-08-18T21:11:54"));
    const { user, logout } = useContext(authContext);
 
+
+  const {
+    fetch: fetchReceipt,
+    loading: loadingReceipt,
+    error: errorReceipt,
+    data: dataReceipt,
+  } = useFetch({ service: typeReceipt, init: true });
 
 
 
@@ -108,6 +119,56 @@ console.log(data)
 
     setShowConfirmationModal(true);
   };
+
+    const formatNumberWithThousandsSeparator = (value) => {
+    if (value === undefined || value === null) return '';
+    
+    // Convert to string and split into integer and decimal parts
+    const [integerPart, decimalPart] = value.toString().split('.');
+    
+    // Format only the integer part with commas
+    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    
+    // Combine with decimal part if it exists
+    return decimalPart ? `${formattedInteger}.${decimalPart}` : formattedInteger;
+};
+
+  const [typeID, setTypeID] = useState([]);
+    const [selectedIndex, setSelectedIndex] = useState(-1);
+    console.log(dataReceipt)
+    useEffect(() => {
+      if (dataReceipt) {
+        const typesID = dataReceipt?.data?.map((type) => ({
+          label: type.description,
+          value: type.id
+        }));
+        setTypeID(typesID);
+        
+        // Encontrar índice del valor actual
+        if (formik.values.typeReceipt) {
+          const index = typesID?.findIndex(option => option.value === formik.values.typeReceipt);
+          setSelectedIndex(index);
+        }
+      }
+    }, [dataReceipt, formik.values.typeReceipt]);
+
+console.log(dataReceipt)
+// O con switch (forma correcta)
+const getColorByType = (typeId) => {
+  switch(typeId) {
+    case '3d461dea-0545-4a92-a847-31b8327bf033':
+    case 'edd99cf7-6f47-4c82-a4fd-f13b4c60a0c0':
+      return '#ff9100ff';
+    case '62b0ca1e-f999-4a76-a07f-be1fe4f38cfb':
+    case 'ed85d2bc-1a4b-45ae-b2fd-f931527d9f7f':
+      return '#c70d0dff';
+    case 'db1d1fa4-e467-4fde-9aee-bbf4008d688b':
+    case 'd40e91b1-fb6c-4c61-9da8-78d4f258181d':
+      return '#4CAF50';
+    default:
+      return '#607D8B';
+  }
+};
   return (
     <>
     <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -119,15 +180,47 @@ console.log(data)
                  <Grid container justifyContent="space-between" alignItems="center">
                     {/* Título - Ocupa toda la fila en móviles, 6/12 en pantallas más grandes */}
                     <Grid item xs={12} md={6}>
-                      <Typography
-                        letterSpacing={0}
-                        fontSize="1.7rem"
-                        fontWeight="regular"
-                        marginBottom="0.7rem"
-                        color="#5EA3A3"
-                      >
-                          Registrar Recaudo  Op : {data?.opId}
-                      </Typography>
+                      <Box sx={{ 
+    display: 'flex', 
+    alignItems: 'center', 
+    flexWrap: 'wrap',
+    gap: { xs: 0.5, sm: 2 },
+    marginBottom: { xs: 0.5, sm: 0.5 },
+    justifyContent: { xs: 'center', sm: 'flex-start' }
+}}>
+    <Typography
+        letterSpacing={0}
+        fontSize={{ xs: "1.4rem", sm: "1.7rem" }}
+        fontWeight="regular"
+        marginBottom="0"
+        color="#5EA3A3"
+        sx={{ 
+            marginRight: { xs: 0.5, sm: 1 },
+        }}
+    >
+        Registrar Recaudo Op: {data?.opId}
+    </Typography>
+
+    {formik.values.typeReceipt && (
+        <Box
+            sx={{
+                backgroundColor: getColorByType(formik.values.typeReceipt),
+                color: "white",
+                borderRadius: "12px",
+                padding: { xs: "3px 8px", sm: "2px 8px" },
+                fontSize: { xs: "0.8rem", sm: "1rem" },
+                fontWeight: "bold",
+                marginBottom: { xs: "0.2rem", sm: "0.1rem" },
+                alignSelf: 'center',
+                flexShrink: 0, // Evita que se reduzca
+                whiteSpace: 'nowrap' // Evita salto de línea
+            }}
+        >
+            {typeID?.find(option => option.value === formik.values.typeReceipt)?.label || 'Tipo de Recaudo'}
+        </Box>
+    )}
+</Box>
+                     
                     </Grid>
                     
                     {/* Información del usuario - Ocupa toda la fila en móviles, 6/12 en pantallas más grandes */}
@@ -149,7 +242,8 @@ console.log(data)
                   </Grid>
          
  
-      {/* Primera fila con 4 campos */}<Grid container rowSpacing={2} columnSpacing={4} alignItems="flex-start">
+      {/* Primera fila con 4 campos */}
+     <Grid container rowSpacing={2}  alignItems="stretch" justifyContent="space-between" mt={3}>
         <Grid item xs={12} md={2}>
           <DesktopDatePicker
             label="Date desktop"
@@ -257,26 +351,8 @@ console.log(data)
 
 
   
- <Grid item xs={12} md={2}>
-      <TypeReceiptSelect formik={formik} disabled={true} />
-    </Grid>
 
-  <Grid item xs={12} md={1}> {/* Contenedor flex */}
-     <TextField
-        id="additionalDays"
-        placeholder="Días adicionales"
-        label="Días adicionales"
-        name="additionalDays"
-        type="number"
-       fullWidth
-        value={formik.values.additionalDays}
-        disabled={true}
-        
-        onChange={formik.handleChange}
-        error={formik.touched.additionalDays && Boolean(formik.errors.additionalDays)}
-        
-      />
-    </Grid>
+
       </Grid>
 
 
@@ -315,6 +391,61 @@ console.log(data)
 
  
 <Grid container spacing={2}>
+    {/* Factura asociada */}
+  <Grid item xs={12} md={6}>
+    <Typography variant="body1">
+      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Factura asociada:</Box>
+      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
+        {data?.bill?.billId}
+      </Box>
+    </Typography>
+  </Grid>
+
+  {/* Valor Nominal */}
+  <Grid item xs={12} md={6}>
+    <Typography variant="body1">
+      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Valor Nominal:</Box>
+      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
+        {formatNumberWithThousandsSeparator(data?.payedAmount)}
+      </Box>
+    </Typography>
+  </Grid>
+    {/* Nombre del inversionista */}
+  <Grid item xs={12} md={6}>
+    <Typography variant="body1">
+      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Fecha Inicio:</Box>
+      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
+        {data?.opDate}
+      </Box>
+    </Typography>
+  </Grid>
+  {/* Nombre del inversionista */}
+  <Grid item xs={12} md={6}>
+    <Typography variant="body1">
+      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Fecha Fin:</Box>
+      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
+        {data?.opExpiration}
+      </Box>
+    </Typography>
+  </Grid>
+  {/* Nombre del inversionista */}
+  <Grid item xs={12} md={6}>
+    <Typography variant="body1">
+      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Emisor:</Box>
+      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
+        {data?.emitter?.social_reason || `${data?.emitter?.first_name || ''} ${data?.emitter?.last_name || ''}`.trim()}
+      </Box>
+    </Typography>
+  </Grid>
+  {/* Nombre del inversionista */}
+  <Grid item xs={12} md={6}>
+    <Typography variant="body1">
+      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Pagador:</Box>
+      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
+        {data?.payer?.social_reason || `${data?.payer?.first_name || ''} ${data?.payer?.last_name || ''}`.trim()}
+      </Box>
+    </Typography>
+  </Grid>
   {/* Nombre del inversionista */}
   <Grid item xs={12} md={6}>
     <Typography variant="body1">
@@ -328,34 +459,18 @@ console.log(data)
   {/* NIT del inversionista */}
   <Grid item xs={12} md={6}>
     <Typography variant="body1">
-      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">NIT inversionista:</Box>
-      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-        {data?.investor?.document_number}
-      </Box>
-    </Typography>
-  </Grid>
-
-  
-
-  {/* Cuenta de inversionista */}
-  <Grid item xs={12} md={6}>
-    <Typography variant="body1">
-      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Cuenta de Inversionista:</Box>
+      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Cuenta inversionista:</Box>
       <Box component="span" color="#5EA3A3" fontSize="1.1rem">
         {data?.clientAccount?.account_number}
       </Box>
     </Typography>
   </Grid>
 
-  {/* Factura asociada */}
-  <Grid item xs={12} md={6}>
-    <Typography variant="body1">
-      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Factura asociada:</Box>
-      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-        {data?.bill?.billId}
-      </Box>
-    </Typography>
-  </Grid>
+  
+
+
+
+
 </Grid>
 </Grid>
                 
@@ -369,7 +484,7 @@ console.log(data)
       color="#5EA3A3"
       sx={{ mb: 0.5 }}  // Reduje el marginBottom a 0.5 (4px)
     >
-      Datos de Recaudos
+      Datos del Recaudo
     </Typography>
     
     <Divider 
@@ -398,16 +513,48 @@ console.log(data)
   {/* Valor futuro Recalculado */}
   <Grid item xs={12} md={6}>
     <Typography variant="body1">
-      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Valor futuro Recalculado</Box>
+      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Valor futuro Recalculado  <AdaptiveTooltip
+        title="Muestra el valor a reconocer al inversionista en caso de recaudos anticipados, tomando en cuenta los días reales de la operación."
+        placement="top-end"
+        arrow
+      >
+        <IconButton edge="end" size="small" aria-label="Información">
+          <InfoIcon style={{ fontSize: '1rem', color: 'rgb(94, 163, 163)' }} />
+        </IconButton>
+       </AdaptiveTooltip></Box>
       <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-        {formik.values.futureValueRecalculation?.toFixed(0)}
+        {formatNumberWithThousandsSeparator(formik.values.futureValueRecalculation?.toFixed(0))}
       </Box>
     </Typography>
   </Grid>
   <Grid item xs={12}>
     <Divider sx={{ borderColor: '#d8d7d7ff' }} />
   </Grid>
+{/* Dias adicionales  */}
+ <Grid item xs={12} md={6}>
+    <Typography variant="body1">
+      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Dias adicionales
+       </Box>
+      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
+        {formik.values.additionalDays}
 
+        
+      </Box>
+    </Typography>
+  </Grid>
+
+  {/* Remanente Mesa  */}
+  <Grid item xs={12} md={6}>
+    <Typography variant="body1">
+      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Remanente Mesa </Box>
+      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
+        {formatNumberWithThousandsSeparator(formik.values.tableRemaining?.toFixed(0))}
+      </Box>
+    </Typography>
+  </Grid>
+ <Grid item xs={12}>
+    <Divider sx={{ borderColor:'#d8d7d7ff' }} />
+  </Grid>
     {/* Pendiente por cobrar  */}
   <Grid item xs={12} md={6}>
     <Typography variant="body1">
@@ -422,7 +569,7 @@ console.log(data)
         </IconButton>
        </AdaptiveTooltip></Box>
       <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-        {pendingAmount}
+        {formatNumberWithThousandsSeparator(pendingAmount)}
 
         
       </Box>
@@ -434,7 +581,7 @@ console.log(data)
     <Typography variant="body1">
       <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Intereses adicionales totales </Box>
       <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-        {formik.values.additionalInterests?.toFixed(0)}
+        {formatNumberWithThousandsSeparator(formik.values.additionalInterests?.toFixed(0))}
       </Box>
     </Typography>
   </Grid>
@@ -442,6 +589,8 @@ console.log(data)
     <Divider sx={{ borderColor:'#d8d7d7ff' }} />
   </Grid>
 
+
+  
     {/* Remanente Emisor    */}
     <Grid item xs={12} md={6}>
     <Typography variant="body1">
@@ -455,7 +604,7 @@ console.log(data)
         </IconButton>
         </AdaptiveTooltip></Box>
       <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-        {formik.values.remaining?.toFixed(0)}
+        {formatNumberWithThousandsSeparator(formik.values.remaining?.toFixed(0))}
       </Box>
     </Typography>
   </Grid>
@@ -465,7 +614,7 @@ console.log(data)
     <Typography variant="body1">
       <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Intereses adicionales Inv. </Box>
       <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-        {formik.values.investorInterests?.toFixed(0)}
+        {formatNumberWithThousandsSeparator(formik.values.investorInterests?.toFixed(0))}
       </Box>
     </Typography>
   </Grid>
@@ -477,9 +626,19 @@ console.log(data)
   {/* Valor presente Inversionista */}
   <Grid item xs={12} md={6}>
     <Typography variant="body1">
-      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Valor presente Inversionista :</Box>
+      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Valor presente Inversionista 
+         <AdaptiveTooltip
+        title="Muestra el valor a ser abonado a la cuenta del inversionista."
+        placement="top-end"
+        arrow
+      >
+        <IconButton edge="end" size="small" aria-label="Información">
+          <InfoIcon style={{ fontSize: '1rem', color: 'rgb(94, 163, 163)' }} />
+        </IconButton>
+       </AdaptiveTooltip>
+      </Box>
       <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-        {presentValueInvestor?.toFixed(0)}
+        {formatNumberWithThousandsSeparator(presentValueInvestor?.toFixed(0))}
       </Box>
     </Typography>
   </Grid>
@@ -489,7 +648,7 @@ console.log(data)
     <Typography variant="body1">
       <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Intereses adicionales mesa :</Box>
       <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-        {formik.values.additionalInterestsSM?.toFixed(0)}
+        {formatNumberWithThousandsSeparator(formik.values.additionalInterestsSM?.toFixed(0))}
       </Box>
     </Typography>
   </Grid>
@@ -504,13 +663,34 @@ console.log(data)
    
            
           
-           
-            
-            {formik.values.lastDate && (
+  <Grid container spacing={2} mt={7} ml={1}>
+           {formik.values.lastDate && (
               <>
-
+ <Box sx={{ width: '100%' }} ml={1.5}>
+    <Typography
+      letterSpacing={0}
+      fontSize="1.7rem"
+      fontWeight="regular"
+      color="#5EA3A3"
+      sx={{ mb: 0.5 }}  // Reduje el marginBottom a 0.5 (4px)
+    >
+      Datos de Recaudos Anteriores
+    </Typography>
+    
+    <Divider 
+      sx={{ 
+        backgroundColor: '#5EA3A3', 
+        height: '1px',
+        width: '100%',
+        mt: 0.5,  // Margen superior reducido
+        mb: 2     // Margen inferior normal
+      }} 
+    />
+  </Box>
                {/* Fecha Último Recaudo */}
                <Grid item xs={12} md={6}>
+
+                
     <Typography variant="body1">
       <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Fecha Último Recaudo</Box>
       <Box component="span" color="#5EA3A3" fontSize="1.1rem">
@@ -524,7 +704,7 @@ console.log(data)
     <Typography variant="body1">
       <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Monto Recaudos Previos</Box>
       <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-        {formik.values.previousPayedAmount}
+        {formatNumberWithThousandsSeparator(formik.values.previousPayedAmount)}
       </Box>
     </Typography>
   </Grid>
@@ -537,7 +717,7 @@ console.log(data)
     <Typography variant="body1">
       <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem"> Intereses</Box>
       <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-        {formik.values.interest}
+        {formatNumberWithThousandsSeparator(formik.values.interest)}
       </Box>
     </Typography>
   </Grid>
@@ -548,9 +728,13 @@ console.log(data)
               </>
             )}
 
+    </Grid>          
+            
+     
             {data?.previousOperationBill && (
               <>
               <Grid item xs={12} md={6}>
+                
     <Typography variant="body1">
       <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem"> Fecha Radicación</Box>
       <Box component="span" color="#5EA3A3" fontSize="1.1rem">
@@ -562,7 +746,7 @@ console.log(data)
     <Typography variant="body1">
       <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">  Tasa Descuento</Box>
       <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-        {formik.values.previousDiscountTax}
+        {formatNumberWithThousandsSeparator(formik.values.previousDiscountTax)}
       </Box>
     </Typography>
   </Grid>
