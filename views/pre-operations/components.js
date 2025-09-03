@@ -1352,44 +1352,62 @@ const updateFilters = (value, field) => {
           <ArrowDropDownIcon sx={{ fontSize: "16px", color: "#ffff" }} />
         )}
       </button>
-      
-      <Menu
-        anchorEl={anchorElStatus}
-        open={Boolean(anchorElStatus)}
-        onClose={handleCloseStatus}
-        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-        transformOrigin={{ vertical: "top", horizontal: "left" }}
-        PaperProps={{
-          sx: {
-            maxHeight: 300,
-            width: "250px"
+<Menu
+  anchorEl={anchorElStatus}
+  open={Boolean(anchorElStatus)}
+  onClose={handleCloseStatus}
+  anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+  transformOrigin={{ vertical: "top", horizontal: "left" }}
+  
+>
+  {statusOptions.map((option) => (
+    <MenuItem
+      key={option.value}
+      onClick={() => handleSelectStatus(option)}
+      selected={selectedStatus?.value === option.value}
+      disableGutters
+      sx={{
+        '&.Mui-selected': {
+          backgroundColor: "#488B8F10",
+          '&:hover': {
+            backgroundColor: "#488B8F15"
           }
+        },
+        px: 0.5,          // reduce padding horizontal
+        py: 0.25,         // reduce padding vertical
+        minHeight: "auto", // quita alto mínimo de MUI
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        gap: "4px"
+      }}
+    >
+      {/* 🔹 Badge */}
+       <span
+        className={option.badgeClass}
+        style={{
+          display: "inline-block",
+          padding: "4px 10px",
+          borderRadius: "6px",
+          fontSize: "0.85rem",
+          fontWeight: 600,
+          minWidth: "100px", // todos iguales de ancho
+          textAlign: "center",
+          lineHeight: 1.2
         }}
       >
-        {statusOptions.map((option) => (
-          <MenuItem
-            key={option.value}
-            onClick={() => handleSelectStatus(option)}
-            selected={selectedStatus?.value === option.value}
-            sx={{
-              '&.Mui-selected': {
-                backgroundColor: "#488B8F10",
-                '&:hover': {
-                  backgroundColor: "#488B8F15"
-                }
-              }
-            }}
-          >
-            <span className={option.badgeClass} style={{ marginRight: '8px' }}>
-              {option.label}
-            </span>
-            <ListItemText primary={option.label} />
-            {selectedStatus?.value === option.value && (
-              <CheckIcon fontSize="small" sx={{ ml: 1, color: "#488B8F" }} />
-            )}
-          </MenuItem>
-        ))}
-      </Menu>
+        {option.label}
+      </span>
+
+      {/* 🔹 Check alineado a la derecha */}
+      {selectedStatus?.value === option.value && (
+        <CheckIcon fontSize="small" sx={{ color: "#488B8F" }} />
+      )}
+    </MenuItem>
+  ))}
+</Menu>
+
+
     <button className="button-header-preop" onClick={handleOpenModal}>Valor a Girar</button>
     <ModalValorAGirar open={openModal} handleClose={handleCloseModal} data={mockData} />
 

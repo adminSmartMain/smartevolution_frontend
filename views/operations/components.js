@@ -785,32 +785,47 @@ const handleTextFieldChange = (evt) => {
         open={Boolean(anchorEl)}
         onClose={handleCloseStatus}
         anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-        transformOrigin={{ vertical: "top", horizontal: "left" }}
-        PaperProps={{
-          sx: {
-            maxHeight: 300,
-            width: "250px"
-          }
-        }}
-      >
+  transformOrigin={{ vertical: "top", horizontal: "left" }}
+  
+>
         {statusOptions.map((option) => (
           <MenuItem
             key={option.value}
             onClick={() => handleSelectStatus(option)}
             selected={selectedStatus?.value === option.value}
-            sx={{
-              '&.Mui-selected': {
-                backgroundColor: "#488B8F10",
-                '&:hover': {
-                  backgroundColor: "#488B8F15"
-                }
-              }
-            }}
+             disableGutters
+      sx={{
+        '&.Mui-selected': {
+          backgroundColor: "#488B8F10",
+          '&:hover': {
+            backgroundColor: "#488B8F15"
+          }
+        },
+        px: 0.5,          // reduce padding horizontal
+        py: 0.25,         // reduce padding vertical
+        minHeight: "auto", // quita alto mínimo de MUI
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        gap: "4px"
+      }}
           >
-            <span className={option.badgeClass} style={{ marginRight: '8px' }}>
+             <span
+        className={option.badgeClass}
+        style={{
+          display: "inline-block",
+          padding: "4px 10px",
+          borderRadius: "6px",
+          fontSize: "0.85rem",
+          fontWeight: 600,
+          minWidth: "100px", // todos iguales de ancho
+          textAlign: "center",
+          lineHeight: 1.2
+        }}
+      >
               {option.label}
             </span>
-            <ListItemText primary={option.label} />
+        
             {selectedStatus?.value === option.value && (
               <CheckIcon fontSize="small" sx={{ ml: 1, color: "#488B8F" }} />
             )}
