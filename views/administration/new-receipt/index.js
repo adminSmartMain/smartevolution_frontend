@@ -7,7 +7,8 @@ import { RegisterReceipt, getOperationById } from "./queries";
 import { FV } from "@formulajs/formulajs";
 import { differenceInDays, set } from "date-fns";
 import { useFormik } from "formik";
-
+import * as Yup from 'yup';
+import { ToastContainer, toast } from "react-toastify";
 
 export default function Receipt() {
   const router = useRouter();
@@ -21,8 +22,16 @@ export default function Receipt() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
 
+  const {
+    fetch: fetch,
+    loading: loadingOpById,
+    error: error,
+    data: data,
+  } = useFetch({ service: getOperationById, init: false });
+
+
   const initialValues = {
-    date: `${new Date().toISOString().substring(0, 10)}`,
+    date: `${data?.opDate}`,
     typeReceipt: "",
     payedAmount: 0,
     opPendingAmount: 0,
@@ -46,6 +55,7 @@ export default function Receipt() {
     previousDiscountTax: 0,
     previousOpNumber: 0,
     previousOpDate: "",
+    user_created_at:"",
   };
 
   const {
@@ -55,35 +65,8 @@ export default function Receipt() {
     data: dataRegisterReceipt,
   } = useFetch({ service: RegisterReceipt, init: false });
 
-    const formik = useFormik({
-    initialValues: initialValues,
-    onSubmit: async (values, actions) => {
-      setShowConfirmationModal(false); // Cierra el modal de confirmación
-      setLoading(true);
-      setIsModalOpen(true);
-      setSuccess(null);
-      
-      try {
-        console.log("Enviando datos...", values);
-        await fetchRegisterReceipt({ ...values, presentValueInvestor });
-        setSuccess(true);
-        Toast("Registro exitoso", "success");
-        // Cerrar la ventana después de 4 segundos
-      setTimeout(() => {
-        setIsModalOpen(false);
-        window.close(); // Cierra la ventana actual
-      }, 4000);
 
-      } catch (error) {
-        setSuccess(false);
-        Toast("Hubo un error al registrar", "error");
-      } finally {
-        setLoading(false);
-        actions.setSubmitting(false);
-        setTimeout(() => setIsModalOpen(false), 4000);
-      }
-    }
-  });
+
 
 
   useEffect(() => {
@@ -110,16 +93,53 @@ export default function Receipt() {
     }
   }, [router.query]);
 
-  const {
-    fetch: fetch,
-    loading: loadingOpById,
-    error: error,
-    data: data,
-  } = useFetch({ service: getOperationById, init: false });
+
+
+
+
+  const validationSchema = Yup.object().shape({
+  // ... tus otros campos
+  date: Yup.date()
+    .min(data?.opDate || new Date(), `No puede ser anterior al ${data?.opDate ? new Date(data.opDate).toLocaleDateString('es-ES') : 'dia de inicio'}`)
+    .nullable(),
+});
+
+    const formik = useFormik({
+    initialValues: initialValues,
+    validationSchema:validationSchema,
+    onSubmit: async (values, actions) => {
+      setShowConfirmationModal(false); // Cierra el modal de confirmación
+      setLoading(true);
+      setIsModalOpen(true);
+      setSuccess(null);
+      
+      try {
+      
+        await fetchRegisterReceipt({ ...values, presentValueInvestor });
+        setSuccess(true);
+        Toast("Registro exitoso", "success");
+        // Cerrar la ventana después de 4 segundos
+      setTimeout(() => {
+        setIsModalOpen(false);
+       // window.close(); // Cierra la ventana actual
+      }, 4000);
+
+      } catch (error) {
+        setSuccess(false);
+        Toast("Hubo un error al registrar", "error");
+      } finally {
+        setLoading(false);
+        actions.setSubmitting(false);
+        setTimeout(() => setIsModalOpen(false), 4000);
+      }
+    }
+  });
+
 
   useEffect(() => {
     if (data) {
       formik.setFieldValue("client", data?.data?.investor.id);
+      formik.setFieldValue("date", data?.data?.opDate);
       formik.setFieldValue("account", data?.data?.clientAccount.id);
       formik.setFieldValue("payedAmount", 0);
       formik.setFieldValue("opPendingAmount", 0);
@@ -189,20 +209,16 @@ export default function Receipt() {
   }, [data, formik.values.date]);
 
 
-  console.log(formik.values.payedAmount-formik.values.additionalInterests>data?.data?.opPendingAmount)
 
 useEffect(() => {
   if (!data?.data) return; // Validación inicial
 
   let pendingAmount = data.data.payedAmount - (formik.values.payedAmount - formik.values.additionalInterests);
   
-  console.log('Pending amount inicial:', Math.round(pendingAmount));
-  console.log('Data para el pending amount:', data);
-  console.log('Last date:', data?.receipts?.lastDate);
 
   // Primero verificar si el monto pagado supera el pendiente
   if (formik.values.payedAmount - formik.values.additionalInterests > data.data.opPendingAmount) {
-    console.log('Entramos al condicional de pending amount 0');
+
     setPendingAmount(0);
   } 
   // Luego aplicar el ajuste por receipts si existe
@@ -248,7 +264,7 @@ useEffect(() => {
             formik.values.receiptStatus !==
             "ea8518e8-168a-46d7-b56a-1286bf0037cd"
           ) {
-            console.log(formik.values.futureValueRecalculation,presentValueInvestor,data?.data?.payedAmount);
+  
             formik.setFieldValue(
               "tableRemaining",
               Math.round(
@@ -271,10 +287,7 @@ useEffect(() => {
           formik.setFieldValue("investorInterests", 0);
           formik.setFieldValue("additionalDays", 0);
           if (formik.values.payedAmount-formik.values.additionalInterests > data?.data?.opPendingAmount && formik.values.receiptStatus != "ea8518e8-168a-46d7-b56a-1286bf0037cd") {
-          console.log( 'a',data?.data?.amount,data?.data?.payedAmount)
-          console.log(formik.values.payedAmount,formik.values.additionalInterests,data?.data?.opPendingAmount)
-          console.log(data?.data)
-           console.log( 'resta a',formik.values.payedAmount-formik.values.additionalInterests-data?.data?.opPendingAmount)
+       
           formik.setFieldValue(
             "remaining",
             formik.values.payedAmount-formik.values.additionalInterests-data?.data?.opPendingAmount
@@ -360,7 +373,7 @@ useEffect(() => {
           formik.setFieldValue("futureValueRecalculation", 0);
           formik.setFieldValue("tableRemaining", 0);
                 if (formik.values.payedAmount-formik.values.additionalInterests > data?.data?.opPendingAmount && formik.values.receiptStatus !== "ea8518e8-168a-46d7-b56a-1286bf0037cd") {
-                   console.log( 'b',data?.data?.amount,data?.data?.payedAmount)
+                
         formik.setFieldValue(
           "remaining",
          formik.values.payedAmount-formik.values.additionalInterests-data?.data?.opPendingAmount
@@ -380,7 +393,7 @@ useEffect(() => {
           formik.setFieldValue("additionalInterestsSM", 0);
           formik.setFieldValue("additionalDays", 0);
                 if (formik.values.payedAmount-formik.values.additionalInterests > data?.data?.opPendingAmount  && formik.values.receiptStatus !== "ea8518e8-168a-46d7-b56a-1286bf0037cd") {
-                  console.log( 'c',data?.data?.amount,data?.data?.payedAmount)
+             
         formik.setFieldValue(
           "remaining",
           formik.values.payedAmount-formik.values.additionalInterests-data?.data?.opPendingAmount
@@ -491,7 +504,7 @@ useEffect(() => {
 
   useEffect(() => {
     if ( formik.values.investorInterests > 0 && formik.values.additionalInterests > 0 ) {
-      console.log(formik.values.additionalInterests, formik.values.investorInterests);
+
       formik.setFieldValue("additionalInterestsSM", formik.values.additionalInterests - formik.values.investorInterests);
     }
   }, [formik.values.investorInterests, formik.values.additionalInterests]);
@@ -593,7 +606,7 @@ setPresentValueInvestor(formik.values.payedAmount);
 
   useEffect(() => {
     setCounter(counter + 1);
-    console.log('contador ')
+
     if (Math.floor(pendingAmount) <= 0) {
       setCanceled(true);
     } else {
@@ -604,7 +617,7 @@ setPresentValueInvestor(formik.values.payedAmount);
   useEffect(() => {
     if (counter == 4) {
       
-      console.log('monto aplicacion','contador',counter)
+    
       formik.setFieldValue("payedAmount", pendingAmount);
     }
   }, [counter]);

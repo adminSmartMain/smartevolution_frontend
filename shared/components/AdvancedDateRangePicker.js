@@ -129,6 +129,7 @@ function AdvancedDateRangePicker({ onApply,onClean }) {
         onClick={handleOpen}
         variant="outlined"
         startIcon={<CalendarTodayIcon />}
+        fullWidth
         sx={{
           textTransform: "none",
           height:'2.2rem',

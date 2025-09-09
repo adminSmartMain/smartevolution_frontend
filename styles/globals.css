@@ -631,9 +631,6 @@ body {
   flex-wrap: wrap;  /* Permitir que los elementos se acomoden cuando no haya espacio suficiente */
 }
 
-.date-picker-container {
-  margin-right: 16px;
-}
 
 .button-header-preop {
   padding: 8px 16px;
@@ -661,9 +658,9 @@ body {
   border: 1px solid #488B8F; /* Borde azul */
   background-color: #488B8F;
   color: white; /* Texto azul */
-  margin-right: 10px; /* Espacio entre botones */
+  margin-right: 0px; /* Espacio entre botones */
   transition: background-color 0.3s;
-  margin-left: 10px;
+  margin-left: 0px;
   display: flex;
   align-items: center;
   gap: 8px; /* Espacio entre texto e icono
