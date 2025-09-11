@@ -700,7 +700,7 @@ const formatDateToDDMMYYYY = (dateString) => {
          
  
       {/* Primera fila con 4 campos */}
-     <Grid container rowSpacing={2}  alignItems="stretch" justifyContent="space-between" mt={3}>
+     <Grid container rowSpacing={2}  alignItems="stretch" justifyContent="space-between" mt={1}>
         <Grid item xs={12} md={2}>
 <DesktopDatePicker
   label="Date desktop"
@@ -730,8 +730,7 @@ const formatDateToDDMMYYYY = (dateString) => {
       onChange={formik.handleChange}
       error={formik.touched.date && Boolean(formik.errors.date)}
       helperText={formik.touched.date && formik.errors.date}
-      sx={formik.errors.date ? 
-        { border: "1.4px solid #E6643180" } : null}
+
       onBlur={() => {
         if (formik.values.date < data?.opDate) {
           toast("la fecha de aplicacion no puede ser menor a la fecha de inicio");
@@ -864,11 +863,11 @@ const formatDateToDDMMYYYY = (dateString) => {
 
                     {/* Contenedores de datos operacion y recuados */}
 <Grid container spacing={2}>
- <Grid container spacing={2} mt={7} ml={2.5}>
+ <Grid container spacing={2} mt={5} ml={2.5}>
   <Box sx={{ width: '100%' }}>
     <Typography
       letterSpacing={0}
-      fontSize="1.7rem"
+      fontSize="1.5rem"
       fontWeight="regular"
       color="#5EA3A3"
       sx={{ mb: 0.5 }}  // Reduje el marginBottom a 0.5 (4px)
@@ -976,11 +975,11 @@ const formatDateToDDMMYYYY = (dateString) => {
 </Grid>
                 
                 
-  <Grid container spacing={2} mt={7} ml={2.5}>
+  <Grid container spacing={2} mt={3} ml={2.5}>
   <Box sx={{ width: '100%' }}>
     <Typography
       letterSpacing={0}
-      fontSize="1.7rem"
+      fontSize="1.5rem"
       fontWeight="regular"
       color="#5EA3A3"
       sx={{ mb: 0.5 }}  // Reduje el marginBottom a 0.5 (4px)
@@ -1028,9 +1027,7 @@ const formatDateToDDMMYYYY = (dateString) => {
       </Box>
     </Typography>
   </Grid>
-  <Grid item xs={12}>
-    <Divider sx={{ borderColor: '#d8d7d7ff' }} />
-  </Grid>
+ 
 {/* Dias adicionales  */}
  <Grid item xs={12} md={6}>
     <Typography variant="body1">
@@ -1053,9 +1050,7 @@ const formatDateToDDMMYYYY = (dateString) => {
       </Box>
     </Typography>
   </Grid>
- <Grid item xs={12}>
-    <Divider sx={{ borderColor:'#d8d7d7ff' }} />
-  </Grid>
+
     {/* Pendiente por cobrar  */}
   <Grid item xs={12} md={6}>
     <Typography variant="body1">
@@ -1086,9 +1081,7 @@ const formatDateToDDMMYYYY = (dateString) => {
       </Box>
     </Typography>
   </Grid>
- <Grid item xs={12}>
-    <Divider sx={{ borderColor:'#d8d7d7ff' }} />
-  </Grid>
+ 
 
 
   
@@ -1120,9 +1113,7 @@ const formatDateToDDMMYYYY = (dateString) => {
     </Typography>
   </Grid>
 
-   <Grid item xs={12}>
-    <Divider sx={{ borderColor: '#d8d7d7ff' }} />
-  </Grid>
+  
 
   {/* Valor presente Inversionista */}
   <Grid item xs={12} md={6}>
@@ -1155,22 +1146,20 @@ const formatDateToDDMMYYYY = (dateString) => {
   </Grid>
 </Grid>
 
- <Grid item xs={12}>
-    <Divider sx={{ borderColor: '#d8d7d7ff' }} />
-  </Grid>
+
 
 </Grid>
           
    
            
           
-  <Grid container spacing={2} mt={7} ml={1}>
+  <Grid container spacing={2} mt={3} ml={1}>
            {formik.values.lastDate && (
               <>
  <Box sx={{ width: '100%' }} ml={1.5}>
     <Typography
       letterSpacing={0}
-      fontSize="1.7rem"
+      fontSize="1.5rem"
       fontWeight="regular"
       color="#5EA3A3"
       sx={{ mb: 0.5 }}  // Reduje el marginBottom a 0.5 (4px)
@@ -1193,7 +1182,7 @@ const formatDateToDDMMYYYY = (dateString) => {
 
                 
     <Typography variant="body1">
-      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Fecha Último Recaudo</Box>
+      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Fecha Recaudo anterior</Box>
       <Box component="span" color="#5EA3A3" fontSize="1.1rem">
         {formatDateToDDMMYYYY(formik.values.lastDate)}
       </Box>
@@ -1209,9 +1198,7 @@ const formatDateToDDMMYYYY = (dateString) => {
       </Box>
     </Typography>
   </Grid>
- <Grid item xs={12}>
-    <Divider sx={{ borderColor: '#d8d7d7ff'}} />
-  </Grid>
+
 
    {/* Intereses */}
    <Grid item xs={12} md={6}>
@@ -1222,10 +1209,7 @@ const formatDateToDDMMYYYY = (dateString) => {
       </Box>
     </Typography>
   </Grid>
-        <Grid item xs={12}>
-    <Divider sx={{ borderColor: '#d8d7d7ff' }} />
-  </Grid>
-       
+   
               </>
             )}
 
@@ -1251,9 +1235,7 @@ const formatDateToDDMMYYYY = (dateString) => {
       </Box>
     </Typography>
   </Grid>
-   <Grid item xs={12}>
-    <Divider sx={{ borderColor: '#d8d7d7ff' }} />
-  </Grid>
+  
 
   <Grid item xs={12} md={6}>
     <Typography variant="body1">
@@ -1263,9 +1245,7 @@ const formatDateToDDMMYYYY = (dateString) => {
       </Box>
     </Typography>
   </Grid>
-          <Grid item xs={12}>
-    <Divider sx={{ borderColor: '#d8d7d7ff' }} />
-  </Grid>
+   
      
               </>
             )}
@@ -1312,8 +1292,8 @@ const formatDateToDDMMYYYY = (dateString) => {
               onClick={handleSubmitWithConfirmation}
               disabled={formik.isSubmitting || loading}
               sx={{
-                mb: 2,
-                mt: 2,
+                mb: 0,
+                mt: 0,
                 ml: 2,
                 boxShadow: "none",
                 borderRadius: "4px",
@@ -1500,13 +1480,7 @@ const formatDateToDDMMYYYY = (dateString) => {
     
     
     )}
-  {process.env.NODE_ENV === 'development' && (
-                  <div style={{ marginTop: 20 }}>
-                    <h4>Errores:</h4>
-                    <pre>{JSON.stringify(formik.errors, null, 2)}</pre>
-                    <pre>{JSON.stringify(formik.values, null, 2)}</pre>
-                  </div>
-                )}
+
        {/* Modal de Confirmación */}
         <ModalConfirmation
             values={formik.values}
