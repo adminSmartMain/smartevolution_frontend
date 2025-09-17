@@ -1287,29 +1287,6 @@ const formatDateToDDMMYYYY = (dateString) => {
     </Dialog>
    
 
-     <Grid item xs={12}>
-            <MuiButton
-              type="button"
-              variant="contained"
-              onClick={handleSubmitWithConfirmation}
-              disabled={formik.isSubmitting || loading}
-              sx={{
-                mb: 0,
-                mt: 0,
-                ml: 2,
-                boxShadow: "none",
-                borderRadius: "4px",
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                width: '20rem',
-              }}
-            >
-              <Typography fontWeight="bold" sx={{ textAlign: 'center' }}>
-                Registrar
-              </Typography>
-            </MuiButton>
-          </Grid> 
 
                </Grid>
                

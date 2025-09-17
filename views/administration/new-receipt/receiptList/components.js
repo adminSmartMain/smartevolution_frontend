@@ -433,12 +433,84 @@ const handleTextFieldChange = (evt) => {
     }
   };
   const columns = [
-    // {
-   // field: "operation",
-   // headerName: "opID",
-  //  width: 100,
-  //  renderCell: (params) => <OperationCell params={params} />,
- // },
+  {
+    field: "operation",
+    headerName: "opID",
+    width: 100,
+    renderCell: (params) => {
+      // Verificación de que los parámetros existan
+      if (!params || !params.row || !params.row.operation) {
+        return <InputTitles>N/A</InputTitles>;
+      }
+      
+      const operation = params.row.operation;
+      
+      return (
+        <CustomTooltip
+          title={
+            <Box sx={{ p: 1.5, color: "#fff", fontSize: "0.85rem", minWidth: 230 }}>
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
+                <Typography fontWeight="bold" fontSize="0.9rem">
+                  OpID {operation.opId}
+                </Typography>
+                <CloseIcon
+                  fontSize="small"
+                  sx={{ cursor: "pointer", "&:hover": { color: "#ff5252" } }}
+                />
+              </Box>
+              <Divider sx={{ my: 1, bgcolor: "#777" }} />
+              <Typography>Emisor: {operation.emitter?.social_reason || 
+                `${operation.emitter?.first_name || ""} ${operation.emitter?.last_name || ""}`.trim() || "N/A"}</Typography>
+              <Typography>Pagador: {operation.payer?.social_reason || 
+                `${operation.payer?.first_name || ""} ${operation.payer?.last_name || ""}`.trim() || "N/A"}</Typography>
+              <Typography>Fecha Inicio: {operation.opDate || "N/A"}</Typography>
+              <Typography>Fecha Fin: {operation.opExpiration || "N/A"}</Typography>
+              <Typography>Valor Nominal: {operation.payedAmount || "N/A"}</Typography>
+              <Typography>% Descuento: {operation.payedPercent || "N/A"}</Typography>
+              <Box 
+                sx={{ 
+                  mt: 1, 
+                  display: "flex", 
+                  justifyContent: "flex-start", 
+                  bgcolor: "#488b8f", 
+                  color: "#ffffff", 
+                  width: "fit-content",
+                  p: 0.5,
+                  borderRadius: 1,
+                  cursor: "pointer"
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.open(`/operations?opId=${operation.opId}`, '_blank');
+                }}
+              >
+                <ReadMoreIcon fontSize="small" />
+              </Box>
+            </Box>
+          }
+          arrow
+          placement="bottom-start"
+          TransitionComponent={Fade}
+          PopperProps={{
+            modifiers: [{ name: "offset", options: { offset: [0, 0] } }],
+          }}
+        >
+          <InputTitles 
+            sx={{ 
+              cursor: 'pointer',
+              
+              color: "#5eaea3",
+              '&:hover': {
+                color: "#5eaea3"
+              }
+            }}
+          >
+            {operation.opId}
+          </InputTitles>
+        </CustomTooltip>
+      );
+    },
+  },
      {
   field: "typeReceipt",
   headerName: "Tipo / Estado",
