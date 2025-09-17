@@ -433,12 +433,12 @@ const handleTextFieldChange = (evt) => {
     }
   };
   const columns = [
-     {
-    field: "operation",
-    headerName: "opID",
-    width: 100,
-    renderCell: (params) => <OperationCell params={params} />,
-  },
+    // {
+   // field: "operation",
+   // headerName: "opID",
+  //  width: 100,
+  //  renderCell: (params) => <OperationCell params={params} />,
+ // },
      {
   field: "typeReceipt",
   headerName: "Tipo / Estado",
