@@ -74,9 +74,11 @@ export default function Operations() {
       //const preOperations = checkOperations.filter(
         //(x) =>   x.status == 0 ||   x.status == 2
       //);
-      setData(preOperations);;
+      setData(preOperations);
+          console.log(preOperations)
     }
     console.log('d')
+
   }, [dataGetOperations, loadingGetOperations, errorGetOperations]);
 
   return (

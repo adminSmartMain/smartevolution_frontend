@@ -972,7 +972,7 @@ export const BillsComponents = () => {
         Emitter: bill.emitterName,
         Payer: bill.payerName,
         Subtotal: bill.subTotal,
-        Total: bill.total,
+        Total: bill.subTotal,
         typeBill: bill.typeBill,
         DateBill: bill.dateBill,
         DatePayment: bill.datePayment,
@@ -986,7 +986,7 @@ export const BillsComponents = () => {
           ? bill.associatedOperation?.opId
           : null,
         file: bill.file,
-        valor_a_recibir: (bill.subTotal + bill.iva) - (bill.ret_iva + bill.ret_ica + bill.ret_fte + bill.other_ret)
+        valor_a_recibir: bill.total
       })) || [];
     setBill(bill);
   }, [data]);

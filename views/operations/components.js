@@ -41,6 +41,7 @@ import DocumentIcon from '@mui/icons-material/Description';
 import { Tooltip } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import moment from "moment";
+import { getOperationsVersionTwo,getOperationsVersionTwo2 } from "./queries";
 
 const sectionTitleContainerSx = {
   display: "flex",
@@ -91,6 +92,11 @@ export const OperationsComponents = ({
 
   const [anchorElStatus, setAnchorElStatus] = useState(null);
   const [selectedStatus, setSelectedStatus] = useState(null);
+const router = useRouter();
+
+const opIdQuery=router.query.opId
+
+
 
   // Opciones estáticas de estados
   const statusOptions = [
@@ -102,7 +108,7 @@ export const OperationsComponents = ({
      { value: 5, label: "Vencida", badgeClass: "badge vencido" }
   ];
 
-  
+
 
   const handleClickStatus = (event) => {
     setAnchorEl(event.currentTarget);
@@ -114,10 +120,10 @@ export const OperationsComponents = ({
 
     const handleSelectStatus = (status) => {
     setSelectedStatus(status);
-    console.log(status.value)
+   
     handleCloseStatus();
     // Actualiza los filtros globales
-    console.log(status?.value ?? "")
+    
   filtersHandlers.set({
     ...filtersHandlers.value,
     status: status?.value ?? "", // Usa option.value o cadena vacía
@@ -141,21 +147,28 @@ export const OperationsComponents = ({
     currency: "USD",
   };
   const numberFormat = new Intl.NumberFormat("en-US", formatOptions);
-  console.log(rows)
+  
   const [selectedData, setSelectedData] = useState(calcs);
 
-const router = useRouter();
-  const handleClearSearch = () => {
-    const newFilters = {
-      ...filtersHandlers.value,  // Mantiene todos los filtros actuales
-      opId: "",                  // Limpia solo estos campos
-      billId: "",
-      investor: ""
-    };
-    
-    filtersHandlers.set(newFilters);  // Actualiza el estado conservando las fechas
-    setSearch("");                    // Limpia el estado local de búsqueda si existe
+
+const handleClearSearch = () => {
+  const newFilters = {
+    ...filtersHandlers.value,  // Mantiene todos los filtros actuales
+    opId: "",                  // Limpia solo estos campos
+    billId: "",
+    investor: ""
   };
+  
+  filtersHandlers.set(newFilters);  // Actualiza el estado conservando las fechas
+  setSearch("");                    // Limpia el estado local de búsqueda si existe
+  
+  // Limpiar el parámetro opId de la URL si existe
+  if (window.location.search.includes('opId=')) {
+    const url = new URL(window.location);
+    url.searchParams.delete('opId');
+    window.history.replaceState(null, '', url.toString());
+  }
+};
   const handleOpenModal = () => {
 
     setOpenModal(true);
@@ -525,6 +538,17 @@ const columns = [
 },
   ];
 
+
+
+
+
+  useEffect(()=>{
+    if(opIdQuery){
+
+      setSearch(opIdQuery)
+    }
+
+  },[opIdQuery])
 const handleTextFieldChange = (evt) => {
   const value = evt.target.value;
   setSearch(value);

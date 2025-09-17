@@ -607,29 +607,36 @@ Por solicitud cambia el factor de GM de 0,004 a 0,002 a partir del 26 de octubre
             {activeStep === steps.length - 1 ? (
               option === "register" || option === "modify" ? (
                 <MuiButton
-                  type="submit"
-                  onClick={formik.handleSubmit}
-                  sx={{
-                    mb: 2,
-                    boxShadow: "none",
-                    borderRadius: "4px",
-                  }}
-                >
-                  <Typography fontSize="90%" fontWeight="bold">
-                    {option === "register" && "Registrar"}
-                    {option === "modify" && "Modificar"}
-                  </Typography>
-                  <Typography
-                    fontFamily="icomoon"
-                    sx={{
-                      color: "#fff",
-                      ml: 2,
-                      fontSize: "medium",
-                    }}
-                  >
-                    &#xe91f;
-                  </Typography>
-                </MuiButton>
+      type="submit"
+      onClick={formik.handleSubmit}
+      disabled={formik.isSubmitting} // Desactivar cuando Formik está enviando
+      sx={{
+        mb: 2,
+        boxShadow: "none",
+        borderRadius: "4px",
+        // Estilos cuando está desactivado
+        '&:disabled': {
+          backgroundColor: '#cccccc',
+          color: '#666666',
+          cursor: 'not-allowed'
+        }
+      }}
+    >
+      <Typography fontSize="90%" fontWeight="bold">
+        {option === "register" && (formik.isSubmitting ? "Procesando..." : "Registrar")}
+        {option === "modify" && (formik.isSubmitting ? "Actualizando..." : "Modificar")}
+      </Typography>
+      <Typography
+        fontFamily="icomoon"
+        sx={{
+          color: formik.isSubmitting ? "#666666" : "#fff",
+          ml: 2,
+          fontSize: "medium",
+        }}
+      >
+        &#xe91f;
+      </Typography>
+    </MuiButton>
               ) : (
                 <MuiButton
                   onClick={() =>

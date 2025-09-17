@@ -27,7 +27,8 @@ const pathsWithoutDefaultLayout = [
    "/bills/createBill",
     "/bills/editBill",
       "/bills/detailBill",
-      "/administration/new-receipt"
+      "/administration/new-receipt",
+      "/administration/new-receipt/receipt-visualization"
 ];
 
 function MyApp({ Component, pageProps }) {

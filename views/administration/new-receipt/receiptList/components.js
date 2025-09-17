@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState ,useEffect,useRef} from "react";
 import { SearchOutlined } from "@mui/icons-material";
-import { Box, Button, Fade, Typography } from "@mui/material";
-
+import { Box, Button, Fade, Typography,TextField ,Menu,MenuItem,IconButton, Divider,InputAdornment,} from "@mui/material";
+import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
 /* Modal imports*/
 import ValueFormat from "@formats/ValueFormat";
 import { useFetch } from "@hooks/useFetch";
@@ -10,130 +10,480 @@ import CustomTooltip from "@styles/customTooltip";
 import BaseField from "@styles/fields/BaseField";
 import InputTitles from "@styles/inputTitles";
 import CustomDataGrid from "@styles/tables";
-
-import { DeleteDepositById, GetReceiptList } from "./queries";
-
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import CloseIcon from "@mui/icons-material/Close";
+import CheckIcon from "@mui/icons-material/Check";
+import { DeleteDepositById, GetReceiptList,billById ,typeReceipt} from "./queries";
+import ReadMoreIcon from '@mui/icons-material/ReadMore';
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import Link from "next/link";
 import moment from "moment";
+import AdvancedDateRangePicker from "../../../../shared/components/AdvancedDateRangePicker";
+import { useRouter } from "next/router";
+import {
 
+  Clear as ClearIcon,
+  KeyboardArrowDown as KeyboardArrowDownIcon
+} from '@mui/icons-material';
+const sectionTitleContainerSx = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "rigth",
+};
+
+
+const OperationCell = ({ params }) => {
+  const [openTooltip, setOpenTooltip] = useState(false);
+  const anchorRef = useRef(null);
+  const router=useRouter()
+  const handleClick = () => {
+    setOpenTooltip((prevOpen) => !prevOpen);
+  };
+
+  const handleCloseTooltip = (event) => {
+    if (anchorRef.current && anchorRef.current.contains(event.target)) {
+      return;
+    }
+    setOpenTooltip(false);
+  };
+
+  const handleCloseIconClick = (e) => {
+    e.stopPropagation();
+    setOpenTooltip(false);
+  };
+
+  return (
+    <div>
+       <Box
+        ref={anchorRef}
+        onClick={handleClick}
+        sx={{ cursor: 'pointer', display: 'inline-block' }}
+      >
+        <InputTitles>{params.row.operation.opId}</InputTitles>
+      </Box>
+
+      <CustomTooltip
+        open={openTooltip}
+        onClose={handleCloseTooltip}
+        title={
+    <Box
+      sx={{
+          // Fondo oscuro
+        color: "#fff",           // Texto blanco
+        p: 1.5,
+        borderRadius: 1,
+        minWidth: 230,
+        fontSize: "0.85rem",
+      }}
+    >
+        {/* Cabecera con título y botón de cerrar */}
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      
+      >
+        <Typography fontWeight="bold" fontSize="0.9rem">
+          OpID {params.row.operation.opId}
+        </Typography>
+
+        <CloseIcon
+                fontSize="small"
+                sx={{
+                  cursor: "pointer",
+                  "&:hover": { color: "#ff5252" },
+                }}
+                onClick={handleCloseIconClick}
+              />
+      </Box>
+      <Divider sx={{ my: 1, bgcolor: "#777" }} />
+
+      <Typography>Emisor: {params.row.operation.emitter?.social_reason ||
+        `${params.row.operation.emitter?.first_name || ""} ${params.row.operation.emitter?.last_name || ""}`.trim() || ""}</Typography>
+
+      <Typography>Pagador: {params.row.operation.payer?.social_reason ||
+        `${params.row.operation.payer?.first_name || ""} ${params.row.operation.payer?.last_name || ""}`.trim() || ""}</Typography>
+
+      <Typography>Fecha Inicio: {params.row.operation.opDate}</Typography>
+      <Typography>Fecha Fin: {params.row.operation.opExpiration}</Typography>
+      <Typography>Valor Nominal: {params.row.operation.payedAmount}</Typography>
+      <Typography>% Descuento: {params.row.operation.payedPercent}</Typography>
+
+      <Box sx={{ mt: 1, ml:31,display: "flex", justifyContent: "flex-start", bgcolor:"#488b8f" ,color: "#ffffffff", width:'20px'}}   onClick={()=>(router.push(`/operations?opId=${params.row.operation.opId}`))}>
+        <ReadMoreIcon fontSize="small" />
+      </Box>
+    </Box>
+  }
+        arrow
+        placement="bottom-start"
+        TransitionComponent={Fade}
+        PopperProps={{
+          modifiers: [
+            {
+              name: "offset",
+              options: { offset: [0, 0] },
+            },
+          ],
+          anchorEl: anchorRef.current,
+        }}
+        disableFocusListener
+        disableHoverListener
+        disableTouchListener
+      />
+    </div>
+  );
+};
 export const ReceiptListComponent = () => {
   const [filter, setFilter] = useState("");
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState([false, "", null]);
-  const handleOpen = (deposit, id) => setOpen([true, deposit, id]);
-  const handleClose = () => setOpen([false, "", null]);
-  const handleDelete = (id) => {
-    DeleteDepositById(id);
-    setOpen([false, "", null]);
+    const [search, setSearch] = useState("");
+
+  const [anchorElStatus, setAnchorElStatus] = useState(null);
+  const [selectedStatus, setSelectedStatus] = useState(null);
+  const [anchorElCSV, setAnchorElCSV] = useState(null);
+    const openMenuCSV = Boolean(anchorElCSV);
+    const openStatus = Boolean(anchorElStatus);
+
+
+  const handleSelectStatus = (status) => {
+    setSelectedStatus(status);
+    handleCloseStatus();
+
+
+    // Actualiza los filtros globales
+    filtersHandlers.set({
+      ...filtersHandlers.value,
+      statusReceipt: status?.id || "", // Usa option.value o cadena vacía
+      page: 1 // Resetear a primera página
+    });
+  };
+   const router = useRouter();
+
+
+ const {
+    fetch: fetchReceipt,
+    loading: loadingReceipt,
+    error: errorReceipt,
+    data: dataReceipt,
+  } = useFetch({ service: typeReceipt, init: true });
+
+
+    // Hooks
+  const {
+    fetch: fetch,
+    loading: loading,
+    error: error,
+    data: data,
+  } = useFetch({
+    service: (args) => GetReceiptList({ page, ...filters}),
+    init: true,
+  });
+
+console.log(dataReceipt)
+  // Opciones estáticas de estados
+
+
+  
+  const dataCount = data?.count || 0;
+
+  const [page, setPage] = useState(1);
+// Filters
+
+
+  const [filters, setFilters] = useState({
+
+   
+    opId_billId: "",
+    statusReceipt: "",       
+         
+    startDate: "",
+    endDate: ""
+  });
+
+  const filtersHandlers = {
+    value: filters,
+    set: setFilters,
+    get: fetch,
+    loading: loading,
+    error: error,
+    data: data?.results || {},
   };
 
-  const columns = [
-    {
-      field: "dId",
-      headerName: "ID",
-      width: 100,
-      renderCell: (params) => (
-        <CustomTooltip
-          title={params.value}
-          placement="bottom-start"
-          TransitionComponent={Fade}
-          PopperProps={{
-            modifiers: [
-              {
-                name: "offset",
-                options: {
-                  offset: [0, 0],
-                },
-              },
-            ],
-          }}
-        >
-          <InputTitles>{params.value}</InputTitles>
-        </CustomTooltip>
+  const [tempFilters, setTempFilters] = useState({ ...filtersHandlers.value });
+  useEffect(() => {
+    fetch();
+  }, [
+   
+    filters.opId_billId,
+    
+    filters.startDate,
+    filters.endDate,
+    filters.statusReceipt,    // Añade esta dependencia
+        // Añade esta dependencia
+    page
+  ]);
+
+  
+ // CODIGO DE MANEJO FILTRO POR 
+
+
+  const [filterApplied, setFilterApplied] = useState(false);
+  const updateFilters = (value, field) => {
+    if (field !== "multi") {
+      const newFilters = {
+        ...tempFilters,
+        [field]: value,
+        startDate: tempFilters.startDate,
+        endDate: tempFilters.endDate,
+        statusReceipt: tempFilters.statusReceipt,
+      
+      };
+
+      filtersHandlers.set(newFilters);
+
+      // Si el valor es diferente al filtro actual, marcamos como filtro aplicado
+      if (tempFilters[field] !== value) {
+        setFilterApplied(true);
+      }
+      return;
+    }
+
+
+
+    // Inicializamos los filtros vacíos
+
+    const newFilters = {
+
+      opId_billId: "",
+
+      startDate: "",
+      endDate: "",
+      statusReceipt: tempFilters.statusReceipt,    // Conserva el filtro de tipo
+            // Conserva el filtro de canal
+    };
+    // Clasificación más precisa
+    
+      // Por defecto lo tratamos como inversionista
+      newFilters.opId_billId = value;
+     
+    
+
+    // Si las fechas no están vacías, las agregamos
+    if (tempFilters.startDate && tempFilters.endDate) {
+      newFilters.startDate = tempFilters.startDate;
+      newFilters.endDate = tempFilters.endDate;
+    }
+
+
+
+    // Si las fechas no están vacías, las agregamos
+    if (tempFilters.statusReceipt) {
+      newFilters.statusReceipt = tempFilters.statusReceipt;
+
+    }
+    // Filtramos y actualizamos los filtros
+    filtersHandlers.set({
+      ...tempFilters,
+      ...newFilters,
+      startDate: tempFilters.startDate, // Conserva fechas
+      endDate: tempFilters.endDate,
+      statusReceipt: tempFilters.statusReceipt,
+    });
+
+    setFilterApplied(true);
+    setPage(1)
+  };
+
+  console.log(filters)
+
+  const [openWindow, setOpenWindow] = useState(null);
+  const handleMenuClickCSV = (event) => {
+    setAnchorElCSV(event.currentTarget);
+  };
+  
+  const handleCloseMenuCSV = () => {
+    setAnchorElCSV(null);
+  };
+  
+  const handleClearSearch = () => {
+    const newFilters = {
+      ...filtersHandlers.value,  // Mantiene todos los filtros actuales
+      opId_billId: "",                  // Limpia solo estos campos
+      page: 1                          // Resetea a la primera página
+  };
+    
+    filtersHandlers.set(newFilters);  // Actualiza el estado conservando las fechas
+    setSearch("");                    // Limpia el estado local de búsqueda si existe
+  };
+
+  const handleClickStatus = (event) => {
+    setAnchorElStatus(event.currentTarget);
+  };
+
+  const handleCloseStatus = () => {
+    setAnchorElStatus(null);
+  };
+
+    const handleClearStatus = () => {
+    setSelectedStatus(null);
+    filtersHandlers.set({
+      ...filtersHandlers.value,
+      statusReceipt: "",
+      page: 1
+    });
+  };
+
+  
+const handleTextFieldChange = (evt) => {
+  const value = evt.target.value;
+  setSearch(value);
+  
+  // Si el campo queda vacío, actualizar filtros automáticamente
+  if (value === "") {
+    updateFilters("", "multi");
+  }
+};
+
+  const handleDateRangeApply = (dateRange) => {
+    // Actualiza solo las fechas manteniendo otros filtros
+
+    filtersHandlers.set({
+      ...filtersHandlers.value,
+      startDate: dateRange.startDate,
+      endDate: dateRange.endDate
+    });
+ setPage(1)
+
+  };
+  const handleClear = () => {
+    
+    // Limpiar solo fechas en los filtros globales
+    filtersHandlers.set({
+      ...filtersHandlers.value,
+      startDate: "",
+      endDate: ""
+    });
+  };
+
+  
+  /* Experimento para exportar los datos del data grid a un archivo csv que pueda ser leido por Excel*/
+  const handleExportExcel = () => {
+    // Obtener los datos de las filas visibles en la página actual del DataGrid
+    const currentRows = rows; // Aquí, rows son los datos actuales de la página.
+  
+    // Generar los encabezados de las columnas
+    const columnHeaders = columns.map(col => col.headerName);
+  
+    // Convertir las filas de datos en formato CSV
+    const csvContent = [
+      columnHeaders.join(","), // Cabecera de las columnas
+      ...currentRows.map(row =>
+        columns.map(col => row[col.field] ? row[col.field] : "").join(",") // Filas de datos
       ),
-    },
+    ].join("\n");
+  
+    // Crear un Blob con el contenido CSV
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  
+    // Crear un enlace de descarga
+    const link = document.createElement("a");
+  
+    // Crear un URL para el Blob
+    const url = URL.createObjectURL(blob);
+    
+    // Configurar el enlace para que descargue el archivo CSV
+    link.setAttribute("href", url);
+    link.setAttribute("download", "datos_exportados.csv"); // Nombre del archivo
+  
+    // Simular un clic en el enlace para iniciar la descarga
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+  
+  // Funciones específicas que usan la función genérica
+  const handleOpenReceiptDetail = (idOp) => {
+    handleOpenWindow(`/administration/new-receipt/receipt-visualization?id=${idOp}`);
+  };
+    const handleOpenWindow = (url, windowFeatures = "width=800, height=600") => {
+    if (openWindow && !openWindow.closed) {
+      // Si la ventana ya está abierta, solo le damos el foco
+      openWindow.focus();
+      return openWindow;
+    } else {
+      // Si la ventana no está abierta, la abrimos y guardamos la referencia
+      const newWindow = window.open(url, "_blank", windowFeatures);
+      setOpenWindow(newWindow);
+
+      // Escuchar el evento de cierre de la ventana
+      newWindow.onbeforeunload = () => {
+        setOpenWindow(null);
+      };
+
+      return newWindow;
+    }
+  };
+  const columns = [
+     {
+    field: "operation",
+    headerName: "opID",
+    width: 100,
+    renderCell: (params) => <OperationCell params={params} />,
+  },
+     {
+  field: "typeReceipt",
+  headerName: "Tipo / Estado",
+  width: 180,
+  renderCell: (params) => {
+    const type = params.row.typeReceipt || '';
+    const status = params.row.statusReceipt || '';
+
+    return (
+      <CustomTooltip
+        title={`${type} / ${status}`}
+        placement="bottom-start"
+        TransitionComponent={Fade}
+      >
+        <Box display="flex" flexDirection="column">
+          <Typography
+            fontSize="0.85rem"
+            fontWeight="bold"
+            color="#5eaea3" // Azul tipo "link"
+            lineHeight={1.2}
+          >
+            {type}
+          </Typography>
+          <Typography
+            fontSize="0.8rem"
+            color="#333" // Gris oscuro
+            lineHeight={1.2}
+          >
+            {status}
+          </Typography>
+        </Box>
+      </CustomTooltip>
+    );
+  },
+},
+    
     {
-      field: "typeReceipt",
-      headerName: "ESTADO DE RECAUDO",
-      width: 200,
+      field: "date",
+      headerName: "Aplicado",
+      width: 100,
       renderCell: (params) => {
         return (
-          <CustomTooltip
-            title={params.value}
-            arrow
-            placement="bottom-start"
-            TransitionComponent={Fade}
-            PopperProps={{
-              modifiers: [
-                {
-                  name: "offset",
-                  options: {
-                    offset: [0, 0],
-                  },
-                },
-              ],
-            }}
-          >
-            <Typography
-              fontSize="80%"
-              width="80%"
-              fontWeight="bold"
-              color="#63595C"
-              textAlign="center"
-              border="1.4px solid #63595C"
-              backgroundColor="transparent"
-              textTransform="uppercase"
-              padding="3% 8%"
-              borderRadius="4px"
-            >
-              {params.value}
-            </Typography>
-          </CustomTooltip>
+          <InputTitles>
+            {params.value ? moment(params.value).format("DD/MM/YYYY") : ""}
+          </InputTitles>
         );
       },
     },
-    {
-      field: "statusReceipt",
-      headerName: "TIPO DE RECAUDO",
-      width: 200,
-      renderCell: (params) => {
-        return (
-          <CustomTooltip
-            title={params.value}
-            arrow
-            placement="bottom-start"
-            TransitionComponent={Fade}
-            PopperProps={{
-              modifiers: [
-                {
-                  name: "offset",
-                  options: {
-                    offset: [0, 0],
-                  },
-                },
-              ],
-            }}
-          >
-            <Typography
-              fontSize="80%"
-              width="80%"
-              fontWeight="bold"
-              color="#63595C"
-              textAlign="center"
-              border="1.4px solid #63595C"
-              backgroundColor="transparent"
-              textTransform="uppercase"
-              padding="3% 8%"
-              borderRadius="4px"
-            >
-              {params.value}
-            </Typography>
-          </CustomTooltip>
-        );
-      },
-    },
-    {
-      field: "operation",
-      headerName: "NO. OPERACIÓN",
+       {
+      field: "billId",
+      headerName: "Factura",
       width: 100,
       renderCell: (params) => {
         return (
@@ -158,48 +508,83 @@ export const ReceiptListComponent = () => {
         );
       },
     },
-    {
-      field: "date",
-      headerName: "FECHA",
-      width: 100,
-      renderCell: (params) => {
-        return (
-          <InputTitles>
-            {params.value ? moment(params.value).format("DD/MM/YYYY") : ""}
-          </InputTitles>
-        );
-      },
-    },
-    {
-      field: "payedAmount",
-      headerName: "MONTO",
-      width: 150,
-      renderCell: (params) => {
-        return (
-          <InputTitles>
-            <ValueFormat prefix="$ " value={params.value} />
-          </InputTitles>
-        );
-      },
-    },
-    {
-      field: "presentValueInvestor",
-      headerName: "VALOR PRESENTE INVERSIONISTA",
-      width: 170,
-      valueGetter: (params) => {
-        return params.row.presentValueInvestor;
-      },
-      renderCell: (params) => {
-        return (
-          <InputTitles>
-            <ValueFormat prefix="$ " value={params.value} />
-          </InputTitles>
-        );
-      },
-    },
+   {
+  field: "payedAmount",
+  headerName: "Monto Aplicado",
+  width: 190,
+  renderCell: (params) => {
+    return (
+      <Box 
+        sx={{ 
+          display: "flex", 
+          alignItems: "center", 
+          gap: 1,
+          padding: "4px 8px",
+          
+        }}
+      >
+        <ReadMoreIcon 
+          fontSize="medium" 
+          sx={{ 
+            color: "#488b8f",
+            "&:hover": {
+              color: "#2a6c70",
+              transform: "scale(1.1)"
+            },
+            transition: "all 0.2s ease"
+          }} 
+          onClick={()=>(handleOpenReceiptDetail(params.row.operation.id))}
+        />
+
+        <InputTitles sx={{ fontWeight: 600, color: "#2c3e50" }}>
+          <ValueFormat prefix="$ " value={params.value} />
+        </InputTitles>
+      </Box>
+    );
+  },
+},
+
+
+     {
+  field: "operation2",
+  headerName: "Inversionista/Valor Presente",
+  width: 180,
+  renderCell: (params) => {
+   
+    const Inversionista =  params.row?.operation2?.investor?.social_reason || 
+                  `${params.row?.operation2?.investor?.first_name || ''} ${params.row?.operation2?.investor?.last_name || ''}`.trim()|| '';
+    const ValorPresente = params.row?.operation2?.presentValueInvestor || '';
+
+    return (
+      <CustomTooltip
+        title={`${Inversionista} / ${ValorPresente}`}
+        placement="bottom-start"
+        TransitionComponent={Fade}
+      >
+        <Box display="flex" flexDirection="column">
+          <Typography
+            fontSize="0.85rem"
+            fontWeight="bold"
+            color="#5eaea3" // Azul tipo "link"
+            lineHeight={1.2}
+          >
+            {Inversionista}
+          </Typography>
+          <Typography
+            fontSize="0.8rem"
+            color="#333" // Gris oscuro
+            lineHeight={1.2}
+          >
+            {ValorPresente}
+          </Typography>
+        </Box>
+      </CustomTooltip>
+    );
+  },
+},
     {
       field: "realDays",
-      headerName: "DIAS REALES",
+      headerName: "Dias R.",
       width: 100,
       renderCell: (params) => {
         return (
@@ -226,7 +611,7 @@ export const ReceiptListComponent = () => {
     },
     {
       field: "additionalDays",
-      headerName: "DÍAS ADICIONALES",
+      headerName: "Días +",
       width: 100,
       renderCell: (params) => {
         return (
@@ -251,36 +636,10 @@ export const ReceiptListComponent = () => {
         );
       },
     },
-    {
-      field: "calculatedDays",
-      headerName: "DIAS CALCULADOS",
-      width: 100,
-      renderCell: (params) => {
-        return (
-          <CustomTooltip
-            title={params.value}
-            arrow
-            placement="bottom-start"
-            TransitionComponent={Fade}
-            PopperProps={{
-              modifiers: [
-                {
-                  name: "offset",
-                  options: {
-                    offset: [0, 0],
-                  },
-                },
-              ],
-            }}
-          >
-            <InputTitles>{params.value}</InputTitles>
-          </CustomTooltip>
-        );
-      },
-    },
+    
     {
       field: "additionalInterests",
-      headerName: "INTERESES ADICIONALES",
+      headerName: "Intereses +",
       width: 150,
       renderCell: (params) => {
         return (
@@ -307,474 +666,224 @@ export const ReceiptListComponent = () => {
         );
       },
     },
-    {
-      field: "additionalInterestsSM",
-      headerName: "INTERESES ADICIONALES SM",
-      width: 150,
-      renderCell: (params) => {
-        return (
-          <CustomTooltip
-            title={<ValueFormat prefix="$ " value={params.value} />}
-            arrow
-            placement="bottom-start"
-            TransitionComponent={Fade}
-            PopperProps={{
-              modifiers: [
-                {
-                  name: "offset",
-                  options: {
-                    offset: [0, 0],
-                  },
-                },
-              ],
-            }}
-          >
-            <InputTitles>
-              <ValueFormat prefix="$ " value={params.value} />
-            </InputTitles>
-          </CustomTooltip>
-        );
-      },
-    },
-    {
-      field: "investorInterests",
-      headerName: "INTERESES INVERSOR",
-      width: 150,
-      renderCell: (params) => {
-        return (
-          <CustomTooltip
-            title={<ValueFormat prefix="$ " value={params.value} />}
-            arrow
-            placement="bottom-start"
-            TransitionComponent={Fade}
-            PopperProps={{
-              modifiers: [
-                {
-                  name: "offset",
-                  options: {
-                    offset: [0, 0],
-                  },
-                },
-              ],
-            }}
-          >
-            <InputTitles>
-              <ValueFormat prefix="$ " value={params.value} />
-            </InputTitles>
-          </CustomTooltip>
-        );
-      },
-    },
-    {
-      field: "remaining",
-      headerName: "REMANENTE",
-      width: 150,
-      renderCell: (params) => {
-        return (
-          <CustomTooltip
-            title={<ValueFormat prefix="$ " value={params.value} />}
-            arrow
-            placement="bottom-start"
-            TransitionComponent={Fade}
-            PopperProps={{
-              modifiers: [
-                {
-                  name: "offset",
-                  options: {
-                    offset: [0, 0],
-                  },
-                },
-              ],
-            }}
-          >
-            <InputTitles>
-              <ValueFormat prefix="$ " value={params.value} />
-            </InputTitles>
-          </CustomTooltip>
-        );
-      },
-    },
-    {
-      field: "tableInterests",
-      headerName: "INTERESES MESA",
-      width: 150,
-      renderCell: (params) => {
-        return (
-          <CustomTooltip
-            title={<ValueFormat prefix="$ " value={params.value} />}
-            arrow
-            placement="bottom-start"
-            TransitionComponent={Fade}
-            PopperProps={{
-              modifiers: [
-                {
-                  name: "offset",
-                  options: {
-                    offset: [0, 0],
-                  },
-                },
-              ],
-            }}
-          >
-            <InputTitles>
-              <ValueFormat prefix="$ " value={params.value} />
-            </InputTitles>
-          </CustomTooltip>
-        );
-      },
-    },
-    {
-      field: "tableRemaining",
-      headerName: "REMANENTE MESA",
-      width: 150,
-      renderCell: (params) => {
-        return (
-          <CustomTooltip
-            title={<ValueFormat prefix="$ " value={params.value} />}
-            arrow
-            placement="bottom-start"
-            TransitionComponent={Fade}
-            PopperProps={{
-              modifiers: [
-                {
-                  name: "offset",
-                  options: {
-                    offset: [0, 0],
-                  },
-                },
-              ],
-            }}
-          >
-            <InputTitles>
-              <ValueFormat prefix="$ " value={params.value} />
-            </InputTitles>
-          </CustomTooltip>
-        );
-      },
-    },
-
-    //Iconos de acciones
-
-    /* {
-      field: "Ver giro",
-      headerName: "",
-      width: 50,
-      sortable: false,
-      filterable: false,
-      renderCell: (params) => {
-        return (
-          <Link
-            href={`/administration/deposit-emitter?preview=${params.row.id}`}
-          >
-            <CustomTooltip
-              title="Ver giro"
-              arrow
-              placement="bottom-start"
-              TransitionComponent={Fade}
-              PopperProps={{
-                modifiers: [
-                  {
-                    name: "offset",
-                    options: {
-                      offset: [0, -15],
-                    },
-                  },
-                ],
-              }}
-            >
-              <Typography
-                fontFamily="icomoon"
-                fontSize="1.9rem"
-                color="#999999"
-                borderRadius="5px"
-                sx={{
-                  "&:hover": {
-                    backgroundColor: "#B5D1C980",
-                    color: "#488B8F",
-                  },
-                  cursor: "pointer",
-                }}
-              >
-                &#xe922;
-              </Typography>
-            </CustomTooltip>
-          </Link>
-        );
-      },
-    },
-    {
-      field: "Editar giro",
-      headerName: "",
-      width: 50,
-      sortable: false,
-      filterable: false,
-      renderCell: (params) => {
-        return (
-          <Link
-            href={`/administration/deposit-emitter?modify=${params.row.id}`}
-          >
-            <CustomTooltip
-              title="Editar giro"
-              arrow
-              placement="bottom-start"
-              TransitionComponent={Fade}
-              PopperProps={{
-                modifiers: [
-                  {
-                    name: "offset",
-                    options: {
-                      offset: [0, -15],
-                    },
-                  },
-                ],
-              }}
-            >
-              <Typography
-                fontFamily="icomoon"
-                fontSize="1.9rem"
-                color="#999999"
-                borderRadius="5px"
-                sx={{
-                  "&:hover": {
-                    backgroundColor: "#B5D1C980",
-                    color: "#488B8F",
-                  },
-                  cursor: "pointer",
-                }}
-              >
-                &#xe900;
-              </Typography>
-            </CustomTooltip>
-          </Link>
-        );
-      },
-    },
-    {
-      field: "Eliminar",
-      headerName: "",
-      width: 50,
-      sortable: false,
-      filterable: false,
-      renderCell: (params) => {
-        return (
-          <>
-            <CustomTooltip
-              title="Eliminar"
-              arrow
-              placement="bottom-start"
-              TransitionComponent={Fade}
-              PopperProps={{
-                modifiers: [
-                  {
-                    name: "offset",
-                    options: {
-                      offset: [0, -15],
-                    },
-                  },
-                ],
-              }}
-            >
-              <Typography
-                fontFamily="icomoon"
-                fontSize="1.9rem"
-                color="#999999"
-                borderRadius="5px"
-                sx={{
-                  "&:hover": {
-                    backgroundColor: "#B5D1C980",
-                    color: "#488B8F",
-                  },
-                  cursor: "pointer",
-                }}
-                //Delete deposit by id
-
-                onClick={() => {
-                  handleOpen(params.row.id, params.row.id);
-                }}
-              >
-                &#xe901;
-              </Typography>
-            </CustomTooltip>
-            <Modal open={open[0]} handleClose={handleClose}>
-              <Box
-                display="flex"
-                flexDirection="column"
-                alignItems="center"
-                justifyContent="center"
-                height="100%"
-                width="100%"
-              >
-                <Typography
-                  letterSpacing={0}
-                  fontSize="1vw"
-                  fontWeight="medium"
-                  color="#63595C"
-                >
-                  ¿Estás seguro que deseas eliminar a
-                </Typography>
-                <InputTitles mt={2} sx={{ fontSize: "1.1vw" }}>
-                  {open[1]}
-                </InputTitles>
-                <Typography
-                  letterSpacing={0}
-                  fontSize="1vw"
-                  fontWeight="medium"
-                  color="#63595C"
-                  mt={2}
-                >
-                  de los giros-emisor?
-                </Typography>
-                <Typography
-                  letterSpacing={0}
-                  fontSize="0.8vw"
-                  fontWeight="medium"
-                  color="#333333"
-                  mt={3.5}
-                >
-                  Si eliminas a este corredor, no podrás recuperarlo.
-                </Typography>
-                <Box
-                  display="flex"
-                  flexDirection="row"
-                  alignItems="center"
-                  justifyContent="center"
-                  mt={4}
-                >
-                  <GreenButtonModal onClick={handleClose}>
-                    Volver
-                  </GreenButtonModal>
-                  <RedButtonModal
-                    sx={{
-                      ml: 2,
-                    }}
-                    onClick={() => handleDelete(open[2])}
-                  >
-                    Eliminar
-                  </RedButtonModal>
-                </Box>
-              </Box>
-            </Modal>
-          </>
-        );
-      },
-    }, */
+  
   ];
 
-  // Hooks
-  const {
-    fetch: fetch,
-    loading: loading,
-    error: error,
-    data: data,
-  } = useFetch({
-    service: (args) => GetReceiptList({ page, ...args }),
-    init: true,
-  });
 
-  const dataCount = data?.count || 0;
 
-  const [page, setPage] = useState(1);
 
-  const receipt =
-    data?.results?.map((receipt) => {
-      return {
-        id: receipt.id,
-        dId: receipt.dId,
-        date: receipt.date,
-        typeReceipt: receipt.typeReceipt.description,
-        statusReceipt: receipt.receiptStatus.description,
-        operation: receipt.operation.opId,
-        payedAmount: receipt.payedAmount,
-        realDays: receipt.realDays,
-        additionalDays: receipt.additionalDays,
-        calculatedDays: receipt.calculatedDays,
-        additionalInterests: receipt.additionalInterests,
-        additionalInterestsSM: receipt.additionalInterestsSM,
-        investorInterests: receipt.investorInterests,
-        remaining: receipt.remaining,
-        tableInterests: receipt.tableInterests,
-        tableRemaining: receipt.tableRemaining,
-        presentValueInvestor:receipt.presentValueInvestor,
-      };
-    }) || [];
 
+
+
+
+
+const receipt =
+  data?.results?.map((receipt) => {
+    return {
+      id: receipt.id,
+      dId: receipt.dId,
+      date: receipt.date,
+      typeReceipt: receipt.typeReceipt.description,
+      statusReceipt: receipt.receiptStatus.description,
+      operation: receipt.operation,
+      operation2: receipt.operation,
+      billId: receipt.operation.bill.billId,
+      payedAmount: receipt.payedAmount,
+      realDays: receipt.realDays,
+      additionalDays: receipt.additionalDays,
+      calculatedDays: receipt.calculatedDays,
+      additionalInterests: receipt.additionalInterests,
+      additionalInterestsSM: receipt.additionalInterestsSM,
+      investorInterests: receipt.investorInterests,
+      remaining: receipt.remaining,
+      tableInterests: receipt.tableInterests,
+      tableRemaining: receipt.tableRemaining,
+      presentValueInvestor: receipt.presentValueInvestor,
+   
+    };
+  }) || [];
   return (
     <>
-      <BackButton path="/administration" />
-      <Box
-        container
-        display="flex"
-        flexDirection="row"
-        justifyContent="space-between"
-      >
-        <Typography
+       <Box sx={{ ...sectionTitleContainerSx }}>
+
+<Box display="flex" alignItems="center">
+<Link href="/dashboard" underline="none">
+          <a>
+          <HomeOutlinedIcon 
+              fontSize="large" 
+              sx={{ 
+                color: '#488b8f',
+                opacity: 0.8, // Ajusta la transparencia (0.8 = 80% visible)
+                strokeWidth: 1, // Grosor del contorno
+              }} 
+            />
+        
+          </a>
+          
+          </Link>
+       <Typography
           letterSpacing={0}
           fontSize="1.7rem"
           fontWeight="regular"
           marginBottom="0.7rem"
+          marginTop='0.7rem'
           color="#5EA3A3"
         >
-          Consulta de recaudos
-        </Typography>
+           - Consulta de recaudos
+          </Typography>
+</Box>
+       
+        <Box sx={{ ...sectionTitleContainerSx }}>
+      
+              </Box>
       </Box>
-      <Box container display="flex" flexDirection="column" mt={3}>
-        <InputTitles>Buscar por</InputTitles>
-        <Box
-          container
-          display="flex"
-          flexDirection="row"
-          mt={2}
-          alignItems="center"
-        >
-          <Button
-            variant="standard"
-            size="medium"
-            onClick={() => {
-              setFilter(filter === "opId" ? null : "opId");
-            }}
-            sx={{
-              height: "2rem",
-              backgroundColor: "transparent",
-              border: "1.4px solid #5EA3A3",
-              borderRadius: "4px",
-              marginRight: "0.3rem",
-              ...(filter === "opId" && { borderWidth: 2 }),
-            }}
-          >
-            <Typography
-              letterSpacing={0}
-              fontSize="85%"
-              fontWeight="600"
-              color="#5EA3A3"
-              textTransform="none"
-            >
-              N° Operación
-            </Typography>
-          </Button>
 
-          <BaseField
-            placeholder="Escriba su respuesta aquí"
-            value={query}
-            onChange={(evt) => {
-              setQuery(evt.target.value);
-            }}
-            onKeyPress={(event) => {
-              if (event.key === "Enter") {
-                fetch({
-                  page: 1,
-                  ...(Boolean(filter) && {
-                    [filter]: query,
-                  }),
-                });
-                setPage(1);
-              }
-            }}
-            InputProps={{
-              endAdornment: <SearchOutlined sx={{ color: "#5EA3A3" }} />,
-            }}
-          />
-        </Box>
-      </Box>
+            <Box
+  sx={{
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: 2,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    mb: 2
+  }}
+>
+<TextField
+  variant="outlined"
+  id="searchBar"
+  size="small"
+  placeholder="Buscar por OpID o factura"
+  value={search}
+  onChange={(evt) => handleTextFieldChange(evt, "investor")}
+  onKeyPress={(event) => {
+    if (event.key === "Enter") {
+      const valueToSearch = search || ""; // Si está vacío, manda cadena vacía
+      updateFilters(valueToSearch, "multi"); // realiza la búsqueda, incluso si el valor está vacío
+    }
+  }}
+  sx={{
+    flexGrow: 1,
+    minWidth: '250px',
+    maxWidth: '580px',
+    '& .MuiOutlinedInput-root': {
+      height: 35,
+      fontSize: '14px',
+      paddingRight: 0,
+    },
+    '& .MuiInputBase-input': {
+      padding: '6px 8px',
+    },
+  }}
+  InputProps={{
+    endAdornment: search && (
+      <InputAdornment position="end">
+        <IconButton 
+          onClick={handleClearSearch}
+          size="small"
+          edge="end"
+        >
+          <ClearIcon sx={{ color: "#488b8f", fontSize: '18px' }} />
+        </IconButton>
+      </InputAdornment>
+    ),
+  }}
+/>
+
+
+{/* Filtro por estado */}
+
+  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+  
+      <Button
+    variant="outlined"
+    onClick={handleClickStatus}
+    sx={{
+      justifyContent: 'space-between',
+      minWidth: 200,
+      textTransform: 'none',
+      color: selectedStatus ? 'text.primary' : 'text.secondary',
+      borderColor: selectedStatus ? 'primary.main' : 'grey.400',
+      '&:hover': {
+        borderColor: selectedStatus ? 'primary.dark' : 'grey.600'
+      }
+    }}
+  >
+    {selectedStatus ? selectedStatus.description : 'Seleccionar estado'}
+    <KeyboardArrowDownIcon sx={{ ml: 1, fontSize: 18 }} />
+  </Button>
+  
+  {selectedStatus && (
+    <IconButton 
+      onClick={handleClearStatus}
+      size="small"
+      sx={{ 
+        color: 'grey.500',
+        '&:hover': {
+          color: 'error.main',
+          backgroundColor: 'error.light'
+        }
+      }}
+    >
+      <ClearIcon fontSize="small" />
+    </IconButton>
+  )}
+  
+  <Menu
+    anchorEl={anchorElStatus}
+    open={openStatus}
+    onClose={handleCloseStatus}
+    anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+    transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+  >
+    {dataReceipt?.data?.map((status) => (
+      <MenuItem
+        key={status.id}
+        onClick={() => handleSelectStatus(status)}
+        selected={selectedStatus?.id === status.id}
+        sx={{
+          '&.Mui-selected': {
+            backgroundColor: '#488B8F10',
+            '&:hover': {
+              backgroundColor: '#488B8F15'
+            }
+          },
+          px: 2,
+          py: 1,
+          minWidth: 200,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}
+      >
+        <span>{status.description}</span>
+        {selectedStatus?.id === status.id && (
+          <CheckIcon fontSize="small" sx={{ color: '#488B8F', ml: 1 }} />
+        )}
+      </MenuItem>
+    ))}
+  </Menu>
+
+{/* fin Filtro por estado */}
+
+    <AdvancedDateRangePicker
+      
+      className="date-picker"
+      onApply={handleDateRangeApply}
+      onClean={handleClear}
+      
+    />
+
+ 
+
+    <IconButton onClick={handleMenuClickCSV} className="context-menu">
+      <MoreVertIcon />
+    </IconButton>
+    <Menu anchorEl={anchorElCSV} open={openMenuCSV} onClose={handleCloseMenuCSV}>
+      <MenuItem onClick={handleExportExcel}>Exportar a CSV</MenuItem>
+    </Menu>
+  </Box>
+</Box>
       <Box
         container
         marginTop={4}
@@ -790,6 +899,45 @@ export const ReceiptListComponent = () => {
           rowsPerPageOptions={[5]}
           disableSelectionOnClick
           disableColumnMenu
+            sx={{
+    '& .MuiDataGrid-columnHeaders': {
+      backgroundColor: '#e2e0e0ff', // Gris claro para los headers
+      color: '#000000', // Negro para el texto de los headers
+    
+    },
+    '& .MuiDataGrid-columnHeaderTitle': {
+      fontWeight: '600',
+      fontSize: '0.85rem',
+      color: '#000000', // Negro para el título de las columnas
+    },
+    '& .MuiDataGrid-iconButtonContainer': {
+      visibility: 'visible !important', // Mostrar siempre los iconos de ordenamiento
+    },
+    '& .MuiDataGrid-menuIcon': {
+      visibility: 'visible !important', // Mostrar siempre el icono del menú
+    },
+    '& .MuiDataGrid-sortIcon': {
+      color: '#5EA3A3', // Color verde para los iconos de ordenamiento
+      opacity: 1, // Hacerlos completamente visibles
+      fontSize: '1rem',
+    },
+    '& .MuiDataGrid-columnHeader:hover .MuiDataGrid-sortIcon': {
+      color: '#5EA3A3', // Mantener el mismo color al hover
+      opacity: 1,
+    },
+    '& .MuiDataGrid-virtualScroller': {
+      minHeight: receipt.length === 0 ? '200px' : 'auto',
+    },
+    '& .MuiDataGrid-main': {
+      width: '100%',
+      overflow: 'auto',
+    },
+    // Estilos para los iconos de ordenamiento activos
+    '& .MuiDataGrid-columnHeaderSorted .MuiDataGrid-sortIcon': {
+      color: '#5EA3A3', // Color verde para ordenamiento activo
+      opacity: 1,
+    },
+  }}
           components={{
             ColumnSortedAscendingIcon: () => (
               <Typography fontFamily="icomoon" fontSize="0.7rem">
