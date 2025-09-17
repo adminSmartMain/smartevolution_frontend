@@ -33,8 +33,14 @@ const sectionTitleContainerSx = {
 
 
 const OperationCell = ({ params }) => {
+  // Verificar que todos los parámetros existan
+  if (!params || !params.row || !params.row.operation) {
+    return <InputTitles>N/A</InputTitles>;
+  }
+  
   const [openTooltip, setOpenTooltip] = useState(false);
   const anchorRef = useRef(null);
+
   const router=useRouter()
   const handleClick = () => {
     setOpenTooltip((prevOpen) => !prevOpen);
@@ -126,7 +132,7 @@ const OperationCell = ({ params }) => {
               options: { offset: [0, 0] },
             },
           ],
-          anchorEl: anchorRef.current,
+          anchorEl: anchorRef.current || null, // Asegurar que no sea undefined
         }}
         disableFocusListener
         disableHoverListener
