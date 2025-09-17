@@ -622,6 +622,7 @@ Por solicitud cambia el factor de GM de 0,004 a 0,002 a partir del 26 de octubre
         }
       }}
     >
+      
       <Typography fontSize="90%" fontWeight="bold">
         {option === "register" && (formik.isSubmitting ? "Procesando..." : "Registrar")}
         {option === "modify" && (formik.isSubmitting ? "Actualizando..." : "Modificar")}
