@@ -80,7 +80,7 @@ export default function Receipt() {
     const receiptData = dataGetReceiptById.results[0];
     
     return {
-      date: receiptData.operation?.opDate || "",
+      date: receiptData.date || "",
       typeReceipt: receiptData.typeReceipt?.id || "",
       payedAmount: receiptData.payedAmount || 0,
       opPendingAmount: 0,

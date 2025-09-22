@@ -133,7 +133,7 @@ if (dataUsers?.data) {  // Asumiendo que dataUsers tiene una propiedad data con 
 
 const receipt = dataGetReceiptList?.results?.map((receipt) => {
   // Obtener el inversionista de la operación
-  const investorId = receipt.operation?.investor;
+  const investorId = receipt.account?.client;
   let investorName = 'N/A';
   
   // Buscar el nombre del inversionista en el mapa de clientes
@@ -161,6 +161,7 @@ const receipt = dataGetReceiptList?.results?.map((receipt) => {
     id: receipt.id,
     dId: receipt.dId,
     date: receipt.date,
+    created_at: receipt.created_at,
     typeReceipt: receipt.typeReceipt?.description || 'N/A',
     statusReceipt: receipt.receiptStatus?.description || 'N/A',
     operation: receipt.operation?.opId || 'N/A',
@@ -392,6 +393,24 @@ const columns = [
   {
     field: "user_created_at_id",
     headerName: "REGISTRADO POR",
+    width: 180,
+    renderCell: (params) => {
+      const registeredBy = params.value;
+
+      
+      return (
+        
+          <InputTitles noWrap>
+            {registeredBy}
+          </InputTitles>
+  
+      );
+    },
+  },
+
+    {
+    field: "created_at",
+    headerName: "CREADO EN",
     width: 180,
     renderCell: (params) => {
       const registeredBy = params.value;
@@ -969,7 +988,7 @@ const formatDateToDDMMYYYY = (dateString) => {
   {/* Días reales */}
   <Grid item xs={12} md={6}>
     <Typography variant="body1">
-      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Dias reales</Box>
+      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Días reales</Box>
       <Box component="span" color="#5EA3A3" fontSize="1.1rem">
         {formik.values.realDays}
         
@@ -983,7 +1002,7 @@ const formatDateToDDMMYYYY = (dateString) => {
 {/* Dias adicionales  */}
  <Grid item xs={12} md={6}>
     <Typography variant="body1">
-      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Dias adicionales
+      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Días adicionales
        </Box>
       <Box component="span" color="#5EA3A3" fontSize="1.1rem">
         {formik.values.additionalDays}

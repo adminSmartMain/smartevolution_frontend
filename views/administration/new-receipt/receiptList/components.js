@@ -165,7 +165,7 @@ export const ReceiptListComponent = () => {
     const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     
     // Combine with decimal part if it exists
-    return decimalPart ? `${formattedInteger}.${decimalPart}` : formattedInteger;
+    return decimalPart ? ` ${formattedInteger}.${decimalPart}` : formattedInteger;
 };
 
   const handleSelectStatus = (status) => {
@@ -252,38 +252,26 @@ console.log(dataReceipt)
 
   const [filterApplied, setFilterApplied] = useState(false);
   const updateFilters = (value, field) => {
-    if (field !== "multi") {
-      const newFilters = {
-        ...tempFilters,
-        [field]: value,
-        startDate: tempFilters.startDate,
-        endDate: tempFilters.endDate,
-        statusReceipt: tempFilters.statusReceipt,
-      
-      };
-
-      filtersHandlers.set(newFilters);
-
-      // Si el valor es diferente al filtro actual, marcamos como filtro aplicado
-      if (tempFilters[field] !== value) {
-        setFilterApplied(true);
-      }
-      return;
-    }
-
-
-
-    // Inicializamos los filtros vacíos
-
+      if (field !== "multi") {
     const newFilters = {
-
-      opId_billId: "",
-
-      startDate: "",
-      endDate: "",
-      statusReceipt: tempFilters.statusReceipt,    // Conserva el filtro de tipo
-            // Conserva el filtro de canal
+      ...filtersHandlers.value,  // Cambio clave: usar filtersHandlers.value en lugar de tempFilters
+      [field]: value
     };
+
+    filtersHandlers.set(newFilters);
+
+    // Si el valor es diferente al filtro actual, marcamos como filtro aplicado
+    if (filtersHandlers.value[field] !== value) {
+      setFilterApplied(true);
+    }
+    return;
+  }
+
+  // Inicializamos los filtros vacíos
+  const newFilters = {
+    ...filtersHandlers.value,  // Cambio clave: mantener todos los filtros existentes
+    opId_billId: value,        // Solo actualizar este campo
+  };
     // Clasificación más precisa
     
       // Por defecto lo tratamos como inversionista
@@ -304,17 +292,11 @@ console.log(dataReceipt)
       newFilters.statusReceipt = tempFilters.statusReceipt;
 
     }
-    // Filtramos y actualizamos los filtros
-    filtersHandlers.set({
-      ...tempFilters,
-      ...newFilters,
-      startDate: tempFilters.startDate, // Conserva fechas
-      endDate: tempFilters.endDate,
-      statusReceipt: tempFilters.statusReceipt,
-    });
+     // Filtramos y actualizamos los filtros
+  filtersHandlers.set(newFilters);
 
-    setFilterApplied(true);
-    setPage(1)
+  setFilterApplied(true);
+  setPage(1)
   };
 
   console.log(filters)
@@ -528,7 +510,7 @@ const handleTextFieldChange = (evt) => {
   },
      {
   field: "typeReceipt",
-  headerName: "Tipo / Estado",
+  headerName: "Estado / Tipo ",
     flex: 1.5, // flex: 1.5 le dará más espacio que las demás
     minWidth: 180,
   renderCell: (params) => {
@@ -674,7 +656,7 @@ const handleTextFieldChange = (evt) => {
             color="#333" // Gris oscuro
             lineHeight={1.2}
           >
-            {ValorPresente}
+            $ {ValorPresente}
           </Typography>
         </Box>
       </CustomTooltip>
