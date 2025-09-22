@@ -391,6 +391,23 @@ const columns = [
     },
   },
   {
+    field: "created_at",
+    headerName: "CREADO EN",
+    width: 180,
+    renderCell: (params) => {
+    
+
+      
+      return (
+        
+          <InputTitles noWrap>
+           {params.value ? moment(params.value).format("DD/MM/YYYY") : "N/A"}
+          </InputTitles>
+  
+      );
+    },
+  },
+  {
     field: "user_created_at_id",
     headerName: "REGISTRADO POR",
     width: 180,
@@ -408,23 +425,7 @@ const columns = [
     },
   },
 
-    {
-    field: "created_at",
-    headerName: "CREADO EN",
-    width: 180,
-    renderCell: (params) => {
-      const registeredBy = params.value;
-
-      
-      return (
-        
-          <InputTitles noWrap>
-            {registeredBy}
-          </InputTitles>
-  
-      );
-    },
-  },
+    
   
   
  // {
