@@ -40,6 +40,10 @@ import CustomTooltip from "@styles/customTooltip";
 import CustomDataGrid from "@styles/tables";
 import moment from "moment";
 import ValueFormat from "@formats/ValueFormat";
+import PayedAmountField from "@components/selects/receipts/montoAplicacion";
+
+
+
 
 export const ReceiptC = ({ formik, 
                             data, 
@@ -131,6 +135,19 @@ if (dataUsers?.data) {  // Asumiendo que dataUsers tiene una propiedad data con 
     usersMap[user.id] = user;
   });
 }
+const formatDateToDDMMYYYY = (dateString) => {
+  if (!dateString) return '';
+  
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return '';
+  
+  // Usar métodos UTC para evitar problemas de zona horaria
+  const day = String(date.getUTCDate()).padStart(2, '0');
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const year = date.getUTCFullYear();
+  
+  return `${day}/${month}/${year}`;
+};
 
 const receipt = dataGetReceiptList?.results?.map((receipt) => {
   // Obtener el inversionista de la operación
@@ -178,6 +195,7 @@ const receipt = dataGetReceiptList?.results?.map((receipt) => {
     tableRemaining: receipt.tableRemaining || 0,
     presentValueInvestor: receipt.presentValueInvestor || 0,
     user_created_at_id:userName,
+    created_at:receipt.created_at ?  formatDateToDDMMYYYY(receipt.created_at) : 'N/A',
   };
 }) || [];
 const columns = [
@@ -391,6 +409,23 @@ const columns = [
     },
   },
   {
+    field: "created_at",
+    headerName: "CREADO EN",
+    width: 180,
+    renderCell: (params) => {
+      const registeredBy = params.value;
+
+      
+      return (
+        
+          <InputTitles noWrap>
+            {registeredBy}
+          </InputTitles>
+  
+      );
+    },
+  },
+  {
     field: "user_created_at_id",
     headerName: "REGISTRADO POR",
     width: 180,
@@ -511,7 +546,7 @@ const columns = [
     const [integerPart, decimalPart] = value.toString().split('.');
     
     // Format only the integer part with commas
-    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     
     // Combine with decimal part if it exists
     return decimalPart ? `${formattedInteger}.${decimalPart}` : formattedInteger;
@@ -555,19 +590,6 @@ const getColorByType = (typeId) => {
 };
 
 
-const formatDateToDDMMYYYY = (dateString) => {
-  if (!dateString) return '';
-  
-  const date = new Date(dateString);
-  if (isNaN(date.getTime())) return '';
-  
-  // Usar métodos UTC para evitar problemas de zona horaria
-  const day = String(date.getUTCDate()).padStart(2, '0');
-  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-  const year = date.getUTCFullYear();
-  
-  return `${day}/${month}/${year}`;
-};
   return (
     <>
     <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -716,6 +738,15 @@ const formatDateToDDMMYYYY = (dateString) => {
     } else {
       formik.setFieldError('date', ''); // Limpiar error si es válido
     }
+
+     if (newValue && data?.lastDate && new Date(newValue) < new Date(data.lastDate)) {
+      formik.setFieldError('date', "la fecha de aplicacion no puede ser menor a la fecha de recaudo anterior");
+      formik.setFieldTouched('date', true, false); // Marcar como touched
+    } else {
+      formik.setFieldError('date', ''); // Limpiar error si es válido
+    }
+
+    
     formik.setFieldValue('date', newValue);
   }}
   renderInput={(params) => (
@@ -732,10 +763,17 @@ const formatDateToDDMMYYYY = (dateString) => {
       helperText={formik.touched.date && formik.errors.date}
 
       onBlur={() => {
+     
         if (formik.values.date < data?.opDate) {
           toast("la fecha de aplicacion no puede ser menor a la fecha de inicio");
           formik.setFieldError('date',"la fecha de aplicacion no puede ser menor a la fecha de inicio");
           formik.setFieldValue('date',data.opDate)
+        }
+        console.log(formik.values.lastDate,formik.values.date )
+         if (formik.values.lastDate && formik.values.date < formik.values.lastDate) {
+          toast("la fecha de aplicacion no puede ser menor a la fecha de recaudo anterior");
+          formik.setFieldError('date',"la fecha de aplicacion no puede ser menor a la fecha de recaudo anterior");
+          formik.setFieldValue('date', formik.values.lastDate)
         }
       }}
     />
@@ -792,58 +830,7 @@ const formatDateToDDMMYYYY = (dateString) => {
   />
 </Grid>
 <Grid item xs={12} md={4}>
-<BaseField
-  fullWidth
-  InputProps={{
-    startAdornment: (
-      <i
-        style={{
-          color: "#5EA3A3",
-          marginRight: "0.7vw",
-          fontSize: "1.1vw",
-        }}
-        className="far fa-dollar-sign"
-      ></i>
-    ),
-    endAdornment: (
-      <AdaptiveTooltip
-        title="Debe ser el monto registrado en el banco"
-        placement="top-end"
-        arrow
-      >
-        <IconButton edge="end" size="small" aria-label="Información">
-          <InfoIcon style={{ fontSize: "1rem", color: "rgb(94, 163, 163)" }} />
-        </IconButton>
-      </AdaptiveTooltip>
-    ),
-  }}
-  id="payedAmount"
-  name="payedAmount"
-  label="Monto Aplicación"
- 
-  thousandSeparator="."
-  decimalSeparator=","
-  decimalScale={0}
-  allowNegative={false}
-  isMasked
-  error={formik.touched.payedAmount && Boolean(formik.errors.payedAmount)}
-     value={formik.values.payedAmount ?? 0} // Nullish coalescing
-  onChangeMasked={(values) => {
-    // Convertir cualquier valor falsy a 0
-    const newValue = values.floatValue ? Number(values.floatValue) : 0;
-    formik.setFieldValue("payedAmount", newValue);
-  }}
-  onBlur={() => {
-    // Validación segura
-    const payedAmount = Number(formik.values.payedAmount) || 0;
-    const additionalInterests = Number(formik.values.additionalInterests) || 0;
-    
-    if (payedAmount < additionalInterests) {
-      toast("El monto de aplicación no puede ser menor a los intereses adicionales");
-       formik.setFieldValue("payedAmount",0);
-    }
-  }}
-/>
+<PayedAmountField formik={formik} presentValueInvestor={presentValueInvestor} />
 
 </Grid>
 
@@ -1292,26 +1279,41 @@ const formatDateToDDMMYYYY = (dateString) => {
               onClick={handleSubmitWithConfirmation}
               disabled={formik.isSubmitting || loading}
               sx={{
-                mb: 0,
-                mt: 0,
-                ml: 2,
-                boxShadow: "none",
-                borderRadius: "4px",
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                width: '20rem',
-              }}
-            >
-              <Typography fontWeight="bold" sx={{ textAlign: 'center' }}>
-                Registrar
-              </Typography>
-            </MuiButton>
+    mb: 0,
+    mt: 0,
+    ml: 2,
+    boxShadow: "none",
+    borderRadius: "4px",
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '20rem',
+    // Aplicar estilo gris cuando esté deshabilitado
+    backgroundColor: (formik.isSubmitting || loading) ? 'grey.400' : 'primary.main',
+    color: 'white',
+    // Cambiar el cursor según el estado
+    cursor: (formik.isSubmitting || loading) ? 'not-allowed' : 'pointer',
+    // Efecto hover solo cuando está habilitado
+    '&:hover': {
+      backgroundColor: (formik.isSubmitting || loading) ? 'grey.400' : 'primary.dark',
+    }
+  }}
+>
+  <Typography fontWeight="bold" sx={{ textAlign: 'center' }}>
+    {formik.isSubmitting || loading ? 'Procesando...' : 'Registrar'}
+  </Typography>
+</MuiButton>
           </Grid> 
 
                </Grid>
                
-
+{process.env.NODE_ENV === 'development' && (
+                  <div style={{ marginTop: 20 }}>
+                    <h4>Errores:</h4>
+                    <pre>{JSON.stringify(formik.errors, null, 2)}</pre>
+                    <pre>{JSON.stringify(formik.values, null, 2)}</pre>
+                  </div>
+                )}
 
         </form>
           </>

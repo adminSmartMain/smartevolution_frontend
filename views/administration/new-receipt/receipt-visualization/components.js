@@ -76,12 +76,11 @@ const {
 } = useFetch({
   service: (args) => GetReceiptList({ 
     page, 
-    opId: data?.opId || "", 
+    opId:data?.[0].operation.opId || "", 
     ...args 
   }),
   init: false, // No ejecutar inmediatamente
 });
-
 
 
 useEffect(() => {
@@ -92,10 +91,10 @@ useEffect(() => {
 
 // Ejecutar cuando data.opId esté disponible
 useEffect(() => {
-  if (data?.opId) {
+  if (data?.[0].operation.opId) {
     fetchGetReceiptList();
   }
-}, [data?.opId]);
+}, [data?.[0].operation.opId]);
 
 const dataCount = dataGetReceiptList?.count || 0;
 
@@ -122,7 +121,7 @@ if (dataClients?.data) {
     clientsMap[client.id] = client;
   });
 }
-console.log(dataGetReceiptList,dataUsers)
+console.log(data)
 
 
 const usersMap = {};
@@ -149,7 +148,7 @@ const receipt = dataGetReceiptList?.results?.map((receipt) => {
 
     // Obtener el usuario que creó el recaudo
   const userId = receipt.user_created_at;
-  let userName = 'N/A';
+  let userName = 'N/A';data
   
   // Buscar el nombre del usuario en el mapa de usuarios
   if (userId && usersMap[userId]) {
@@ -511,7 +510,7 @@ const columns = [
     const [integerPart, decimalPart] = value.toString().split('.');
     
     // Format only the integer part with commas
-    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     
     // Combine with decimal part if it exists
     return decimalPart ? `${formattedInteger}.${decimalPart}` : formattedInteger;
@@ -568,6 +567,9 @@ const formatDateToDDMMYYYY = (dateString) => {
   
   return `${day}/${month}/${year}`;
 };
+
+
+
   return (
     <>
     <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -590,7 +592,7 @@ const formatDateToDDMMYYYY = (dateString) => {
             marginRight: { xs: 0.5, sm: 1 },
         }}
     >
-        Factura: {data?.bill?.billId} Op: {data?.opId}
+        Factura: {data?.[0].operation.bill?.billId} Op: {data?.[0].operation.opId}
     </Typography>
 
 
@@ -754,44 +756,7 @@ const formatDateToDDMMYYYY = (dateString) => {
         </Grid>
 
     
-    <Grid item xs={12} md={1}>
-<TextField
-  id="calculatedDays"
-  placeholder="Días Cálculo"
-  name="calculatedDays"
-  type="number"
-  label="Días Cálculo"
-  value={formik.values.calculatedDays}
-      disabled
-  onChange={(e) => {
-    // Prevenir números negativos
-    if (e.target.value >= 0 || e.target.value === '') {
-      formik.handleChange(e);
-    }
-  }}
-  fullWidth
-  InputProps={{
-    inputProps: { 
-      min: 0  // Establece el valor mínimo permitido a 0
-    },
-    endAdornment: (
-     <AdaptiveTooltip
-  title="Este campo se completa automáticamente con los dias reales calculados, pero puedes modificarlo manualmente"
-  placement="top-end"
->
-  <IconButton edge="end" size="small" aria-label="Información">
-    <InfoIcon style={{ fontSize: '1rem', color: 'rgb(94, 163, 163)' }} />
-  </IconButton>
-</AdaptiveTooltip>
-      ),
-      
-    }}
-
-    error={formik.touched.calculatedDays && Boolean(formik.errors.calculatedDays)}
-
-    
-  />
-</Grid>
+ 
 <Grid item xs={12} md={4}>
 <BaseField
   fullWidth
@@ -898,7 +863,7 @@ const formatDateToDDMMYYYY = (dateString) => {
     <Typography variant="body1">
       <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Factura asociada:</Box>
       <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-        {data?.bill?.billId}
+        {data?.[0].operation.bill?.billId}
       </Box>
     </Typography>
   </Grid>
@@ -908,7 +873,7 @@ const formatDateToDDMMYYYY = (dateString) => {
     <Typography variant="body1">
       <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Valor Nominal:</Box>
       <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-        {formatNumberWithThousandsSeparator(data?.payedAmount)}
+        {formatNumberWithThousandsSeparator(data?.[0].operation.payedAmount)}
       </Box>
     </Typography>
   </Grid>
@@ -917,7 +882,7 @@ const formatDateToDDMMYYYY = (dateString) => {
     <Typography variant="body1">
       <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Fecha Inicio:</Box>
       <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-        {formatDateToDDMMYYYY(data?.opDate)}
+        {formatDateToDDMMYYYY(data?.[0].operation.opDate)}
       </Box>
     </Typography>
   </Grid>
@@ -926,7 +891,7 @@ const formatDateToDDMMYYYY = (dateString) => {
     <Typography variant="body1">
       <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Fecha Fin:</Box>
       <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-        {formatDateToDDMMYYYY(data?.opExpiration)}
+        {formatDateToDDMMYYYY(data?.[0].operation.opExpiration)}
       </Box>
     </Typography>
   </Grid>
@@ -935,7 +900,7 @@ const formatDateToDDMMYYYY = (dateString) => {
     <Typography variant="body1">
       <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Emisor:</Box>
       <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-        {data?.emitter?.social_reason || `${data?.emitter?.first_name || ''} ${data?.emitter?.last_name || ''}`.trim()}
+        {data?.[0].operation.emitter?.social_reason || `${data?.[0].operation.emitter?.first_name || ''} ${data?.[0].operation.emitter?.last_name || ''}`.trim()}
       </Box>
     </Typography>
   </Grid>
@@ -944,7 +909,7 @@ const formatDateToDDMMYYYY = (dateString) => {
     <Typography variant="body1">
       <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Pagador:</Box>
       <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-        {data?.payer?.social_reason || `${data?.payer?.first_name || ''} ${data?.payer?.last_name || ''}`.trim()}
+        {data?.[0].operation.payer?.social_reason || `${data?.[0].operation.payer?.first_name || ''} ${data?.[0].operation.payer?.last_name || ''}`.trim()}
       </Box>
     </Typography>
   </Grid>
@@ -953,7 +918,7 @@ const formatDateToDDMMYYYY = (dateString) => {
     <Typography variant="body1">
       <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Nombre inversionista:</Box>
       <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-        {data?.investor?.social_reason || `${data?.investor?.first_name || ''} ${data?.investor?.last_name || ''}`.trim()}
+        {data?.[0].operation.investor?.social_reason || `${data?.[0].operation.investor?.first_name || ''} ${data?.[0].operation.investor?.last_name || ''}`.trim()}
       </Box>
     </Typography>
   </Grid>
@@ -963,7 +928,7 @@ const formatDateToDDMMYYYY = (dateString) => {
     <Typography variant="body1">
       <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Cuenta inversionista:</Box>
       <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-        {data?.clientAccount?.account_number}
+        {data?.[0].operation.clientAccount?.account_number}
       </Box>
     </Typography>
   </Grid>
@@ -1013,22 +978,7 @@ const formatDateToDDMMYYYY = (dateString) => {
   </Grid>
 
   {/* Valor futuro Recalculado */}
-  <Grid item xs={12} md={6}>
-    <Typography variant="body1">
-      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Valor futuro Recalculado  <AdaptiveTooltip
-        title="Muestra el valor a reconocer al inversionista en caso de recaudos anticipados, tomando en cuenta los días reales de la operación."
-        placement="top-end"
-        arrow
-      >
-        <IconButton edge="end" size="small" aria-label="Información">
-          <InfoIcon style={{ fontSize: '1rem', color: 'rgb(94, 163, 163)' }} />
-        </IconButton>
-       </AdaptiveTooltip></Box>
-      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-        {formatNumberWithThousandsSeparator(formik.values.futureValueRecalculation?.toFixed(0))}
-      </Box>
-    </Typography>
-  </Grid>
+
  
 {/* Dias adicionales  */}
  <Grid item xs={12} md={6}>
@@ -1067,7 +1017,7 @@ const formatDateToDDMMYYYY = (dateString) => {
         </IconButton>
        </AdaptiveTooltip></Box>
       <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-       {formatNumberWithThousandsSeparator(pendingAmount || 0)}
+       {formatNumberWithThousandsSeparator(formik.values.opPendingAmount || 0)}
 
         
       </Box>
@@ -1155,102 +1105,7 @@ const formatDateToDDMMYYYY = (dateString) => {
    
            
           
-  <Grid container spacing={2} mt={3} ml={1}>
-           {formik.values.lastDate && (
-              <>
- <Box sx={{ width: '100%' }} ml={1.5}>
-    <Typography
-      letterSpacing={0}
-      fontSize="1.5rem"
-      fontWeight="regular"
-      color="#5EA3A3"
-      sx={{ mb: 0.5 }}  // Reduje el marginBottom a 0.5 (4px)
-    >
-      Datos de Recaudos Anteriores
-    </Typography>
-    
-    <Divider 
-      sx={{ 
-        backgroundColor: '#5EA3A3', 
-        height: '1px',
-        width: '100%',
-        mt: 0.5,  // Margen superior reducido
-        mb: 2     // Margen inferior normal
-      }} 
-    />
-  </Box>
-               {/* Fecha Último Recaudo */}
-               <Grid item xs={12} md={6}>
 
-                
-    <Typography variant="body1">
-      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Fecha Recaudo anterior</Box>
-      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-        {formatDateToDDMMYYYY(formik.values.lastDate)}
-      </Box>
-    </Typography>
-  </Grid>
-
-   {/* Monto Recaudos Previos< */}
-   <Grid item xs={12} md={6}>
-    <Typography variant="body1">
-      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Monto Recaudos Previos</Box>
-      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-        {formatNumberWithThousandsSeparator(formik.values.previousPayedAmount)}
-      </Box>
-    </Typography>
-  </Grid>
-
-
-   {/* Intereses */}
-   <Grid item xs={12} md={6}>
-    <Typography variant="body1">
-      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem"> Intereses</Box>
-      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-        {formatNumberWithThousandsSeparator(formik.values.interest)}
-      </Box>
-    </Typography>
-  </Grid>
-   
-              </>
-            )}
-
-    </Grid>          
-            
-     
-            {data?.previousOperationBill && (
-              <>
-              <Grid item xs={12} md={6}>
-                
-    <Typography variant="body1">
-      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem"> Fecha Radicación</Box>
-      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-        {formik.values.previousOpDate}
-      </Box>
-    </Typography>
-  </Grid>
-  <Grid item xs={12} md={6}>
-    <Typography variant="body1">
-      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">  Tasa Descuento</Box>
-      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-        {formatNumberWithThousandsSeparator(formik.values.previousDiscountTax)}
-      </Box>
-    </Typography>
-  </Grid>
-  
-
-  <Grid item xs={12} md={6}>
-    <Typography variant="body1">
-      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">  Nro Operacion</Box>
-      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-       {formik.values.previousOpNumber}
-      </Box>
-    </Typography>
-  </Grid>
-   
-     
-              </>
-            )}
 
             <Box
               sx={{

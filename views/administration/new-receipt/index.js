@@ -80,9 +80,9 @@ export default function Receipt() {
   
         // Espera 2.5s antes de redirigir
         setTimeout(() => {
-          //router.push("/operations");
+          window.close();
           setLoading(false);
-        },6000);
+        },1000);
     }
   }, [dataRegisterReceipt, errorRegisterReceipt, loadingRegisterReceipt]);
   
@@ -106,7 +106,7 @@ export default function Receipt() {
 
     const formik = useFormik({
     initialValues: initialValues,
-    validationSchema:validationSchema,
+   // validationSchema:validationSchema,
     onSubmit: async (values, actions) => {
       setShowConfirmationModal(false); // Cierra el modal de confirmación
       setLoading(true);

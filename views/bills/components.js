@@ -294,20 +294,19 @@ console.log(bill)
   }}
   disabled={!bill || bill.length === 0 || loadingSaveBills || wasSaved}
   sx={{
-    backgroundColor: wasSaved ? "#4caf50" : "#488B8F",
+    backgroundColor: (!bill || bill.length === 0 || loadingSaveBills || wasSaved) ? "#CECECE" : (wasSaved ? "#4caf50" : "#488B8F"),
     borderRadius: "4px",
-    color: "#FFFFFF",
+    color: (!bill || bill.length === 0 || loadingSaveBills || wasSaved) ? "#5f5f5f" : "#FFFFFF",
     height: "3rem",
     fontSize: "0.7rem",
     fontFamily: "Montserrat",
     fontWeight: "bold",
     "&:hover": {
-      backgroundColor: wasSaved ? "#4caf50" : "#5EA3A3",
+      backgroundColor: (!bill || bill.length === 0 || loadingSaveBills || wasSaved) ? "#CECECE" : (wasSaved ? "#4caf50" : "#5EA3A3"),
     },
-    "&:disabled": {
-      backgroundColor: wasSaved ? "#4caf50" : "#cccccc",
-      color: "#FFFFFF",
-      cursor: wasSaved ? "default" : "not-allowed"
+    "&.Mui-disabled": {
+      backgroundColor: "#CECECE !important",
+      color: "#a7a7a7ff !important",
     }
   }}
   aria-label="add"

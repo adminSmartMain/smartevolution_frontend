@@ -154,6 +154,20 @@ export const ReceiptListComponent = () => {
     const openStatus = Boolean(anchorElStatus);
 
 
+
+    const formatNumberWithThousandsSeparator = (value) => {
+    if (value === undefined || value === null) return '';
+    
+    // Convert to string and split into integer and decimal parts
+    const [integerPart, decimalPart] = value.toString().split('.');
+    
+    // Format only the integer part with commas
+    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    
+    // Combine with decimal part if it exists
+    return decimalPart ? `${formattedInteger}.${decimalPart}` : formattedInteger;
+};
+
   const handleSelectStatus = (status) => {
     setSelectedStatus(status);
     handleCloseStatus();
@@ -436,7 +450,8 @@ const handleTextFieldChange = (evt) => {
   {
     field: "operation",
     headerName: "opID",
-    width: 100,
+    flex: 1, // Cambia width por flex
+    minWidth: 100, // Mantén un ancho mínimo
     renderCell: (params) => {
       // Verificación de que los parámetros existan
       if (!params || !params.row || !params.row.operation) {
@@ -514,7 +529,8 @@ const handleTextFieldChange = (evt) => {
      {
   field: "typeReceipt",
   headerName: "Tipo / Estado",
-  width: 180,
+    flex: 1.5, // flex: 1.5 le dará más espacio que las demás
+    minWidth: 180,
   renderCell: (params) => {
     const type = params.row.typeReceipt || '';
     const status = params.row.statusReceipt || '';
@@ -550,7 +566,8 @@ const handleTextFieldChange = (evt) => {
     {
       field: "date",
       headerName: "Aplicado",
-      width: 100,
+     flex: 1,
+    minWidth: 100,
       renderCell: (params) => {
         return (
           <InputTitles>
@@ -562,7 +579,9 @@ const handleTextFieldChange = (evt) => {
        {
       field: "billId",
       headerName: "Factura",
-      width: 100,
+      flex: 1,
+    minWidth: 100,
+
       renderCell: (params) => {
         return (
           <CustomTooltip
@@ -589,7 +608,8 @@ const handleTextFieldChange = (evt) => {
    {
   field: "payedAmount",
   headerName: "Monto Aplicado",
-  width: 190,
+    flex: 1.5,
+    minWidth: 190,
   renderCell: (params) => {
     return (
       <Box 
@@ -611,7 +631,7 @@ const handleTextFieldChange = (evt) => {
             },
             transition: "all 0.2s ease"
           }} 
-          onClick={()=>(handleOpenReceiptDetail(params.row.operation.id))}
+          onClick={()=>(handleOpenReceiptDetail(params.row.id))}
         />
 
         <InputTitles sx={{ fontWeight: 600, color: "#2c3e50" }}>
@@ -626,12 +646,13 @@ const handleTextFieldChange = (evt) => {
      {
   field: "operation2",
   headerName: "Inversionista/Valor Presente",
-  width: 180,
+  flex: 2, // Más flex para columnas más largas
+    minWidth: 180,
   renderCell: (params) => {
    
     const Inversionista =  params.row?.operation2?.investor?.social_reason || 
                   `${params.row?.operation2?.investor?.first_name || ''} ${params.row?.operation2?.investor?.last_name || ''}`.trim()|| '';
-    const ValorPresente = params.row?.operation2?.presentValueInvestor || '';
+    const ValorPresente = formatNumberWithThousandsSeparator(params.row?.operation2?.presentValueInvestor )|| '';
 
     return (
       <CustomTooltip
@@ -663,7 +684,8 @@ const handleTextFieldChange = (evt) => {
     {
       field: "realDays",
       headerName: "Dias R.",
-      width: 100,
+          flex: 0.8, // Menos flex para columnas pequeñas
+    minWidth: 80,
       renderCell: (params) => {
         return (
           <CustomTooltip
@@ -690,7 +712,8 @@ const handleTextFieldChange = (evt) => {
     {
       field: "additionalDays",
       headerName: "Días +",
-      width: 100,
+      flex: 0.8,
+    minWidth: 80,
       renderCell: (params) => {
         return (
           <CustomTooltip
@@ -718,7 +741,8 @@ const handleTextFieldChange = (evt) => {
     {
       field: "additionalInterests",
       headerName: "Intereses +",
-      width: 150,
+      flex: 1.2,
+    minWidth: 150,
       renderCell: (params) => {
         return (
           <CustomTooltip
@@ -962,160 +986,181 @@ const receipt =
     </Menu>
   </Box>
 </Box>
-      <Box
-        container
-        marginTop={4}
-        display="flex"
-        flexDirection="column"
-        width="100%"
-        height="100%"
-      >
-        <CustomDataGrid
-          rows={receipt}
-          columns={columns}
-          pageSize={15}
-          rowsPerPageOptions={[5]}
-          disableSelectionOnClick
-          disableColumnMenu
-            sx={{
-    '& .MuiDataGrid-columnHeaders': {
-      backgroundColor: '#e2e0e0ff', // Gris claro para los headers
-      color: '#000000', // Negro para el texto de los headers
-    
-    },
-    '& .MuiDataGrid-columnHeaderTitle': {
-      fontWeight: '600',
-      fontSize: '0.85rem',
-      color: '#000000', // Negro para el título de las columnas
-    },
-    '& .MuiDataGrid-iconButtonContainer': {
-      visibility: 'visible !important', // Mostrar siempre los iconos de ordenamiento
-    },
-    '& .MuiDataGrid-menuIcon': {
-      visibility: 'visible !important', // Mostrar siempre el icono del menú
-    },
-    '& .MuiDataGrid-sortIcon': {
-      color: '#5EA3A3', // Color verde para los iconos de ordenamiento
-      opacity: 1, // Hacerlos completamente visibles
-      fontSize: '1rem',
-    },
-    '& .MuiDataGrid-columnHeader:hover .MuiDataGrid-sortIcon': {
-      color: '#5EA3A3', // Mantener el mismo color al hover
-      opacity: 1,
-    },
-    '& .MuiDataGrid-virtualScroller': {
-      minHeight: receipt.length === 0 ? '200px' : 'auto',
-    },
-    '& .MuiDataGrid-main': {
+<Box
+  container
+  marginTop={4}
+  display="flex"
+  flexDirection="column"
+  width="100%"
+  height="100%"
+>
+  <CustomDataGrid
+    rows={receipt}
+    columns={columns}
+    pageSize={15}
+    rowsPerPageOptions={[5]}
+    disableSelectionOnClick
+    disableColumnMenu
+    sx={{
       width: '100%',
-      overflow: 'auto',
-    },
-    // Estilos para los iconos de ordenamiento activos
-    '& .MuiDataGrid-columnHeaderSorted .MuiDataGrid-sortIcon': {
-      color: '#5EA3A3', // Color verde para ordenamiento activo
-      opacity: 1,
-    },
-  }}
-          components={{
-            ColumnSortedAscendingIcon: () => (
-              <Typography fontFamily="icomoon" fontSize="0.7rem">
-                &#xe908;
-              </Typography>
-            ),
-
-            ColumnSortedDescendingIcon: () => (
-              <Typography fontFamily="icomoon" fontSize="0.7rem">
-                &#xe908;
-              </Typography>
-            ),
-
-            NoRowsOverlay: () => (
-              <Typography
-                fontSize="0.9rem"
-                fontWeight="600"
-                color="#488B8F"
-                height="100%"
-                display="flex"
-                alignItems="center"
-                justifyContent="center"
-              >
-                No hay recaudos registrados
-              </Typography>
-            ),
-
-            Pagination: () => (
-              <Box
-                container
-                display="flex"
-                flexDirection="row"
-                justifyContent="space-between"
-                alignItems="center"
-              >
-                <Typography fontSize="0.8rem" fontWeight="600" color="#5EA3A3">
-                  {page * 15 - 14} - {page * 15} de {dataCount}{" "}
-                </Typography>
-                <Box
-                  container
-                  display="flex"
-                  flexDirection="row"
-                  justifyContent="space-between"
-                >
-                  <Typography
-                    fontFamily="icomoon"
-                    fontSize="1.2rem"
-                    marginRight="0.3rem"
-                    marginLeft="0.5rem"
-                    sx={{
-                      cursor: "pointer",
-                      transform: "rotate(180deg)",
-                      color: "#63595C",
-                    }}
-                    onClick={() => {
-                      if (page > 1) {
-                        fetch({
-                          page: page - 1,
-                          ...(Boolean(filter) && { [filter]: query }),
-                        });
-                        setPage(page - 1);
-                      }
-                    }}
-                  >
-                    &#xe91f;
-                  </Typography>
-                  <Typography
-                    fontFamily="icomoon"
-                    fontSize="1.2rem"
-                    marginRight="0.3rem"
-                    marginLeft="0.5rem"
-                    sx={{
-                      cursor: "pointer",
-
-                      color: "#63595C",
-                    }}
-                    onClick={() => {
-                      if (page < dataCount / 15) {
-                        fetch({
-                          page: page + 1,
-                          ...(Boolean(filter) && { [filter]: query }),
-                        });
-                        setPage(page + 1);
-                      }
-                    }}
-                  >
-                    &#xe91f;
-                  </Typography>
-                </Box>
-              </Box>
-            ),
-          }}
-          componentsProps={{
-            pagination: {
-              color: "#5EA3A3",
-            },
-          }}
-          loading={loading}
-        />
-      </Box>
+      // ESTILOS NUEVOS PARA ELIMINAR ESPACIO SOBRANTE
+      '& .MuiDataGrid-virtualScroller': {
+        minHeight: receipt.length === 0 ? '200px' : 'auto',
+        overflowX: 'hidden', // Oculta el scroll horizontal innecesario
+      },
+      '& .MuiDataGrid-main': {
+        width: '100%',
+        overflow: 'hidden', // Cambia de 'auto' a 'hidden'
+      },
+      '& .MuiDataGrid-columnHeaders': {
+        backgroundColor: '#e2e0e0ff',
+        color: '#000000',
+        minWidth: '100% !important', // Fuerza el ancho completo
+        width: '100% !important',
+      },
+      '& .MuiDataGrid-row': {
+        minWidth: '100% !important',
+        width: '100% !important',
+      },
+      '& .MuiDataGrid-viewport': {
+        minWidth: '100% !important',
+        width: '100% !important',
+      },
+      // ELIMINA EL ESPACIO SOBRANTE DE LA ÚLTIMA COLUMNA
+      '& .MuiDataGrid-filler': {
+        display: 'none !important',
+      },
+      '& .MuiDataGrid-scrollbar': {
+        display: 'none !important',
+      },
+      '& .MuiDataGrid-columnHeader:last-child': {
+        borderRight: 'none',
+      },
+      '& .MuiDataGrid-cell:last-of-type': {
+        borderRight: 'none',
+      },
+      // ESTILOS EXISTENTES
+      '& .MuiDataGrid-columnHeaderTitle': {
+        fontWeight: '600',
+        fontSize: '0.85rem',
+        color: '#000000',
+      },
+      '& .MuiDataGrid-iconButtonContainer': {
+        visibility: 'visible !important',
+      },
+      '& .MuiDataGrid-menuIcon': {
+        visibility: 'visible !important',
+      },
+      '& .MuiDataGrid-sortIcon': {
+        color: '#5EA3A3',
+        opacity: 1,
+        fontSize: '1rem',
+      },
+      '& .MuiDataGrid-columnHeader:hover .MuiDataGrid-sortIcon': {
+        color: '#5EA3A3',
+        opacity: 1,
+      },
+      '& .MuiDataGrid-columnHeaderSorted .MuiDataGrid-sortIcon': {
+        color: '#5EA3A3',
+        opacity: 1,
+      },
+    }}
+    components={{
+      ColumnSortedAscendingIcon: () => (
+        <Typography fontFamily="icomoon" fontSize="0.7rem">
+          &#xe908;
+        </Typography>
+      ),
+      ColumnSortedDescendingIcon: () => (
+        <Typography fontFamily="icomoon" fontSize="0.7rem">
+          &#xe908;
+        </Typography>
+      ),
+      NoRowsOverlay: () => (
+        <Typography
+          fontSize="0.9rem"
+          fontWeight="600"
+          color="#488B8F"
+          height="100%"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+        >
+          No hay recaudos registrados
+        </Typography>
+      ),
+      Pagination: () => (
+        <Box
+          container
+          display="flex"
+          flexDirection="row"
+          justifyContent="space-between"
+          alignItems="center"
+        >
+          <Typography fontSize="0.8rem" fontWeight="600" color="#5EA3A3">
+            {page * 15 - 14} - {page * 15} de {dataCount}{" "}
+          </Typography>
+          <Box
+            container
+            display="flex"
+            flexDirection="row"
+            justifyContent="space-between"
+          >
+            <Typography
+              fontFamily="icomoon"
+              fontSize="1.2rem"
+              marginRight="0.3rem"
+              marginLeft="0.5rem"
+              sx={{
+                cursor: "pointer",
+                transform: "rotate(180deg)",
+                color: "#63595C",
+              }}
+              onClick={() => {
+                if (page > 1) {
+                  fetch({
+                    page: page - 1,
+                    ...(Boolean(filter) && { [filter]: query }),
+                  });
+                  setPage(page - 1);
+                }
+              }}
+            >
+              &#xe91f;
+            </Typography>
+            <Typography
+              fontFamily="icomoon"
+              fontSize="1.2rem"
+              marginRight="0.3rem"
+              marginLeft="0.5rem"
+              sx={{
+                cursor: "pointer",
+                color: "#63595C",
+              }}
+              onClick={() => {
+                if (page < dataCount / 15) {
+                  fetch({
+                    page: page + 1,
+                    ...(Boolean(filter) && { [filter]: query }),
+                  });
+                  setPage(page + 1);
+                }
+              }}
+            >
+              &#xe91f;
+            </Typography>
+          </Box>
+        </Box>
+      ),
+    }}
+    componentsProps={{
+      pagination: {
+        color: "#5EA3A3",
+      },
+    }}
+    loading={loading}
+  />
+</Box>
     </>
   );
 };
