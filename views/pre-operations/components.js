@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ToastContainer } from "react-toastify";
 import Link from "next/link";
 import { SearchOutlined } from "@mui/icons-material";
+import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
 import { Box, Button, Fade, FormControl, Grid, IconButton, InputLabel,Menu, MenuItem, InputAdornment , Select, TextField, Typography } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import Modal from "@components/modals/modal";
@@ -32,6 +33,10 @@ import DocumentIcon from '@mui/icons-material/Description';
 import { Tooltip } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { T } from "@formulajs/formulajs";
+import ListItemText from '@mui/material/ListItemText';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import CloseIcon from "@mui/icons-material/Close";
+import CheckIcon from "@mui/icons-material/Check";
 
 
 const sectionTitleContainerSx = {
@@ -155,7 +160,7 @@ export const OperationsComponents = ({
       
       try {
         await GetSummaryList(opId);
-        console.log('aaa')
+  
         results[opId] = true; // Tiene resumen
       } catch (error) {
         if (error.response?.status === 500) {
@@ -189,7 +194,6 @@ export const OperationsComponents = ({
     }
   }, [page, rows, checkedPages, filtersHandlers.value]);
 
-  console.log(haveNegotiationSummary)
   const calcs = rows[0]?.calcs;
 
   const [other, setOther] = useState(calcs?.others || 0);
@@ -201,7 +205,7 @@ export const OperationsComponents = ({
 
   const [search, setSearch] = useState("");
  // Supongamos que `dateRange` es un estado que mantiene el rango de fechas seleccionado
-const [dateRange, setDateRange] = useState({ startDate: null, endDate: null });
+  const [dateRange, setDateRange] = useState({ startDate: null, endDate: null });
   const [anchorElCSV, setAnchorElCSV] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
   const openMenu = Boolean(anchorEl);
@@ -212,6 +216,32 @@ const [dateRange, setDateRange] = useState({ startDate: null, endDate: null });
 
   const handleOpenDelete = (id) => setOpenDelete([true, id]);
   const handleCloseDelete = () => setOpenDelete([false, null]);
+
+
+
+    const [anchorElStatus, setAnchorElStatus] = useState(null);
+    const [selectedStatus, setSelectedStatus] = useState(null);
+  
+    // Opciones estáticas de estados
+    const statusOptions = [
+      { value: 0, label: "Por Aprobar", badgeClass: "badge por-aprobar" },
+     
+      { value: 2, label: "Rechazada", badgeClass: "badge rechazado" },
+
+   
+    ];
+
+
+
+  const handleClickStatus = (event) => {
+    setAnchorElStatus(event.currentTarget);
+  };
+
+  const handleCloseStatus = () => {
+    setAnchorElStatus(null);
+  };
+
+
 
   const handleDelete = (id) => {
     fetchDeleteOperation(id);
@@ -513,7 +543,8 @@ const handleCloseMenu = () => {
       ...filtersHandlers.value,  // Mantiene todos los filtros actuales
       opId: "",                  // Limpia solo estos campos
       billId: "",
-      investor: ""
+      investor: "",
+      
     };
     
     filtersHandlers.set(newFilters);  // Actualiza el estado conservando las fechas
@@ -523,7 +554,7 @@ const handleCloseMenu = () => {
 
 
   const handleOpenModal = () => {
-    console.log("Datos seleccionados para el modal:", selectedData);
+ 
     setOpenModal(true);
   };
 
@@ -657,7 +688,7 @@ const handleUpdateAllClick = (e) => {
 const handleOpenNegotiationSummary = (id, opId,hasSummary) => {
   // Verificar si ya tenemos información sobre si existe resumen para este opId
 
-  console.log(`Verificando resumen para opId ${opId}:`, hasSummary);
+ 
   // Construir la URL basada en si existe o no el resumen
   let url;
   if (hasSummary) {
@@ -703,47 +734,46 @@ const checkSingleNegotiationSummary = async (opId) => {
     }
   }
 };
-console.log(rows)
-  const columns = [
-    {
-      field: "status",
-      headerName: "Estado",
-      width: 100,
-      renderCell: (params) => {
-       
-        let statusText = "";
-        let badgeClass = "";
-        
-        switch (params.value) {
-          case 0:
-            statusText = "Por Aprobar";
-            badgeClass = "badge por-aprobar";
-            break;
-          case 1:
-            statusText = "Aprobada";
-            badgeClass = "badge aprobado";
-            break;
-          case 2:
-            statusText = "Rechazada";
-            badgeClass = "badge rechazado";
-            break;
-          case 3:
-            statusText = "Vigente";
-            badgeClass = "badge vigente";
-            break;
-          case 4:
-            statusText = "Cancelada";
-            badgeClass = "badge cancelada";
-            break;
-          default:
-            statusText = "Por Aprobar";
-            badgeClass = "badge por-aprobar";
-        }
-        
+
+ const columns = [
+  {
+    field: "status",
+    headerName: "Estado",
+    width: 100,
+    renderCell: (params) => {
+      let statusText = "";
+      let badgeClass = "";
+      
+      switch (params.value) {
+        case 0:
+          statusText = "Por Aprobar";
+          badgeClass = "badge por-aprobar";
+          break;
+        case 1:
+          statusText = "Aprobada";
+          badgeClass = "badge aprobado";
+          break;
+        case 2:
+          statusText = "Rechazada";
+          badgeClass = "badge rechazado";
+          break;
+        case 3:
+          statusText = "Vigente";
+          badgeClass = "badge vigente";
+          break;
+        case 4:
+          statusText = "Cancelada";
+          badgeClass = "badge cancelada";
+          break;
+        default:
+          statusText = "Por Aprobar";
+          badgeClass = "badge por-aprobar";
+      }
+      
         return <span className={badgeClass}>{statusText}</span>;
-      },
     },
-    
+  },
+  
     { field: "opId", headerName: "ID", width:55 },
    // { field: "created_at", headerName: "Creado el", width: 93,  valueFormatter: (params) => {
       // if (!params.value) return '';
@@ -755,45 +785,190 @@ console.log(rows)
       if (!params.value) return '';
       const [year, month, day] = params.value.split('T')[0].split('-');
       return `${day}/${month}/${year}`;
-    }},
-    { field: "billFraction", headerName: "Fracción", width: 60},
-    { field: "billData", headerName: "# Factura", width: 100 },
-    { field: "emitterName", headerName: "Emisor", width: 230 },
-    { field: "investorName", headerName: "Inversionista", width: 200 },
-    { field: "payerName", headerName: "Pagador", width: 150 },
-    { field: "discountTax", headerName: "Tasa Desc", width: 60 },
-    { field: "payedPercent", headerName: "% Desc", width: 40}, // Nueva columna
-    { field: "investorTax", headerName: "Tasa Inv", width: 40 },
-    { field: "payedAmount", headerName: "Valor Nominal", width: 110,
-      valueFormatter: ({ value }) => {
-        if (value == null) return "$0.00";
-        return new Intl.NumberFormat("es-CO", {
-          style: "currency",
-          currency: "COP",
-        }).format(value);
-      },
     },
-    { field: "presentValueInvestor", headerName: "Valor Inversionista", width: 110,
-      valueFormatter: ({ value }) => {
-        if (value == null) return "$0.00";
-        return new Intl.NumberFormat("es-CO", {
-          style: "currency",
-          currency: "COP",
-        }).format(value);
-      },
+    renderCell: (params) => (
+      <Tooltip title={params.formattedValue || ''} arrow>
+        <span>{params.formattedValue}</span>
+      </Tooltip>
+    )
+  },
+  
+  { 
+    field: "billFraction", 
+    headerName: "Fracción", 
+    width: 60,
+    renderCell: (params) => (
+      <Tooltip title={params.value || ''} arrow>
+        <span>{params.value}</span>
+      </Tooltip>
+    )
+  },
+  
+  { 
+    field: "billData", 
+    headerName: "# Factura", 
+    width: 100,
+    renderCell: (params) => (
+      <Tooltip title={params.value || ''} arrow>
+        <span>{params.value}</span>
+      </Tooltip>
+    )
+  },
+  
+  { 
+    field: "emitterName", 
+    headerName: "Emisor", 
+    width: 230,
+    renderCell: (params) => (
+      <Tooltip title={params.value || ''} arrow>
+        <span style={{ 
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis',
+          width: '100%'
+        }}>
+          {params.value}
+        </span>
+      </Tooltip>
+    )
+  },
+  
+  { 
+    field: "investorName", 
+    headerName: "Inversionista", 
+    width: 200,
+    renderCell: (params) => (
+      <Tooltip title={params.value || ''} arrow>
+        <span style={{ 
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis',
+          width: '100%'
+        }}>
+          {params.value}
+        </span>
+      </Tooltip>
+    )
+  },
+  
+  { 
+    field: "payerName", 
+    headerName: "Pagador", 
+    width: 150,
+    renderCell: (params) => (
+      <Tooltip title={params.value || ''} arrow>
+        <span style={{ 
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis',
+          width: '100%'
+        }}>
+          {params.value}
+        </span>
+      </Tooltip>
+    )
+  },
+  
+  { 
+    field: "discountTax", 
+    headerName: "Tasa Desc", 
+    width: 60,
+    renderCell: (params) => (
+      <Tooltip title={params.value || ''} arrow>
+        <span>{params.value}</span>
+      </Tooltip>
+    )
+  },
+  
+  { 
+    field: "payedPercent", 
+    headerName: "% Desc", 
+    width: 40,
+    renderCell: (params) => (
+      <Tooltip title={params.value ? `${params.value}%` : ''} arrow>
+        <span>{params.value}</span>
+      </Tooltip>
+    )
+  },
+  
+  { 
+    field: "investorTax", 
+    headerName: "Tasa Inv", 
+    width: 40,
+    renderCell: (params) => (
+      <Tooltip title={params.value || ''} arrow>
+        <span>{params.value}</span>
+      </Tooltip>
+    )
+  },
+  
+  { 
+    field: "payedAmount", 
+    headerName: "Valor Nominal", 
+    width: 110,
+    valueFormatter: ({ value }) => {
+      if (value == null) return "$0.00";
+      return new Intl.NumberFormat("es-CO", {
+        style: "currency",
+        currency: "COP",
+      }).format(value);
     },
-    { field: "probableDate", headerName: "Fecha Probable", width: 93 ,  valueFormatter: (params) => {
+    renderCell: (params) => (
+      <Tooltip title={params.formattedValue || ''} arrow>
+        <span>{params.formattedValue}</span>
+      </Tooltip>
+    )
+  },
+  
+  { 
+    field: "presentValueInvestor", 
+    headerName: "Valor Inversionista", 
+    width: 110,
+    valueFormatter: ({ value }) => {
+      if (value == null) return "$0.00";
+      return new Intl.NumberFormat("es-CO", {
+        style: "currency",
+        currency: "COP",
+      }).format(value);
+    },
+    renderCell: (params) => (
+      <Tooltip title={params.formattedValue || ''} arrow>
+        <span>{params.formattedValue}</span>
+      </Tooltip>
+    )
+  },
+  
+  { 
+    field: "probableDate", 
+    headerName: "Fecha Probable", 
+    width: 93,
+    valueFormatter: (params) => {
       if (!params.value) return '';
-      // Extrae directamente las partes de la fecha ISO (evita conversión local)
       const [year, month, day] = params.value.split('T')[0].split('-');
-      return `${day}/${month}/${year}`; // Formato dd/mm/YYYY
-    }},
-    { field: "opExpiration", headerName: "Fecha Fin", width: 94 ,  valueFormatter: (params) => {
+      return `${day}/${month}/${year}`;
+    },
+    renderCell: (params) => (
+      <Tooltip title={params.formattedValue || ''} arrow>
+        <span>{params.formattedValue}</span>
+      </Tooltip>
+    )
+  },
+  
+  { 
+    field: "opExpiration", 
+    headerName: "Fecha Fin", 
+    width: 94,
+    valueFormatter: (params) => {
       if (!params.value) return '';
-      // Extrae directamente las partes de la fecha ISO (evita conversión local)
       const [year, month, day] = params.value.split('T')[0].split('-');
-      return `${day}/${month}/${year}`; // Formato dd/mm/YYYY
-    }},
+      return `${day}/${month}/${year}`;
+    },
+    renderCell: (params) => (
+      <Tooltip title={params.formattedValue || ''} arrow>
+        <span>{params.formattedValue}</span>
+      </Tooltip>
+    )
+  },
    
     {
       field: "Acciones",
@@ -915,10 +1090,10 @@ const handleTextFieldChange = (evt) => {
     });
   };
 
-  const updateFilters = (value, field) => {
-     if (field !== "multi") {
-      const newFilters = { 
-        ...tempFilters, 
+const updateFilters = (value, field) => {
+  if (field !== "multi") {
+    const newFilters = { 
+      ...tempFilters, 
         [field]: value,
         startDate: tempFilters.startDate,
         endDate: tempFilters.endDate
@@ -927,11 +1102,11 @@ const handleTextFieldChange = (evt) => {
       filtersHandlers.set(newFilters);
 
       // Si el valor es diferente al filtro actual, marcamos como filtro aplicado
-      if (tempFilters[field] !== value) {
-        setFilterApplied(true);
-      }
-      return;
+    if (tempFilters[field] !== value) {
+      setFilterApplied(true);
     }
+    return;
+  }
 
     const onlyDigits = /^\d{3,4}$/; // Operación: 3-4 dígitos
     const alphaNumeric = /^[a-zA-Z0-9]{3,10}$/; // Factura: Alfanumérico de 3-10 caracteres
@@ -942,20 +1117,17 @@ const handleTextFieldChange = (evt) => {
     const newFilters = { opId: "", billId: "", investor: "", startDate: null, endDate: null };
   
     // Clasificación más precisa
-    if (onlyDigits.test(value)) {
+  if (onlyDigits.test(value)) {
       // Asignamos opId solo si tiene 3-4 dígitos
       newFilters.opId = value; // Asignar a opId si es una operación
-    } else if (alphaNumeric.test(value) && !hasLetters && value.length >= 3 && value.length <= 10) {
-      // Asignamos billId solo si es alfanumérico de 3-10 caracteres y no tiene letras
-      newFilters.billId = value;
-    } else if (hasLetters || hasSpaces || value.length > 4) {
-      // Si tiene letras o espacios, es un nombre de inversionista
-      newFilters.investor = value;
-    } else {
-      // Por defecto lo tratamos como inversionista
-      newFilters.investor = value;
-    }
-  
+  } else if (alphaNumeric.test(value) && !hasLetters && value.length >= 3 && value.length <= 10) {
+    newFilters.billId = value;
+  } else if (hasLetters || hasSpaces || value.length > 4) {
+    newFilters.investor = value;
+  } else {
+    newFilters.investor = value;
+  }
+
     // Si las fechas no están vacías, las agregamos
     if (tempFilters.startDate && tempFilters.endDate) {
       newFilters.startDate = tempFilters.startDate;
@@ -970,10 +1142,9 @@ const handleTextFieldChange = (evt) => {
       endDate: tempFilters.endDate
     });
 
-        setFilterApplied(true);
+  setFilterApplied(true);
         setPage(1)
-  };
-  
+};
   
       // Modificar el useEffect para resetear checkedPages cuando se aplica un filtro
   useEffect(() => {
@@ -1020,17 +1191,36 @@ const handleTextFieldChange = (evt) => {
   return (
     <>
     
-      <BackButton path="/dashboard" />
+      
       <Box sx={{ ...sectionTitleContainerSx }}>
-        <Typography
+
+<Box display="flex" alignItems="center">
+<Link href="/dashboard" underline="none">
+          <a>
+          <HomeOutlinedIcon 
+              fontSize="large" 
+              sx={{ 
+                color: '#488b8f',
+                opacity: 0.8, // Ajusta la transparencia (0.8 = 80% visible)
+                strokeWidth: 1, // Grosor del contorno
+              }} 
+            />
+        
+          </a>
+          
+          </Link>
+       <Typography
           letterSpacing={0}
           fontSize="1.7rem"
           fontWeight="regular"
           marginBottom="0.7rem"
+          marginTop='0.7rem'
           color="#5EA3A3"
         >
-          Pre-operaciones
-        </Typography>
+           - Pre-operaciones
+          </Typography>
+</Box>
+       
         <Box sx={{ ...sectionTitleContainerSx }}>
         <Link href="/operations" passHref>
   <button className="button-header-preop-title">
@@ -1095,7 +1285,7 @@ const handleTextFieldChange = (evt) => {
 
 
   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
-  
+
 
     <button className="button-header-preop" onClick={handleOpenModal}>Valor a Girar</button>
     <ModalValorAGirar open={openModal} handleClose={handleCloseModal} data={mockData} />

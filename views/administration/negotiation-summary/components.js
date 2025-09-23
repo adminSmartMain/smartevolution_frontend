@@ -3,7 +3,7 @@ import Axios from "axios";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import CloseIcon from "@mui/icons-material/Close";
-
+import { CircularProgress } from '@mui/material';
 import {
   Box,
   Button,
@@ -134,18 +134,41 @@ export const NegotiationSummary = ({
   const [deposit, setDeposit] = useState([]);
 
 
-  //Este useEffect es el que toma el id que se va a enviar al backend.
-  useEffect(() => {
-    if (router && router.query.id) {
-      setID(router.query.id);
-      
-      if (option === "modify") {
-        setOpID(router.query.opId);
-        console.log("data",data)
-        
-      }
+ // Añade este estado
+const [idFromUrl, setIdFromUrl] = useState(false);
+
+// Actualiza el useEffect
+useEffect(() => {
+  if (router && router.query.id) {
+    setID(router.query.id);
+    
+    if (option === "modify") {
+      setOpID(router.query.opId);
+      console.log("data", data);
+    } else {
+      // Solo establecer OpID si no tiene valor previo
+      setOpID(prevOpID => {
+        if (!prevOpID) {
+          setIdFromUrl(true);
+          return router.query.id;
+        }
+        return prevOpID;
+      });
     }
-  }, [router.query, option]);
+  }
+}, [router.query, option]);
+
+// Función para manejar cambios en el input
+const handleOpIdChange = (e) => {
+  if (option !== "modify") {
+    const value = e.target.value;
+    // Validación para solo números
+    if (value === '' || /^[0-9]+$/.test(value)) {
+      setOpID(value);
+      setIdFromUrl(false); // El usuario está editando, ya no es de la URL
+    }
+  }
+};
 
 
   //comentario de prueba
@@ -664,36 +687,64 @@ export const NegotiationSummary = ({
         <Box display="flex" flexDirection="row" justifyContent="space-between">
           <BackButton path="/administration/negotiation-summary/summaryList" />
 
-          <Button
-            variant="standard"
-            color="primary"
-            size="large"
-            //funcion que gobierna el boton Guardar/Modificar
-            onClick={handleButtonClick}
-            sx={{
-              height: "2.6rem",
-              backgroundColor: "#488B8F",
-              border: "1.4px solid #5EA3A3",
-              borderRadius: "4px",
-              "&:hover": {
-                backgroundColor: "#5EA3A3",
-              },
-            }}
-          >
-            <Typography
-              letterSpacing={0}
-              fontSize="80%"
-              fontWeight="bold"
-              color="#FFFFFF"
-            >
-              {option === "modify" ? "MODIFICAR" : "GUARDAR"}
-            </Typography>
-
-            <i
-              className="fa-regular fa-floppy-disk"
-              style={{ color: "#FFFFFF", marginLeft: "0.5rem" }}
-            ></i>
-          </Button>
+        <Button
+  variant="contained"
+  color="primary"
+  size="large"
+  onClick={handleButtonClick}
+  disabled={loadingCreateSummary || loadingModifySummary || dataCreateSummary || dataModifySummary}
+  sx={{
+    height: "2.6rem",
+    backgroundColor: (dataCreateSummary || dataModifySummary) ? "#4caf50" : "#488B8F",
+    border: "1.4px solid",
+    borderColor: (dataCreateSummary || dataModifySummary) ? "#4caf50" : "#5EA3A3",
+    borderRadius: "4px",
+    "&:hover": {
+      backgroundColor: (dataCreateSummary || dataModifySummary) ? "#4caf50" : "#5EA3A3",
+    },
+    "&:disabled": {
+      backgroundColor: (dataCreateSummary || dataModifySummary) ? "#4caf50" : "#cccccc",
+      borderColor: (dataCreateSummary || dataModifySummary) ? "#4caf50" : "#999999",
+      cursor: (dataCreateSummary || dataModifySummary) ? "default" : "not-allowed"
+    }
+  }}
+>
+  {(loadingCreateSummary || loadingModifySummary) ? (
+    <>
+      <CircularProgress size={16} color="inherit" sx={{ mr: 1 }} />
+      <Typography
+        letterSpacing={0}
+        fontSize="80%"
+        fontWeight="bold"
+        color="#FFFFFF"
+      >
+        GUARDANDO...
+      </Typography>
+    </>
+  ) : (
+    <>
+      <Typography
+        letterSpacing={0}
+        fontSize="80%"
+        fontWeight="bold"
+        color="#FFFFFF"
+      >
+        {(dataCreateSummary || dataModifySummary) 
+          ? "GUARDADO" 
+          : option === "modify" ? "MODIFICAR" : "GUARDAR"}
+      </Typography>
+      <i
+        className="fa-regular fa-floppy-disk"
+        style={{ 
+          color: "#FFFFFF", 
+          marginLeft: "0.5rem",
+          // Ocultar icono cuando ya está guardado
+          display: (dataCreateSummary || dataModifySummary) ? "none" : "inline-block"
+        }}
+      ></i>
+    </>
+  )}
+</Button>
         </Box>
         <Box marginBottom={3}>
           <Typography
@@ -715,59 +766,56 @@ export const NegotiationSummary = ({
             gap={2}
             width="90%"
           >
-            <Box display="flex" flexDirection="column">
-              <InputTitles marginBottom={1}>N° operación</InputTitles>
-              <TextField
-                id="opId"
-                placeholder="# OP"
-                variant="outlined"
-                size="small"
-                type="number"
-               onChange={(e) => {
-      if (option !== "modify") {
-        const value = e.target.value;
-        // Validación para solo números
-        if (value === '' || /^[0-9]+$/.test(value)) {
-          setOpID(value);
-        }
+<Box display="flex" flexDirection="column">
+  <InputTitles marginBottom={1}>N° operación</InputTitles>
+  <TextField
+    id="opId"
+    placeholder="# OP"
+    variant="outlined"
+    size="small"
+    type="number"
+    onChange={handleOpIdChange}  // Usar la nueva función
+    disabled={option === "modify"}
+    value={option === "modify" ? id : OpID}
+    onKeyDown={(e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleOpEntered(e);
       }
     }}
-                disabled={option === "modify" ? true : false}
-                value={option === "modify" ? id : OpID}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    handleOpEntered(e);
-                  }
-                }}
-                onWheel={(e) => e.target.blur()}
-                sx={{
-                  color: "#333333",
-                  width: "35%",
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "4px",
-                    backgroundColor: "#F5F5F5",
-                    "& fieldset": {
-                      borderColor: "#5C9E9F",
-                    },
-                    "&:hover fieldset": {
-                      borderColor: "#5C9E9F",
-                    },
-                    "&.Mui-focused fieldset": {
-                      borderColor: "#5C9E9F",
-                    },
-                  },
-                  "input::-webkit-outer-spin-button": {
-                    WebkitAppearance: "none",
-                    margin: 0,
-                  },
-                  "input::-webkit-inner-spin-button": {
-                    WebkitAppearance: "none",
-                    margin: 0,
-                  },
-                }}
-              />
-            </Box>
+    onWheel={(e) => e.target.blur()}
+    sx={{
+      color: "#333333",
+      width: "35%",
+      "& .MuiOutlinedInput-root": {
+        borderRadius: "4px",
+        backgroundColor: option === "modify" ? "#E8E8E8" : "#F5F5F5",
+        "& fieldset": {
+          borderColor: "#5C9E9F",
+        },
+        "&:hover fieldset": {
+          borderColor: "#5C9E9F",
+        },
+        "&.Mui-focused fieldset": {
+          borderColor: "#5C9E9F",
+        },
+      },
+      "input::-webkit-outer-spin-button": {
+        WebkitAppearance: "none",
+        margin: 0,
+      },
+      "input::-webkit-inner-spin-button": {
+        WebkitAppearance: "none",
+        margin: 0,
+      },
+    }}
+  />
+  {idFromUrl && option !== "modify" && (
+    <Typography variant="caption" color="textSecondary">
+      ID cargado desde la URL
+    </Typography>
+  )}
+</Box>
             <TitleModal
               open={open[0]}
               handleClose={handleClose}

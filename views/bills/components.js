@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ToastContainer } from "react-toastify";
 
 import { useRouter } from "next/router";
-
+import { CircularProgress } from '@mui/material';
 import { ArrowForward, SaveOutlined } from "@mui/icons-material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import UploadFileOutlinedIcon from "@mui/icons-material/UploadFileOutlined";
@@ -133,6 +133,23 @@ export const BillsComponents = () => {
     data: dataSaveBills,
   } = useFetch({ service: SaveBills, init: false });
 
+
+  // Dentro de tu componente:
+const [wasSaved, setWasSaved] = useState(false);
+
+// Efecto para resetear wasSaved cuando bill cambie
+useEffect(() => {
+  if (bill && bill.length > 0) {
+    setWasSaved(false);
+  }
+}, [bill]);
+
+// Efecto para detectar cuando el guardado se completa
+useEffect(() => {
+  if (dataSaveBills && !loadingSaveBills) {
+    setWasSaved(true);
+  }
+}, [dataSaveBills, loadingSaveBills]);
   useToatsStatus(
     loadingSaveBills,
     dataSaveBills,
@@ -200,6 +217,8 @@ console.log(bill)
       }, 2000);
     }
   }, [dataSaveBills]);
+
+  
     return (
       <GridToolbarContainer
         sx={{
@@ -267,31 +286,40 @@ console.log(bill)
             style={{ marginLeft: 4, fontSize: "medium" }}
           ></i>
         </Button>
-        <Button
-          variant="standard"
-          onClick={() => {
-            const bills = {
-              bills: bill,
-            };
-            fetchSaveBills(bills);
-          }}
-          sx={{
-            backgroundColor: "#488B8F",
-            borderRadius: "4px",
-            color: "#FFFFFF",
-            height: "3rem",
-            fontSize: "0.7rem",
-            fontFamily: "Montserrat",
-            fontWeight: "bold",
-            "&:hover": {
-              backgroundColor: "#5EA3A3",
-            },
-          }}
-          aria-label="add"
-        >
-          GUARDAR MODIFICACIONES
-          <SaveOutlined sx={{ ml: 1, fontSize: "medium" }} />
-        </Button>
+<Button
+  variant="contained"
+  onClick={() => {
+    const bills = { bills: bill };
+    fetchSaveBills(bills);
+  }}
+  disabled={!bill || bill.length === 0 || loadingSaveBills || wasSaved}
+  sx={{
+    backgroundColor: (!bill || bill.length === 0 || loadingSaveBills || wasSaved) ? "#CECECE" : (wasSaved ? "#4caf50" : "#488B8F"),
+    borderRadius: "4px",
+    color: (!bill || bill.length === 0 || loadingSaveBills || wasSaved) ? "#5f5f5f" : "#FFFFFF",
+    height: "3rem",
+    fontSize: "0.7rem",
+    fontFamily: "Montserrat",
+    fontWeight: "bold",
+    "&:hover": {
+      backgroundColor: (!bill || bill.length === 0 || loadingSaveBills || wasSaved) ? "#CECECE" : (wasSaved ? "#4caf50" : "#5EA3A3"),
+    },
+    "&.Mui-disabled": {
+      backgroundColor: "#CECECE !important",
+      color: "#a7a7a7ff !important",
+    }
+  }}
+  aria-label="add"
+  startIcon={
+    loadingSaveBills ? (
+      <CircularProgress size={16} color="inherit" />
+    ) : (
+      <SaveOutlined sx={{ fontSize: "medium" }} />
+    )
+  }
+>
+  {loadingSaveBills ? "GUARDANDO..." : wasSaved ? "GUARDADO" : "GUARDAR MODIFICACIONES"}
+</Button>
       </GridToolbarContainer>
     );
   }
