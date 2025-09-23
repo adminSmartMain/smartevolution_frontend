@@ -15,10 +15,11 @@ import {
    Select,
    Menu, MenuItem,
 } from "@mui/material";
+import ListItemText from '@mui/material/ListItemText'; // Importación añadida
 import { styled } from "@mui/material/styles";
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
 import ValueFormat from "@formats/ValueFormat";
-
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import responsiveFontSize from "@lib/responsiveFontSize";
 
 import BackButton from "@styles/buttons/BackButton";
@@ -33,12 +34,14 @@ import ClearIcon from "@mui/icons-material/Clear";
 import ModalValorAGirar from "../../shared/components/ModalValorAGirar";
 import AdvancedDateRangePicker from "../../shared/components/AdvancedDateRangePicker";
 import scrollSx from "@styles/scroll";
-
+import CloseIcon from "@mui/icons-material/Close";
+import CheckIcon from "@mui/icons-material/Check"
 import CustomDataGrid from "@styles/tables";
 import DocumentIcon from '@mui/icons-material/Description';
 import { Tooltip } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import moment from "moment";
+import { getOperationsVersionTwo,getOperationsVersionTwo2 } from "./queries";
 
 const sectionTitleContainerSx = {
   display: "flex",
@@ -46,58 +49,7 @@ const sectionTitleContainerSx = {
   alignItems: "center",
 };
 
-const filtersContainerSx = {
-  display: "flex",
-  gap: 1,
-};
 
-const entriesGrid = {
-  backgroundColor: "#488B8F",
-  borderRadius: "4px",
-
-  mt: 1,
-
-  pb: 1.5,
-  pr: 1.5,
-};
-
-const entryContainerSx = {
-  display: "flex",
-  justifyContent: "flex-end",
-  alignItems: "center",
-
-  position: "relative",
-};
-
-const titleSx = {
-  letterSpacing: 0,
-  fontSize: 10,
-  fontWeight: "bold",
-  color: "#488B8F",
-  textTransform: "uppercase",
-  textAlign: "right",
-
-  position: "absolute",
-  left: 8,
-  top: 3,
-};
-
-const valueSx = {
-  letterSpacing: 0,
-  color: "#488B8F",
-  fontSize: 14,
-  fontWeight: 600,
-  textAlign: "right",
-
-  border: "1px solid #C7C7C780",
-  borderRadius: "4px",
-
-  backgroundColor: "#ebfaf6",
-  width: "100%",
-  padding: "0.35rem",
-  pt: "0.7rem",
-  pb: "0.1rem",
-};
 
 const tableWrapperSx = {
   marginTop: 2,
@@ -107,37 +59,7 @@ const tableWrapperSx = {
   height: "100%",
 };
 
-const TextFieldSearch = (props) => {
-  const { ...rest } = props;
 
-  return (
-    <MuiTextField
-      type="text"
-      variant="standard"
-      margin="normal"
-      InputProps={{
-        disableUnderline: true,
-        sx: {
-          marginTop: "-5px",
-        },
-        endAdornment: <SearchOutlined sx={{ color: "#5EA3A3" }} />,
-      }}
-      sx={{ m: 0, my: 1 }}
-      {...rest}
-    />
-  );
-};
-
-const Entry = (props) => {
-  const { title, children, sx, ...rest } = props;
-
-  return (
-    <Box sx={{ ...entryContainerSx, ...sx }}>
-      <Typography sx={{ ...titleSx }}>{title}</Typography>
-      <Typography sx={{ ...valueSx }}>{children}</Typography>
-    </Box>
-  );
-};
 
 const SortIcon = () => (
   <Typography fontFamily="icomoon" fontSize="0.7rem">
@@ -145,105 +67,8 @@ const SortIcon = () => (
   </Typography>
 );
 
-const EntryField = styled(StandardTextField)(({ theme }) => ({
-  "& label": {
-    color: "#488B8F",
-    fontWeight: 600,
-    top: 10,
-    left: -5,
-  },
 
-  "& .Mui-focused": {
-    color: "#488B8F",
-    fontWeight: 600,
-  },
 
-  "& fieldset": {
-    display: "none",
-  },
-
-  "& .MuiInputBase-root": {
-    height: 35.78,
-    backgroundColor: "#ebfaf6",
-  },
-
-  "& .MuiOutlinedInput-notchedOutline": {
-    borderColor: "#5EA3A380 !important",
-  },
-
-  "& .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline": {
-    borderColor: "#d32f2f !important",
-  },
-
-  "& .MuiOutlinedInput-input": {
-    textAlign: "right",
-    color: "#488B8F",
-    fontWeight: 600,
-    fontSize: 14,
-  },
-
-  "& .MuiInputAdornment-root": {
-    color: "#5EA3A3",
-  },
-}));
-
-const EditableEntry = (props) => {
-  const { title, value, onChangeMasked, ...rest } = props;
-
-  return (
-    <EntryField
-      notched={true}
-      label={title}
-      InputLabelProps={{ shrink: true }}
-      isMasked
-      thousandSeparator="."
-      decimalSeparator=","
-      decimalScale={2}
-      allowNegative={false}
-      value={value}
-      onChangeMasked={onChangeMasked}
-    />
-  );
-};
-
-const NotificationsButton = (props) => {
-  const { ...rest } = props;
-
-  return (
-    <Link href="/operations/notifications" underline="none">
-      <Button
-        variant="standard"
-        color="primary"
-        size="large"
-        sx={{
-          height: "2.6rem",
-          backgroundColor: "transparent",
-          border: "1.4px solid #63595C",
-          borderRadius: "4px",
-          ml: 1,
-        }}
-      >
-        <Typography
-          letterSpacing={0}
-          fontSize="80%"
-          fontWeight="bold"
-          color="#63595C"
-        >
-          Estado de firma
-        </Typography>
-
-        <Typography
-          fontFamily="icomoon"
-          fontSize="1.5rem"
-          color="#63595C"
-          marginLeft="0.9rem"
-        >
-          &#xe900;
-        </Typography>
-      </Button>
-    </Link>
-  );
-};
 
 export const OperationsComponents = ({
   rows,
@@ -262,26 +87,88 @@ export const OperationsComponents = ({
   const [anchorElCSV, setAnchorElCSV] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
   const openMenuCSV = Boolean(anchorElCSV);
+    const [openWindow, setOpenWindow] = useState(null); 
+
+
+  const [anchorElStatus, setAnchorElStatus] = useState(null);
+  const [selectedStatus, setSelectedStatus] = useState(null);
+const router = useRouter();
+
+const opIdQuery=router.query.opId
+
+
+
+  // Opciones estáticas de estados
+  const statusOptions = [
+  
+    { value: 1, label: "Vigente", badgeClass: "badge aprobado" },
+ 
+ 
+    { value: 4, label: "Cancelada", badgeClass: "badge cancelada" },
+     { value: 5, label: "Vencida", badgeClass: "badge vencido" }
+  ];
+
+
+
+  const handleClickStatus = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleCloseStatus = () => {
+    setAnchorEl(null);
+  };
+
+    const handleSelectStatus = (status) => {
+    setSelectedStatus(status);
+   
+    handleCloseStatus();
+    // Actualiza los filtros globales
+    
+  filtersHandlers.set({
+    ...filtersHandlers.value,
+    status: status?.value ?? "", // Usa option.value o cadena vacía
+    page: 1 // Resetear a primera página
+  });
+  };
+
+  const handleClearStatus = () => {
+    setSelectedStatus(null);
+
+     filtersHandlers.set({
+    ...filtersHandlers.value,
+    status: "",
+    page: 1
+  });
+  };
+
+
   const formatOptions = {
     style: "currency",
     currency: "USD",
   };
   const numberFormat = new Intl.NumberFormat("en-US", formatOptions);
-  console.log(rows)
+  
   const [selectedData, setSelectedData] = useState(calcs);
 
-const router = useRouter();
-  const handleClearSearch = () => {
-    const newFilters = {
-      ...filtersHandlers.value,  // Mantiene todos los filtros actuales
-      opId: "",                  // Limpia solo estos campos
-      billId: "",
-      investor: ""
-    };
-    
-    filtersHandlers.set(newFilters);  // Actualiza el estado conservando las fechas
-    setSearch("");                    // Limpia el estado local de búsqueda si existe
+
+const handleClearSearch = () => {
+  const newFilters = {
+    ...filtersHandlers.value,  // Mantiene todos los filtros actuales
+    opId: "",                  // Limpia solo estos campos
+    billId: "",
+    investor: ""
   };
+  
+  filtersHandlers.set(newFilters);  // Actualiza el estado conservando las fechas
+  setSearch("");                    // Limpia el estado local de búsqueda si existe
+  
+  // Limpiar el parámetro opId de la URL si existe
+  if (window.location.search.includes('opId=')) {
+    const url = new URL(window.location);
+    url.searchParams.delete('opId');
+    window.history.replaceState(null, '', url.toString());
+  }
+};
   const handleOpenModal = () => {
 
     setOpenModal(true);
@@ -297,118 +184,283 @@ const router = useRouter();
     setOpenModal(false);
   };
 
-
-
-
-
-
-  const columns = [
-    {
-      field: "status",
-      headerName: "Estado",
-      width: 100,
-      renderCell: (params) => {
-       
-        let statusText = "";
-        let badgeClass = "";
-        
-        switch (params.value) {
-          case 0:
-            statusText = "Por Aprobar";
-            badgeClass = "badge por-aprobar";
-            break;
-          case 1:
-            statusText = "Vigente";
-            badgeClass = "badge aprobado";
-            break;
-          case 2:
-            statusText = "Rechazada";
-            badgeClass = "badge rechazado";
-            break;
-          case 3:
-            statusText = "Vigente";
-            badgeClass = "badge vigente";
-            break;
-          case 4:
-            statusText = "Cancelada";
-            badgeClass = "badge cancelada";
-            break;
-          case 5:
-            statusText = "Vencida";
-            badgeClass = "badge vencido";
-            break;
-          default:
-            statusText = "Por Aprobar";
-            badgeClass = "badge por-aprobar";
-        }
-        
-        return <span className={badgeClass}>{statusText}</span>;
-      },
-    },
+const handleOpenWindow = (url, windowFeatures = "width=800, height=600") => {
+  if (openWindow && !openWindow.closed) {
+    // Si la ventana ya está abierta, solo le damos el foco
+    openWindow.focus();
+    return openWindow;
+  } else {
+    // Si la ventana no está abierta, la abrimos y guardamos la referencia
+    const newWindow = window.open(url, "_blank", windowFeatures);
+    setOpenWindow(newWindow);
     
-    { field: "opId", headerName: "ID", width: 56},
-    //{
-     // field: "created_at",
-     // headerName: "Creado el",
-     // width: 93,
-    //  valueFormatter: (params) => {
-     //   if (!params.value) return '';
-        // Extrae directamente las partes de la fecha ISO (evita conversión local)
-     //   const [year, month, day] = params.value.split('T')[0].split('-');
-     //   return `${day}/${month}/${year}`; // Formato dd/mm/YYYY
-    //  }
-   // },
-    {
-      field: "opDate", 
-      headerName: "Fecha Op", 
-      width:93,
-      valueFormatter: (params) => {
-        if (!params.value) return '';
-        const [year, month, day] = params.value.split('T')[0].split('-');
-        return `${day}/${month}/${year}`;
+    // Escuchar el evento de cierre de la ventana
+    newWindow.onbeforeunload = () => {
+      setOpenWindow(null);
+    };
+    
+    return newWindow;
+  }
+};
+
+
+// Funciones específicas que usan la función genérica
+const handleOpenRegisterReceipt = (id) => {
+  handleOpenWindow(`/administration/new-receipt?id=${id}`);
+};
+
+
+
+const columns = [
+  {
+    field: "status",
+    headerName: "Estado",
+    width: 100,
+    renderCell: (params) => {
+      let statusText = "";
+      let badgeClass = "";
+      
+      switch (params.value) {
+        case 0:
+          statusText = "Por Aprobar";
+          badgeClass = "badge por-aprobar";
+          break;
+        case 1:
+          statusText = "Vigente";
+          badgeClass = "badge aprobado";
+          break;
+        case 2:
+          statusText = "Rechazada";
+          badgeClass = "badge rechazado";
+          break;
+        case 3:
+          statusText = "Vigente";
+          badgeClass = "badge vigente";
+          break;
+        case 4:
+          statusText = "Cancelada";
+          badgeClass = "badge cancelada";
+          break;
+        case 5:
+          statusText = "Vencida";
+          badgeClass = "badge vencido";
+          break;
+        default:
+          statusText = "Por Aprobar";
+          badgeClass = "badge por-aprobar";
       }
+      
+      return (
+        <Tooltip title={statusText} arrow placement="top">
+          <span className={badgeClass}>{statusText}</span>
+        </Tooltip>
+      );
     },
-    { field: "billFraction", headerName: "Fracción", width: 60 },
-    { field: "billData", headerName: "# Factura", width: 100},
-    { field: "emitterName", headerName: "Emisor", width: 230 },
-    { field: "investorName", headerName: "Inversionista", width: 200 },
-    { field: "payerName", headerName: "Pagador", width: 150 },
-    { field: "discountTax", headerName: "Tasa Desc.", width: 60 },
-    { field: "payedPercent", headerName: "% Desc.", width: 40 }, // Nueva columna
-    { field: "investorTax", headerName: "Tasa Inv.", width:  40},
-    { field: "payedAmount", headerName: "Valor Nominal", width: 110,
-      valueFormatter: ({ value }) => {
-        if (value == null) return "$0.00";
-        return new Intl.NumberFormat("es-CO", {
-          style: "currency",
-          currency: "COP",
-        }).format(value);
-      },
+  },
+  
+  { 
+    field: "opId", 
+    headerName: "ID", 
+    width: 56,
+    renderCell: (params) => (
+      <Tooltip title={params.value || ''} arrow placement="top">
+        <span>{params.value}</span>
+      </Tooltip>
+    )
+  },
+  
+  { 
+    field: "opDate", 
+    headerName: "Fecha Op", 
+    width: 93,
+    valueFormatter: (params) => {
+      if (!params.value) return '';
+      const [year, month, day] = params.value.split('T')[0].split('-');
+      return `${day}/${month}/${year}`;
     },
-    { field: "presentValueInvestor", headerName: "Valor Inversionista", width: 110,
-      valueFormatter: ({ value }) => {
-        if (value == null) return "$0.00";
-        return new Intl.NumberFormat("es-CO", {
-          style: "currency",
-          currency: "COP",
-        }).format(value);
-      },
+    renderCell: (params) => (
+      <Tooltip title={params.formattedValue || ''} arrow placement="top">
+        <span>{params.formattedValue}</span>
+      </Tooltip>
+    )
+  },
+  
+  { 
+    field: "billFraction", 
+    headerName: "Fracción", 
+    width: 60,
+    renderCell: (params) => (
+      <Tooltip title={params.value || ''} arrow placement="top">
+        <span>{params.value}</span>
+      </Tooltip>
+    )
+  },
+  
+  { 
+    field: "billData", 
+    headerName: "# Factura", 
+    width: 100,
+    renderCell: (params) => (
+      <Tooltip title={params.value || ''} arrow placement="top">
+        <span>{params.value}</span>
+      </Tooltip>
+    )
+  },
+  
+  { 
+    field: "emitterName", 
+    headerName: "Emisor", 
+    width: 230,
+    renderCell: (params) => (
+      <Tooltip title={params.value || ''} arrow placement="top">
+        <span style={{ 
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis',
+          width: '100%'
+        }}>
+          {params.value}
+        </span>
+      </Tooltip>
+    )
+  },
+  
+  { 
+    field: "investorName", 
+    headerName: "Inversionista", 
+    width: 200,
+    renderCell: (params) => (
+      <Tooltip title={params.value || ''} arrow placement="top">
+        <span style={{ 
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis',
+          width: '100%'
+        }}>
+          {params.value}
+        </span>
+      </Tooltip>
+    )
+  },
+  
+  { 
+    field: "payerName", 
+    headerName: "Pagador", 
+    width: 150,
+    renderCell: (params) => (
+      <Tooltip title={params.value || ''} arrow placement="top">
+        <span style={{ 
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis',
+          width: '100%'
+        }}>
+          {params.value}
+        </span>
+      </Tooltip>
+    )
+  },
+  
+  { 
+    field: "discountTax", 
+    headerName: "Tasa Desc.", 
+    width: 60,
+    renderCell: (params) => (
+      <Tooltip title={params.value || ''} arrow placement="top">
+        <span>{params.value}</span>
+      </Tooltip>
+    )
+  },
+  
+  { 
+    field: "payedPercent", 
+    headerName: "% Desc.", 
+    width: 40,
+    renderCell: (params) => (
+      <Tooltip title={params.value ? `${params.value}%` : ''} arrow placement="top">
+        <span>{params.value}</span>
+      </Tooltip>
+    )
+  },
+  
+  { 
+    field: "investorTax", 
+    headerName: "Tasa Inv.", 
+    width: 40,
+    renderCell: (params) => (
+      <Tooltip title={params.value || ''} arrow placement="top">
+        <span>{params.value}</span>
+      </Tooltip>
+    )
+  },
+  
+  { 
+    field: "payedAmount", 
+    headerName: "Valor Nominal", 
+    width: 110,
+    valueFormatter: ({ value }) => {
+      if (value == null) return "$0.00";
+      return new Intl.NumberFormat("es-CO", {
+        style: "currency",
+        currency: "COP",
+      }).format(value);
     },
-    { field: "probableDate", headerName: "Fecha Probable", width: 93,
-      valueFormatter: (params) => {
-        if (!params.value) return '';
-        const [year, month, day] = params.value.split('T')[0].split('-');
-        return `${day}/${month}/${year}`;
-      }
-    }, 
-    { field: "opExpiration", headerName: "Fecha Fin", width: 93 ,
-      valueFormatter: (params) => {
-        if (!params.value) return '';
-        const [year, month, day] = params.value.split('T')[0].split('-');
-        return `${day}/${month}/${year}`;
-      }
-    }, 
-   
+    renderCell: (params) => (
+      <Tooltip title={params.formattedValue || ''} arrow placement="top">
+        <span>{params.formattedValue}</span>
+      </Tooltip>
+    )
+  },
+  
+  { 
+    field: "presentValueInvestor", 
+    headerName: "Valor Inversionista", 
+    width: 110,
+    valueFormatter: ({ value }) => {
+      if (value == null) return "$0.00";
+      return new Intl.NumberFormat("es-CO", {
+        style: "currency",
+        currency: "COP",
+      }).format(value);
+    },
+    renderCell: (params) => (
+      <Tooltip title={params.formattedValue || ''} arrow placement="top">
+        <span>{params.formattedValue}</span>
+      </Tooltip>
+    )
+  },
+  
+  { 
+    field: "probableDate", 
+    headerName: "Fecha Probable", 
+    width: 93,
+    valueFormatter: (params) => {
+      if (!params.value) return '';
+      const [year, month, day] = params.value.split('T')[0].split('-');
+      return `${day}/${month}/${year}`;
+    },
+    renderCell: (params) => (
+      <Tooltip title={params.formattedValue || ''} arrow placement="top">
+        <span>{params.formattedValue}</span>
+      </Tooltip>
+    )
+  },
+  
+  { 
+    field: "opExpiration", 
+    headerName: "Fecha Fin", 
+    width: 93,
+    valueFormatter: (params) => {
+      if (!params.value) return '';
+      const [year, month, day] = params.value.split('T')[0].split('-');
+      return `${day}/${month}/${year}`;
+    },
+    renderCell: (params) => (
+      <Tooltip title={params.formattedValue || ''} arrow placement="top">
+        <span>{params.formattedValue}</span>
+      </Tooltip>
+    )
+  },
    {
   field: "Acciones",
   headerName: "Acciones",
@@ -443,7 +495,7 @@ const router = useRouter();
     }}
     onClick={() => {
       if (params.row.status !== 4) {
-        router.push(`/administration/new-receipt?id=${params.row.id}`);
+       handleOpenRegisterReceipt(params.row.id);
       }
     }}
   >
@@ -486,6 +538,17 @@ const router = useRouter();
 },
   ];
 
+
+
+
+
+  useEffect(()=>{
+    if(opIdQuery){
+
+      setSearch(opIdQuery)
+    }
+
+  },[opIdQuery])
 const handleTextFieldChange = (evt) => {
   const value = evt.target.value;
   setSearch(value);
@@ -519,63 +582,56 @@ const handleTextFieldChange = (evt) => {
 
     const [filterApplied, setFilterApplied] = useState(false);
   const updateFilters = (value, field) => {
-     if (field !== "multi") {
-      const newFilters = { 
-        ...tempFilters, 
-        [field]: value,
-        startDate: tempFilters.startDate,
-        endDate: tempFilters.endDate
-      };
-      
-      filtersHandlers.set(newFilters);
-
-      // Si el valor es diferente al filtro actual, marcamos como filtro aplicado
-      if (tempFilters[field] !== value) {
-        setFilterApplied(true);
-      }
-      return;
-    }
-
-    const onlyDigits = /^\d{3,4}$/; // Operación: 3-4 dígitos
-    const alphaNumeric = /^[a-zA-Z0-9]{3,10}$/; // Factura: Alfanumérico de 3-10 caracteres
-    const hasLetters = /[a-zA-Z]/.test(value); // Si tiene letras
-    const hasSpaces = /\s/.test(value); // Si tiene espacios
-  
-    // Inicializamos los filtros vacíos
-    const newFilters = { opId: "", billId: "", investor: "", startDate: null, endDate: null };
-  
-    // Clasificación más precisa
-    if (onlyDigits.test(value)) {
-      // Asignamos opId solo si tiene 3-4 dígitos
-      newFilters.opId = value; // Asignar a opId si es una operación
-    } else if (alphaNumeric.test(value) && !hasLetters && value.length >= 3 && value.length <= 10) {
-      // Asignamos billId solo si es alfanumérico de 3-10 caracteres y no tiene letras
-      newFilters.billId = value;
-    } else if (hasLetters || hasSpaces || value.length > 4) {
-      // Si tiene letras o espacios, es un nombre de inversionista
-      newFilters.investor = value;
-    } else {
-      // Por defecto lo tratamos como inversionista
-      newFilters.investor = value;
-    }
-  
-    // Si las fechas no están vacías, las agregamos
-    if (tempFilters.startDate && tempFilters.endDate) {
-      newFilters.startDate = tempFilters.startDate;
-      newFilters.endDate = tempFilters.endDate;
-    }
-
-    // Filtramos y actualizamos los filtros
+  if (field !== "multi") {
+    const newFilters = { 
+      ...tempFilters, 
+      [field]: value
+    };
+    
+    setTempFilters(newFilters);
     filtersHandlers.set({
-      ...tempFilters,
       ...newFilters,
-      startDate: tempFilters.startDate, // Conserva fechas
-      endDate: tempFilters.endDate
+      page: 1
     });
 
-        setFilterApplied(true);
-              setPage(1)
+    if (tempFilters[field] !== value) {
+      setFilterApplied(true);
+    }
+    return;
+  }
+
+  const onlyDigits = /^\d{3,4}$/;
+  const alphaNumeric = /^[a-zA-Z0-9]{3,10}$/;
+  const hasLetters = /[a-zA-Z]/.test(value);
+  const hasSpaces = /\s/.test(value);
+
+  // SOLUCIÓN: Usar filtersHandlers.value en lugar de tempFilters
+  const newFilters = { 
+    ...filtersHandlers.value, // ← Usar el valor ACTUAL de los filtros
+    opId: "", 
+    billId: "", 
+    investor: "",
+    page: 1
   };
+
+  if (onlyDigits.test(value)) {
+    newFilters.opId = value;
+  } else if (alphaNumeric.test(value) && !hasLetters && value.length >= 3 && value.length <= 10) {
+    newFilters.billId = value;
+  } else if (hasLetters || hasSpaces || value.length > 4) {
+    newFilters.investor = value;
+  } else {
+    newFilters.investor = value;
+  }
+
+  // Actualizar ambos estados
+  setTempFilters(newFilters);
+  filtersHandlers.set(newFilters);
+
+  setFilterApplied(true);
+  setPage(1);
+};
+  
   
   /* Experimento para exportar los datos del data grid a un archivo csv que pueda ser leido por Excel*/
   const handleExportExcel = () => {
@@ -614,8 +670,8 @@ const handleTextFieldChange = (evt) => {
 
   return (
     <>
-    
-    <Box sx={{ ...sectionTitleContainerSx }}>
+     
+      <Box sx={{ ...sectionTitleContainerSx }}>
         <Box  display="flex" alignItems="center" gap={2}>
 
    <Link href="/dashboard" underline="none">
@@ -640,7 +696,7 @@ const handleTextFieldChange = (evt) => {
           marginTop='0.7rem'
           color="#5EA3A3"
         >
-          - Operaciones
+          -Operaciones
         </Typography>
         </Box>
        
@@ -707,11 +763,107 @@ const handleTextFieldChange = (evt) => {
   }}
 />
 
+  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+
+<button
+        onClick={handleClickStatus}
+        className="button-header-bill button-header-bill-primary"
+        style={{ 
+            display: 'flex', 
+    alignItems: 'center', 
+    gap: '4px',
+    position: 'relative',
+          paddingRight: selectedStatus ? '32px' : '8px',
+       
+        }}
+      >
+        {selectedStatus?.label || "Por Estado"}
+        
+        {selectedStatus ? (
+          <IconButton
+            size="small"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleClearStatus();
+            }}
+            sx={{
+              position: 'absolute',
+              right: '4px',
+              color: "#ffff",
+              '&:hover': {
+                backgroundColor: "#ffffff20"
+              },
+              width: 20,
+              height: 20
+            }}
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        ) : (
+          <ArrowDropDownIcon sx={{ fontSize: "16px", color: "#ffff" }} />
+        )}
+      </button>
+      
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleCloseStatus}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+  transformOrigin={{ vertical: "top", horizontal: "left" }}
+  
+>
+        {statusOptions.map((option) => (
+          <MenuItem
+            key={option.value}
+            onClick={() => handleSelectStatus(option)}
+            selected={selectedStatus?.value === option.value}
+             disableGutters
+      sx={{
+        '&.Mui-selected': {
+          backgroundColor: "#488B8F10",
+          '&:hover': {
+            backgroundColor: "#488B8F15"
+          }
+        },
+        px: 0.5,          // reduce padding horizontal
+        py: 0.25,         // reduce padding vertical
+        minHeight: "auto", // quita alto mínimo de MUI
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        gap: "4px"
+      }}
+          >
+             <span
+        className={option.badgeClass}
+        style={{
+          display: "inline-block",
+          padding: "4px 10px",
+          borderRadius: "6px",
+          fontSize: "0.85rem",
+          fontWeight: 600,
+          minWidth: "100px", // todos iguales de ancho
+          textAlign: "center",
+          lineHeight: 1.2
+        }}
+      >
+              {option.label}
+            </span>
+        
+            {selectedStatus?.value === option.value && (
+              <CheckIcon fontSize="small" sx={{ ml: 1, color: "#488B8F" }} />
+            )}
+          </MenuItem>
+        ))}
+      </Menu>
 
   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
     <Link href="/pre-operations/byOp" underline="none">
       <button className="button-header-preop">Ver por Grupos</button>
     </Link>
+
+ 
+
 
     <button className="button-header-preop" onClick={handleOpenModal}>Valor a Girar</button>
     <ModalValorAGirar open={openModal} handleClose={handleCloseModal} data={calcs} />
@@ -732,72 +884,12 @@ const handleTextFieldChange = (evt) => {
     <Menu anchorEl={anchorElCSV} open={openMenuCSV} onClose={handleCloseMenuCSV}>
       <MenuItem onClick={handleExportExcel}>Exportar a CSV</MenuItem>
     </Menu>
+
+  </Box>
+
   </Box>
 </Box>
-        {/*<Grid container spacing={1.5} sx={{ ...entriesGrid }}>
-        <Grid item xs={2}>
-          <Entry title="Comisión">
-            <ValueFormat value={Math.round(calcs?.commission) || 0} />
-          </Entry>
-        </Grid>
-
-        <Grid item xs={2}>
-          <EditableEntry
-            title="Otros"
-            onChangeMasked={(values) => {
-              setOther(values.floatValue);
-            }}
-          />
-        </Grid>
-
-        <Grid item xs={2}>
-          <Entry title="IVA">
-            <ValueFormat value={Math.round(calcs?.iva) || 0} />
-          </Entry>
-        </Grid>
-
-        <Grid item xs={2}>
-          <Entry title="Valor inversor">
-            <ValueFormat value={Math.round(calcs?.investorValue) || 0} />
-          </Entry>
-        </Grid>
-
-        <Grid item xs={2}>
-          <Entry title="RETEFUENTE">
-            <ValueFormat value={Math.round(calcs?.rteFte) || 0} />
-          </Entry>
-        </Grid>
-
-        <Grid item xs={2}>
-          <Entry title="FACTURAR NETO">
-            <ValueFormat value={Math.round(calcs?.netFact) || 0} />
-          </Entry>
-        </Grid>
-
-        <Grid item xs={2}>
-          <Entry title="RETEICA">
-            <ValueFormat value={Math.round(calcs?.retIca) || 0} />
-          </Entry>
-        </Grid>
-
-        <Grid item xs={2}>
-          <Entry title="VALOR FUTURO">
-            <ValueFormat value={Math.round(calcs?.futureValue) || 0} />
-          </Entry>
-        </Grid>
-
-        <Grid item xs={2}>
-          <Entry title="RETEIVA">
-            <ValueFormat value={Math.round(calcs?.retIva) || 0} />
-          </Entry>
-        </Grid>
-
-        <Grid item xs={2}>
-          <Entry title="VALOR A GIRAR">
-            <ValueFormat value={Math.round(calcs?.depositValue - other) || 0} />
-          </Entry>
-        </Grid>
-      </Grid> */}
+       
       
   {loading && (
     <Box

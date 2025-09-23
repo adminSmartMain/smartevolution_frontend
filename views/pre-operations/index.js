@@ -16,6 +16,7 @@ export default function Operations() {
     opId: "",
     billId: "",
     investor: "",
+    status:"",
   });
 
   const [commission, setCommission] = useState(0);
@@ -46,7 +47,7 @@ export default function Operations() {
   console.log(filters)
   useEffect(() => {
     getOperationsFetch();
-  }, [filters.opId, filters.billId, filters.investor,filters.startDate, filters.endDate, page]);
+  }, [filters.opId, filters.billId, filters.investor,filters.startDate, filters.endDate,filters.status, page]);
 
   useEffect(() => {
     if (dataGetOperations) {
@@ -73,9 +74,11 @@ export default function Operations() {
       //const preOperations = checkOperations.filter(
         //(x) =>   x.status == 0 ||   x.status == 2
       //);
-      setData(preOperations);;
+      setData(preOperations);
+          console.log(preOperations)
     }
     console.log('d')
+
   }, [dataGetOperations, loadingGetOperations, errorGetOperations]);
 
   return (

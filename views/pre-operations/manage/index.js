@@ -538,14 +538,15 @@ const verificarSaldosFacturas = async (billIds, facturasTransformadas) => {
     // 1. Primero verificamos si hay billIds duplicados
     const billIdsConEstado = billIds.map((billId, index) => ({
       billId,
+      emitterId: facturasTransformadas[index]?.dataSent?.emitter, // Obtener emitterId
       is_creada: facturasTransformadas[index]?.is_creada || false
     }));
     
     console.log('📊 billIdsConEstado:', billIdsConEstado);
     
     // Filtrar para obtener solo los únicos, manteniendo el estado is_creada
-    const billIdsUnicos = Array.from(new Map(
-      billIdsConEstado.map(item => [item.billId, item])
+     const billIdsUnicos = Array.from(new Map(
+      billIdsConEstado.map(item => [`${item.billId}_${item.emitterId}`, item])
     ).values());
 
     console.log('🔍 billIdsUnicos:', billIdsUnicos);
@@ -553,14 +554,20 @@ const verificarSaldosFacturas = async (billIds, facturasTransformadas) => {
     // 2. Obtenemos los datos de todas las facturas únicas
     const resultadosUnicos = await Promise.all(
       billIdsUnicos.map(async (billIdInfo) => {
-        const billIdStr = String(billIdInfo.billId).trim();
+         const billIdStr = String(billIdInfo.billId).trim();
+        const emitterId = billIdInfo.emitterId;
         const is_creada = billIdInfo.is_creada;
         
-        console.log(`📡 Consultando API para billId: ${billIdStr}, is_creada: ${is_creada}`);
+         console.log(`📡 Consultando API para billId: ${billIdStr}, emitterId: ${emitterId}, is_creada: ${is_creada}`);
         
         try {
+
+            let url = `${process.env.NEXT_PUBLIC_API_URL}/bill/?bill_operation=${billIdStr}`;
+          if (emitterId) {
+            url += `&emitter=${emitterId}`;
+          }
           const response = await Axios.get(
-            `${process.env.NEXT_PUBLIC_API_URL}/bill/?bill_operation=${billIdStr}`,
+            url,
             {
               headers: {
                 Authorization: `Bearer ${localStorage.getItem("access-token")}`,
@@ -598,10 +605,11 @@ const verificarSaldosFacturas = async (billIds, facturasTransformadas) => {
           console.log(`📋 Factura obtenida para ${billIdStr}:`, factura);
 
           // Si la factura fue creada en el sistema (is_creada = true), no hacemos validaciones estrictas
-          if (is_creada) {
+           if (is_creada) {
             console.log(`🟢 Factura ${billIdStr} es creada - validación relajada`);
             return {
               billId: billIdStr,
+              emitterId: emitterId,
               currentBalance: factura.currentBalance || factura.billValue || 0,
               billData: factura,
               status: "success",
@@ -624,6 +632,7 @@ const verificarSaldosFacturas = async (billIds, facturasTransformadas) => {
 
           return {
             billId: billIdStr,
+            emitterId: emitterId,
             currentBalance: factura.currentBalance,
             billData: factura,
             status: "success",
@@ -671,6 +680,7 @@ const verificarSaldosFacturas = async (billIds, facturasTransformadas) => {
 
             return {
               billId: billIdStr,
+              emitterId: emitterId,
               currentBalance: 0,
               status: "error",
               error: errorMessage,

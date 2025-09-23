@@ -614,7 +614,28 @@ const handleCloseMenu = () => {
 
 
 
-  
+    const handleSelectStatus = (status) => {
+    setSelectedStatus(status);
+    console.log(status.value)
+    handleCloseStatus();
+    // Actualiza los filtros globales
+    console.log(status?.value ?? "")
+  filtersHandlers.set({
+    ...filtersHandlers.value,
+    status: status?.value ?? "", // Usa option.value o cadena vacía
+    page: 1 // Resetear a primera página
+  });
+  };
+
+  const handleClearStatus = () => {
+    setSelectedStatus(null);
+
+     filtersHandlers.set({
+    ...filtersHandlers.value,
+    status: "",
+    page: 1
+  });
+  };
 
 
   const handleUpdateClick = (e) => {
@@ -770,18 +791,30 @@ const checkSingleNegotiationSummary = async (opId) => {
           badgeClass = "badge por-aprobar";
       }
       
-        return <span className={badgeClass}>{statusText}</span>;
+      return (
+        <Tooltip title={statusText} arrow>
+          <span className={badgeClass}>{statusText}</span>
+        </Tooltip>
+      );
     },
   },
   
-    { field: "opId", headerName: "ID", width:55 },
-   // { field: "created_at", headerName: "Creado el", width: 93,  valueFormatter: (params) => {
-      // if (!params.value) return '';
-      // Extrae directamente las partes de la fecha ISO (evita conversión local)
-     //  const [year, month, day] = params.value.split('T')[0].split('-');
-    //  return `${day}/${month}/${year}`; // Formato dd/mm/YYYY
-    //}},
-    { field: "opDate", headerName: "Fecha Op", width: 100,valueFormatter: (params) => {
+  { 
+    field: "opId", 
+    headerName: "ID", 
+    width: 55,
+    renderCell: (params) => (
+      <Tooltip title={params.value || ''} arrow>
+        <span>{params.value}</span>
+      </Tooltip>
+    )
+  },
+  
+  { 
+    field: "opDate", 
+    headerName: "Fecha Op", 
+    width: 100,
+    valueFormatter: (params) => {
       if (!params.value) return '';
       const [year, month, day] = params.value.split('T')[0].split('-');
       return `${day}/${month}/${year}`;
@@ -1094,32 +1127,37 @@ const updateFilters = (value, field) => {
   if (field !== "multi") {
     const newFilters = { 
       ...tempFilters, 
-        [field]: value,
-        startDate: tempFilters.startDate,
-        endDate: tempFilters.endDate
-      };
-      
-      filtersHandlers.set(newFilters);
+      [field]: value
+    };
+    
+    setTempFilters(newFilters);
+    filtersHandlers.set({
+      ...newFilters,
+      page: 1
+    });
 
-      // Si el valor es diferente al filtro actual, marcamos como filtro aplicado
     if (tempFilters[field] !== value) {
       setFilterApplied(true);
     }
     return;
   }
 
-    const onlyDigits = /^\d{3,4}$/; // Operación: 3-4 dígitos
-    const alphaNumeric = /^[a-zA-Z0-9]{3,10}$/; // Factura: Alfanumérico de 3-10 caracteres
-    const hasLetters = /[a-zA-Z]/.test(value); // Si tiene letras
-    const hasSpaces = /\s/.test(value); // Si tiene espacios
-  
-    // Inicializamos los filtros vacíos
-    const newFilters = { opId: "", billId: "", investor: "", startDate: null, endDate: null };
-  
-    // Clasificación más precisa
+  const onlyDigits = /^\d{3,4}$/;
+  const alphaNumeric = /^[a-zA-Z0-9]{3,10}$/;
+  const hasLetters = /[a-zA-Z]/.test(value);
+  const hasSpaces = /\s/.test(value);
+
+  // SOLUCIÓN: Usar filtersHandlers.value en lugar de tempFilters
+  const newFilters = { 
+    ...filtersHandlers.value, // ← Usar el valor ACTUAL de los filtros
+    opId: "", 
+    billId: "", 
+    investor: "",
+    page: 1
+  };
+
   if (onlyDigits.test(value)) {
-      // Asignamos opId solo si tiene 3-4 dígitos
-      newFilters.opId = value; // Asignar a opId si es una operación
+    newFilters.opId = value;
   } else if (alphaNumeric.test(value) && !hasLetters && value.length >= 3 && value.length <= 10) {
     newFilters.billId = value;
   } else if (hasLetters || hasSpaces || value.length > 4) {
@@ -1128,22 +1166,12 @@ const updateFilters = (value, field) => {
     newFilters.investor = value;
   }
 
-    // Si las fechas no están vacías, las agregamos
-    if (tempFilters.startDate && tempFilters.endDate) {
-      newFilters.startDate = tempFilters.startDate;
-      newFilters.endDate = tempFilters.endDate;
-    }
-
-    // Filtramos y actualizamos los filtros
-    filtersHandlers.set({
-      ...tempFilters,
-      ...newFilters,
-      startDate: tempFilters.startDate, // Conserva fechas
-      endDate: tempFilters.endDate
-    });
+  // Actualizar ambos estados
+  setTempFilters(newFilters);
+  filtersHandlers.set(newFilters);
 
   setFilterApplied(true);
-        setPage(1)
+  setPage(1);
 };
   
       // Modificar el useEffect para resetear checkedPages cuando se aplica un filtro
@@ -1285,6 +1313,99 @@ const updateFilters = (value, field) => {
 
 
   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+  
+<button
+        onClick={handleClickStatus}
+        className="button-header-bill button-header-bill-primary"
+        style={{ 
+            display: 'flex', 
+    alignItems: 'center', 
+    gap: '4px',
+    position: 'relative',
+          paddingRight: selectedStatus ? '32px' : '8px',
+       
+        }}
+      >
+        {selectedStatus?.label || "Por Estado"}
+        
+        {selectedStatus ? (
+          <IconButton
+            size="small"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleClearStatus();
+            }}
+            sx={{
+              position: 'absolute',
+              right: '4px',
+              color: "#ffff",
+              '&:hover': {
+                backgroundColor: "#ffffff20"
+              },
+              width: 20,
+              height: 20
+            }}
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        ) : (
+          <ArrowDropDownIcon sx={{ fontSize: "16px", color: "#ffff" }} />
+        )}
+      </button>
+<Menu
+  anchorEl={anchorElStatus}
+  open={Boolean(anchorElStatus)}
+  onClose={handleCloseStatus}
+  anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+  transformOrigin={{ vertical: "top", horizontal: "left" }}
+  
+>
+  {statusOptions.map((option) => (
+    <MenuItem
+      key={option.value}
+      onClick={() => handleSelectStatus(option)}
+      selected={selectedStatus?.value === option.value}
+      disableGutters
+      sx={{
+        '&.Mui-selected': {
+          backgroundColor: "#488B8F10",
+          '&:hover': {
+            backgroundColor: "#488B8F15"
+          }
+        },
+        px: 0.5,          // reduce padding horizontal
+        py: 0.25,         // reduce padding vertical
+        minHeight: "auto", // quita alto mínimo de MUI
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        gap: "4px"
+      }}
+    >
+      {/* 🔹 Badge */}
+       <span
+        className={option.badgeClass}
+        style={{
+          display: "inline-block",
+          padding: "4px 10px",
+          borderRadius: "6px",
+          fontSize: "0.85rem",
+          fontWeight: 600,
+          minWidth: "100px", // todos iguales de ancho
+          textAlign: "center",
+          lineHeight: 1.2
+        }}
+      >
+        {option.label}
+      </span>
+
+      {/* 🔹 Check alineado a la derecha */}
+      {selectedStatus?.value === option.value && (
+        <CheckIcon fontSize="small" sx={{ color: "#488B8F" }} />
+      )}
+    </MenuItem>
+  ))}
+</Menu>
 
 
     <button className="button-header-preop" onClick={handleOpenModal}>Valor a Girar</button>
