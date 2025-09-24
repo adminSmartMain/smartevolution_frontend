@@ -270,12 +270,11 @@ const [showAllPayers, setShowAllPayers] = useState(false);
 
 
 
-  // Función para formatear el número con separadores de miles
-  const formatNumberWithThousandsSeparator = (value) => {
-    if (value === undefined || value === null) return '';
-    return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  };
-
+// Función para formatear el número con separadores de miles y signo de $
+const formatNumberWithThousandsSeparator = (value) => {
+  if (value === undefined || value === null) return '';
+  return '$' + ' ' + value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+};
 
 
   const [initialPayer, setInitialPayer] = useState(null);

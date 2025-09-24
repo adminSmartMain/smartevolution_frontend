@@ -119,13 +119,13 @@ export default function Header() {
       >
         <Toolbar disableGutters>
           <>
-            {downScale && (
+       
               <IconButton sx={{ mr: 1 }} onClick={handleOpenDrawer}>
                 <Box sx={{ ...iconWrapperSx }}>
                   <i className="fas fa-bars" />
                 </Box>
               </IconButton>
-            )}
+         
 
             <Link href="/dashboard" passHref>
               <a>
@@ -172,15 +172,12 @@ export default function Header() {
         </Toolbar>
       </AppBar>
 
-      <Drawer anchor="left" open={drawerOpen} onClose={handleCloseDrawer}>
-        <Box sx={{ width: 300, height: "100vh" }}>
-          <Navbar
-            onClick={() => {
-              setDrawerOpen(false);
-            }}
-          />
-        </Box>
-      </Drawer>
+     <Drawer anchor="left" open={drawerOpen} onClose={handleCloseDrawer}>
+  <Box sx={{ width: 300, height: "100vh" }}>
+    <Navbar onClick={() => setDrawerOpen(false)} />
+  </Box>
+</Drawer>
+
     </>
   );
 }

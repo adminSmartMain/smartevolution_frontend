@@ -1167,7 +1167,7 @@ export const BillsComponents = () => {
                     size="small"
                     edge="end"
                   >
-                    <ClearIcon sx={{ color: "#ffffffff", fontSize: '18px' }} />
+                    <ClearIcon sx={{ color: "#488b8f", fontSize: '18px' }} />
                   </IconButton>
                 </InputAdornment>
               ),
@@ -1190,7 +1190,7 @@ export const BillsComponents = () => {
             {/*BOTON DE POR TIPO */}
             <button
               onClick={handleClickTypeBill}
-              className="button-header-bill button-header-bill-primary"
+              className="button-header-preop-title"
               style={{
                 display: 'flex',
                 
@@ -1222,7 +1222,7 @@ export const BillsComponents = () => {
                   <CloseIcon fontSize="small" />
                 </IconButton>
               ) : (
-                <ArrowDropDownIcon sx={{ fontSize: "16px", color: "#ffff" }} />
+                <ArrowDropDownIcon sx={{ fontSize: "16px", color: "#488B8F" }} />
               )}
             </button>
             <Menu
@@ -1273,7 +1273,7 @@ export const BillsComponents = () => {
             {/*BOTON DE POR CANAL */}
             <button
               onClick={handleClickChannel}
-              className="button-header-bill button-header-bill-primary"
+              className="button-header-preop-title"
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -1304,7 +1304,7 @@ export const BillsComponents = () => {
                   <CloseIcon fontSize="small" />
                 </IconButton>
               ) : (
-                <ArrowDropDownIcon sx={{ fontSize: "16px", color: "#ffff" }} />
+                <ArrowDropDownIcon sx={{ fontSize: "16px", color: "#488B8F" }} />
               )}
             </button>
             <Menu

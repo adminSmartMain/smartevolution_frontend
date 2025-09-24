@@ -15,7 +15,7 @@ export default function RetFteSelector({values, setFieldValue,formatNumberWithTh
         fullWidth
         type='text'
         value={
-           values?.ret_fte
+           formatNumberWithThousandsSeparator(values?.ret_fte)
         }
     
         onChange={(e) => {

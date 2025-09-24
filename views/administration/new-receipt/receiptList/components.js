@@ -880,6 +880,7 @@ const receipt =
   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
   
       <Button
+      className="button-header-preop-title"
     variant="outlined"
     onClick={handleClickStatus}
     sx={{

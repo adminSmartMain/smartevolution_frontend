@@ -1219,45 +1219,96 @@ const updateFilters = (value, field) => {
   return (
     <>
     
-      
-      <Box sx={{ ...sectionTitleContainerSx }}>
-
-<Box display="flex" alignItems="center">
-<Link href="/dashboard" underline="none">
-          <a>
-          <HomeOutlinedIcon 
-              fontSize="large" 
-              sx={{ 
-                color: '#488b8f',
-                opacity: 0.8, // Ajusta la transparencia (0.8 = 80% visible)
-                strokeWidth: 1, // Grosor del contorno
-              }} 
-            />
-        
-          </a>
-          
-          </Link>
-       <Typography
-          letterSpacing={0}
-          fontSize="1.7rem"
-          fontWeight="regular"
-          marginBottom="0.7rem"
-          marginTop='0.7rem'
-          color="#5EA3A3"
-        >
-           - Pre-operaciones
-          </Typography>
-</Box>
-       
-        <Box sx={{ ...sectionTitleContainerSx }}>
-        <Link href="/operations" passHref>
-  <button className="button-header-preop-title">
-    Operaciones
-  </button>
-</Link>
-              <SellOrderButton /> 
-              </Box>
+     <Box sx={{ 
+  ...sectionTitleContainerSx, 
+  display: 'flex', 
+  flexDirection: { xs: 'column', sm: 'row' }, // Columna en móvil, fila en tablet+
+  alignItems: { xs: 'flex-start', sm: 'center' },
+  justifyContent: 'space-between',
+  gap: { xs: 2, sm: 0 },
+  padding: { xs: 1, sm: 0 }
+}}>
+  
+  {/* Parte izquierda - Icono y título */}
+  <Box display="flex" alignItems="center" flexWrap="wrap" gap={1}>
+    <Link href="/dashboard" passHref>
+      <Box 
+        component="a" 
+        sx={{ 
+          display: 'flex',
+          padding: { xs: '4px', sm: '0px' } // Más espacio táctil en móvil
+        }}
+      >
+        <HomeOutlinedIcon 
+          sx={{ 
+            color: '#488b8f',
+            opacity: 0.8,
+            strokeWidth: 1,
+            fontSize: { 
+              xs: '2rem',    // Más pequeño en móvil
+              sm: '2.5rem',  // Mediano en tablet
+              md: '3rem'     // Original en desktop
+            } 
+          }} 
+        />
       </Box>
+    </Link>
+    
+    <Typography
+      letterSpacing={0}
+      fontSize={{ 
+        xs: '1.2rem',    // Móvil
+        sm: '1.4rem',    // Tablet
+        md: '1.7rem'     // Desktop
+      }}
+      fontWeight="regular"
+      marginBottom={{ xs: '0.3rem', sm: '0.7rem' }}
+      marginTop={{ xs: '0.3rem', sm: '0.7rem' }}
+      color="#5EA3A3"
+      sx={{
+        whiteSpace: { xs: 'normal', sm: 'nowrap' }, // Permite wrap en móvil
+        wordBreak: 'break-word'
+      }}
+    >
+      - Pre-operaciones
+    </Typography>
+  </Box>
+       
+  {/* Parte derecha - Botones */}
+  <Box sx={{ 
+    display: 'flex', 
+    alignItems: 'center',
+    gap: { xs: 1, sm: 2 },
+    flexWrap: { xs: 'wrap', sm: 'nowrap' },
+    width: { xs: '100%', sm: 'auto' },
+    justifyContent: { xs: 'space-between', sm: 'flex-end' }
+  }}>
+    
+    {/* Botón Operaciones */}
+    <Link href="/operations" passHref>
+      <Box 
+        component="button"
+        className="button-header-preop-title"
+        sx={{
+          padding: { xs: '8px 12px', sm: '10px 16px' },
+          fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1rem' },
+          minWidth: { xs: '100px', sm: '120px' },
+          whiteSpace: 'nowrap'
+        }}
+      >
+        Operaciones
+      </Box>
+    </Link>
+    
+    {/* Botón Sell Order */}
+    <Box sx={{
+      transform: { xs: 'scale(0.9)', sm: 'scale(1)' },
+      marginLeft: { xs: 0, sm: 1 }
+    }}>
+      <SellOrderButton />
+    </Box>
+  </Box>
+</Box>
 
       <Box
   sx={{
@@ -1316,7 +1367,7 @@ const updateFilters = (value, field) => {
   
 <button
         onClick={handleClickStatus}
-        className="button-header-bill button-header-bill-primary"
+        className="button-header-preop-title"
         style={{ 
             display: 'flex', 
     alignItems: 'center', 
@@ -1349,7 +1400,7 @@ const updateFilters = (value, field) => {
             <CloseIcon fontSize="small" />
           </IconButton>
         ) : (
-          <ArrowDropDownIcon sx={{ fontSize: "16px", color: "#ffff" }} />
+          <ArrowDropDownIcon sx={{ fontSize: "16px", color: "#488B8F" }} />
         )}
       </button>
 <Menu
@@ -1429,6 +1480,8 @@ const updateFilters = (value, field) => {
     </Menu>
   </Box>
 </Box>
+
+
  {loading && (
     <Box
       sx={{

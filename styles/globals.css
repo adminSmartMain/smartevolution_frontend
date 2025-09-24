@@ -663,22 +663,9 @@ body {
   margin-left: 0px;
   display: flex;
   align-items: center;
-  gap: 8px; /* Espacio entre texto e icono
+  gap: 8px; 
 }
 
-.button-header-preop:hover {
-  background-color: #E3F2FD; /* Azul muy claro al pasar mouse */
-}
-
-/* Estilo para el botón principal */
-.button-header-preop-primary {
-  background-color: #488B8F; /* Azul */
-  color: white;
-}
-
-.button-header-preop-primary:hover {
-  background-color: #488B8F; /* Azul un poco más oscuro */
-}
 
 .button-header-preop-title {
   padding: 6px 12px;       /* Reducido el padding */
@@ -696,6 +683,17 @@ body {
   align-items: center;     /* Centra el texto verticalmente */
   justify-content: center; /* Centra el texto horizontalmente */
 }
+/* Estilo para el botón principal */
+.button-header-preop-primary {
+  background-color: #488B8F; /* Azul */
+  color: white;
+}
+
+.button-header-preop-primary:hover {
+  background-color: #488B8F; /* Azul un poco más oscuro */
+}
+
+
 
 /* Efecto hover */
 .button-header-preop-title:hover {

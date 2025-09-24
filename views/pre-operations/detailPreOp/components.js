@@ -40,10 +40,13 @@ export const ManageOperationDetails = ({
     }).format(value);
 
   // Función para formatear el número con separadores de miles
-  const formatNumberWithThousandsSeparator = (value) => {
+   const formatNumberWithThousandsSeparator = (value) => {
     if (value === undefined || value === null) return '';
-    return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return '$' + ' ' + value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   };
+
+
+
   const validationSchema = Yup.object({
     numeroOperacion: Yup.number()
       .required('Este campo es obligatorio')

@@ -15,7 +15,7 @@ export default function IvaSelector({values, setFieldValue,formatNumberWithThous
         fullWidth
         type='text'
         value={
-           values?.iva
+          formatNumberWithThousandsSeparator(values?.iva) 
         }
     
 onChange={(e) => {
