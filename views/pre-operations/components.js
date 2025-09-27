@@ -717,7 +717,7 @@ const handleOpenNegotiationSummary = (id, opId,hasSummary) => {
     url = `/administration/negotiation-summary?modify&id=${id}&opId=${opId}`;
   } else {
     // Si no existe o no sabemos, usar la URL de registro normal
-    url = `/administration/negotiation-summary?register&id=${id}`;
+    url = `/administration/negotiation-summary?register&opId=${opId}`;
   }
 
   if (openWindow && !openWindow.closed) {
@@ -1019,7 +1019,7 @@ const checkSingleNegotiationSummary = async (opId) => {
               arrow
             >
               <IconButton
-                onClick={() => handleOpenNegotiationSummary(params.row.opId,params.row.id,hasSummary)}
+                onClick={() => handleOpenNegotiationSummary(params.row.id,params.row.opId,hasSummary)}
                 style={{ marginRight: 10, position: 'relative' }}
               >
                <DocumentIcon sx={{ color: hasSummary ? "#488B8F" : "action.disabled" }} />

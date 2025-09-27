@@ -151,7 +151,7 @@ const formatDateToDDMMYYYY = (dateString) => {
 
 const receipt = dataGetReceiptList?.results?.map((receipt) => {
   // Obtener el inversionista de la operación
-  const investorId = receipt.operation?.investor;
+  const investorId = receipt.account?.client;
   let investorName = 'N/A';
   
   // Buscar el nombre del inversionista en el mapa de clientes
@@ -733,7 +733,7 @@ const getColorByType = (typeId) => {
     setValue(newValue);
     // Validación inmediata al cambiar la fecha
     if (newValue && data?.opDate && new Date(newValue) < new Date(data.opDate)) {
-      formik.setFieldError('date', "la fecha de aplicacion no puede ser menor a la fecha de inicio");
+      formik.setFieldError('date', "Disculpe, la fecha de aplicación del recaudo no puede ser menor a la fecha de inicio de la operación. Por favor, verifique e intente nuevamente.");
       formik.setFieldTouched('date', true, false); // Marcar como touched
     } else {
       formik.setFieldError('date', ''); // Limpiar error si es válido

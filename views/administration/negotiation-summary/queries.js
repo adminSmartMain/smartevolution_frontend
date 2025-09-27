@@ -4,7 +4,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // Get Negotiation Summary by ID
 export const GetNegotiationSummary = async (id) => {
-  const res = await Axios.get(`${API_URL}/report/negotiationSummary?id=${id}`, {
+  const res = await Axios.get(`${API_URL}/report/negotiationSummary?opId=${id}`, {
     headers: {
       authorization: "Bearer " + localStorage.getItem("access-token"),
     },
@@ -36,6 +36,9 @@ export const ModifyNegotiationSummary = async (data, id) => {
   return res.data;
 };
 
+
+
+
 export const GetRiskProfile = async (data) => {
   const res = await Axios.get(`${API_URL}/riskProfile/client/${data}`, {
     headers: {
@@ -45,6 +48,9 @@ export const GetRiskProfile = async (data) => {
   console.log(`${API_URL}/riskProfile/client/${data}`)
   return res.data;
 };
+
+
+
 
 export const RegisterDepositQuery = async (data) => {
   const res = await Axios.post(`${API_URL}/emitter-deposit/`, data, {

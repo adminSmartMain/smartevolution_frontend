@@ -139,16 +139,16 @@ const [idFromUrl, setIdFromUrl] = useState(false);
 
 // Actualiza el useEffect
 useEffect(() => {
-  if (router && router.query.id) {
-    setID(router.query.id);
+  if (router && router.query.opId ) {
+    setOpID(router.query.opId);
     
     if (option === "modify") {
-      setOpID(router.query.opId);
-      console.log("data", data);
+      setID(router.query.id);
+   
     } else {
-      // Solo establecer OpID si no tiene valor previo
-      setOpID(prevOpID => {
-        if (!prevOpID) {
+      
+      setID(prevID => {
+        if (!prevID) {
           setIdFromUrl(true);
           return router.query.id;
         }
@@ -171,16 +171,16 @@ const handleOpIdChange = (e) => {
 };
 
 
-  //comentario de prueba
+
   useEffect(() => {
    
     
-    if (id) {
-      console.log("Fetching data for id:", id);
-      setOpIdSelected(id)
-      fetch(id)
+    if (OpID) {
+   
+      setOpIdSelected(OpID)
+      fetchSummaryByID(OpID)
         .then(() => {
-          console.log("Fetch successful:", data);// Verifica el estado de los datos después del fetch
+         
           
         })
         .catch((error) => {
@@ -196,9 +196,9 @@ const handleOpIdChange = (e) => {
   useEffect(() => {
 
     
-    if (id) {
+    if (OpID) {
    
-      fetch(id)
+      fetch(OpID)
         .then(() => {
           setDeposit(data?.data?.emitterDeposits)
           // Verifica el estado de los datos después del fetch
@@ -222,11 +222,11 @@ const handleOpIdChange = (e) => {
   const [notFound,setNotFound]=useState(null);
   const handleCloseModal = () => setModalOpen(false);
   const [isOperationExists, setIsOperationExists] = useState(false);
-  const [manualAdjustmentValue,setManualAdjustmentValue]= useState(null)
+ 
   useEffect(() => {
     if (OpID) {
       
-      fetchSummaryByID(OpID);
+      fetch(OpID);
       
     }
   }, [OpID]);
@@ -246,12 +246,12 @@ const handleOpIdChange = (e) => {
   
   useEffect(() => {
     if (opIdSelected) {
-      console.log("Seleccionada operación:", opIdSelected);
+    
 
       const fetchOperations = async () => {
         try {
           const response = await Axios.get(
-            `${API_URL}/report/negotiationSummary?id=${opIdSelected}&mode=query`,
+            `${API_URL}/report/negotiationSummary?opId=${opIdSelected}&mode=query`,
             {
               headers: {
                 authorization: `Bearer ${localStorage.getItem("access-token")}`,
@@ -260,7 +260,7 @@ const handleOpIdChange = (e) => {
           );
 
           if (response && response.data) {
-            console.log("Respuesta de la API:", response.data);
+            
             setIsOperationExists(true);
             setNegotiationSummarySelected(response.data); // Asume que 'data' contiene los datos correctos
             setNotFound(false); // Resetea el estado de "no encontrado"
@@ -289,8 +289,8 @@ const handleOpIdChange = (e) => {
 
   useEffect(() => {
     if (data) {
-        console.log(data)
-      
+    
+      console.log(PendingAccounts)
       
       const depositData = data?.data?.emitterDeposits || []; // Agrega valor predeterminado
       setDeposit(depositData);
@@ -298,7 +298,7 @@ const handleOpIdChange = (e) => {
       Toast("Resumen de negociación cargado con éxito", "success");
       
       setNegotiationSummaryData({
-        opId: id,
+        opId: OpID,
         emitter: data?.data?.emitter?.name,
         emitterId: data?.data?.emitter?.document,
         payer: data?.data?.payer?.name,
@@ -335,7 +335,7 @@ const handleOpIdChange = (e) => {
   }, [
     data,
     error,
-    id,
+    OpID,
     billId,
     manualAdjustment,
     observations,
@@ -350,7 +350,7 @@ const handleOpIdChange = (e) => {
       
         Toast("Resumen de negociación creado con éxito", "success");
         setTimeout(() => {
-          router.push("/administration/negotiation-summary/summaryList");
+        //  router.push("/administration/negotiation-summary/summaryList");
         }, 2000);
         
       
@@ -414,7 +414,7 @@ const handleOpIdChange = (e) => {
     if (e.target.value) {
       
       router.push(
-        `/administration/negotiation-summary?${option}&id=${e.target.value}`
+        `/administration/negotiation-summary?${option}&opId=${e.target.value}`
       );
     }
   };
@@ -427,7 +427,7 @@ const handleOpIdChange = (e) => {
     
     if (option === "add") {
       formik.resetForm();
-      formik.setFieldValue("opId", Number(id));//Aqui está el error
+      formik.setFieldValue("opId", Number(OpID));//Aqui está el error
      
       setOpen([true, null]);
     } else {
@@ -467,12 +467,12 @@ const handleOpIdChange = (e) => {
   
   
   useEffect(() => {
-    console.log(data)
+
     if (data) {
-      console.log(data?.data?.emitter?.id)
+      
       fetchRisk(data?.data?.emitter?.id);
       
-      console.log(dataRiskProfile)
+ 
       
     }
     
@@ -480,23 +480,23 @@ const handleOpIdChange = (e) => {
 
 
   useEffect(() => {
-    console.log(dataRiskProfile)
+    
     if (dataRiskProfile) {
       
       fetchBank(dataRiskProfile?.data?.bank)
       
-      console.log(dataBank)
+     
     }
     
   }, [dataRiskProfile]);
 
   useEffect(() => {
-    console.log(dataRiskProfile)
+  
     if (dataRiskProfile) {
       
       fetchAccountType(dataRiskProfile?.data?.account_type)
       
-      console.log(dataAccountType)
+     
     }
     
   }, [dataRiskProfile]);
@@ -508,10 +508,7 @@ const handleOpIdChange = (e) => {
    
     if (option === "add") {
       formik2.resetForm();
-      console.log("data",data)
-      console.log("client", data?.data?.emitter?.id);
-      console.log("operation", data?.data?.operation?.id[0]);
-      console.log("beneficiary",data?.data?.emitterDeposits)
+     
       formik2.setFieldValue("client", data?.data?.emitter?.id);
       formik2.setFieldValue("operation", data?.data?.operation?.id[0]);
       formik2.setFieldValue("beneficiary", data?.data?.emitterDeposits?.beneficiary);
@@ -664,7 +661,7 @@ const handleOpIdChange = (e) => {
     };
 
     if (option === "modify") {
-      fetchModifySummary(updatedNegotiationData, OpID);
+      fetchModifySummary(updatedNegotiationData, id);
     } else if (isOperationExists) {
       
       setModalOpen(true);
@@ -676,7 +673,7 @@ const handleOpIdChange = (e) => {
 
   const handleButtonGoToSummaryClick = () => {
     const baseUrl = window.location.origin; // Obtiene la base de la URL actual
-    console.log(baseUrl)
+   
     const url = `${baseUrl}/administration/negotiation-summary/summaryList?id=${opIdSelected}&mode=filter&emitter=`;
     window.location.href = url;
   };
@@ -776,7 +773,7 @@ const handleOpIdChange = (e) => {
     type="number"
     onChange={handleOpIdChange}  // Usar la nueva función
     disabled={option === "modify"}
-    value={option === "modify" ? id : OpID}
+    value={OpID}
     onKeyDown={(e) => {
       if (e.key === "Enter") {
         e.preventDefault();
@@ -810,11 +807,7 @@ const handleOpIdChange = (e) => {
       },
     }}
   />
-  {idFromUrl && option !== "modify" && (
-    <Typography variant="caption" color="textSecondary">
-      ID cargado desde la URL
-    </Typography>
-  )}
+
 </Box>
             <TitleModal
               open={open[0]}
@@ -900,7 +893,7 @@ const handleOpIdChange = (e) => {
                           variant="standard"
                           margin="normal"
                           fullWidth
-                          value={id}
+                          value={OpID}
                           disabled
                           InputProps={{
                             disableUnderline: true,

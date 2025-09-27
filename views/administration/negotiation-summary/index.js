@@ -29,10 +29,12 @@ export default function FinancialProf() {
     }
   }, [router.query]);
 
+
+  console.log(router.query.opId)
   
   const initialValues = {
     id: null,
-    opId: router.query.id,
+    opId: router.query.opId,
     description: "",
     amount: null,
     date: `${new Date().getFullYear()}-${
@@ -43,6 +45,8 @@ export default function FinancialProf() {
     typeExpenditure: null,
     modify: false,
   };
+
+  console.log(initialValues)
   const validationSchema = object({
     description: string("Ingresa una descripción").required(
       "La descripción es requerida"
@@ -85,6 +89,7 @@ export default function FinancialProf() {
 
   useEffect(() => {
     if (dataSummaryByID) {
+      console.log(dataSummaryByID)
 
       setPendingAccounts(dataSummaryByID?.data?.pendingAccounts);
       setDeposits(dataSummaryByID?.data?.emitterDeposits);
@@ -99,7 +104,7 @@ export default function FinancialProf() {
 
     onSubmit: (values) => {
       if (!values.modify) {
-        
+        console.log(pendingAccounts)
         setPendingAccounts([...pendingAccounts, values]);
         Toast("Descuento agregado", "success");
       } else {

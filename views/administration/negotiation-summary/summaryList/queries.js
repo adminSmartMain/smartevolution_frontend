@@ -18,7 +18,7 @@ export const GetSummaryList = async (params) => {
 
 export const GetNegotiationSummaryPDF = async (id) => {
   const res = await Axios.get(
-    `${API_URL}/report/negotiationSummary?pdf=${id}&id=undefined`,
+    `${API_URL}/report/negotiationSummary?pdf=${id}`,
     {
       headers: {
         authorization: "Bearer " + localStorage.getItem("access-token"),
