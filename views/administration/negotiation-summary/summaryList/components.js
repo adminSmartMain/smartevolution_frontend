@@ -387,14 +387,6 @@ export const SummaryListComponent = () => {
   ) || [];
   
 
-  //Configuración filtro numero operacion y emisor
-  // Efecto que se ejecuta al inicio para limpiar la URL
-useEffect(() => {
-  // Limpiar los parámetros de la URL al cargar la página
-  if (window.location.search) {
-    window.history.replaceState(null, "", window.location.pathname);
-  }
-}, []);
 
   const handleOpen = () => {
     setOpen(true);
@@ -409,7 +401,22 @@ useEffect(() => {
     handleOpen();
   };
 
+// Leer parámetros iniciales de la URL
+useEffect(() => {
+  const searchParams = new URLSearchParams(window.location.search);
+  const opId = searchParams.get("opId") || ""; // Cambiar "id" por "opId"
+  const emitter = searchParams.get("emitter") || "";
 
+  if (emitter) {
+    setFilterInput(emitter);
+  } else if (opId) {
+    setFilterInput(opId);
+     setPage(1);
+        setPageFiltered(1);
+        fetchFilteredData();
+        setIsFilterApplied(true);
+  }
+}, []);
 
   // Actualizar `pageFiltered` cada vez que `page` cambie
   useEffect(() => {

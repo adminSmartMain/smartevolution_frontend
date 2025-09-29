@@ -705,43 +705,62 @@ const handleUpdateAllClick = (e) => {
     currency: "USD",
   };
   const numberFormat = new Intl.NumberFormat("en-US", formatOptions);
-
-const handleOpenNegotiationSummary = (id, opId,hasSummary) => {
-  // Verificar si ya tenemos información sobre si existe resumen para este opId
-
- 
-  // Construir la URL basada en si existe o no el resumen
-  let url;
+const handleOpenNegotiationSummary = async (operationId, opId, hasSummary) => {
+  // Si ya sabemos que tiene resumen, buscar el id del resumen
   if (hasSummary) {
-    // Si existe, usar la URL de modificación con los parámetros invertidos
-    url = `/administration/negotiation-summary?modify&id=${id}&opId=${opId}`;
-  } else {
-    // Si no existe o no sabemos, usar la URL de registro normal
-    url = `/administration/negotiation-summary?register&opId=${opId}`;
-  }
-
-  if (openWindow && !openWindow.closed) {
-    // Si la ventana ya está abierta, solo le damos el foco
-    openWindow.focus();
-  } else {
-    // Si la ventana no está abierta, la abrimos con la URL correspondiente
-    const newWindow = window.open(url, "_blank", "width=800,height=600");
-    setOpenWindow(newWindow);
-    
-    // Escuchar el evento de cierre de la ventana
-    newWindow.onbeforeunload = () => {
-      setOpenWindow(null);
+    try {
+      // Buscar el resumen por opId para obtener el id del resumen
+      const response = await GetSummaryList(opId);
       
-      // Cuando se cierra la ventana, podríamos querer actualizar el estado
-      // de si tiene resumen o no (opcional)
-      if (hasSummary === undefined) {
-        // Si no sabíamos si tenía resumen, verificamos ahora
-        checkSingleNegotiationSummary(opId);
+      // El id del resumen puede venir en diferentes estructuras de respuesta
+      let summaryId;
+      
+      if (response.data?.id) {
+        // Si la respuesta tiene data.id directo
+        summaryId = response.data.id;
+      } else if (response.data?.results?.[0]?.id) {
+        // Si la respuesta es un array en results
+        summaryId = response.data.results[0].id;
+      } else if (response.id) {
+        // Si la respuesta tiene id en el nivel superior
+        summaryId = response.id;
+      } else {
+        console.warn("No se pudo encontrar el ID del resumen en la respuesta:", response);
+        // Fallback: usar el opId como id (no ideal pero funcional)
+        summaryId = opId;
       }
-    };
+
+      // Construir URL con el id del resumen y el opId
+      const url = `/administration/negotiation-summary?modify&id=${summaryId}&opId=${opId}`;
+      openNegotiationSummaryWindow(url);
+
+    } catch (error) {
+      console.error("Error al obtener el ID del resumen:", error);
+      // Fallback: abrir en modo registro si hay error
+      const url = `/administration/negotiation-summary?register&opId=${opId}`;
+      openNegotiationSummaryWindow(url);
+    }
+  } else {
+    // Si no tiene resumen, abrir en modo registro
+    const url = `/administration/negotiation-summary?register&opId=${opId}`;
+    openNegotiationSummaryWindow(url);
   }
 };
 
+// Función auxiliar para abrir la ventana
+const openNegotiationSummaryWindow = (url) => {
+  if (openWindow && !openWindow.closed) {
+    openWindow.location.href = url;
+    openWindow.focus();
+  } else {
+    const newWindow = window.open(url, "_blank", "width=800,height=600");
+    setOpenWindow(newWindow);
+    
+    newWindow.onbeforeunload = () => {
+      setOpenWindow(null);
+    };
+  }
+};
 // Función auxiliar para verificar un solo resumen
 const checkSingleNegotiationSummary = async (opId) => {
   try {

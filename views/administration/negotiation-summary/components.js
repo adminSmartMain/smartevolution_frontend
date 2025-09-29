@@ -165,7 +165,13 @@ const handleOpIdChange = (e) => {
     // Validación para solo números
     if (value === '' || /^[0-9]+$/.test(value)) {
       setOpID(value);
-      setIdFromUrl(false); // El usuario está editando, ya no es de la URL
+      setIdFromUrl(false);
+      
+      // Resetear el estado de existencia cuando el usuario cambia el opId
+      if (value !== opIdSelected) {
+        setIsOperationExists(false);
+        setModalOpen(false);
+      }
     }
   }
 };
@@ -231,61 +237,52 @@ const handleOpIdChange = (e) => {
     }
   }, [OpID]);
 
-  useEffect(() => {
-    if (dataSummaryByID) {
-      
-      setObservations(dataSummaryByID?.data?.observations);
-  
-      const id = dataSummaryByID?.data?.billId?.substring(3);
-      setBillId(id);
-      
-      
-    }
-  }, [dataSummaryByID]);
-
-  
-  useEffect(() => {
-    if (opIdSelected) {
-    
-
-      const fetchOperations = async () => {
-        try {
-          const response = await Axios.get(
-            `${API_URL}/report/negotiationSummary?opId=${opIdSelected}&mode=query`,
-            {
-              headers: {
-                authorization: `Bearer ${localStorage.getItem("access-token")}`,
-              },
-            }
-          );
-
-          if (response && response.data) {
-            
-            setIsOperationExists(true);
-            setNegotiationSummarySelected(response.data); // Asume que 'data' contiene los datos correctos
-            setNotFound(false); // Resetea el estado de "no encontrado"
-          } else {
-            console.warn("Datos vacíos en la respuesta de la API.");
-            setNegotiationSummarySelected(null);
+useEffect(() => {
+  // Solo verificar en modo "register" y cuando opIdSelected tenga valor
+  if (opIdSelected && option === "register") {
+    const fetchOperations = async () => {
+      try {
+        const response = await Axios.get(
+          `${API_URL}/report/negotiationSummary?opId=${opIdSelected}&mode=query`,
+          {
+            headers: {
+              authorization: `Bearer ${localStorage.getItem("access-token")}`,
+            },
           }
-        } catch (error) {
-          console.error("Error al obtener las operaciones:", error);
+        );
 
-          // Manejo de errores específicos
-          if (error.response && error.response.status === 404) {
-            setNotFound(true);
-            setNegotiationSummarySelected(null);
-            
-          } else {
-            setNegotiationSummarySelected(null);
-            
-          }
+        if (response && response.data) {
+          setIsOperationExists(true);
+          setNegotiationSummarySelected(response.data);
+          setNotFound(false);
+          
+          // MOSTRAR MODAL AUTOMÁTICAMENTE solo en modo register
+          setModalOpen(true);
+        } else {
+          console.warn("Datos vacíos en la respuesta de la API.");
+          setNegotiationSummarySelected(null);
+          setIsOperationExists(false);
+          setModalOpen(false);
         }
-      };
+      } catch (error) {
+        console.error("Error al obtener las operaciones:", error);
 
-      fetchOperations();
-    }
-  }, [opIdSelected]);
+        if (error.response && error.response.status === 404) {
+          setNotFound(true);
+          setNegotiationSummarySelected(null);
+          setIsOperationExists(false);
+          setModalOpen(false);
+        } else {
+          setNegotiationSummarySelected(null);
+          setIsOperationExists(false);
+          setModalOpen(false);
+        }
+      }
+    };
+
+    fetchOperations();
+  }
+}, [opIdSelected, option]); // Agregar option como dependencia
 
   useEffect(() => {
     if (data) {
@@ -410,15 +407,16 @@ const handleOpIdChange = (e) => {
   const today = fns.format(new Date(), "yyyy-MM-dd");
 
   
-  const handleOpEntered = async (e) => {
-    if (e.target.value) {
-      
-      router.push(
-        `/administration/negotiation-summary?${option}&opId=${e.target.value}`
-      );
-    }
-  };
-
+const handleOpEntered = async (e) => {
+  if (e.target.value) {
+    setOpIdSelected(e.target.value); // Actualizar el estado primero
+    
+    // La verificación automática se hará en el useEffect
+    router.push(
+      `/administration/negotiation-summary?${option}&opId=${e.target.value}`
+    );
+  }
+};
   const [open, setOpen] = useState([false, null]);
 
   //maneja la apertura del cuadrado de agregar descuentos. cuando se crea el descuento toma la option add
@@ -652,31 +650,35 @@ const handleOpIdChange = (e) => {
   };
 
 
- 
-  const handleButtonClick = () => {
-    // Asigna "FV-<billId>" o "FV-No aplica" si billId es null o undefined
-    const updatedNegotiationData = {
-      ...NegotiationSummaryData,
-      billId: billId ? `FE-${billId}` : "FE-",
-    };
+const handleButtonClick = () => {
+  // Prevención adicional - no debería ejecutarse si el botón está deshabilitado
+  if (isOperationExists && option === "register") {
+    setModalOpen(true);
+    return;
+  }
 
-    if (option === "modify") {
-      fetchModifySummary(updatedNegotiationData, id);
-    } else if (isOperationExists) {
-      
-      setModalOpen(true);
-    } else {
-      fetchCreateSummary(updatedNegotiationData);
-    }
+  const updatedNegotiationData = {
+    ...NegotiationSummaryData,
+    billId: billId ? `FE-${billId}` : "FE-",
   };
 
+  if (option === "modify") {
+    fetchModifySummary(updatedNegotiationData, id);
+  } else {
+    fetchCreateSummary(updatedNegotiationData);
+  }
+};
 
-  const handleButtonGoToSummaryClick = () => {
-    const baseUrl = window.location.origin; // Obtiene la base de la URL actual
-   
-    const url = `${baseUrl}/administration/negotiation-summary/summaryList?id=${opIdSelected}&mode=filter&emitter=`;
-    window.location.href = url;
-  };
+
+const handleButtonGoToSummaryClick = () => {
+  const baseUrl = window.location.origin;
+  
+  // Cambiar la URL para que use los parámetros correctos que espera SummaryListComponent
+  const url = `${baseUrl}/administration/negotiation-summary/summaryList?opId=${opIdSelected}&mode=filter&emitter=`;
+  
+  // Usar window.location.href para redirección completa
+  window.location.href = url;
+};
   
   return (
     <>
@@ -684,12 +686,18 @@ const handleOpIdChange = (e) => {
         <Box display="flex" flexDirection="row" justifyContent="space-between">
           <BackButton path="/administration/negotiation-summary/summaryList" />
 
-        <Button
+    <Button
   variant="contained"
   color="primary"
   size="large"
   onClick={handleButtonClick}
-  disabled={loadingCreateSummary || loadingModifySummary || dataCreateSummary || dataModifySummary}
+  disabled={
+    loadingCreateSummary || 
+    loadingModifySummary || 
+    dataCreateSummary || 
+    dataModifySummary ||
+    (isOperationExists && option === "register") // Nueva condición para deshabilitar
+  }
   sx={{
     height: "2.6rem",
     backgroundColor: (dataCreateSummary || dataModifySummary) ? "#4caf50" : "#488B8F",
@@ -697,7 +705,8 @@ const handleOpIdChange = (e) => {
     borderColor: (dataCreateSummary || dataModifySummary) ? "#4caf50" : "#5EA3A3",
     borderRadius: "4px",
     "&:hover": {
-      backgroundColor: (dataCreateSummary || dataModifySummary) ? "#4caf50" : "#5EA3A3",
+      backgroundColor: (dataCreateSummary || dataModifySummary) ? "#4caf50" : 
+                     (isOperationExists && option === "register") ? "#cccccc" : "#5EA3A3", // Manejar hover cuando está deshabilitado por existencia
     },
     "&:disabled": {
       backgroundColor: (dataCreateSummary || dataModifySummary) ? "#4caf50" : "#cccccc",
@@ -728,15 +737,19 @@ const handleOpIdChange = (e) => {
       >
         {(dataCreateSummary || dataModifySummary) 
           ? "GUARDADO" 
-          : option === "modify" ? "MODIFICAR" : "GUARDAR"}
+          : (isOperationExists && option === "register") 
+            ? "RESUMEN EXISTE"  // Texto diferente cuando ya existe
+            : option === "modify" ? "MODIFICAR" : "GUARDAR"}
       </Typography>
       <i
         className="fa-regular fa-floppy-disk"
         style={{ 
           color: "#FFFFFF", 
           marginLeft: "0.5rem",
-          // Ocultar icono cuando ya está guardado
-          display: (dataCreateSummary || dataModifySummary) ? "none" : "inline-block"
+          // Ocultar icono cuando ya está guardado o cuando existe resumen
+          display: (dataCreateSummary || dataModifySummary || (isOperationExists && option === "register")) 
+            ? "none" 
+            : "inline-block"
         }}
       ></i>
     </>
@@ -764,14 +777,16 @@ const handleOpIdChange = (e) => {
             width="90%"
           >
 <Box display="flex" flexDirection="column">
+
+  <Box display="flex" flexDirection="column">
   <InputTitles marginBottom={1}>N° operación</InputTitles>
-  <TextField
+  <TextField 
     id="opId"
     placeholder="# OP"
     variant="outlined"
     size="small"
     type="number"
-    onChange={handleOpIdChange}  // Usar la nueva función
+    onChange={handleOpIdChange}
     disabled={option === "modify"}
     value={OpID}
     onKeyDown={(e) => {
@@ -807,6 +822,7 @@ const handleOpIdChange = (e) => {
       },
     }}
   />
+</Box>
 
 </Box>
             <TitleModal
