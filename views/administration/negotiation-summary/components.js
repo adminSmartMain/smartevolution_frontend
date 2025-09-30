@@ -128,7 +128,7 @@ export const NegotiationSummary = ({
   const router = useRouter();
   //esta constante se encarga de manejar el almacenamiento de los datos ingresados en el formulario
   const [NegotiationSummaryData, setNegotiationSummaryData] = useState({});
-  const [billId, setBillId] = useState(null);
+const [billId, setBillId] = useState("");
   const [manualAdjustment, setManualAdjustment] = useState(0);
   const [observations, setObservations] = useState("");
   const [deposit, setDeposit] = useState([]);
@@ -287,7 +287,7 @@ useEffect(() => {
   useEffect(() => {
     if (data) {
     
-      console.log(PendingAccounts)
+      console.log(dataSummaryByID)
       
       const depositData = data?.data?.emitterDeposits || []; // Agrega valor predeterminado
       setDeposit(depositData);
@@ -502,6 +502,8 @@ const handleOpEntered = async (e) => {
 
 
   const [open2, setOpen2] = useState([false, null]);
+
+  console.log(dataBank)
   const handleOpen2 = (option) => {
    
     if (option === "add") {
@@ -510,7 +512,7 @@ const handleOpEntered = async (e) => {
       formik2.setFieldValue("client", data?.data?.emitter?.id);
       formik2.setFieldValue("operation", data?.data?.operation?.id[0]);
       formik2.setFieldValue("beneficiary", data?.data?.emitterDeposits?.beneficiary);
-      formik2.setFieldValue("bank", dataBank?.data?.description);
+      formik2.setFieldValue("bank", dataBank?.data?.id);
       formik2.setFieldValue("accountNumber", dataRiskProfile?.data?.account_number);
       formik2.setFieldValue("accountType", dataAccountType?.data?.id);
       setOpen2([true, option]);
@@ -650,16 +652,26 @@ const handleOpEntered = async (e) => {
   };
 
 
+useEffect(() => {
+  if (option === "modify" && dataSummaryByID?.data?.billId) {
+    // Extraer solo la parte numérica del billId (remover "FE-")
+    const billIdValue = dataSummaryByID.data.billId.replace('FE-', '');
+    setBillId(billIdValue);
+  }
+}, [dataSummaryByID, option]);
+
 const handleButtonClick = () => {
-  // Prevención adicional - no debería ejecutarse si el botón está deshabilitado
   if (isOperationExists && option === "register") {
     setModalOpen(true);
     return;
   }
 
+  // Construir el billId completo
+  const fullBillId = billId ? `FE-${billId}` : "";
+
   const updatedNegotiationData = {
     ...NegotiationSummaryData,
-    billId: billId ? `FE-${billId}` : "FE-",
+    billId: fullBillId, // Enviar el billId completo
   };
 
   if (option === "modify") {
@@ -1865,47 +1877,49 @@ const handleButtonGoToSummaryClick = () => {
               alignItems="center"
               mb={10}
             >
-              <TextField
-                id="billId"
-                variant="outlined"
-                size="small"
-                type="text"
-                value={billId}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <InputTitles>FE -</InputTitles>
-                    </InputAdornment>
-                  ),
-                }}
-                onChange={(e) => {
-                  setBillId(e.target.value);
-                }}
-                sx={{
-                  color: "#333333",
-                  width: "40%",
 
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "4px",
-                    backgroundColor: "transparent",
-                    textAlign: "left",
-                    fontWeight: "bold",
-                    fontSize: "12px",
-                    color: "#63595c",
-                    letterSpacing: "0px",
-                    textTransform: "uppercase",
-                    "& fieldset": {
-                      borderColor: "#63595C",
-                    },
-                    "&:hover fieldset": {
-                      borderColor: "#63595C",
-                    },
-                    "&.Mui-focused fieldset": {
-                      borderColor: "#63595C",
-                    },
-                  },
-                }}
-              />
+<TextField
+  id="billId"
+  variant="outlined"
+  size="small"
+  type="text"
+  value={billId || ''} // Asegurar que no sea undefined
+  InputProps={{
+    startAdornment: (
+      <InputAdornment position="start">
+        <InputTitles>FE -</InputTitles>
+      </InputAdornment>
+    ),
+  }}
+onChange={(e) => {
+  // Solo permitir alfanumérico y remover accidental "FE-" si el usuario lo escribe
+  let value = e.target.value.toUpperCase().replace(/^FE-/, '');
+  setBillId(value);
+}}
+  sx={{
+    color: "#333333",
+    width: "40%",
+    "& .MuiOutlinedInput-root": {
+      borderRadius: "4px",
+      backgroundColor: "transparent",
+      textAlign: "left",
+      fontWeight: "bold",
+      fontSize: "12px",
+      color: "#63595c",
+      letterSpacing: "0px",
+      textTransform: "uppercase",
+      "& fieldset": {
+        borderColor: "#63595C",
+      },
+      "&:hover fieldset": {
+        borderColor: "#63595C",
+      },
+      "&.Mui-focused fieldset": {
+        borderColor: "#63595C",
+      },
+    },
+  }}
+/>
               <InputTitles ml={2}>
                 <ValueFormat
                   prefix="$ "

@@ -22,6 +22,7 @@ export default function BankSelect({ formik, width, disabled }) {
   } = useFetch({ service: Banks, init: true });
 
   const [bank, setBank] = useState([]);
+  console.log(formik.values)
 
   useEffect(() => {
     if (data) {
@@ -44,9 +45,10 @@ export default function BankSelect({ formik, width, disabled }) {
   console.log("Formik Value:", formik.values.bank);
   console.log(
     "Matched Option:",
-    bank.find((option) => option.label === formik.values.bank)
+    bank.find((option) => option.value === formik.values.bank)
   );
 
+  console.log(bank)
 
   return (
     <Box
