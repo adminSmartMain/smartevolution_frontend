@@ -128,7 +128,8 @@ export const NegotiationSummary = ({
   const router = useRouter();
   //esta constante se encarga de manejar el almacenamiento de los datos ingresados en el formulario
   const [NegotiationSummaryData, setNegotiationSummaryData] = useState({});
-const [billId, setBillId] = useState("");
+// Estados para billId
+
   const [manualAdjustment, setManualAdjustment] = useState(0);
   const [observations, setObservations] = useState("");
   const [deposit, setDeposit] = useState([]);
@@ -136,7 +137,19 @@ const [billId, setBillId] = useState("");
 
  // Añade este estado
 const [idFromUrl, setIdFromUrl] = useState(false);
+// Función para manejar cambios en el billId
+// Estados para billId - SIEMPRE con prefijo
+const [billId, setBillId] = useState("");
 
+
+
+// Función para obtener el billId completo
+const getFullBillId = () => {
+  if (!billId || billId.trim() === "") {
+    return "FE-";
+  }
+  return `FE-${billId}`;
+};
 // Actualiza el useEffect
 useEffect(() => {
   if (router && router.query.opId ) {
@@ -284,63 +297,70 @@ useEffect(() => {
   }
 }, [opIdSelected, option]); // Agregar option como dependencia
 
-  useEffect(() => {
-    if (data) {
+
+
+// REEMPLAZA los useEffects de observations y billId con este único useEffect
+useEffect(() => {
+  if (data) {
+    console.log("Datos cargados:", data);
     
-      console.log(dataSummaryByID)
-      
-      const depositData = data?.data?.emitterDeposits || []; // Agrega valor predeterminado
-      setDeposit(depositData);
-     
-      Toast("Resumen de negociación cargado con éxito", "success");
-      
-      setNegotiationSummaryData({
-        opId: OpID,
-        emitter: data?.data?.emitter?.name,
-        emitterId: data?.data?.emitter?.document,
-        payer: data?.data?.payer?.name,
-        payerId: data?.data?.payer?.document,
-        ...data?.data?.operation,
-        billId: billId,
-        date: today,
-        totalDiscounts: PendingAccounts.reduce((a, b) => a + b.amount, 0),
-        total:
-          data?.data?.operation?.valueToDiscount -
-          data?.data?.operation?.investorDiscount -
-          data?.data?.operation?.billValue -
-          PendingAccounts.reduce((a, b) => a + b.amount, 0),
-        pendingToDeposit:
-          data?.data?.operation?.valueToDiscount -
-          data?.data?.operation?.investorDiscount -
-          data?.data?.operation?.billValue -
-          PendingAccounts.reduce((a, b) => a + b.amount, 0) -
-          (manualAdjustment || 0)
-          -depositData.map(deposit => deposit.amount).reduce((a, b) => a + b, 0),
-        
-        pendingAccounts: PendingAccounts,
-        
-        observations: observations,
-        totalDeposits: depositData.map(deposit => deposit.amount).reduce((a, b) => a + b, 0),
-      });
+    const depositData = data?.data?.emitterDeposits || [];
+    setDeposit(depositData);
+   
+    Toast("Resumen de negociación cargado con éxito", "success");
+    
+    // Solo cargar observations si no hemos modificado manualmente
+    if (!observationsModified) {
+      const observationsFromData = dataSummaryByID.data.observations || "";
+      setObservations(observationsFromData);
     }
+    
+    setNegotiationSummaryData({
+      opId: OpID,
+      emitter: data?.data?.emitter?.name,
+      emitterId: data?.data?.emitter?.document,
+      payer: data?.data?.payer?.name,
+      payerId: data?.data?.payer?.document,
+      ...data?.data?.operation,
+      billId: getFullBillId(),
+      date: today,
+      totalDiscounts: PendingAccounts.reduce((a, b) => a + b.amount, 0),
+      total:
+        data?.data?.operation?.valueToDiscount -
+        data?.data?.operation?.investorDiscount -
+        data?.data?.operation?.billValue -
+        PendingAccounts.reduce((a, b) => a + b.amount, 0),
+      pendingToDeposit:
+        data?.data?.operation?.valueToDiscount -
+        data?.data?.operation?.investorDiscount -
+        data?.data?.operation?.billValue -
+        PendingAccounts.reduce((a, b) => a + b.amount, 0) -
+        (manualAdjustment || 0)
+        -depositData.map(deposit => deposit.amount).reduce((a, b) => a + b, 0),
+      
+      pendingAccounts: PendingAccounts,
+      
+      observations: observations, // Usar el estado actual de observations
+      totalDeposits: depositData.map(deposit => deposit.amount).reduce((a, b) => a + b, 0),
+    });
+  }
 
-    if (error) {
-      error.message == "El Cliente no posee perfil de riesgo"
-        ? Toast(error.message, "error")
-        : Toast("La operación no existe", "error");
-    }
-  }, [
-    data,
-    error,
-    OpID,
-    billId,
-    manualAdjustment,
-    observations,
-    deposit,
-    PendingAccounts,
-  ]);
+  if (error) {
+    error.message == "El Cliente no posee perfil de riesgo"
+      ? Toast(error.message, "error")
+      : Toast("La operación no existe", "error");
+  }
+}, [
+  data,
+  error,
+  OpID,
+  manualAdjustment,
+  deposit,
+  PendingAccounts,
+]);
 
- 
+
+
 
   useEffect(() => {
     if (dataCreateSummary) {
@@ -503,7 +523,7 @@ const handleOpEntered = async (e) => {
 
   const [open2, setOpen2] = useState([false, null]);
 
-  console.log(dataBank)
+  
   const handleOpen2 = (option) => {
    
     if (option === "add") {
@@ -579,9 +599,25 @@ const handleOpEntered = async (e) => {
     setManualAdjustment(value);
   };
 
-  const handleObservations = (e) => {
-    setObservations(e.target.value);
-  };
+// Agrega este estado para controlar si el usuario modificó las observations
+const [observationsModified, setObservationsModified] = useState(false);
+
+// useEffect para actualizar NegotiationSummaryData cuando cambien billId u observations
+useEffect(() => {
+  if (data && NegotiationSummaryData.opId) {
+    setNegotiationSummaryData(prevData => ({
+      ...prevData,
+      billId: getFullBillId(),
+      observations: observations,
+    }));
+  }
+}, [billId, observations, data]);
+
+// Modifica la función handleObservations
+const handleObservations = (e) => {
+  setObservations(e.target.value);
+  setObservationsModified(true); // Marcar como modificado por el usuario
+};
 
   const handlePurchaseOrderClick = (e) => {
     fetchPurchaseOrder(id);
@@ -599,7 +635,7 @@ const handleOpEntered = async (e) => {
       item.accountingControls[0].observations
     );
     formik2.setFieldValue("beneficiary", item.beneficiary);
-    formik2.setFieldValue("bank", item.bank.description);
+    formik2.setFieldValue("bank", item.bank.id);
     formik2.setFieldValue("accountNumber", item.accountNumber);
     formik2.setFieldValue("accountType", item.accountType);
     formik2.setFieldValue("egressType", item.egressType);
@@ -651,14 +687,31 @@ const handleOpEntered = async (e) => {
     setOpen5([false, null]);
   };
 
-
+// Actualiza el useEffect para modo "modify" del billId
 useEffect(() => {
   if (option === "modify" && dataSummaryByID?.data?.billId) {
-    // Extraer solo la parte numérica del billId (remover "FE-")
-    const billIdValue = dataSummaryByID.data.billId.replace('FE-', '');
-    setBillId(billIdValue);
+    const billIdValue = dataSummaryByID.data.billId;
+    
+    // Extraer la parte después de "FE-" (puede contener letras y números)
+    if (billIdValue && billIdValue.startsWith("FE-")) {
+      const valueWithoutPrefix = billIdValue.replace('FE-', '');
+      setBillId(valueWithoutPrefix);
+      console.log("BillId cargado desde API:", valueWithoutPrefix);
+    } else if (billIdValue) {
+      // Si por alguna razón no tiene "FE-", usar el valor completo
+      setBillId(billIdValue);
+    } else {
+      setBillId(""); // Vacío si no hay valor
+    }
+  }
+  
+  // También cargar observations en modo modify
+  if (option === "modify" && dataSummaryByID?.data?.observations) {
+    setObservations(dataSummaryByID.data.observations);
+    console.log("Observations cargadas desde API:", dataSummaryByID.data.observations);
   }
 }, [dataSummaryByID, option]);
+
 
 const handleButtonClick = () => {
   if (isOperationExists && option === "register") {
@@ -666,12 +719,12 @@ const handleButtonClick = () => {
     return;
   }
 
-  // Construir el billId completo
-  const fullBillId = billId ? `FE-${billId}` : "";
+  // Siempre enviar con formato "FE-XXXX"
+  const fullBillId = getFullBillId();
 
   const updatedNegotiationData = {
     ...NegotiationSummaryData,
-    billId: fullBillId, // Enviar el billId completo
+    billId: fullBillId, // Siempre tendrá "FE-" + números
   };
 
   if (option === "modify") {
@@ -680,7 +733,6 @@ const handleButtonClick = () => {
     fetchCreateSummary(updatedNegotiationData);
   }
 };
-
 
 const handleButtonGoToSummaryClick = () => {
   const baseUrl = window.location.origin;
@@ -1878,48 +1930,49 @@ const handleButtonGoToSummaryClick = () => {
               mb={10}
             >
 
-<TextField
-  id="billId"
-  variant="outlined"
-  size="small"
-  type="text"
-  value={billId || ''} // Asegurar que no sea undefined
-  InputProps={{
-    startAdornment: (
-      <InputAdornment position="start">
-        <InputTitles>FE -</InputTitles>
-      </InputAdornment>
-    ),
-  }}
-onChange={(e) => {
-  // Solo permitir alfanumérico y remover accidental "FE-" si el usuario lo escribe
-  let value = e.target.value.toUpperCase().replace(/^FE-/, '');
-  setBillId(value);
-}}
-  sx={{
-    color: "#333333",
-    width: "40%",
-    "& .MuiOutlinedInput-root": {
-      borderRadius: "4px",
-      backgroundColor: "transparent",
-      textAlign: "left",
+<Box display="flex" alignItems="center" gap={1}>
+  <Typography 
+    sx={{ 
+      color: "#63595C", 
       fontWeight: "bold",
-      fontSize: "12px",
-      color: "#63595c",
-      letterSpacing: "0px",
-      textTransform: "uppercase",
-      "& fieldset": {
-        borderColor: "#63595C",
+      fontSize: "14px"
+    }}
+  >
+    FE-
+  </Typography>
+  <TextField
+    id="billId"
+    variant="outlined"
+    size="small"
+    type="text"
+    value={billId}
+    onChange={(e) => {
+      // Permitir letras, números y algunos caracteres especiales comunes
+      // Remover solo caracteres no deseados, mantener alfanumérico y guiones
+      const value = e.target.value.toUpperCase()
+        .replace(/[^A-Z0-9\-_]/g, ''); // Solo permite letras, números, guiones y guiones bajos
+      setBillId(value);
+    }}
+    placeholder="Número de factura"
+    sx={{
+      color: "#333333",
+      width: "200px", // Un poco más ancho para texto alfanumérico
+      "& .MuiOutlinedInput-root": {
+        borderRadius: "4px",
+        backgroundColor: "transparent",
+        "& fieldset": {
+          borderColor: "#63595C",
+        },
+        "&:hover fieldset": {
+          borderColor: "#63595C",
+        },
+        "&.Mui-focused fieldset": {
+          borderColor: "#63595C",
+        },
       },
-      "&:hover fieldset": {
-        borderColor: "#63595C",
-      },
-      "&.Mui-focused fieldset": {
-        borderColor: "#63595C",
-      },
-    },
-  }}
-/>
+    }}
+  />
+</Box>
               <InputTitles ml={2}>
                 <ValueFormat
                   prefix="$ "
