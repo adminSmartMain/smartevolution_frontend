@@ -311,7 +311,7 @@ useEffect(() => {
     
     // Solo cargar observations si no hemos modificado manualmente
     if (!observationsModified) {
-      const observationsFromData = dataSummaryByID.data.observations || "";
+      const observationsFromData = dataSummaryByID?.data?.observations || "";
       setObservations(observationsFromData);
     }
     
