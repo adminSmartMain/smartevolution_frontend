@@ -367,7 +367,7 @@ useEffect(() => {
       
         Toast("Resumen de negociación creado con éxito", "success");
         setTimeout(() => {
-        //  router.push("/administration/negotiation-summary/summaryList");
+         router.push("/administration/negotiation-summary/summaryList");
         }, 2000);
         
       
