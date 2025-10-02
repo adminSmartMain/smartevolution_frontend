@@ -1,55 +1,15 @@
 // components/header.js
 import { useContext, useState } from "react";
 import Image from "next/image";
-import {
-  AppBar,
-  Avatar,
-  Box,
-  Toolbar,
-  Menu,
-  MenuItem,
-} from "@mui/material";
-
+import { AppBar, Avatar, Box, Toolbar, Menu, MenuItem } from "@mui/material";
 import authContext from "@context/authContext";
+import { useSidebar } from "@context/sideBarContext";
 
-const getNavSpacingSx = (isSidebarExpanded) => ({
-  backgroundColor: "#EBEBEB",
-  borderBottom: "1.4px solid #5EA3A380",
-  justifyContent: "center",
-  transition: 'margin-left 0.3s ease, width 0.3s ease',
-  marginLeft: { 
-    xs: 0, 
-    lg: isSidebarExpanded ? 0 : '80px' // ← Cambiado para que no se mueva
-  },
-  width: { 
-    xs: '100%', 
-    lg: isSidebarExpanded ? '100%' : 'calc(100% - 80px)' // ← Cambiado para que no se mueva
-  },
-  left: 0,
-  "@media all and (display-mode: fullscreen)": {
-    height: "10vh",
-  },
-  "@media only screen and (max-width: 1600px)": {
-    "&": {
-      padding: "0% max(2.5%, 32px)",
-    },
-  },
-  "@media (min-width: 1024px)": {
-    "&": {
-      padding: "0% 5%",
-    },
-  },
-});
-
-const imageWrapperSx = {
-  aspectRatio: "90/30",
-  width: "max(90px + 2vw, 45px)",
-};
-
-export default function Header({ isSidebarExpanded, user }) {
+export default function Header({ user }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
   const { logout } = useContext(authContext);
+  const { isSidebarExpanded } = useSidebar();
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -76,11 +36,29 @@ export default function Header({ isSidebarExpanded, user }) {
     <AppBar
       elevation={0}
       position="fixed"
-      sx={getNavSpacingSx(isSidebarExpanded)}
+      sx={{
+        backgroundColor: "#EBEBEB",
+        borderBottom: "1.4px solid #5EA3A380",
+        justifyContent: "center",
+        transition: 'margin-left 0.2s ease, width 0.2s ease',
+        marginLeft: { 
+          xs: 0, 
+          lg: isSidebarExpanded ? 0 : '80px'
+        },
+        width: { 
+          xs: '100%', 
+          lg: isSidebarExpanded ? '100%' : 'calc(100% - 80px)'
+        },
+        left: 0,
+      }}
     >
       <Toolbar disableGutters>
-        {/* Logo decorativo - SIN FUNCIONALIDAD */}
-        <Box sx={imageWrapperSx}>
+        {/* Logo decorativo - OCULTAR EN MÓVIL */}
+        <Box sx={{ 
+          aspectRatio: "90/30",
+          width: "max(90px + 2vw, 45px)",
+          display: { xs: 'none', lg: 'block' }
+        }}>
           <Image
             layout="responsive"
             src="/assets/Logo Smart - Lite.svg"
