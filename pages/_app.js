@@ -17,7 +17,7 @@ const pathsWithoutDefaultLayout = [
   "/",
   "/self-management",
   "/auth/login",
-  "/financialProfile/financialStatement",
+  //"/financialProfile/financialStatement",
   "/financialProfile/indicators",
   "/auth/resetPassword",
   "/auth/forgotPassword",

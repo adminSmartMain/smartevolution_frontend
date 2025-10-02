@@ -242,13 +242,6 @@ const handleOpIdChange = (e) => {
   const handleCloseModal = () => setModalOpen(false);
   const [isOperationExists, setIsOperationExists] = useState(false);
  
-  useEffect(() => {
-    if (OpID) {
-      
-      fetch(OpID);
-      
-    }
-  }, [OpID]);
 
 useEffect(() => {
   // Solo verificar en modo "register" y cuando opIdSelected tenga valor
@@ -428,12 +421,22 @@ useEffect(() => {
 
   
 const handleOpEntered = async (e) => {
-  if (e.target.value) {
-    setOpIdSelected(e.target.value); // Actualizar el estado primero
+  if (e.target.value && e.target.value.trim() !== "") {
+    const enteredOpId = e.target.value.trim();
+    setOpIdSelected(enteredOpId);
+    setOpID(enteredOpId); // También actualizar OpID
     
-    // La verificación automática se hará en el useEffect
+    // Hacer todos los fetches necesarios aquí
+    try {
+      await fetch(enteredOpId);
+      await fetchSummaryByID(enteredOpId);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+    
+    // Solo hacer el fetch y redirección cuando se presiona Enter
     router.push(
-      `/administration/negotiation-summary?${option}&opId=${e.target.value}`
+      `/administration/negotiation-summary?${option}&opId=${enteredOpId}`
     );
   }
 };
@@ -842,7 +845,8 @@ const handleButtonGoToSummaryClick = () => {
           >
 <Box display="flex" flexDirection="column">
 
-  <Box display="flex" flexDirection="column">
+
+<Box display="flex" flexDirection="column">
   <InputTitles marginBottom={1}>N° operación</InputTitles>
   <TextField 
     id="opId"
