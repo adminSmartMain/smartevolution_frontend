@@ -40,10 +40,6 @@ import CustomTooltip from "@styles/customTooltip";
 import CustomDataGrid from "@styles/tables";
 import moment from "moment";
 import ValueFormat from "@formats/ValueFormat";
-import PayedAmountField from "@components/selects/receipts/montoAplicacion";
-
-
-
 
 export const ReceiptC = ({ formik, 
                             data, 
@@ -80,12 +76,11 @@ const {
 } = useFetch({
   service: (args) => GetReceiptList({ 
     page, 
-    opId: data?.opId || "", 
+    opId:data?.[0].operation.opId || "", 
     ...args 
   }),
   init: false, // No ejecutar inmediatamente
 });
-
 
 
 useEffect(() => {
@@ -96,10 +91,10 @@ useEffect(() => {
 
 // Ejecutar cuando data.opId esté disponible
 useEffect(() => {
-  if (data?.opId) {
+  if (data?.[0].operation.opId) {
     fetchGetReceiptList();
   }
-}, [data?.opId]);
+}, [data?.[0].operation.opId]);
 
 const dataCount = dataGetReceiptList?.count || 0;
 
@@ -126,7 +121,7 @@ if (dataClients?.data) {
     clientsMap[client.id] = client;
   });
 }
-console.log(dataGetReceiptList,dataUsers)
+console.log(data)
 
 
 const usersMap = {};
@@ -135,19 +130,6 @@ if (dataUsers?.data) {  // Asumiendo que dataUsers tiene una propiedad data con 
     usersMap[user.id] = user;
   });
 }
-const formatDateToDDMMYYYY = (dateString) => {
-  if (!dateString) return '';
-  
-  const date = new Date(dateString);
-  if (isNaN(date.getTime())) return '';
-  
-  // Usar métodos UTC para evitar problemas de zona horaria
-  const day = String(date.getUTCDate()).padStart(2, '0');
-  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-  const year = date.getUTCFullYear();
-  
-  return `${day}/${month}/${year}`;
-};
 
 const receipt = dataGetReceiptList?.results?.map((receipt) => {
   // Obtener el inversionista de la operación
@@ -166,7 +148,7 @@ const receipt = dataGetReceiptList?.results?.map((receipt) => {
 
     // Obtener el usuario que creó el recaudo
   const userId = receipt.user_created_at;
-  let userName = 'N/A';
+  let userName = 'N/A';data
   
   // Buscar el nombre del usuario en el mapa de usuarios
   if (userId && usersMap[userId]) {
@@ -179,6 +161,7 @@ const receipt = dataGetReceiptList?.results?.map((receipt) => {
     id: receipt.id,
     dId: receipt.dId,
     date: receipt.date,
+    created_at: receipt.created_at,
     typeReceipt: receipt.typeReceipt?.description || 'N/A',
     statusReceipt: receipt.receiptStatus?.description || 'N/A',
     operation: receipt.operation?.opId || 'N/A',
@@ -195,7 +178,6 @@ const receipt = dataGetReceiptList?.results?.map((receipt) => {
     tableRemaining: receipt.tableRemaining || 0,
     presentValueInvestor: receipt.presentValueInvestor || 0,
     user_created_at_id:userName,
-    created_at:receipt.created_at ?  formatDateToDDMMYYYY(receipt.created_at) : 'N/A',
   };
 }) || [];
 const columns = [
@@ -413,13 +395,13 @@ const columns = [
     headerName: "CREADO EN",
     width: 180,
     renderCell: (params) => {
-      const registeredBy = params.value;
+    
 
       
       return (
         
           <InputTitles noWrap>
-            {registeredBy}
+           {params.value ? moment(params.value).format("DD/MM/YYYY") : "N/A"}
           </InputTitles>
   
       );
@@ -442,6 +424,8 @@ const columns = [
       );
     },
   },
+
+    
   
   
  // {
@@ -590,6 +574,22 @@ const getColorByType = (typeId) => {
 };
 
 
+const formatDateToDDMMYYYY = (dateString) => {
+  if (!dateString) return '';
+  
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return '';
+  
+  // Usar métodos UTC para evitar problemas de zona horaria
+  const day = String(date.getUTCDate()).padStart(2, '0');
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const year = date.getUTCFullYear();
+  
+  return `${day}/${month}/${year}`;
+};
+
+
+
   return (
     <>
     <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -612,7 +612,7 @@ const getColorByType = (typeId) => {
             marginRight: { xs: 0.5, sm: 1 },
         }}
     >
-        Factura: {data?.bill?.billId} Op: {data?.opId}
+        Factura: {data?.[0].operation.bill?.billId} Op: {data?.[0].operation.opId}
     </Typography>
 
 
@@ -634,7 +634,7 @@ const getColorByType = (typeId) => {
   }}
 >
 <Tab 
-    label="Registrar  Recaudo" 
+    label="Ver Recaudo" 
     sx={{
       fontFamily: '"Montserrat", "icomoon", sans-serif', // Ejemplo de fuente
 
@@ -733,20 +733,11 @@ const getColorByType = (typeId) => {
     setValue(newValue);
     // Validación inmediata al cambiar la fecha
     if (newValue && data?.opDate && new Date(newValue) < new Date(data.opDate)) {
-      formik.setFieldError('date', "Disculpe, la fecha de aplicación del recaudo no puede ser menor a la fecha de inicio de la operación. Por favor, verifique e intente nuevamente.");
+      formik.setFieldError('date', "la fecha de aplicacion no puede ser menor a la fecha de inicio");
       formik.setFieldTouched('date', true, false); // Marcar como touched
     } else {
       formik.setFieldError('date', ''); // Limpiar error si es válido
     }
-
-     if (newValue && data?.lastDate && new Date(newValue) < new Date(data.lastDate)) {
-      formik.setFieldError('date', "la fecha de aplicacion no puede ser menor a la fecha de recaudo anterior");
-      formik.setFieldTouched('date', true, false); // Marcar como touched
-    } else {
-      formik.setFieldError('date', ''); // Limpiar error si es válido
-    }
-
-    
     formik.setFieldValue('date', newValue);
   }}
   renderInput={(params) => (
@@ -761,19 +752,12 @@ const getColorByType = (typeId) => {
       onChange={formik.handleChange}
       error={formik.touched.date && Boolean(formik.errors.date)}
       helperText={formik.touched.date && formik.errors.date}
-
+    disabled
       onBlur={() => {
-     
         if (formik.values.date < data?.opDate) {
           toast("la fecha de aplicacion no puede ser menor a la fecha de inicio");
           formik.setFieldError('date',"la fecha de aplicacion no puede ser menor a la fecha de inicio");
           formik.setFieldValue('date',data.opDate)
-        }
-        console.log(formik.values.lastDate,formik.values.date )
-         if (formik.values.lastDate && formik.values.date < formik.values.lastDate) {
-          toast("la fecha de aplicacion no puede ser menor a la fecha de recaudo anterior");
-          formik.setFieldError('date',"la fecha de aplicacion no puede ser menor a la fecha de recaudo anterior");
-          formik.setFieldValue('date', formik.values.lastDate)
         }
       }}
     />
@@ -787,50 +771,66 @@ const getColorByType = (typeId) => {
         <Grid item xs={12} md={2}>
           <ReceiptStatusSelect
             formik={formik}
-            disabled={false}
+            disabled={true}
           />
         </Grid>
 
     
-    <Grid item xs={12} md={1}>
-<TextField
-  id="calculatedDays"
-  placeholder="Días Cálculo"
-  name="calculatedDays"
-  type="number"
-  label="Días Cálculo"
-  value={formik.values.calculatedDays}
-  onChange={(e) => {
-    // Prevenir números negativos
-    if (e.target.value >= 0 || e.target.value === '') {
-      formik.handleChange(e);
+ 
+<Grid item xs={12} md={4}>
+<BaseField
+  fullWidth
+      disabled
+  InputProps={{
+    startAdornment: (
+      <i
+        style={{
+          color: "#5EA3A3",
+          marginRight: "0.7vw",
+          fontSize: "1.1vw",
+        }}
+        className="far fa-dollar-sign"
+      ></i>
+    ),
+    endAdornment: (
+      <AdaptiveTooltip
+        title="Debe ser el monto registrado en el banco"
+        placement="top-end"
+        arrow
+      >
+        <IconButton edge="end" size="small" aria-label="Información">
+          <InfoIcon style={{ fontSize: "1rem", color: "rgb(94, 163, 163)" }} />
+        </IconButton>
+      </AdaptiveTooltip>
+    ),
+  }}
+  id="payedAmount"
+  name="payedAmount"
+  label="Monto Aplicación"
+ 
+  thousandSeparator="."
+  decimalSeparator=","
+  decimalScale={0}
+  allowNegative={false}
+  isMasked
+  error={formik.touched.payedAmount && Boolean(formik.errors.payedAmount)}
+     value={formik.values.payedAmount ?? 0} // Nullish coalescing
+  onChangeMasked={(values) => {
+    // Convertir cualquier valor falsy a 0
+    const newValue = values.floatValue ? Number(values.floatValue) : 0;
+    formik.setFieldValue("payedAmount", newValue);
+  }}
+  onBlur={() => {
+    // Validación segura
+    const payedAmount = Number(formik.values.payedAmount) || 0;
+    const additionalInterests = Number(formik.values.additionalInterests) || 0;
+    
+    if (payedAmount < additionalInterests) {
+      toast("El monto de aplicación no puede ser menor a los intereses adicionales");
+       formik.setFieldValue("payedAmount",0);
     }
   }}
-  fullWidth
-  InputProps={{
-    inputProps: { 
-      min: 0  // Establece el valor mínimo permitido a 0
-    },
-    endAdornment: (
-     <AdaptiveTooltip
-  title="Este campo se completa automáticamente con los dias reales calculados, pero puedes modificarlo manualmente"
-  placement="top-end"
->
-  <IconButton edge="end" size="small" aria-label="Información">
-    <InfoIcon style={{ fontSize: '1rem', color: 'rgb(94, 163, 163)' }} />
-  </IconButton>
-</AdaptiveTooltip>
-      ),
-      
-    }}
-
-    error={formik.touched.calculatedDays && Boolean(formik.errors.calculatedDays)}
-
-    
-  />
-</Grid>
-<Grid item xs={12} md={4}>
-<PayedAmountField formik={formik} presentValueInvestor={presentValueInvestor} />
+/>
 
 </Grid>
 
@@ -883,7 +883,7 @@ const getColorByType = (typeId) => {
     <Typography variant="body1">
       <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Factura asociada:</Box>
       <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-        {data?.bill?.billId}
+        {data?.[0].operation.bill?.billId}
       </Box>
     </Typography>
   </Grid>
@@ -893,7 +893,7 @@ const getColorByType = (typeId) => {
     <Typography variant="body1">
       <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Valor Nominal:</Box>
       <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-        {formatNumberWithThousandsSeparator(data?.payedAmount)}
+        {formatNumberWithThousandsSeparator(data?.[0].operation.payedAmount)}
       </Box>
     </Typography>
   </Grid>
@@ -902,7 +902,7 @@ const getColorByType = (typeId) => {
     <Typography variant="body1">
       <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Fecha Inicio:</Box>
       <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-        {formatDateToDDMMYYYY(data?.opDate)}
+        {formatDateToDDMMYYYY(data?.[0].operation.opDate)}
       </Box>
     </Typography>
   </Grid>
@@ -911,7 +911,7 @@ const getColorByType = (typeId) => {
     <Typography variant="body1">
       <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Fecha Fin:</Box>
       <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-        {formatDateToDDMMYYYY(data?.opExpiration)}
+        {formatDateToDDMMYYYY(data?.[0].operation.opExpiration)}
       </Box>
     </Typography>
   </Grid>
@@ -920,7 +920,7 @@ const getColorByType = (typeId) => {
     <Typography variant="body1">
       <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Emisor:</Box>
       <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-        {data?.emitter?.social_reason || `${data?.emitter?.first_name || ''} ${data?.emitter?.last_name || ''}`.trim()}
+        {data?.[0].operation.emitter?.social_reason || `${data?.[0].operation.emitter?.first_name || ''} ${data?.[0].operation.emitter?.last_name || ''}`.trim()}
       </Box>
     </Typography>
   </Grid>
@@ -929,7 +929,7 @@ const getColorByType = (typeId) => {
     <Typography variant="body1">
       <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Pagador:</Box>
       <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-        {data?.payer?.social_reason || `${data?.payer?.first_name || ''} ${data?.payer?.last_name || ''}`.trim()}
+        {data?.[0].operation.payer?.social_reason || `${data?.[0].operation.payer?.first_name || ''} ${data?.[0].operation.payer?.last_name || ''}`.trim()}
       </Box>
     </Typography>
   </Grid>
@@ -938,7 +938,7 @@ const getColorByType = (typeId) => {
     <Typography variant="body1">
       <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Nombre inversionista:</Box>
       <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-        {data?.investor?.social_reason || `${data?.investor?.first_name || ''} ${data?.investor?.last_name || ''}`.trim()}
+        {data?.[0].operation.investor?.social_reason || `${data?.[0].operation.investor?.first_name || ''} ${data?.[0].operation.investor?.last_name || ''}`.trim()}
       </Box>
     </Typography>
   </Grid>
@@ -948,7 +948,7 @@ const getColorByType = (typeId) => {
     <Typography variant="body1">
       <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Cuenta inversionista:</Box>
       <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-        {data?.clientAccount?.account_number}
+        {data?.[0].operation.clientAccount?.account_number}
       </Box>
     </Typography>
   </Grid>
@@ -989,7 +989,7 @@ const getColorByType = (typeId) => {
   {/* Días reales */}
   <Grid item xs={12} md={6}>
     <Typography variant="body1">
-      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Dias reales</Box>
+      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Días reales</Box>
       <Box component="span" color="#5EA3A3" fontSize="1.1rem">
         {formik.values.realDays}
         
@@ -998,27 +998,12 @@ const getColorByType = (typeId) => {
   </Grid>
 
   {/* Valor futuro Recalculado */}
-  <Grid item xs={12} md={6}>
-    <Typography variant="body1">
-      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Valor futuro Recalculado  <AdaptiveTooltip
-        title="Muestra el valor a reconocer al inversionista en caso de recaudos anticipados, tomando en cuenta los días reales de la operación."
-        placement="top-end"
-        arrow
-      >
-        <IconButton edge="end" size="small" aria-label="Información">
-          <InfoIcon style={{ fontSize: '1rem', color: 'rgb(94, 163, 163)' }} />
-        </IconButton>
-       </AdaptiveTooltip></Box>
-      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-        {formatNumberWithThousandsSeparator(formik.values.futureValueRecalculation?.toFixed(0))}
-      </Box>
-    </Typography>
-  </Grid>
+
  
 {/* Dias adicionales  */}
  <Grid item xs={12} md={6}>
     <Typography variant="body1">
-      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Dias adicionales
+      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Días adicionales
        </Box>
       <Box component="span" color="#5EA3A3" fontSize="1.1rem">
         {formik.values.additionalDays}
@@ -1052,7 +1037,7 @@ const getColorByType = (typeId) => {
         </IconButton>
        </AdaptiveTooltip></Box>
       <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-       {formatNumberWithThousandsSeparator(pendingAmount || 0)}
+       {formatNumberWithThousandsSeparator(formik.values.opPendingAmount || 0)}
 
         
       </Box>
@@ -1140,102 +1125,7 @@ const getColorByType = (typeId) => {
    
            
           
-  <Grid container spacing={2} mt={3} ml={1}>
-           {formik.values.lastDate && (
-              <>
- <Box sx={{ width: '100%' }} ml={1.5}>
-    <Typography
-      letterSpacing={0}
-      fontSize="1.5rem"
-      fontWeight="regular"
-      color="#5EA3A3"
-      sx={{ mb: 0.5 }}  // Reduje el marginBottom a 0.5 (4px)
-    >
-      Datos de Recaudos Anteriores
-    </Typography>
-    
-    <Divider 
-      sx={{ 
-        backgroundColor: '#5EA3A3', 
-        height: '1px',
-        width: '100%',
-        mt: 0.5,  // Margen superior reducido
-        mb: 2     // Margen inferior normal
-      }} 
-    />
-  </Box>
-               {/* Fecha Último Recaudo */}
-               <Grid item xs={12} md={6}>
 
-                
-    <Typography variant="body1">
-      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Fecha Recaudo anterior</Box>
-      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-        {formatDateToDDMMYYYY(formik.values.lastDate)}
-      </Box>
-    </Typography>
-  </Grid>
-
-   {/* Monto Recaudos Previos< */}
-   <Grid item xs={12} md={6}>
-    <Typography variant="body1">
-      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Monto Recaudos Previos</Box>
-      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-        {formatNumberWithThousandsSeparator(formik.values.previousPayedAmount)}
-      </Box>
-    </Typography>
-  </Grid>
-
-
-   {/* Intereses */}
-   <Grid item xs={12} md={6}>
-    <Typography variant="body1">
-      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem"> Intereses</Box>
-      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-        {formatNumberWithThousandsSeparator(formik.values.interest)}
-      </Box>
-    </Typography>
-  </Grid>
-   
-              </>
-            )}
-
-    </Grid>          
-            
-     
-            {data?.previousOperationBill && (
-              <>
-              <Grid item xs={12} md={6}>
-                
-    <Typography variant="body1">
-      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem"> Fecha Radicación</Box>
-      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-        {formik.values.previousOpDate}
-      </Box>
-    </Typography>
-  </Grid>
-  <Grid item xs={12} md={6}>
-    <Typography variant="body1">
-      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">  Tasa Descuento</Box>
-      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-        {formatNumberWithThousandsSeparator(formik.values.previousDiscountTax)}
-      </Box>
-    </Typography>
-  </Grid>
-  
-
-  <Grid item xs={12} md={6}>
-    <Typography variant="body1">
-      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">  Nro Operacion</Box>
-      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-       {formik.values.previousOpNumber}
-      </Box>
-    </Typography>
-  </Grid>
-   
-     
-              </>
-            )}
 
             <Box
               sx={{
@@ -1272,48 +1162,10 @@ const getColorByType = (typeId) => {
     </Dialog>
    
 
-     <Grid item xs={12}>
-            <MuiButton
-              type="button"
-              variant="contained"
-              onClick={handleSubmitWithConfirmation}
-              disabled={formik.isSubmitting || loading}
-              sx={{
-    mb: 0,
-    mt: 0,
-    ml: 2,
-    boxShadow: "none",
-    borderRadius: "4px",
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '20rem',
-    // Aplicar estilo gris cuando esté deshabilitado
-    backgroundColor: (formik.isSubmitting || loading) ? 'grey.400' : 'primary.main',
-    color: 'white',
-    // Cambiar el cursor según el estado
-    cursor: (formik.isSubmitting || loading) ? 'not-allowed' : 'pointer',
-    // Efecto hover solo cuando está habilitado
-    '&:hover': {
-      backgroundColor: (formik.isSubmitting || loading) ? 'grey.400' : 'primary.dark',
-    }
-  }}
->
-  <Typography fontWeight="bold" sx={{ textAlign: 'center' }}>
-    {formik.isSubmitting || loading ? 'Procesando...' : 'Registrar'}
-  </Typography>
-</MuiButton>
-          </Grid> 
 
                </Grid>
                
-{process.env.NODE_ENV === 'development' && (
-                  <div style={{ marginTop: 20 }}>
-                    <h4>Errores:</h4>
-                    <pre>{JSON.stringify(formik.errors, null, 2)}</pre>
-                    <pre>{JSON.stringify(formik.values, null, 2)}</pre>
-                  </div>
-                )}
+
 
         </form>
           </>

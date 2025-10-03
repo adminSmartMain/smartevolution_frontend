@@ -26,7 +26,7 @@ export default function BrokerSelect({ formik, disabled }) {
   useEffect(() => {
     if (data) {
       var Brokers = [];
-      data.results.map((broker) => {
+      data.brokers.map((broker) => {
         Brokers.push({
           label: `${broker.first_name} ${broker.last_name}`,
           value: broker.id,
@@ -35,6 +35,8 @@ export default function BrokerSelect({ formik, disabled }) {
       setBroker(Brokers);
     }
   }, [data, loading, error]);
+
+  console.log(data)
 
   return (
     <Box width="17vw">

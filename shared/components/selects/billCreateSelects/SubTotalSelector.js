@@ -15,7 +15,7 @@ export default function SubTotalSelector({values, setFieldValue,formatNumberWith
         fullWidth
         type='text'
         value={
-           values?.subTotal
+          formatNumberWithThousandsSeparator(values?.subTotal) 
         }
     
         onChange={(e) => {

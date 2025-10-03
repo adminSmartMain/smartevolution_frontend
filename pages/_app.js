@@ -17,7 +17,7 @@ const pathsWithoutDefaultLayout = [
   "/",
   "/self-management",
   "/auth/login",
-  "/financialProfile/financialStatement",
+  //"/financialProfile/financialStatement",
   "/financialProfile/indicators",
   "/auth/resetPassword",
   "/auth/forgotPassword",
@@ -27,7 +27,8 @@ const pathsWithoutDefaultLayout = [
    "/bills/createBill",
     "/bills/editBill",
       "/bills/detailBill",
-      "/administration/new-receipt"
+      "/administration/new-receipt",
+      "/administration/new-receipt/receipt-visualization"
 ];
 
 function MyApp({ Component, pageProps }) {
@@ -39,7 +40,8 @@ function MyApp({ Component, pageProps }) {
     <>
       <ThemeProvider theme={theme}>
         <AuthProvider>
-          <>
+      
+<>
             <Head>
               <title>Smart Evolution</title>
             </Head>
@@ -53,6 +55,8 @@ function MyApp({ Component, pageProps }) {
               <Component {...pageProps} />
             )}
           </>
+
+          
         </AuthProvider>
       </ThemeProvider>
     </>

@@ -16,7 +16,7 @@ export default function RetIvaSelector({values, setFieldValue,formatNumberWithTh
        
         type='text'
         value={
-           values?.ret_iva
+           formatNumberWithThousandsSeparator(values?.ret_iva)
         }
     
         onChange={(e) => {

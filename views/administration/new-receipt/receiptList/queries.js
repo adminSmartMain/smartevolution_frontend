@@ -6,7 +6,7 @@ const token =
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export const GetReceiptList = async (params) => {
-  if (params.opId === undefined) params.opId = "";
+ 
   const res = await Axios.get(`${API_URL}/receipt/`, {
     headers: {
       authorization: "Bearer " + localStorage.getItem("access-token"),
@@ -36,6 +36,26 @@ export const DeleteDepositById = async (id) => {
 
 export const GetFinancialProfileById = async (id) => {
   const res = await Axios.get(`${API_URL}/financial_profile/${id}`, {
+    headers: {
+      authorization: "Bearer " + localStorage.getItem("access-token"),
+    },
+  });
+  return res.data;
+};
+
+
+export const billById = async (data) => {
+  const res = await Axios.get(`${API_URL}/bill?billEvent=${data}`, {
+    headers: {
+      authorization: "Bearer " + localStorage.getItem("access-token"),
+    },
+  });
+  return res.data;
+};
+
+
+export const typeReceipt = async (data) => {
+  const res = await Axios.get(`${API_URL}/type_receipt`, {
     headers: {
       authorization: "Bearer " + localStorage.getItem("access-token"),
     },

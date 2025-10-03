@@ -705,43 +705,62 @@ const handleUpdateAllClick = (e) => {
     currency: "USD",
   };
   const numberFormat = new Intl.NumberFormat("en-US", formatOptions);
-
-const handleOpenNegotiationSummary = (id, opId,hasSummary) => {
-  // Verificar si ya tenemos información sobre si existe resumen para este opId
-
- 
-  // Construir la URL basada en si existe o no el resumen
-  let url;
+const handleOpenNegotiationSummary = async (operationId, opId, hasSummary) => {
+  // Si ya sabemos que tiene resumen, buscar el id del resumen
   if (hasSummary) {
-    // Si existe, usar la URL de modificación con los parámetros invertidos
-    url = `/administration/negotiation-summary?modify&id=${id}&opId=${opId}`;
-  } else {
-    // Si no existe o no sabemos, usar la URL de registro normal
-    url = `/administration/negotiation-summary?register&id=${id}`;
-  }
-
-  if (openWindow && !openWindow.closed) {
-    // Si la ventana ya está abierta, solo le damos el foco
-    openWindow.focus();
-  } else {
-    // Si la ventana no está abierta, la abrimos con la URL correspondiente
-    const newWindow = window.open(url, "_blank", "width=800,height=600");
-    setOpenWindow(newWindow);
-    
-    // Escuchar el evento de cierre de la ventana
-    newWindow.onbeforeunload = () => {
-      setOpenWindow(null);
+    try {
+      // Buscar el resumen por opId para obtener el id del resumen
+      const response = await GetSummaryList(opId);
       
-      // Cuando se cierra la ventana, podríamos querer actualizar el estado
-      // de si tiene resumen o no (opcional)
-      if (hasSummary === undefined) {
-        // Si no sabíamos si tenía resumen, verificamos ahora
-        checkSingleNegotiationSummary(opId);
+      // El id del resumen puede venir en diferentes estructuras de respuesta
+      let summaryId;
+      
+      if (response.data?.id) {
+        // Si la respuesta tiene data.id directo
+        summaryId = response.data.id;
+      } else if (response.data?.results?.[0]?.id) {
+        // Si la respuesta es un array en results
+        summaryId = response.data.results[0].id;
+      } else if (response.id) {
+        // Si la respuesta tiene id en el nivel superior
+        summaryId = response.id;
+      } else {
+        console.warn("No se pudo encontrar el ID del resumen en la respuesta:", response);
+        // Fallback: usar el opId como id (no ideal pero funcional)
+        summaryId = opId;
       }
-    };
+
+      // Construir URL con el id del resumen y el opId
+      const url = `/administration/negotiation-summary?modify&id=${summaryId}&opId=${opId}`;
+      openNegotiationSummaryWindow(url);
+
+    } catch (error) {
+      console.error("Error al obtener el ID del resumen:", error);
+      // Fallback: abrir en modo registro si hay error
+      const url = `/administration/negotiation-summary?register&opId=${opId}`;
+      openNegotiationSummaryWindow(url);
+    }
+  } else {
+    // Si no tiene resumen, abrir en modo registro
+    const url = `/administration/negotiation-summary?register&opId=${opId}`;
+    openNegotiationSummaryWindow(url);
   }
 };
 
+// Función auxiliar para abrir la ventana
+const openNegotiationSummaryWindow = (url) => {
+  if (openWindow && !openWindow.closed) {
+    openWindow.location.href = url;
+    openWindow.focus();
+  } else {
+    const newWindow = window.open(url, "_blank", "width=800,height=600");
+    setOpenWindow(newWindow);
+    
+    newWindow.onbeforeunload = () => {
+      setOpenWindow(null);
+    };
+  }
+};
 // Función auxiliar para verificar un solo resumen
 const checkSingleNegotiationSummary = async (opId) => {
   try {
@@ -1019,7 +1038,7 @@ const checkSingleNegotiationSummary = async (opId) => {
               arrow
             >
               <IconButton
-                onClick={() => handleOpenNegotiationSummary(params.row.opId,params.row.id,hasSummary)}
+                onClick={() => handleOpenNegotiationSummary(params.row.id,params.row.opId,hasSummary)}
                 style={{ marginRight: 10, position: 'relative' }}
               >
                <DocumentIcon sx={{ color: hasSummary ? "#488B8F" : "action.disabled" }} />
@@ -1219,45 +1238,96 @@ const updateFilters = (value, field) => {
   return (
     <>
     
-      
-      <Box sx={{ ...sectionTitleContainerSx }}>
-
-<Box display="flex" alignItems="center">
-<Link href="/dashboard" underline="none">
-          <a>
-          <HomeOutlinedIcon 
-              fontSize="large" 
-              sx={{ 
-                color: '#488b8f',
-                opacity: 0.8, // Ajusta la transparencia (0.8 = 80% visible)
-                strokeWidth: 1, // Grosor del contorno
-              }} 
-            />
-        
-          </a>
-          
-          </Link>
-       <Typography
-          letterSpacing={0}
-          fontSize="1.7rem"
-          fontWeight="regular"
-          marginBottom="0.7rem"
-          marginTop='0.7rem'
-          color="#5EA3A3"
-        >
-           - Pre-operaciones
-          </Typography>
-</Box>
-       
-        <Box sx={{ ...sectionTitleContainerSx }}>
-        <Link href="/operations" passHref>
-  <button className="button-header-preop-title">
-    Operaciones
-  </button>
-</Link>
-              <SellOrderButton /> 
-              </Box>
+     <Box sx={{ 
+  ...sectionTitleContainerSx, 
+  display: 'flex', 
+  flexDirection: { xs: 'column', sm: 'row' }, // Columna en móvil, fila en tablet+
+  alignItems: { xs: 'flex-start', sm: 'center' },
+  justifyContent: 'space-between',
+  gap: { xs: 2, sm: 0 },
+  padding: { xs: 1, sm: 0 }
+}}>
+  
+  {/* Parte izquierda - Icono y título */}
+  <Box display="flex" alignItems="center" flexWrap="wrap" gap={1}>
+    <Link href="/dashboard" passHref>
+      <Box 
+        component="a" 
+        sx={{ 
+          display: 'flex',
+          padding: { xs: '4px', sm: '0px' } // Más espacio táctil en móvil
+        }}
+      >
+        <HomeOutlinedIcon 
+          sx={{ 
+            color: '#488b8f',
+            opacity: 0.8,
+            strokeWidth: 1,
+            fontSize: { 
+              xs: '2rem',    // Más pequeño en móvil
+              sm: '2.5rem',  // Mediano en tablet
+              md: '3rem'     // Original en desktop
+            } 
+          }} 
+        />
       </Box>
+    </Link>
+    
+    <Typography
+      letterSpacing={0}
+      fontSize={{ 
+        xs: '1.2rem',    // Móvil
+        sm: '1.4rem',    // Tablet
+        md: '1.7rem'     // Desktop
+      }}
+      fontWeight="regular"
+      marginBottom={{ xs: '0.3rem', sm: '0.7rem' }}
+      marginTop={{ xs: '0.3rem', sm: '0.7rem' }}
+      color="#5EA3A3"
+      sx={{
+        whiteSpace: { xs: 'normal', sm: 'nowrap' }, // Permite wrap en móvil
+        wordBreak: 'break-word'
+      }}
+    >
+      - Pre-operaciones
+    </Typography>
+  </Box>
+       
+  {/* Parte derecha - Botones */}
+  <Box sx={{ 
+    display: 'flex', 
+    alignItems: 'center',
+    gap: { xs: 1, sm: 2 },
+    flexWrap: { xs: 'wrap', sm: 'nowrap' },
+    width: { xs: '100%', sm: 'auto' },
+    justifyContent: { xs: 'space-between', sm: 'flex-end' }
+  }}>
+    
+    {/* Botón Operaciones */}
+    <Link href="/operations" passHref>
+      <Box 
+        component="button"
+        className="button-header-preop-title"
+        sx={{
+          padding: { xs: '8px 12px', sm: '10px 16px' },
+          fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1rem' },
+          minWidth: { xs: '100px', sm: '120px' },
+          whiteSpace: 'nowrap'
+        }}
+      >
+        Operaciones
+      </Box>
+    </Link>
+    
+    {/* Botón Sell Order */}
+    <Box sx={{
+      transform: { xs: 'scale(0.9)', sm: 'scale(1)' },
+      marginLeft: { xs: 0, sm: 1 }
+    }}>
+      <SellOrderButton />
+    </Box>
+  </Box>
+</Box>
 
       <Box
   sx={{
@@ -1316,7 +1386,7 @@ const updateFilters = (value, field) => {
   
 <button
         onClick={handleClickStatus}
-        className="button-header-bill button-header-bill-primary"
+        className="button-header-preop-title"
         style={{ 
             display: 'flex', 
     alignItems: 'center', 
@@ -1349,7 +1419,7 @@ const updateFilters = (value, field) => {
             <CloseIcon fontSize="small" />
           </IconButton>
         ) : (
-          <ArrowDropDownIcon sx={{ fontSize: "16px", color: "#ffff" }} />
+          <ArrowDropDownIcon sx={{ fontSize: "16px", color: "#488B8F" }} />
         )}
       </button>
 <Menu
@@ -1429,6 +1499,8 @@ const updateFilters = (value, field) => {
     </Menu>
   </Box>
 </Box>
+
+
  {loading && (
     <Box
       sx={{

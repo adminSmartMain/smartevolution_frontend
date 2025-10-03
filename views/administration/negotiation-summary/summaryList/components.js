@@ -197,7 +197,7 @@ export const SummaryListComponent = () => {
       renderCell: (params) => {
         return (
           <Link
-            href={`/administration/negotiation-summary?modify&id=${params.row.NoOP}&opId=${params.row.id}`}
+            href={`/administration/negotiation-summary?modify&id=${params.row.id}&opId=${params.row.NoOP}`}
           >
             <CustomTooltip
               title="Editar resumen"
@@ -281,7 +281,7 @@ export const SummaryListComponent = () => {
       },
     },
   ];
-
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
   const [filter, setFilter] = useState("");
   const [query, setQuery] = useState("");
   const [filterInput, setFilterInput] = useState("");
@@ -290,6 +290,21 @@ export const SummaryListComponent = () => {
   const [dateSelectedFilter,setDateSelectedFilter]=useState([])
   const [dataFilteredByDate,setDataFilteredByDate]=useState(null)
   const [isDateFilter,setIsDateFilter] = useState(false)
+  const [page, setPage] = useState(1);
+  const [open, setOpen] = useState(false);
+  const [isFirstLoad, setIsFirstLoad] = useState(true); // Controla si es la primera carga o un cambio de página
+  const [isFilterApplied, setIsFilterApplied] = useState(false); // Controla si el filtro está aplicado
+  const [pageFiltered,setPageFiltered]=useState(1)
+  const [modeFilter,setModelFilter]=useState("")
+  const today = new Date();
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [startDatePicker, setStartDatePicker] = useState(format(today, "yyyy-MM-dd")); // Almacena la fecha de inicio como string;
+  const [endDatePicker, setEndDatePicker] = useState(format(today, "yyyy-MM-dd")); // Almacena la fecha de fin como string;
+  const [errorPicker, setErrorPicker] = useState("");// Almacena errores relacionados con la validación de fechas
+
+  const openPicker = Boolean(anchorEl);
+  const [searchTrigger, setSearchTrigger] = useState(false);
+
   const [filterParams, setFilterParams] = useState({
     id: "",
     emitter: "",
@@ -311,6 +326,14 @@ export const SummaryListComponent = () => {
   });
   let dataCount = 0;
 
+    const {
+    fetch: fetchNegotiationSummmary,
+    loading: loadingNegotiationSummary,
+    error: errorNegotiationSummary,
+    data: dataNegotiationSummary,
+  } = useFetch({ service: GetNegotiationSummaryPDF, init: false });
+
+
   if (Array.isArray(dataFiltered?.results)) {
     // Si `dataFiltered.results` es un array, contamos los elementos
     dataCount = dataFiltered.count;
@@ -323,13 +346,7 @@ export const SummaryListComponent = () => {
   }
   
 
-  
-
-  
-  const [page, setPage] = useState(1);
-
-
-  const summary = (
+   const summary = (
     
     dataFiltered?.results // Si `dataFiltered.data` es un array con elementos
       ? dataFiltered.results.map((summary) => ({
@@ -370,8 +387,7 @@ export const SummaryListComponent = () => {
   ) || [];
   
 
-  //Configuración filtro numero operacion y emisor
-  const [open, setOpen] = useState(false);
+
   const handleOpen = () => {
     setOpen(true);
   };
@@ -379,56 +395,65 @@ export const SummaryListComponent = () => {
     setOpen(false);
   };
 
-  const {
-    fetch: fetchNegotiationSummmary,
-    loading: loadingNegotiationSummary,
-    error: errorNegotiationSummary,
-    data: dataNegotiationSummary,
-  } = useFetch({ service: GetNegotiationSummaryPDF, init: false });
 
   const handleNegotiationSummaryClick = (id) => {
     fetchNegotiationSummmary(id);
     handleOpen();
   };
 
+// Leer parámetros iniciales de la URL
+useEffect(() => {
+  const searchParams = new URLSearchParams(window.location.search);
+  const opId = searchParams.get("opId") || ""; // Cambiar "id" por "opId"
+  const emitter = searchParams.get("emitter") || "";
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
-   // Leer parámetros iniciales de la URL
-  useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    const id = searchParams.get("id") || "";
-    const emitter = searchParams.get("emitter") || "";
-
-    if (emitter) {
-      setFilterInput(emitter);
-    } else if (id) {
-      setFilterInput(id);
-    }
-  }, []);
-
-
-
-  const [pageFiltered,setPageFiltered]=useState(1)
-  const [modeFilter,setModelFilter]=useState("")
+  if (emitter) {
+    setFilterInput(emitter);
+  } else if (opId) {
+    setFilterInput(opId);
+     setPage(1);
+        setPageFiltered(1);
+        fetchFilteredData();
+        setIsFilterApplied(true);
+  }
+}, []);
 
   // Actualizar `pageFiltered` cada vez que `page` cambie
   useEffect(() => {
-    console.log('pagina',page)
+
     setPageFiltered(page);
   }, [page]);
 
 
 
-  const handleFilterChange = (e) => {
+// Modificar handleFilterChange para solo actualizar el estado
+const handleFilterChange = (e) => {
     setFilterInput(e.target.value);
     const { name, value } = e.target;
     setFilterParams((prevParams) => ({
-      ...prevParams,
-      [name]: value, // Actualiza el valor del filtro específico
+        ...prevParams,
+        [name]: value,
     }));
-    
-  };
+};
+
+// Manejar la tecla Enter
+const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+        setSearchTrigger(prev => !prev); // Alternar el valor para trigger el efecto
+    }
+};
+
+// Efecto que se ejecuta cuando se presiona Enter o cuando searchTrigger cambia
+useEffect(() => {
+    if (filterInput !== "") {
+        console.log('Búsqueda con Enter o botón');
+        setPage(1);
+        setPageFiltered(1);
+        fetchFilteredData();
+        setIsFilterApplied(true);
+    }
+}, [searchTrigger]); // Solo se ejecuta cuando searchTrigger cambia
+
 
   const isNumber = (value) => {
     return /^\d+$/.test(value); // Comprueba si es un número entero
@@ -437,27 +462,12 @@ export const SummaryListComponent = () => {
 
 
 
-  const [isFirstLoad, setIsFirstLoad] = useState(true); // Controla si es la primera carga o un cambio de página
-  const [isFilterApplied, setIsFilterApplied] = useState(false); // Controla si el filtro está aplicado
-  
-  // Efecto para aplicar el filtro al cargar la página o cuando cambia filterInput
-  useEffect(() => {
-    if (filterInput !== "") {
-      console.log('a')
-      
-      fetchFilteredData(); // Aplica el filtro
-      setIsFilterApplied(true); // Marca que el filtro ha sido aplicado
-    } else {
-      setIsFilterApplied(false); // Si no hay filtro, reseteamos el estado
-    }
-  }, [filterInput]);
-  
+
+
   // Efecto para manejar la paginación, que solo se activa después de aplicar el filtro
   useEffect(() => {
     if (!isFirstLoad && isFilterApplied) {
-      console.log('b')
-      
-      fetchFilteredData(); 
+  fetchFilteredData(); 
       
     }
   }, [pageFiltered, isFirstLoad, isFilterApplied]);
@@ -480,26 +490,24 @@ export const SummaryListComponent = () => {
     if (filterInput !== "") {
         if (isNumber(filterInput)) {
             // Si el filtro es un número, es un filtro por `id`
-            setModelFilter("id");
-            params.set("id", filterInput);
+            setModelFilter("opId");
+            params.set("opId", filterInput);
             params.set("mode", "filter");
             params.set("emitter", ""); // Limpiamos otros filtros relacionados
         } else {
             // Si el filtro es texto, es un filtro por `emitter`
             setModelFilter("emitter");
-            params.set("id", ""); // Limpiamos otros filtros relacionados
+            params.set("opId", ""); // Limpiamos otros filtros relacionados
             params.set("mode", "filter");
             params.set("emitter", filterInput);
             params.set("page", pageFiltered);
         }
     }
     
-    console.log(params.toString())
-    console.log('filterInput',filterInput)
-    console.log('paginas',page,pageFiltered)
-    let params2={}
+
+
     try {
-        console.log("Parámetros resultantes:", params.toString()); // Para verificar los parámetros
+       
 
         // Actualizamos la URL del navegador con los parámetros modificados
         window.history.pushState(null, "", `?${params.toString()}`);
@@ -512,7 +520,7 @@ export const SummaryListComponent = () => {
               params: Object.fromEntries(params.entries()), // Convertimos URLSearchParams a un objeto plano
           });
       
-          console.log("Respuesta exitosa:", response.data);
+
           setDataFiltered(response.data); // Actualizamos los datos con la respuesta
           setError(""); // Limpiamos cualquier error previo
           return response; // O realiza la acción deseada con la respuesta
@@ -530,8 +538,7 @@ export const SummaryListComponent = () => {
                   params: Object.fromEntries(params.entries()),
               });
                 // Reiniciamos el parámetro "page" a 1 y hacemos una nueva solicitud
-              
-              console.log("Respuesta exitosa después de reiniciar página:", response.data);
+  
               window.history.pushState(null, "", `?${params.toString()}`);
               
               setDataFiltered(response.data); // Actualizamos los datos con la respuesta
@@ -564,7 +571,7 @@ const clearFilters = async () => {
     const startDate = params.get("startDate");
     const endDate = params.get("endDate");
     const emitter = params.get("emitter");
-    const id = params.get("id");
+    const id = params.get("opId");
 
     // Lógica condicional según los parámetros
     if (startDate && endDate && !emitter && !id) {
@@ -575,7 +582,7 @@ const clearFilters = async () => {
     if (startDate && endDate && (emitter || id)) {
       // Caso: Si están startDate y endDate llenos y emitter o id llenos, vaciarlos sin borrarlos
       if (emitter) params.set("emitter", "");
-      if (id) params.set("id", "");
+      if (id) params.set("opId", "");
 
       window.history.pushState(null, "", `/administration/negotiation-summary/summaryList?${params.toString()}`);
 
@@ -601,7 +608,7 @@ const clearFilters = async () => {
       params.delete("emitter");
       params.delete("startDate");
       params.delete("endDate");
-      params.delete("id");
+      params.delete("opId");
       params.delete("filter");
       params.delete("mode");
       params.delete("page");
@@ -625,7 +632,7 @@ const clearFilters = async () => {
     } else if (id && !emitter) {
       // Caso: Si id está lleno, borrar todo
       console.log('casoid')
-      params.delete("id");
+      params.delete("opId");
       params.delete("startDate");
       params.delete("endDate");
       params.delete("emitter");
@@ -677,7 +684,7 @@ const clearFilters = async () => {
     const params = new URLSearchParams(window.location.search);
 
     // Verificar si los parámetros `id` y `emitter` están vacíos
-    const id = params.get("id");
+    const id = params.get("opId");
     const emitter = params.get("emitter");
 
     if (!id && !emitter) {
@@ -739,13 +746,7 @@ const formatDateSelected = (date) => {
 
 
 
-const today = new Date();
-const [anchorEl, setAnchorEl] = useState(null);
-const [startDatePicker, setStartDatePicker] = useState(format(today, "yyyy-MM-dd")); // Almacena la fecha de inicio como string;
-const [endDatePicker, setEndDatePicker] = useState(format(today, "yyyy-MM-dd")); // Almacena la fecha de fin como string;
-const [errorPicker, setErrorPicker] = useState("");// Almacena errores relacionados con la validación de fechas
 
-const openPicker = Boolean(anchorEl);
 //abrir el popover
 const handleOpenPicker = (event) => setAnchorEl(event.currentTarget);
 // Cerrar el Popover
@@ -774,7 +775,7 @@ const handleClosePicker = async () => {
     if (!isNaN(filterInput)) {
       // Si es un número, lo asignamos a 'id'
       params = {
-        id: filterInput || "",
+        opId: filterInput || "",
         mode: "filter",
         emitter: "", // No asignamos 'emitter' si es un número
         startDate: formattedStartDate,
@@ -784,7 +785,7 @@ const handleClosePicker = async () => {
     } else {
       // Si es texto, lo asignamos a 'emitter'
       params = {
-        id: "",
+        opId: "",
         mode: "filter",
         emitter: filterInput || "", // Asignamos 'emitter' si es un texto
         startDate: formattedStartDate,
@@ -988,29 +989,28 @@ const setQuickFilter = (type) => {
    
   }}
 >
-  <TextField
+<TextField
     placeholder="Ingrese número de operación o emisor"
     variant="standard"
     value={filterInput}
     onChange={handleFilterChange}
+    onKeyPress={handleKeyPress} // Agregar manejo de tecla Enter
     required
     InputProps={{
-      disableUnderline: true, // Elimina la línea inferior
-      sx: {
-        fontSize: '0.875rem', // Tamaño del texto
-        color: '#6c757d', // Color del texto
-        height:'7px',
-        
-      },
+        disableUnderline: true,
+        sx: {
+            fontSize: '0.875rem',
+            color: '#6c757d',
+            height: '7px',
+        },
     }}
     sx={{
-      flex: 1, // El input ocupa el máximo espacio disponible
-      '& .MuiInputBase-root': {
-        padding: '8px', // Ajusta el padding interno
-      },
-      
+        flex: 1,
+        '& .MuiInputBase-root': {
+            padding: '8px',
+        },
     }}
-  />
+/>
 
   <Button
     onClick={clearFilters}
@@ -1318,7 +1318,7 @@ const setQuickFilter = (type) => {
                           
                           console.log(currentParams.toString())
                           const pagea = currentParams.get("page");
-                          const ida = currentParams.get("id");
+                          const ida = currentParams.get("opId");
                           const modea = currentParams.get("mode");
                           const emittera = currentParams.get("emitter");
                           const startDatea = currentParams.get("startDate");

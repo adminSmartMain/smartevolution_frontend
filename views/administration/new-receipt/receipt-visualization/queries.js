@@ -47,6 +47,27 @@ console.log(cleanParams)
   return res.data;
 };
 
+
+
+export const GetReceiptById = async (params) => {
+  // Limpiar parámetros undefined o null
+  const cleanParams = {};
+  console.log(params)
+  Object.keys(params).forEach(key => {
+    if (params[key] !== undefined && params[key] !== null) {
+      cleanParams[key] = params[key];
+    }
+  });
+console.log(cleanParams)
+  const res = await Axios.get(`${API_URL}/receipt/`, {
+    headers: {
+      authorization: "Bearer " + localStorage.getItem("access-token"),
+    },
+    params: cleanParams,
+  });
+  return res.data;
+};
+
 export const Clients = async (data) => {
   const res = await Axios.get(`${API_URL}/client/all`, {
     headers: {

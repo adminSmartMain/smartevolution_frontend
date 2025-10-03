@@ -128,7 +128,8 @@ export const NegotiationSummary = ({
   const router = useRouter();
   //esta constante se encarga de manejar el almacenamiento de los datos ingresados en el formulario
   const [NegotiationSummaryData, setNegotiationSummaryData] = useState({});
-  const [billId, setBillId] = useState(null);
+// Estados para billId
+
   const [manualAdjustment, setManualAdjustment] = useState(0);
   const [observations, setObservations] = useState("");
   const [deposit, setDeposit] = useState([]);
@@ -136,19 +137,31 @@ export const NegotiationSummary = ({
 
  // Añade este estado
 const [idFromUrl, setIdFromUrl] = useState(false);
+// Función para manejar cambios en el billId
+// Estados para billId - SIEMPRE con prefijo
+const [billId, setBillId] = useState("");
 
+
+
+// Función para obtener el billId completo
+const getFullBillId = () => {
+  if (!billId || billId.trim() === "") {
+    return "FE-";
+  }
+  return `FE-${billId}`;
+};
 // Actualiza el useEffect
 useEffect(() => {
-  if (router && router.query.id) {
-    setID(router.query.id);
+  if (router && router.query.opId ) {
+    setOpID(router.query.opId);
     
     if (option === "modify") {
-      setOpID(router.query.opId);
-      console.log("data", data);
+      setID(router.query.id);
+   
     } else {
-      // Solo establecer OpID si no tiene valor previo
-      setOpID(prevOpID => {
-        if (!prevOpID) {
+      
+      setID(prevID => {
+        if (!prevID) {
           setIdFromUrl(true);
           return router.query.id;
         }
@@ -165,22 +178,28 @@ const handleOpIdChange = (e) => {
     // Validación para solo números
     if (value === '' || /^[0-9]+$/.test(value)) {
       setOpID(value);
-      setIdFromUrl(false); // El usuario está editando, ya no es de la URL
+      setIdFromUrl(false);
+      
+      // Resetear el estado de existencia cuando el usuario cambia el opId
+      if (value !== opIdSelected) {
+        setIsOperationExists(false);
+        setModalOpen(false);
+      }
     }
   }
 };
 
 
-  //comentario de prueba
+
   useEffect(() => {
    
     
-    if (id) {
-      console.log("Fetching data for id:", id);
-      setOpIdSelected(id)
-      fetch(id)
+    if (OpID) {
+   
+      setOpIdSelected(OpID)
+      fetchSummaryByID(OpID)
         .then(() => {
-          console.log("Fetch successful:", data);// Verifica el estado de los datos después del fetch
+         
           
         })
         .catch((error) => {
@@ -196,9 +215,9 @@ const handleOpIdChange = (e) => {
   useEffect(() => {
 
     
-    if (id) {
+    if (OpID) {
    
-      fetch(id)
+      fetch(OpID)
         .then(() => {
           setDeposit(data?.data?.emitterDeposits)
           // Verifica el estado de los datos después del fetch
@@ -222,135 +241,126 @@ const handleOpIdChange = (e) => {
   const [notFound,setNotFound]=useState(null);
   const handleCloseModal = () => setModalOpen(false);
   const [isOperationExists, setIsOperationExists] = useState(false);
-  const [manualAdjustmentValue,setManualAdjustmentValue]= useState(null)
-  useEffect(() => {
-    if (OpID) {
-      
-      fetchSummaryByID(OpID);
-      
-    }
-  }, [OpID]);
-
-  useEffect(() => {
-    if (dataSummaryByID) {
-      
-      setObservations(dataSummaryByID?.data?.observations);
-  
-      const id = dataSummaryByID?.data?.billId?.substring(3);
-      setBillId(id);
-      
-      
-    }
-  }, [dataSummaryByID]);
-
-  
-  useEffect(() => {
-    if (opIdSelected) {
-      console.log("Seleccionada operación:", opIdSelected);
-
-      const fetchOperations = async () => {
-        try {
-          const response = await Axios.get(
-            `${API_URL}/report/negotiationSummary?id=${opIdSelected}&mode=query`,
-            {
-              headers: {
-                authorization: `Bearer ${localStorage.getItem("access-token")}`,
-              },
-            }
-          );
-
-          if (response && response.data) {
-            console.log("Respuesta de la API:", response.data);
-            setIsOperationExists(true);
-            setNegotiationSummarySelected(response.data); // Asume que 'data' contiene los datos correctos
-            setNotFound(false); // Resetea el estado de "no encontrado"
-          } else {
-            console.warn("Datos vacíos en la respuesta de la API.");
-            setNegotiationSummarySelected(null);
-          }
-        } catch (error) {
-          console.error("Error al obtener las operaciones:", error);
-
-          // Manejo de errores específicos
-          if (error.response && error.response.status === 404) {
-            setNotFound(true);
-            setNegotiationSummarySelected(null);
-            
-          } else {
-            setNegotiationSummarySelected(null);
-            
-          }
-        }
-      };
-
-      fetchOperations();
-    }
-  }, [opIdSelected]);
-
-  useEffect(() => {
-    if (data) {
-        console.log(data)
-      
-      
-      const depositData = data?.data?.emitterDeposits || []; // Agrega valor predeterminado
-      setDeposit(depositData);
-     
-      Toast("Resumen de negociación cargado con éxito", "success");
-      
-      setNegotiationSummaryData({
-        opId: id,
-        emitter: data?.data?.emitter?.name,
-        emitterId: data?.data?.emitter?.document,
-        payer: data?.data?.payer?.name,
-        payerId: data?.data?.payer?.document,
-        ...data?.data?.operation,
-        billId: billId,
-        date: today,
-        totalDiscounts: PendingAccounts.reduce((a, b) => a + b.amount, 0),
-        total:
-          data?.data?.operation?.valueToDiscount -
-          data?.data?.operation?.investorDiscount -
-          data?.data?.operation?.billValue -
-          PendingAccounts.reduce((a, b) => a + b.amount, 0),
-        pendingToDeposit:
-          data?.data?.operation?.valueToDiscount -
-          data?.data?.operation?.investorDiscount -
-          data?.data?.operation?.billValue -
-          PendingAccounts.reduce((a, b) => a + b.amount, 0) -
-          (manualAdjustment || 0)
-          -depositData.map(deposit => deposit.amount).reduce((a, b) => a + b, 0),
-        
-        pendingAccounts: PendingAccounts,
-        
-        observations: observations,
-        totalDeposits: depositData.map(deposit => deposit.amount).reduce((a, b) => a + b, 0),
-      });
-    }
-
-    if (error) {
-      error.message == "El Cliente no posee perfil de riesgo"
-        ? Toast(error.message, "error")
-        : Toast("La operación no existe", "error");
-    }
-  }, [
-    data,
-    error,
-    id,
-    billId,
-    manualAdjustment,
-    observations,
-    deposit,
-    PendingAccounts,
-  ]);
-
  
+
+useEffect(() => {
+  // Solo verificar en modo "register" y cuando opIdSelected tenga valor
+  if (opIdSelected && option === "register") {
+    const fetchOperations = async () => {
+      try {
+        const response = await Axios.get(
+          `${API_URL}/report/negotiationSummary?opId=${opIdSelected}&mode=query`,
+          {
+            headers: {
+              authorization: `Bearer ${localStorage.getItem("access-token")}`,
+            },
+          }
+        );
+
+        if (response && response.data) {
+          setIsOperationExists(true);
+          setNegotiationSummarySelected(response.data);
+          setNotFound(false);
+          
+          // MOSTRAR MODAL AUTOMÁTICAMENTE solo en modo register
+          setModalOpen(true);
+        } else {
+          console.warn("Datos vacíos en la respuesta de la API.");
+          setNegotiationSummarySelected(null);
+          setIsOperationExists(false);
+          setModalOpen(false);
+        }
+      } catch (error) {
+        console.error("Error al obtener las operaciones:", error);
+
+        if (error.response && error.response.status === 404) {
+          setNotFound(true);
+          setNegotiationSummarySelected(null);
+          setIsOperationExists(false);
+          setModalOpen(false);
+        } else {
+          setNegotiationSummarySelected(null);
+          setIsOperationExists(false);
+          setModalOpen(false);
+        }
+      }
+    };
+
+    fetchOperations();
+  }
+}, [opIdSelected, option]); // Agregar option como dependencia
+
+
+
+// REEMPLAZA los useEffects de observations y billId con este único useEffect
+useEffect(() => {
+  if (data) {
+    console.log("Datos cargados:", data);
+    
+    const depositData = data?.data?.emitterDeposits || [];
+    setDeposit(depositData);
+   
+    Toast("Resumen de negociación cargado con éxito", "success");
+    
+    // Solo cargar observations si no hemos modificado manualmente
+    if (!observationsModified) {
+      const observationsFromData = dataSummaryByID?.data?.observations || "";
+      setObservations(observationsFromData);
+    }
+    
+    setNegotiationSummaryData({
+      opId: OpID,
+      emitter: data?.data?.emitter?.name,
+      emitterId: data?.data?.emitter?.document,
+      payer: data?.data?.payer?.name,
+      payerId: data?.data?.payer?.document,
+      ...data?.data?.operation,
+      billId: getFullBillId(),
+      date: today,
+      totalDiscounts: PendingAccounts.reduce((a, b) => a + b.amount, 0),
+      total:
+        data?.data?.operation?.valueToDiscount -
+        data?.data?.operation?.investorDiscount -
+        data?.data?.operation?.billValue -
+        PendingAccounts.reduce((a, b) => a + b.amount, 0),
+      pendingToDeposit:
+        data?.data?.operation?.valueToDiscount -
+        data?.data?.operation?.investorDiscount -
+        data?.data?.operation?.billValue -
+        PendingAccounts.reduce((a, b) => a + b.amount, 0) -
+        (manualAdjustment || 0)
+        -depositData.map(deposit => deposit.amount).reduce((a, b) => a + b, 0),
+      
+      pendingAccounts: PendingAccounts,
+      
+      observations: observations, // Usar el estado actual de observations
+      totalDeposits: depositData.map(deposit => deposit.amount).reduce((a, b) => a + b, 0),
+    });
+  }
+
+  if (error) {
+    error.message == "El Cliente no posee perfil de riesgo"
+      ? Toast(error.message, "error")
+      : Toast("La operación no existe", "error");
+  }
+}, [
+  data,
+  error,
+  OpID,
+  manualAdjustment,
+  deposit,
+  PendingAccounts,
+]);
+
+
+
 
   useEffect(() => {
     if (dataCreateSummary) {
       
         Toast("Resumen de negociación creado con éxito", "success");
         setTimeout(() => {
-          router.push("/administration/negotiation-summary/summaryList");
+         router.push("/administration/negotiation-summary/summaryList");
         }, 2000);
         
       
@@ -410,15 +420,26 @@ const handleOpIdChange = (e) => {
   const today = fns.format(new Date(), "yyyy-MM-dd");
 
   
-  const handleOpEntered = async (e) => {
-    if (e.target.value) {
-      
-      router.push(
-        `/administration/negotiation-summary?${option}&id=${e.target.value}`
-      );
+const handleOpEntered = async (e) => {
+  if (e.target.value && e.target.value.trim() !== "") {
+    const enteredOpId = e.target.value.trim();
+    setOpIdSelected(enteredOpId);
+    setOpID(enteredOpId); // También actualizar OpID
+    
+    // Hacer todos los fetches necesarios aquí
+    try {
+      await fetch(enteredOpId);
+      await fetchSummaryByID(enteredOpId);
+    } catch (error) {
+      console.error("Error fetching data:", error);
     }
-  };
-
+    
+    // Solo hacer el fetch y redirección cuando se presiona Enter
+    router.push(
+      `/administration/negotiation-summary?${option}&opId=${enteredOpId}`
+    );
+  }
+};
   const [open, setOpen] = useState([false, null]);
 
   //maneja la apertura del cuadrado de agregar descuentos. cuando se crea el descuento toma la option add
@@ -427,7 +448,7 @@ const handleOpIdChange = (e) => {
     
     if (option === "add") {
       formik.resetForm();
-      formik.setFieldValue("opId", Number(id));//Aqui está el error
+      formik.setFieldValue("opId", Number(OpID));//Aqui está el error
      
       setOpen([true, null]);
     } else {
@@ -467,12 +488,12 @@ const handleOpIdChange = (e) => {
   
   
   useEffect(() => {
-    console.log(data)
+
     if (data) {
-      console.log(data?.data?.emitter?.id)
+      
       fetchRisk(data?.data?.emitter?.id);
       
-      console.log(dataRiskProfile)
+ 
       
     }
     
@@ -480,23 +501,23 @@ const handleOpIdChange = (e) => {
 
 
   useEffect(() => {
-    console.log(dataRiskProfile)
+    
     if (dataRiskProfile) {
       
       fetchBank(dataRiskProfile?.data?.bank)
       
-      console.log(dataBank)
+     
     }
     
   }, [dataRiskProfile]);
 
   useEffect(() => {
-    console.log(dataRiskProfile)
+  
     if (dataRiskProfile) {
       
       fetchAccountType(dataRiskProfile?.data?.account_type)
       
-      console.log(dataAccountType)
+     
     }
     
   }, [dataRiskProfile]);
@@ -504,18 +525,17 @@ const handleOpIdChange = (e) => {
 
 
   const [open2, setOpen2] = useState([false, null]);
+
+  
   const handleOpen2 = (option) => {
    
     if (option === "add") {
       formik2.resetForm();
-      console.log("data",data)
-      console.log("client", data?.data?.emitter?.id);
-      console.log("operation", data?.data?.operation?.id[0]);
-      console.log("beneficiary",data?.data?.emitterDeposits)
+     
       formik2.setFieldValue("client", data?.data?.emitter?.id);
       formik2.setFieldValue("operation", data?.data?.operation?.id[0]);
       formik2.setFieldValue("beneficiary", data?.data?.emitterDeposits?.beneficiary);
-      formik2.setFieldValue("bank", dataBank?.data?.description);
+      formik2.setFieldValue("bank", dataBank?.data?.id);
       formik2.setFieldValue("accountNumber", dataRiskProfile?.data?.account_number);
       formik2.setFieldValue("accountType", dataAccountType?.data?.id);
       setOpen2([true, option]);
@@ -582,9 +602,25 @@ const handleOpIdChange = (e) => {
     setManualAdjustment(value);
   };
 
-  const handleObservations = (e) => {
-    setObservations(e.target.value);
-  };
+// Agrega este estado para controlar si el usuario modificó las observations
+const [observationsModified, setObservationsModified] = useState(false);
+
+// useEffect para actualizar NegotiationSummaryData cuando cambien billId u observations
+useEffect(() => {
+  if (data && NegotiationSummaryData.opId) {
+    setNegotiationSummaryData(prevData => ({
+      ...prevData,
+      billId: getFullBillId(),
+      observations: observations,
+    }));
+  }
+}, [billId, observations, data]);
+
+// Modifica la función handleObservations
+const handleObservations = (e) => {
+  setObservations(e.target.value);
+  setObservationsModified(true); // Marcar como modificado por el usuario
+};
 
   const handlePurchaseOrderClick = (e) => {
     fetchPurchaseOrder(id);
@@ -602,7 +638,7 @@ const handleOpIdChange = (e) => {
       item.accountingControls[0].observations
     );
     formik2.setFieldValue("beneficiary", item.beneficiary);
-    formik2.setFieldValue("bank", item.bank.description);
+    formik2.setFieldValue("bank", item.bank.id);
     formik2.setFieldValue("accountNumber", item.accountNumber);
     formik2.setFieldValue("accountType", item.accountType);
     formik2.setFieldValue("egressType", item.egressType);
@@ -654,32 +690,62 @@ const handleOpIdChange = (e) => {
     setOpen5([false, null]);
   };
 
-
- 
-  const handleButtonClick = () => {
-    // Asigna "FV-<billId>" o "FV-No aplica" si billId es null o undefined
-    const updatedNegotiationData = {
-      ...NegotiationSummaryData,
-      billId: billId ? `FE-${billId}` : "FE-",
-    };
-
-    if (option === "modify") {
-      fetchModifySummary(updatedNegotiationData, OpID);
-    } else if (isOperationExists) {
-      
-      setModalOpen(true);
+// Actualiza el useEffect para modo "modify" del billId
+useEffect(() => {
+  if (option === "modify" && dataSummaryByID?.data?.billId) {
+    const billIdValue = dataSummaryByID.data.billId;
+    
+    // Extraer la parte después de "FE-" (puede contener letras y números)
+    if (billIdValue && billIdValue.startsWith("FE-")) {
+      const valueWithoutPrefix = billIdValue.replace('FE-', '');
+      setBillId(valueWithoutPrefix);
+      console.log("BillId cargado desde API:", valueWithoutPrefix);
+    } else if (billIdValue) {
+      // Si por alguna razón no tiene "FE-", usar el valor completo
+      setBillId(billIdValue);
     } else {
-      fetchCreateSummary(updatedNegotiationData);
+      setBillId(""); // Vacío si no hay valor
     }
-  };
+  }
+  
+  // También cargar observations en modo modify
+  if (option === "modify" && dataSummaryByID?.data?.observations) {
+    setObservations(dataSummaryByID.data.observations);
+    console.log("Observations cargadas desde API:", dataSummaryByID.data.observations);
+  }
+}, [dataSummaryByID, option]);
 
 
-  const handleButtonGoToSummaryClick = () => {
-    const baseUrl = window.location.origin; // Obtiene la base de la URL actual
-    console.log(baseUrl)
-    const url = `${baseUrl}/administration/negotiation-summary/summaryList?id=${opIdSelected}&mode=filter&emitter=`;
-    window.location.href = url;
+const handleButtonClick = () => {
+  if (isOperationExists && option === "register") {
+    setModalOpen(true);
+    return;
+  }
+
+  // Siempre enviar con formato "FE-XXXX"
+  const fullBillId = getFullBillId();
+
+  const updatedNegotiationData = {
+    ...NegotiationSummaryData,
+    billId: fullBillId, // Siempre tendrá "FE-" + números
   };
+
+  if (option === "modify") {
+    fetchModifySummary(updatedNegotiationData, id);
+  } else {
+    fetchCreateSummary(updatedNegotiationData);
+  }
+};
+
+const handleButtonGoToSummaryClick = () => {
+  const baseUrl = window.location.origin;
+  
+  // Cambiar la URL para que use los parámetros correctos que espera SummaryListComponent
+  const url = `${baseUrl}/administration/negotiation-summary/summaryList?opId=${opIdSelected}&mode=filter&emitter=`;
+  
+  // Usar window.location.href para redirección completa
+  window.location.href = url;
+};
   
   return (
     <>
@@ -687,12 +753,18 @@ const handleOpIdChange = (e) => {
         <Box display="flex" flexDirection="row" justifyContent="space-between">
           <BackButton path="/administration/negotiation-summary/summaryList" />
 
-        <Button
+    <Button
   variant="contained"
   color="primary"
   size="large"
   onClick={handleButtonClick}
-  disabled={loadingCreateSummary || loadingModifySummary || dataCreateSummary || dataModifySummary}
+  disabled={
+    loadingCreateSummary || 
+    loadingModifySummary || 
+    dataCreateSummary || 
+    dataModifySummary ||
+    (isOperationExists && option === "register") // Nueva condición para deshabilitar
+  }
   sx={{
     height: "2.6rem",
     backgroundColor: (dataCreateSummary || dataModifySummary) ? "#4caf50" : "#488B8F",
@@ -700,7 +772,8 @@ const handleOpIdChange = (e) => {
     borderColor: (dataCreateSummary || dataModifySummary) ? "#4caf50" : "#5EA3A3",
     borderRadius: "4px",
     "&:hover": {
-      backgroundColor: (dataCreateSummary || dataModifySummary) ? "#4caf50" : "#5EA3A3",
+      backgroundColor: (dataCreateSummary || dataModifySummary) ? "#4caf50" : 
+                     (isOperationExists && option === "register") ? "#cccccc" : "#5EA3A3", // Manejar hover cuando está deshabilitado por existencia
     },
     "&:disabled": {
       backgroundColor: (dataCreateSummary || dataModifySummary) ? "#4caf50" : "#cccccc",
@@ -731,15 +804,19 @@ const handleOpIdChange = (e) => {
       >
         {(dataCreateSummary || dataModifySummary) 
           ? "GUARDADO" 
-          : option === "modify" ? "MODIFICAR" : "GUARDAR"}
+          : (isOperationExists && option === "register") 
+            ? "RESUMEN EXISTE"  // Texto diferente cuando ya existe
+            : option === "modify" ? "MODIFICAR" : "GUARDAR"}
       </Typography>
       <i
         className="fa-regular fa-floppy-disk"
         style={{ 
           color: "#FFFFFF", 
           marginLeft: "0.5rem",
-          // Ocultar icono cuando ya está guardado
-          display: (dataCreateSummary || dataModifySummary) ? "none" : "inline-block"
+          // Ocultar icono cuando ya está guardado o cuando existe resumen
+          display: (dataCreateSummary || dataModifySummary || (isOperationExists && option === "register")) 
+            ? "none" 
+            : "inline-block"
         }}
       ></i>
     </>
@@ -767,16 +844,19 @@ const handleOpIdChange = (e) => {
             width="90%"
           >
 <Box display="flex" flexDirection="column">
+
+
+<Box display="flex" flexDirection="column">
   <InputTitles marginBottom={1}>N° operación</InputTitles>
-  <TextField
+  <TextField 
     id="opId"
     placeholder="# OP"
     variant="outlined"
     size="small"
     type="number"
-    onChange={handleOpIdChange}  // Usar la nueva función
+    onChange={handleOpIdChange}
     disabled={option === "modify"}
-    value={option === "modify" ? id : OpID}
+    value={OpID}
     onKeyDown={(e) => {
       if (e.key === "Enter") {
         e.preventDefault();
@@ -810,11 +890,8 @@ const handleOpIdChange = (e) => {
       },
     }}
   />
-  {idFromUrl && option !== "modify" && (
-    <Typography variant="caption" color="textSecondary">
-      ID cargado desde la URL
-    </Typography>
-  )}
+</Box>
+
 </Box>
             <TitleModal
               open={open[0]}
@@ -900,7 +977,7 @@ const handleOpIdChange = (e) => {
                           variant="standard"
                           margin="normal"
                           fullWidth
-                          value={id}
+                          value={OpID}
                           disabled
                           InputProps={{
                             disableUnderline: true,
@@ -1856,47 +1933,50 @@ const handleOpIdChange = (e) => {
               alignItems="center"
               mb={10}
             >
-              <TextField
-                id="billId"
-                variant="outlined"
-                size="small"
-                type="text"
-                value={billId}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <InputTitles>FE -</InputTitles>
-                    </InputAdornment>
-                  ),
-                }}
-                onChange={(e) => {
-                  setBillId(e.target.value);
-                }}
-                sx={{
-                  color: "#333333",
-                  width: "40%",
 
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "4px",
-                    backgroundColor: "transparent",
-                    textAlign: "left",
-                    fontWeight: "bold",
-                    fontSize: "12px",
-                    color: "#63595c",
-                    letterSpacing: "0px",
-                    textTransform: "uppercase",
-                    "& fieldset": {
-                      borderColor: "#63595C",
-                    },
-                    "&:hover fieldset": {
-                      borderColor: "#63595C",
-                    },
-                    "&.Mui-focused fieldset": {
-                      borderColor: "#63595C",
-                    },
-                  },
-                }}
-              />
+<Box display="flex" alignItems="center" gap={1}>
+  <Typography 
+    sx={{ 
+      color: "#63595C", 
+      fontWeight: "bold",
+      fontSize: "14px"
+    }}
+  >
+    FE-
+  </Typography>
+  <TextField
+    id="billId"
+    variant="outlined"
+    size="small"
+    type="text"
+    value={billId}
+    onChange={(e) => {
+      // Permitir letras, números y algunos caracteres especiales comunes
+      // Remover solo caracteres no deseados, mantener alfanumérico y guiones
+      const value = e.target.value.toUpperCase()
+        .replace(/[^A-Z0-9\-_]/g, ''); // Solo permite letras, números, guiones y guiones bajos
+      setBillId(value);
+    }}
+    placeholder="Número de factura"
+    sx={{
+      color: "#333333",
+      width: "200px", // Un poco más ancho para texto alfanumérico
+      "& .MuiOutlinedInput-root": {
+        borderRadius: "4px",
+        backgroundColor: "transparent",
+        "& fieldset": {
+          borderColor: "#63595C",
+        },
+        "&:hover fieldset": {
+          borderColor: "#63595C",
+        },
+        "&.Mui-focused fieldset": {
+          borderColor: "#63595C",
+        },
+      },
+    }}
+  />
+</Box>
               <InputTitles ml={2}>
                 <ValueFormat
                   prefix="$ "

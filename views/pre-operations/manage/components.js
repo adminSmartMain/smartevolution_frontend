@@ -293,8 +293,10 @@ const [hasShownIntegrationModal, setHasShownIntegrationModal] = useState(false);
   // Safe version of formatNumberWithThousandsSeparator
   const formatNumberWithThousandsSeparator = (value) => {
     if (value === undefined || value === null) return '';
-    return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return '$' + ' ' + value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   };
+
+
   const [] = useState([
     { id: 1, titulo: "Factura 1", contenido: "Detalles de Factura 1" }
   ]);

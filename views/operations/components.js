@@ -46,9 +46,8 @@ import { getOperationsVersionTwo,getOperationsVersionTwo2 } from "./queries";
 const sectionTitleContainerSx = {
   display: "flex",
   justifyContent: "space-between",
-  alignItems: "center",
+  alignItems: "rigth",
 };
-
 
 
 const tableWrapperSx = {
@@ -672,7 +671,7 @@ const handleTextFieldChange = (evt) => {
     <>
      
       <Box sx={{ ...sectionTitleContainerSx }}>
-        <Box  display="flex" alignItems="center" gap={2}>
+        <Box display="flex" alignItems="center">
 
    <Link href="/dashboard" underline="none">
           <a>
@@ -703,12 +702,12 @@ const handleTextFieldChange = (evt) => {
 
         <Box sx={{ ...sectionTitleContainerSx }}>
         <Link href="/pre-operations" passHref>
-  <button className="button-header-preop-title">
-    Pre-Operaciones
-  </button>
-</Link>
-                      
-                      </Box>
+        <button className="button-header-preop-title">
+          Pre-Operaciones
+        </button>
+      </Link>
+                            
+      </Box>
       </Box>
 
       <Box
@@ -767,7 +766,7 @@ const handleTextFieldChange = (evt) => {
 
 <button
         onClick={handleClickStatus}
-        className="button-header-bill button-header-bill-primary"
+        className="button-header-preop-title"
         style={{ 
             display: 'flex', 
     alignItems: 'center', 
@@ -800,7 +799,7 @@ const handleTextFieldChange = (evt) => {
             <CloseIcon fontSize="small" />
           </IconButton>
         ) : (
-          <ArrowDropDownIcon sx={{ fontSize: "16px", color: "#ffff" }} />
+          <ArrowDropDownIcon sx={{ fontSize: "16px", color: "#488B8F" }} />
         )}
       </button>
       
@@ -859,7 +858,7 @@ const handleTextFieldChange = (evt) => {
 
   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
     <Link href="/pre-operations/byOp" underline="none">
-      <button className="button-header-preop">Ver por Grupos</button>
+      <button className="button-header-preop-title">Ver por Grupos</button>
     </Link>
 
  
