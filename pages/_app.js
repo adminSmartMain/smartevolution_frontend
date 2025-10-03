@@ -13,6 +13,7 @@ import theme from "../styles/themes";
 
 import { AuthProvider } from "@context/authContext";
 
+
 const pathsWithoutDefaultLayout = [
   "/",
   "/self-management",
