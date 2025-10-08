@@ -44,6 +44,12 @@ const getNavSpacingSx = (isSidebarExpanded) => ({
 const imageWrapperSx = {
   aspectRatio: "90/30",
   width: "max(90px + 2vw, 45px)",
+  // Ocultar en dispositivos móviles y pantallas pequeñas
+  display: {
+    xs: "none", // Oculta en extra small (0px - 599px)
+    sm: "none", // Oculta en small (600px - 899px) 
+    md: "block", // Muestra en medium (900px - 1199px) y superiores
+  },
 };
 
 export default function Header({ isSidebarExpanded, user }) {
@@ -80,6 +86,7 @@ export default function Header({ isSidebarExpanded, user }) {
     >
       <Toolbar disableGutters>
         {/* Logo decorativo - SIN FUNCIONALIDAD */}
+        {/* Se ocultará en dispositivos móviles y pantallas pequeñas */}
         <Box sx={imageWrapperSx}>
           <Image
             layout="responsive"

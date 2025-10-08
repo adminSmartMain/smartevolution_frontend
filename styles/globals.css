@@ -273,9 +273,9 @@ body {
 }
 
 .Toastify__toast--error {
-  border: 1px solid #eb5757;
-  border-radius: 50px !important;
-  background: #fae1e2 !important;
+  border: 1px solid #d80000;
+  border-radius: 20px !important;
+  background: #d80000!important;
 }
 
 .Toastify__toast--error::after {
@@ -294,9 +294,9 @@ body {
   top: 6px;
 }
 .Toastify__toast--success {
-  border: 1px solid #3a9ea5 !important;
-  border-radius: 50px !important;
-  background: #f0f9fa !important;
+  border: 1px solid #00b050 !important;
+  border-radius: 20px !important;
+  background:#00b050!important;
   padding-left: 10px;
 }
 .Toastify__toast--success::before {
@@ -314,8 +314,8 @@ body {
   padding-top: 14px !important;
 }
 .Toastify__toast--warning {
-  border: 1px solid #e78326 !important;
-  border-radius: 50px !important;
+  border: 1px solid #e4ce0c !important;
+  border-radius: 20px !important;
   background: #fadfc5 !important;
 }
 .Toastify__toast--warning::before {
@@ -335,7 +335,7 @@ body {
 
 .Toastify__toast--info {
   border: 1px solid #63b0cd !important;
-  border-radius: 50px !important;
+  border-radius:20px !important;
   background: white !important;
 }
 

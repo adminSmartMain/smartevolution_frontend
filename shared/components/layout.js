@@ -1,5 +1,6 @@
 // components/layout.js
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
+import { useRouter } from "next/router";
 import { Box, Drawer, useMediaQuery } from "@mui/material";
 
 import Header from "./header";
@@ -9,11 +10,18 @@ import authContext from "@context/authContext";
 
 export default function Layout({ children }) {
   const { user } = useContext(authContext);
+  const router = useRouter();
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   
   const isDesktop = useMediaQuery('(min-width: 1024px)');
   const headerHeight = 72;
+
+  // CERRAR SIDEBAR CUANDO CAMBIA LA RUTA
+  useEffect(() => {
+    setIsSidebarExpanded(false);
+    setIsMobileOpen(false);
+  }, [router.pathname]); // Se ejecuta cuando cambia la ruta
 
   const handleToggleSidebar = () => {
     setIsSidebarExpanded(!isSidebarExpanded);

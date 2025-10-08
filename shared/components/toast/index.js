@@ -4,29 +4,45 @@ import Image from "next/image";
 
 export const Toast = (message, type) => {
   if (type == "success") {
-    return toast.success(
-      <div className="div-test">
-        <Image
-          src="/assets/success-svgrepo-com.svg"
-          alt="gif"
-          width={"20px"}
-          height={"20px"}
-        />
-        <strong>{message}</strong>
-      </div>,
-      {
-        position: "bottom-right",
-        autoClose: 3500,
-        hideProgressBar: true,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        toastId: "toast1",
-        icon: false,
-      }
-    );
-  } else if (type == "error") {
+  return toast.success(
+    <div style={{ 
+      display: "flex", 
+      alignItems: "center",
+      padding: "8px 16px"
+    }}>
+      <Image
+        src="/assets/image-removebg-preview.png"
+        alt="gif"
+        width={"30px"}
+        height={"30px"}
+      />
+      <strong style={{ fontSize: "13px", marginLeft: "10px", color: "#FFFFFF" }}>
+        {message}
+      </strong>
+      
+      {/* Barra de progreso personalizada */}
+      <style>{`
+        .Toastify__progress-bar--success {
+          background: rgba(255, 255, 255, 0.4) !important;
+        }
+        .Toastify__toast--success {
+          background: #4CAF50 !important;
+        }
+      `}</style>
+    </div>,
+    {
+      position: "bottom-right",
+      autoClose: 3500,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+      toastId: "toast1",
+      icon: false,
+    }
+  );
+} else if (type == "error") {
     return toast.error(
       <div
         style={{
@@ -34,22 +50,29 @@ export const Toast = (message, type) => {
           justifyContent: "center",
           alignItems: "center",
         }}
-      >
-        <Image
-          style={{ display: "inline-block" }}
-          src="/assets/error-svgrepo-com.svg"
-          alt="gif"
-          width={"20px"}
-          height={"20px"}
-        />
-        <strong style={{ fontSize: "13px", marginLeft: "10px" }}>
+      >  <Image
+        src="/assets/image-removebg-preview_error.png"
+        alt="gif"
+        width={"30px"}
+        height={"30px"}
+      />
+         <strong style={{ fontSize: "13px", marginLeft: "10px", color: "#FFFFFF" }}>
           {message}
         </strong>
+         {/* Barra de progreso personalizada */}
+      <style>{`
+        .Toastify__progress-bar--success {
+          background: rgba(255, 255, 255, 0.4) !important;
+        }
+        .Toastify__toast--success {
+          background: #4CAF50 !important;
+        }
+      `}</style>
       </div>,
       {
         position: "bottom-right",
         autoClose: 2000,
-        hideProgressBar: true,
+        hideProgressBar: false,
         closeOnClick: true,
         pauseOnHover: true,
         draggable: true,
@@ -67,21 +90,29 @@ export const Toast = (message, type) => {
           alignItems: "center",
         }}
       >
-        <Image
-          style={{ display: "inline-block" }}
-          src="/assets/warning-svgrepo-com.svg"
-          alt="gif"
-          width={"20px"}
-          height={"20px"}
-        />
-        <strong style={{ fontSize: "13px", marginLeft: "10px" }}>
+       <Image
+        src="/assets/image-removebg-preview_warning.png"
+        alt="gif"
+        width={"30px"}
+        height={"30px"}
+      />
+        <strong style={{ fontSize: "13px", marginLeft: "10px", color: "#FFFFFF" }}>
           {message}
         </strong>
+         {/* Barra de progreso personalizada */}
+      <style>{`
+        .Toastify__progress-bar--success {
+          background: rgba(255, 255, 255, 0.4) !important;
+        }
+        .Toastify__toast--success {
+          background: #4CAF50 !important;
+        }
+      `}</style>
       </div>,
       {
         position: "bottom-right",
         autoClose: 3500,
-        hideProgressBar: true,
+        hideProgressBar: false,
         closeOnClick: true,
         pauseOnHover: true,
         draggable: true,
@@ -99,21 +130,29 @@ export const Toast = (message, type) => {
           alignItems: "center",
         }}
       >
-        <img
-      style={{ display: "inline-block" }}
-      src="/assets/warning-svgrepo-com.svg"
-      alt="Warning icon"
-      width={20}
-      height={20}
-    />
-        <strong style={{ fontSize: "13px", marginLeft: "10px" }}>
+        <Image
+        src="/assets/image-removebg-preview_info.png"
+        alt="gif"
+        width={"30px"}
+        height={"30px"}
+      />
+        <strong style={{ fontSize: "13px", marginLeft: "10px", color: "#FFFFFF" }}>
           {message}
         </strong>
+         {/* Barra de progreso personalizada */}
+      <style>{`
+        .Toastify__progress-bar--success {
+          background: rgba(255, 255, 255, 0.4) !important;
+        }
+        .Toastify__toast--success {
+          background: #4CAF50 !important;
+        }
+      `}</style>
       </div>,
       {
         position: "bottom-right",
         autoClose: 3500,
-        hideProgressBar: true,
+        hideProgressBar: false,
         closeOnClick: true,
         pauseOnHover: true,
         draggable: true,
