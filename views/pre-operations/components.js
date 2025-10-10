@@ -2,7 +2,10 @@ import { useEffect, useState } from "react";
 import { ToastContainer } from "react-toastify";
 import Link from "next/link";
 import { SearchOutlined } from "@mui/icons-material";
-import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
+import {
+  Home as HomeIcon,
+
+} from "@mui/icons-material";
 import { Box, Button, Fade, FormControl, Grid, IconButton, InputLabel,Menu, MenuItem, InputAdornment , Select, TextField, Typography } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import Modal from "@components/modals/modal";
@@ -1258,7 +1261,7 @@ const updateFilters = (value, field) => {
           padding: { xs: '4px', sm: '0px' } // Más espacio táctil en móvil
         }}
       >
-        <HomeOutlinedIcon 
+        <HomeIcon
           sx={{ 
             color: '#488b8f',
             opacity: 0.8,
@@ -1289,7 +1292,7 @@ const updateFilters = (value, field) => {
         wordBreak: 'break-word'
       }}
     >
-      - Pre-operaciones
+      - Operaciones por Aprobar
     </Typography>
   </Box>
        

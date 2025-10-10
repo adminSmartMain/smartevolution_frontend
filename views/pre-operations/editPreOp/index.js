@@ -410,6 +410,7 @@ const onSubmit = async (values, { setSubmitting }) => {
     id: values.id,
     DateBill: values.DateBill || new Date().toISOString().substring(0, 10),
     DateExpiration: values.DateExpiration || new Date().toISOString().substring(0, 10),
+    applyGm:values.applyGm,
     amount: Number(values.amount) || 0,
     payedAmount:values.payedAmount,
     bill: values.billBack,
@@ -471,7 +472,7 @@ opExpiration: values.opExpiration ? new Date(values.opExpiration).toISOString().
     Toast("Operación completada con éxito", "success");
     
  setTimeout(() => {
-      window.close();
+      //window.close();
     }, 1500); // 1.5 segundos para que el usuario vea el mensaje de éxito
     
   } catch (error) {

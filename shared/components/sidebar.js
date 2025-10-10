@@ -15,6 +15,7 @@ import {
   ExpandLess as ExpandLessIcon,
   ExpandMore as ExpandMoreIcon,
 } from "@mui/icons-material";
+
 import React, { useMemo, useCallback, useState, useEffect } from "react";
 import { useSidebar } from "@context/sideBarContext";
 
@@ -30,7 +31,7 @@ const containerSx = {
   left: 0,
   bottom: 0,
   overflow: 'hidden',
-  borderRight: "2px solid #B5D1C9",
+
   zIndex: 1200,
 };
 
@@ -73,7 +74,7 @@ const primaryPathsContainerSx = {
 const secondaryPathsContainerSx = {
   display: "flex",
   flexDirection: "column",
-  backgroundColor: "#FAFAFA",
+  backgroundColor: "white",
   justifyContent: "center",
   alignItems: "center",
   gap: 1,
@@ -147,7 +148,7 @@ const subMenuItemSx = {
   height: 40,
   padding: '0 16px',
   borderRadius: '4px',
-  backgroundColor: '#F8F8F8',
+ 
   color: '#488B8F',
   textDecoration: 'none',
   transition: 'all 0.15s ease',
@@ -371,7 +372,7 @@ const primarySections = [
           { href: "/bills/createBill", text: "Registrar Factura" }
         ]
       },
-      { href: "/pre-operations", text: "Pre-operaciones", Icon: AssignmentIcon,
+      { href: "/pre-operations", text: "Operaciones", Icon: AssignmentTurnedInIcon,
         subItems: [
           { href: "/pre-operations/manage", text: "Registrar Operación" },
           { href: "/pre-operations", text: "Operaciones por Aprobar" },

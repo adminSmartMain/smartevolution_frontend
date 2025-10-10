@@ -21,7 +21,7 @@ export default function Layout({ children }) {
   useEffect(() => {
     setIsSidebarExpanded(false);
     setIsMobileOpen(false);
-  }, [router.pathname]); // Se ejecuta cuando cambia la ruta
+  }, [router.pathname]);
 
   const handleToggleSidebar = () => {
     setIsSidebarExpanded(!isSidebarExpanded);
@@ -45,7 +45,7 @@ export default function Layout({ children }) {
         display: "flex",
         flexDirection: "column",
         minHeight: "100vh",
-        backgroundColor: '#F5F5F5',
+        backgroundColor: 'white',
       }}
     >
       {/* Header - Solo el avatar */}
@@ -141,22 +141,24 @@ export default function Layout({ children }) {
           />
         </Drawer>
 
-        {/* Contenido principal - MARGIN SOLO CUANDO SIDEBAR ESTÁ CONTRAÍDO */}
+        {/* Contenido principal - PADDING DERECHO REDUCIDO */}
         <Box
           sx={{
             flex: 1,
             display: "flex",
             flexDirection: "column",
-            px: { xs: 2, sm: 3, md: "5%" },
+            // Padding izquierdo normal, derecho reducido
+            pl: { xs: 2, sm: 3, md: "5%" }, // ← Izquierda igual
+            pr: { xs: 1.5, sm: 2, md: 3 },  // ← Derecha reducida
             py: 3,
             transition: 'margin-left 0.3s',
             marginLeft: { 
               xs: 0, 
-              lg: isSidebarExpanded ? 0 : '80px' // ← Solo margen cuando está contraído
+              lg: isSidebarExpanded ? 0 : '20px'
             },
             width: { 
               xs: '100%', 
-              lg: isSidebarExpanded ? '100%' : 'calc(100% - 80px)' // ← Ajuste de ancho
+              lg: isSidebarExpanded ? '100%' : 'calc(100% - 80px)'
             },
             minHeight: `calc(100vh - ${headerHeight}px)`,
           }}
@@ -165,7 +167,7 @@ export default function Layout({ children }) {
         </Box>
       </Box>
 
-      {/* Footer - MARGIN SOLO CUANDO SIDEBAR ESTÁ CONTRAÍDO */}
+      {/* Footer - PADDING DERECHO REDUCIDO */}
       <Box
         component="footer"
         sx={{
@@ -173,16 +175,21 @@ export default function Layout({ children }) {
           backgroundColor: "background.paper",
           marginLeft: { 
             xs: 0, 
-            lg: isSidebarExpanded ? 0 : '80px' // ← Solo margen cuando está contraído
+            lg: isSidebarExpanded ? 0 : '80px'
           },
           width: { 
             xs: '100%', 
-            lg: isSidebarExpanded ? '100%' : 'calc(100% - 80px)' // ← Ajuste de ancho
+            lg: isSidebarExpanded ? '100%' : 'calc(100% - 80px)'
           },
           transition: 'margin-left 0.3s, width 0.3s',
         }}
       >
-        <Box sx={{ px: { xs: 2, sm: 3, md: "5%" }, py: 2 }}>
+        {/* Padding izquierdo normal, derecho reducido */}
+        <Box sx={{ 
+          pl: { xs: 2, sm: 3, md: "5%" }, // ← Izquierda igual
+          pr: { xs: 1.5, sm: 2, md: 3 },  // ← Derecha reducida
+          py: 2 
+        }}>
           <Footer />
         </Box>
       </Box>

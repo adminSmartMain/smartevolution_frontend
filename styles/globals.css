@@ -274,7 +274,7 @@ body {
 
 .Toastify__toast--error {
   border: 1px solid #d80000;
-  border-radius: 20px !important;
+  border-radius: 10px !important;
   background: #d80000!important;
 }
 
@@ -295,7 +295,7 @@ body {
 }
 .Toastify__toast--success {
   border: 1px solid #00b050 !important;
-  border-radius: 20px !important;
+  border-radius: 10px !important;
   background:#00b050!important;
   padding-left: 10px;
 }
@@ -315,7 +315,7 @@ body {
 }
 .Toastify__toast--warning {
   border: 1px solid #e4ce0c !important;
-  border-radius: 20px !important;
+  border-radius: 10px !important;
   background: #fadfc5 !important;
 }
 .Toastify__toast--warning::before {
@@ -335,7 +335,7 @@ body {
 
 .Toastify__toast--info {
   border: 1px solid #63b0cd !important;
-  border-radius:20px !important;
+  border-radius:10px !important;
   background: white !important;
 }
 
