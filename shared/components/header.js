@@ -14,7 +14,7 @@ import authContext from "@context/authContext";
 
 const getNavSpacingSx = (isSidebarExpanded) => ({
   backgroundColor: "#EBEBEB",
-  borderBottom: "1.4px solid #5EA3A380",
+
   justifyContent: "center",
   transition: 'margin-left 0.3s ease, width 0.3s ease',
   marginLeft: { 

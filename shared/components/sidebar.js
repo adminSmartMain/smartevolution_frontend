@@ -24,7 +24,7 @@ const containerSx = {
   display: "flex",
   flexDirection: "column",
   boxSizing: "border-box",
-  backgroundColor: "#FFFFFF",
+  backgroundColor:"#EBEBEB",
   transition: 'width 0.2s ease',
   position: 'fixed',
   top: 0,
@@ -40,13 +40,14 @@ const headerSx = {
   alignItems: 'center',
   justifyContent: 'center',
   padding: '0px',
-  backgroundColor: '#FFFFFF',
+  backgroundColor:"#EBEBEB",
   flexShrink: 0,
   height: '72px',
 };
 
 const logoContainerSx = {
   display: 'flex',
+   backgroundColor:"#EBEBEB",
   alignItems: 'center',
   justifyContent: 'center',
   transition: 'all 0.2s ease',
@@ -74,7 +75,7 @@ const primaryPathsContainerSx = {
 const secondaryPathsContainerSx = {
   display: "flex",
   flexDirection: "column",
-  backgroundColor: "white",
+ backgroundColor:"#EBEBEB",
   justifyContent: "center",
   alignItems: "center",
   gap: 1,
@@ -90,7 +91,7 @@ const navItemSx = {
   height: 48,
   padding: '0 16px',
   borderRadius: '4px',
-  backgroundColor: '#FFFFFF',
+  backgroundColor:"#EBEBEB",
   color: '#488B8F',
   textDecoration: 'none',
   transition: 'all 0.15s ease',
@@ -118,6 +119,7 @@ const iconSx = {
   color: 'inherit',
   fontSize: 24,
   flexShrink: 0,
+  
 };
 
 const textSx = {
@@ -602,9 +604,10 @@ export default function Sidebar({ isMobile = false }) {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'flex-end',
-                paddingRight: '16px'
+                paddingRight: '16px',
+                 backgroundColor:"#EBEBEB",
               }}
-            >
+            >backgroundColor:"#EBEBEB",
               {/* VERSIÓN MÓVIL INTACTA - SIN CAMBIOS */}
             </Box>
           )}
