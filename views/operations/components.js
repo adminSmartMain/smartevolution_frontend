@@ -17,7 +17,10 @@ import {
 } from "@mui/material";
 import ListItemText from '@mui/material/ListItemText'; // Importación añadida
 import { styled } from "@mui/material/styles";
-import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
+import {
+  Home as HomeIcon,
+
+} from "@mui/icons-material";
 import ValueFormat from "@formats/ValueFormat";
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import responsiveFontSize from "@lib/responsiveFontSize";
@@ -675,7 +678,7 @@ const handleTextFieldChange = (evt) => {
 
    <Link href="/dashboard" underline="none">
           <a>
-          <HomeOutlinedIcon 
+          <HomeIcon
               fontSize="large" 
               sx={{ 
                 color: '#488b8f',
@@ -695,7 +698,7 @@ const handleTextFieldChange = (evt) => {
           marginTop='0.7rem'
           color="#5EA3A3"
         >
-          -Operaciones
+          - Operaciones Aprobadas
         </Typography>
         </Box>
        

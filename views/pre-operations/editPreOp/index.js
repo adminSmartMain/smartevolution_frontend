@@ -410,6 +410,7 @@ const onSubmit = async (values, { setSubmitting }) => {
     id: values.id,
     DateBill: values.DateBill || new Date().toISOString().substring(0, 10),
     DateExpiration: values.DateExpiration || new Date().toISOString().substring(0, 10),
+    applyGm:values.applyGm,
     amount: Number(values.amount) || 0,
     payedAmount:values.payedAmount,
     bill: values.billBack,
