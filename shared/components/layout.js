@@ -1,5 +1,5 @@
 // components/layout.js
-import { useState, useContext, useEffect } from "react";
+import { useState, useContext, useEffect, useRef } from "react";
 import { useRouter } from "next/router";
 import { Box, Drawer, useMediaQuery } from "@mui/material";
 
@@ -8,27 +8,33 @@ import Footer from "./footer";
 import Sidebar from "./sidebar";
 import authContext from "@context/authContext";
 
+// EVITAR RE-RENDERS INNECESARIOS
 export default function Layout({ children }) {
   const { user } = useContext(authContext);
   const router = useRouter();
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   
-  const isDesktop = useMediaQuery('(min-width: 1024px)');
+  const isDesktop = useMediaQuery('(min-width: 1200px)');
   const headerHeight = 72;
 
-  // CERRAR SIDEBAR CUANDO CAMBIA LA RUTA
+  // USAR useRef PARA EVITAR RE-RENDERS
+  const routerPathnameRef = useRef(router.pathname);
+
   useEffect(() => {
-    setIsSidebarExpanded(false);
-    setIsMobileOpen(false);
+    if (routerPathnameRef.current !== router.pathname) {
+      routerPathnameRef.current = router.pathname;
+      setIsSidebarExpanded(false);
+      setIsMobileOpen(false);
+    }
   }, [router.pathname]);
 
   const handleToggleSidebar = () => {
-    setIsSidebarExpanded(!isSidebarExpanded);
+    setIsSidebarExpanded(prev => !prev);
   };
 
   const handleToggleMobile = () => {
-    setIsMobileOpen(!isMobileOpen);
+    setIsMobileOpen(prev => !prev);
   };
 
   const handleCloseMobile = () => {
@@ -39,157 +45,66 @@ export default function Layout({ children }) {
     setIsMobileOpen(false);
   };
 
+  // CALCULAR ESTILOS UNA VEZ
+  const mainStyles = {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    padding: 3,
+    marginLeft: isDesktop ? (isSidebarExpanded ? "280px" : "80px") : 0,
+    width: isDesktop ? (isSidebarExpanded ? "calc(100% - 280px)" : "calc(100% - 80px)") : "100%",
+    minHeight: `calc(100vh - ${headerHeight}px)`,
+    // ELIMINAR TRANSICIONES DURANTE CARGA DE DATOS
+   transition: "none",
+  };
+
+  const footerStyles = {
+    flexShrink: 0,
+    backgroundColor: "background.paper",
+    marginLeft: isDesktop ? (isSidebarExpanded ? "280px" : "80px") : 0,
+    width: isDesktop ? (isSidebarExpanded ? "calc(100% - 280px)" : "calc(100% - 80px)") : "100%",
+    transition: isDesktop ? "margin-left 0.2s ease, width 0.2s ease" : "none",
+  };
+
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        minHeight: "100vh",
-        backgroundColor: 'white',
-      }}
-    >
-      {/* Header - Solo el avatar */}
-      <Box sx={{ flexShrink: 0 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh", backgroundColor: 'white' }}>
+      {/* Header fijo y simple */}
+      <Box sx={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1300 }}>
         <Header 
           isSidebarExpanded={isSidebarExpanded}
+          onToggleSidebar={handleToggleSidebar}
+          onToggleMobile={handleToggleMobile}
           user={user}
         />
       </Box>
 
-      {/* Main Content Area */}
-      <Box
-        component="main"
-        sx={{
-          flex: 1,
-          display: "flex",
-          width: "100%",
-          pt: `${headerHeight}px`,
-          boxSizing: "border-box",
-          position: 'relative',
-        }}
-      >
-        {/* Sidebar para desktop - El logo funciona como toggle */}
+      {/* Main Content */}
+      <Box sx={{ flex: 1, display: "flex", width: "100%", pt: `${headerHeight}px` }}>
+        
+        {/* Sidebar Desktop */}
         {isDesktop && (
           <Sidebar 
             isExpanded={isSidebarExpanded}
-            onToggle={handleToggleSidebar}
             onClick={handleMobileItemClick}
           />
         )}
 
-        {/* OVERLAY PARA DESKTOP CUANDO SIDEBAR ESTÁ EXPANDIDO */}
-        {isDesktop && isSidebarExpanded && (
-          <Box
-            sx={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'rgba(0, 0, 0, 0.5)',
-              zIndex: 1199,
-              transition: 'all 0.3s ease',
-            }}
-            onClick={handleToggleSidebar}
-          />
-        )}
-
-        {/* Logo para móvil - CAMBIA SEGÚN ESTADO DEL DRAWER */}
+        {/* Drawer Mobile */}
         {!isDesktop && (
-          <Box
-            sx={{
-              position: 'fixed',
-              top: 16,
-              left: 16,
-              zIndex: 1300,
-              cursor: 'pointer',
-            }}
-            onClick={handleToggleMobile}
-          >
-            <img
-              src={isMobileOpen ? "/assets/Logo Smart - Lite.svg" : "/assets/Icono Smart.svg"}
-              width={isMobileOpen ? 120 : 40}
-              height={isMobileOpen ? 40 : 40}
-              alt="Smart Evolution"
-              style={{
-                objectFit: 'contain',
-                transition: 'all 0.3s ease',
-              }}
-            />
-          </Box>
+          <Drawer anchor="left" open={isMobileOpen} onClose={handleCloseMobile}>
+            <Sidebar isExpanded={true} isMobile={true} onClick={handleMobileItemClick} />
+          </Drawer>
         )}
 
-        <Drawer 
-          anchor="left" 
-          open={isMobileOpen} 
-          onClose={handleCloseMobile}
-          sx={{ 
-            display: { lg: 'none' },
-            '& .MuiDrawer-paper': {
-              boxSizing: 'border-box',
-              border: 'none',
-              top: 0,
-              height: '100vh',
-              width: 280,
-            },
-          }}
-        >
-          <Sidebar 
-            isExpanded={true}
-            onClick={handleMobileItemClick}
-            isMobile={true}
-          />
-        </Drawer>
-
-        {/* Contenido principal - PADDING DERECHO REDUCIDO */}
-        <Box
-          sx={{
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            // Padding izquierdo normal, derecho reducido
-            pl: { xs: 2, sm: 3, md: "5%" }, // ← Izquierda igual
-            pr: { xs: 1.5, sm: 2, md: 3 },  // ← Derecha reducida
-            py: 3,
-            transition: 'margin-left 0.3s',
-            marginLeft: { 
-              xs: 0, 
-              lg: isSidebarExpanded ? 0 : '20px'
-            },
-            width: { 
-              xs: '100%', 
-              lg: isSidebarExpanded ? '100%' : 'calc(100% - 80px)'
-            },
-            minHeight: `calc(100vh - ${headerHeight}px)`,
-          }}
-        >
+        {/* Content - SIN RE-RENDERS INNECESARIOS */}
+        <Box sx={mainStyles}>
           {children}
         </Box>
       </Box>
 
-      {/* Footer - PADDING DERECHO REDUCIDO */}
-      <Box
-        component="footer"
-        sx={{
-          flexShrink: 0,
-          backgroundColor: "background.paper",
-          marginLeft: { 
-            xs: 0, 
-            lg: isSidebarExpanded ? 0 : '80px'
-          },
-          width: { 
-            xs: '100%', 
-            lg: isSidebarExpanded ? '100%' : 'calc(100% - 80px)'
-          },
-          transition: 'margin-left 0.3s, width 0.3s',
-        }}
-      >
-        {/* Padding izquierdo normal, derecho reducido */}
-        <Box sx={{ 
-          pl: { xs: 2, sm: 3, md: "5%" }, // ← Izquierda igual
-          pr: { xs: 1.5, sm: 2, md: 3 },  // ← Derecha reducida
-          py: 2 
-        }}>
+      {/* Footer simple */}
+      <Box component="footer" sx={footerStyles}>
+        <Box sx={{ padding: 2 }}>
           <Footer />
         </Box>
       </Box>
