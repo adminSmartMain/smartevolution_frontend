@@ -17,6 +17,31 @@ import {
 
 import React, { useCallback, useState, useEffect } from "react";
 
+// ================== HOOK PERSONALIZADO PARA VENTANAS ==================
+const useWindowManager = () => {
+  const [openWindow, setOpenWindow] = useState(null);
+
+  const handleOpenWindow = (url, windowFeatures = "width=1000,height=700,left=100,top=100") => {
+    if (openWindow && !openWindow.closed) {
+      openWindow.focus();
+      return openWindow;
+    } else {
+      const newWindow = window.open(url, "_blank", windowFeatures);
+      setOpenWindow(newWindow);
+      
+      if (newWindow) {
+        newWindow.onbeforeunload = () => {
+          setOpenWindow(null);
+        };
+      }
+      
+      return newWindow;
+    }
+  };
+
+  return { handleOpenWindow, openWindow };
+};
+
 // ================== ESTILOS ==================
 const containerSx = {
   display: "flex",
@@ -32,7 +57,7 @@ const containerSx = {
   transition: "width 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
   willChange: "width",
   transform: "translateZ(0)",
-  overflow: "visible", // 🔥 ya no bloquea el submenú
+  overflow: "visible",
 };
 
 const primaryPathsContainerSx = {
@@ -131,7 +156,7 @@ const subMenuItemSx = {
   alignItems: "center",
   justifyContent: "flex-start",
   height: 40,
-  padding: "0 16px",
+  padding: "0 70px",
   borderRadius: "4px",
   color: "#488B8F",
   textDecoration: "none",
@@ -144,7 +169,70 @@ const subMenuItemSx = {
 
 // ================== COMPONENTES ==================
 
-const HoverSubMenu = ({ subItems, anchor, visible, onClose }) => {
+// 🔥 COMPONENTE SUBITEM MEJORADO CON FUNCIONALIDAD DE VENTANAS
+const SubMenuItem = ({ subItem, onItemClick, isExpanded }) => {
+  const { handleOpenWindow } = useWindowManager();
+  const router = useRouter();
+
+  const handleClick = (e) => {
+    if (subItem.openInWindow) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      handleOpenWindow(subItem.href, subItem.windowFeatures);
+      
+      if (onItemClick) {
+        onItemClick();
+      }
+    } else {
+      onItemClick?.();
+    }
+  };
+
+  const isActive = router.pathname === subItem.href;
+
+  if (!isExpanded) {
+    return (
+      <Link href={subItem.href} passHref legacyBehavior>
+        <Box 
+          component="a" 
+          sx={{ 
+            ...subMenuItemSx, 
+            width: 180,
+            ...(isActive && {
+              backgroundColor: "#E8F3F3",
+            })
+          }}
+          onClick={handleClick}
+          target={subItem.openInWindow ? "_blank" : "_self"}
+        >
+          {subItem.text}
+        </Box>
+      </Link>
+    );
+  }
+
+  return (
+    <Link href={subItem.href} passHref legacyBehavior>
+      <Box
+        component="a"
+        sx={{
+          ...subMenuItemSx,
+          ...(isActive && {
+            backgroundColor: "#E8F3F3",
+          }),
+        }}
+        onClick={handleClick}
+        target={subItem.openInWindow ? "_blank" : "_self"}
+      >
+        {subItem.text}
+      </Box>
+    </Link>
+  );
+};
+
+// 🔥 COMPONENTE HOVER SUBMENU MEJORADO
+const HoverSubMenu = ({ subItems, anchor, visible, onClose, onItemClick }) => {
   if (!visible || typeof window === "undefined") return null;
 
   const content = (
@@ -167,16 +255,16 @@ const HoverSubMenu = ({ subItems, anchor, visible, onClose }) => {
       }}
     >
       {subItems.map((item) => (
-        <Link key={item.href} href={item.href} passHref legacyBehavior>
-          <Box component="a" sx={{ ...subMenuItemSx, width: 180 }}>
-            {item.text}
-          </Box>
-        </Link>
+        <SubMenuItem
+          key={item.href}
+          subItem={item}
+          onItemClick={onItemClick}
+          isExpanded={false}
+        />
       ))}
     </Paper>
   );
 
-  // 🔥 Renderiza el submenú fuera del sidebar
   return ReactDOM.createPortal(content, document.body);
 };
 
@@ -200,7 +288,7 @@ const NavItemWithSubmenu = ({
       const rect = e.currentTarget.getBoundingClientRect();
       setAnchor({
         top: rect.top,
-        left: rect.right + 4, // fuera del sidebar 🔥
+        left: rect.right + 4,
       });
       setHoverVisible(true);
     }
@@ -259,6 +347,7 @@ const NavItemWithSubmenu = ({
             anchor={anchor}
             visible={hoverVisible}
             onClose={() => setHoverVisible(false)}
+            onItemClick={onItemClick}
           />
         )}
 
@@ -272,20 +361,12 @@ const NavItemWithSubmenu = ({
           >
             <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, padding: "8px 0" }}>
               {subItems.map((subItem) => (
-                <Link key={subItem.href} href={subItem.href} passHref legacyBehavior>
-                  <Box
-                    component="a"
-                    sx={{
-                      ...subMenuItemSx,
-                      ...(router.pathname === subItem.href && {
-                        backgroundColor: "#E8F3F3",
-                      }),
-                    }}
-                    onClick={onItemClick}
-                  >
-                    {subItem.text}
-                  </Box>
-                </Link>
+                <SubMenuItem
+                  key={subItem.href}
+                  subItem={subItem}
+                  onItemClick={onItemClick}
+                  isExpanded={isExpanded}
+                />
               ))}
             </Box>
           </Collapse>
@@ -346,8 +427,7 @@ const SectionTitle = ({ title, isExpanded }) => (
   </Box>
 );
 
-
-// DATOS DE RUTAS
+// ================== DATOS DE RUTAS ACTUALIZADOS ==================
 const PRIMARY_SECTIONS = [
   {
     title: "Cuentas de clientes",
@@ -366,7 +446,12 @@ const PRIMARY_SECTIONS = [
         text: "Clientes", 
         Icon: AccountCircleIcon,
         subItems: [
-          { href: "/customers?register", text: "Agregar Cliente" },
+          { 
+            href: "/customers?register", 
+            text: "Agregar Cliente", 
+            openInWindow: true,
+            windowFeatures: "width=900,height=800"
+          },
           { href: "/customers/customerList", text: "Consulta" },
           { href: "/customers/accountList", text: "Gestión de cuentas" }
         ]
@@ -382,8 +467,18 @@ const PRIMARY_SECTIONS = [
         Icon: ReceiptLongIcon,
         subItems: [
           { href: "/bills/billList", text: "Consulta de Facturas" },
-          { href: "/bills?=register", text: "Extraer Factura" },
-          { href: "/bills/createBill", text: "Registrar Factura" }
+          { 
+            href: "/bills?=register", 
+            text: "Extraer Factura", 
+            openInWindow: true,
+            windowFeatures: "width=800,height=600"
+          },
+          { 
+            href: "/bills/createBill", 
+            text: "Registrar Factura", 
+            openInWindow: true,
+            windowFeatures: "width=1000,height=700"
+          }
         ]
       },
       { 
@@ -391,10 +486,20 @@ const PRIMARY_SECTIONS = [
         text: "Operaciones", 
         Icon: AssignmentTurnedInIcon,
         subItems: [
-          { href: "/pre-operations/manage", text: "Registrar Operación" },
+          { 
+            href: "/pre-operations/manage", 
+            text: "Registrar Operación", 
+            openInWindow: true,
+            windowFeatures: "width=1200,height=800"
+          },
           { href: "/pre-operations", text: "Operaciones por Aprobar" },
           { href: "/administration/negotiation-summary/summaryList", text: "Resumen de Negociación" },
-          { href: "/operations/electronicSignature", text: "Notificaciones de Compra" },
+          { 
+            href: "/operations/electronicSignature", 
+            text: "Notificaciones de Compra", 
+            openInWindow: true,
+            windowFeatures: "width=900,height=700"
+          },
           { href: "/operations", text: "Operaciones Aprobadas" },
           { href: "/administration/new-receipt/receiptList", text: "Consulta de Recaudos" }
         ]
@@ -404,6 +509,7 @@ const PRIMARY_SECTIONS = [
 ];
 
 const DASHBOARD_PATH = { href: "/dashboard", text: "Estadisticas", Icon: HomeIcon };
+
 const SECONDARY_SECTIONS = [
   {
     title: "Otros",
@@ -413,7 +519,12 @@ const SECONDARY_SECTIONS = [
         text: "Corredores", 
         Icon: SupportAgentIcon,
         subItems: [
-          { href: "/brokers?register", text: "Registrar Corredor" },
+          { 
+            href: "/brokers?register", 
+            text: "Registrar Corredor", 
+            openInWindow: true,
+            windowFeatures: "width=850,height=650"
+          },
         ]
       },
       { 
@@ -430,7 +541,7 @@ const SECONDARY_SECTIONS = [
   }
 ];
 
-
+// ================== COMPONENTE SIDEBAR PRINCIPAL ==================
 export default function Sidebar({ isExpanded, onClick, isMobile = false }) {
   const router = useRouter();
   const [openSubmenus, setOpenSubmenus] = useState({});
