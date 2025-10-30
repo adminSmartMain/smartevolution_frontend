@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
-import { ToastContainer } from "react-toastify";
-import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
+import { ToastContainer } from "react-toastify";import {
+  Home as HomeIcon,
+
+} from "@mui/icons-material";
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import DownloadIcon from '@mui/icons-material/Download';
@@ -460,7 +462,7 @@ export const BillsComponents = () => {
             <Typography
               sx={{
                 fontSize: "100%",
-                color: "#488B8F !important",  // !important para forzar prioridad
+                color: "#488B8F !important",  
                 fontWeight: "500 !important",
                 textTransform: "uppercase",
                 // Reset de estilos no deseados
@@ -1089,28 +1091,23 @@ export const BillsComponents = () => {
             flexWrap: 'wrap'
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box className="view-header">
             <Link href="/dashboard" underline="none">
               <a>
-                <HomeOutlinedIcon
-                  fontSize="large"
-                  sx={{
-                    color: '#488b8f',
-                    opacity: 0.8, // Ajusta la transparencia (0.8 = 80% visible)
-                    strokeWidth: 1, // Grosor del contorno
-                  }}
-                />
+                 <HomeIcon
+                                        fontSize="large" 
+                                        sx={{ 
+                                          color: '#488b8f',
+                                          opacity: 0.8, // Ajusta la transparencia (0.8 = 80% visible)
+                                          strokeWidth: 1, // Grosor del contorno
+                                        }} 
+                                      />
 
               </a>
 
             </Link>
             <Typography
-              letterSpacing={0}
-              fontSize="1.7rem"
-              fontWeight="regular"
-              marginBottom="0.7rem"
-              marginTop='0.7rem'
-              color="#5EA3A3"
+              className="view-title"
             >
               - Consulta de facturas
             </Typography>

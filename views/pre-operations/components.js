@@ -1252,7 +1252,7 @@ const updateFilters = (value, field) => {
 }}>
   
   {/* Parte izquierda - Icono y título */}
-  <Box display="flex" alignItems="center" flexWrap="wrap" gap={1}>
+  <Box className="view-header">
     <Link href="/dashboard" passHref>
       <Box 
         component="a" 
@@ -1262,35 +1262,19 @@ const updateFilters = (value, field) => {
         }}
       >
         <HomeIcon
-          sx={{ 
-            color: '#488b8f',
-            opacity: 0.8,
-            strokeWidth: 1,
-            fontSize: { 
-              xs: '2rem',    // Más pequeño en móvil
-              sm: '2.5rem',  // Mediano en tablet
-              md: '3rem'     // Original en desktop
-            } 
-          }} 
-        />
+                        fontSize="large" 
+                        sx={{ 
+                          color: '#488b8f',
+                          opacity: 0.8, // Ajusta la transparencia (0.8 = 80% visible)
+                          strokeWidth: 1, // Grosor del contorno
+                        }} 
+                      />
       </Box>
+      
     </Link>
     
     <Typography
-      letterSpacing={0}
-      fontSize={{ 
-        xs: '1.2rem',    // Móvil
-        sm: '1.4rem',    // Tablet
-        md: '1.7rem'     // Desktop
-      }}
-      fontWeight="regular"
-      marginBottom={{ xs: '0.3rem', sm: '0.7rem' }}
-      marginTop={{ xs: '0.3rem', sm: '0.7rem' }}
-      color="#5EA3A3"
-      sx={{
-        whiteSpace: { xs: 'normal', sm: 'nowrap' }, // Permite wrap en móvil
-        wordBreak: 'break-word'
-      }}
+      className="view-title"
     >
       - Operaciones por Aprobar
     </Typography>

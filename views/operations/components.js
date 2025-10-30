@@ -674,43 +674,37 @@ const handleTextFieldChange = (evt) => {
     <>
      
       <Box sx={{ ...sectionTitleContainerSx }}>
-        <Box display="flex" alignItems="center">
+        <Box  className="view-header">
 
-   <Link href="/dashboard" underline="none">
-          <a>
-          <HomeIcon
-              fontSize="large" 
-              sx={{ 
-                color: '#488b8f',
-                opacity: 0.8, // Ajusta la transparencia (0.8 = 80% visible)
-                strokeWidth: 1, // Grosor del contorno
-              }} 
-            />
-        
-          </a>
-          
-          </Link>
-        <Typography
-          letterSpacing={0}
-          fontSize="1.7rem"
-          fontWeight="regular"
-          marginBottom="0.7rem"
-          marginTop='0.7rem'
-          color="#5EA3A3"
-        >
-          - Operaciones Aprobadas
-        </Typography>
+            <Link href="/dashboard" underline="none">
+                    <a>
+                    <HomeIcon
+                        fontSize="large" 
+                        sx={{ 
+                          color: '#488b8f',
+                          opacity: 0.8, // Ajusta la transparencia (0.8 = 80% visible)
+                          strokeWidth: 1, // Grosor del contorno
+                        }} 
+                      />
+                  
+                    </a>
+                    
+                    </Link>
+                  <Typography
+                    className="view-title"
+                  >
+                    - Operaciones Aprobadas
+                  </Typography>
         </Box>
-       
+                
 
-        <Box sx={{ ...sectionTitleContainerSx }}>
-        <Link href="/pre-operations" passHref>
-        <button className="button-header-preop-title">
-          Pre-Operaciones
-        </button>
-      </Link>
-                            
-      </Box>
+                  <Box sx={{ ...sectionTitleContainerSx }}>
+                        <Link href="/pre-operations" passHref>
+                        <button className="button-header-preop-title">
+                          Pre-Operaciones
+                        </button>
+                      </Link>
+                  </Box>
       </Box>
 
       <Box

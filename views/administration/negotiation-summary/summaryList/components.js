@@ -5,7 +5,10 @@ import Link from "next/link";
 import { debounce, set } from "lodash";
 import { parseISO, parse, isValid } from 'date-fns';
 import es from 'date-fns/locale/es';
+import {
+  Home as HomeIcon,
 
+} from "@mui/icons-material";
 import SearchIcon from '@mui/icons-material/Search'; // Importa el ícono de búsqueda
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import {
@@ -934,22 +937,26 @@ const setQuickFilter = (type) => {
     <>
      
   <Box
-    container
-    display="flex"
-    flexDirection="row"
-    justifyContent="flex-start"  // Alinea a la izquierda
-    alignItems="center"          // Alinea verticalmente los elementos
-    gap="1rem"                   // Espacio entre el botón y el título
+className="view-header"
   >
-  <BackButton path="/administration" />
+  <Link href="/dashboard" underline="none">
+              <a>
+                 <HomeIcon
+                                        fontSize="large" 
+                                        sx={{ 
+                                          color: '#488b8f',
+                                          opacity: 0.8, // Ajusta la transparencia (0.8 = 80% visible)
+                                          strokeWidth: 1, // Grosor del contorno
+                                        }} 
+                                      />
+
+              </a>
+
+            </Link>
   <Typography
-    letterSpacing={0}
-    fontSize="1.7rem"
-    fontWeight="regular"
-    marginBottom="0.7rem"
-    color="#5EA3A3"
+   className="view-title"
   >
-    Consulta de resumen de negociación
+    - Consulta de resumen de negociación
   </Typography>
 </Box>
 

@@ -10,7 +10,11 @@ import {
   IconButton,
   Typography,
 } from "@mui/material";
+import Link from "next/link";
+import {
+  Home as HomeIcon,
 
+} from "@mui/icons-material";
 import Modal from "@components/modals/modal";
 import TitleModal from "@components/modals/titleModal";
 import { Toast } from "@components/toast";
@@ -42,6 +46,11 @@ import {
 } from "./queries";
 
 import moment from "moment";
+const sectionTitleContainerSx = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "rigth",
+};
 
 export const BrochureListComponent = () => {
   const [filter, setFilter] = useState("name");
@@ -1284,18 +1293,35 @@ export const BrochureListComponent = () => {
           </Box>
         </Box>
       </Modal>
-      <BackButton path="/dashboard" />
-      <Box display="flex" flexDirection="row" justifyContent="space-between">
-        <Typography
-          letterSpacing={0}
-          fontSize="1.7rem"
-          fontWeight="regular"
-          color="#5EA3A3"
-        >
-          Consulta y gestión de Prospectos
-        </Typography>
 
-        <Button
+
+
+      <Box sx={{ ...sectionTitleContainerSx }}>
+
+
+         <Box className="view-header">
+
+                <Link href="/dashboard" underline="none">
+                            <a>
+                            <HomeIcon
+                                fontSize="large" 
+                                sx={{ 
+                                  color: '#488b8f',
+                                  opacity: 0.8, // Ajusta la transparencia (0.8 = 80% visible)
+                                  strokeWidth: 1, // Grosor del contorno
+                                }} 
+                              />
+                          
+                            </a>
+                            
+                            </Link>
+        <Typography
+          className="view-title"
+        >
+          - Consulta y gestión de Prospectos
+        </Typography>
+         </Box>
+           <Button
           variant="standard"
           color="primary"
           size="large"
@@ -1337,7 +1363,8 @@ export const BrochureListComponent = () => {
           </Typography>
         </Button>
       </Box>
-
+   
+      
       <Box>
         <BaseField
           placeholder="Filtro por nombre"

@@ -26,12 +26,12 @@ export const Toast = (message, type) => {
           background: rgba(255, 255, 255, 0.4) !important;
         }
         .Toastify__toast--success {
-          background: #4CAF50 !important;
+          background: #00b050 !important;
         }
       `}</style>
     </div>,
     {
-      position: "bottom-right",
+      position: "top-right",
       autoClose: 3500,
       hideProgressBar: false,
       closeOnClick: true,
@@ -61,16 +61,16 @@ export const Toast = (message, type) => {
         </strong>
          {/* Barra de progreso personalizada */}
       <style>{`
-        .Toastify__progress-bar--success {
+        .Toastify__progress-bar--error {
           background: rgba(255, 255, 255, 0.4) !important;
         }
-        .Toastify__toast--success {
-          background: #4CAF50 !important;
+        .Toastify__toast--error {
+          background: #d80000 !important;
         }
       `}</style>
       </div>,
       {
-        position: "bottom-right",
+        position: "top-right",
         autoClose: 5000,
         hideProgressBar: false,
         closeOnClick: true,
@@ -101,16 +101,16 @@ export const Toast = (message, type) => {
         </strong>
          {/* Barra de progreso personalizada */}
       <style>{`
-        .Toastify__progress-bar--success {
+        .Toastify__progress-bar--warning {
           background: rgba(255, 255, 255, 0.4) !important;
         }
-        .Toastify__toast--success {
-          background: #4CAF50 !important;
+        .Toastify__toast--warning {
+          background: #E5DB80 !important;
         }
       `}</style>
       </div>,
       {
-        position: "bottom-right",
+        position: "top-right",
         autoClose: 3500,
         hideProgressBar: false,
         closeOnClick: true,
@@ -141,16 +141,16 @@ export const Toast = (message, type) => {
         </strong>
          {/* Barra de progreso personalizada */}
       <style>{`
-        .Toastify__progress-bar--success {
+        .Toastify__progress-bar--info {
           background: rgba(255, 255, 255, 0.4) !important;
         }
-        .Toastify__toast--success {
-          background: #4CAF50 !important;
+        .Toastify__toast--info {
+          background: #63b0cd !important;
         }
       `}</style>
       </div>,
       {
-        position: "bottom-right",
+        position: "top-right",
         autoClose: 3500,
         hideProgressBar: false,
         closeOnClick: true,

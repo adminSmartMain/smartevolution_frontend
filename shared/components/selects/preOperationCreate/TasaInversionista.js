@@ -4,6 +4,7 @@ import { TextField } from '@mui/material';
 import { PV } from "@formulajs/formulajs";
 import InfoIcon from '@mui/icons-material/Info';
 import { ToastContainer, toast } from "react-toastify";
+import { Toast } from '@components/toast';
 import "react-toastify/dist/ReactToastify.css";
 import { InputAdornment } from '@mui/material';
 import ErrorIcon from '@mui/icons-material/Error';
@@ -92,7 +93,7 @@ export default function TasaInversionistaSelector({ values, setFieldValue, setFi
             setFieldValue(`investorTax`, discountTax);
             setFieldValue(`facturas[${index}].investorTax`, discountTax);
             setTimeout(() => {
-                toast.error("La tasa inversionista no puede ser mayor que la tasa de descuento");
+                Toast("La tasa inversionista no puede ser mayor que la tasa de descuento","error");
             }, 100);
         } else {
             setFieldValue(`investorTax`, finalValue);

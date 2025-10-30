@@ -22,10 +22,18 @@ import InputTitles from "@styles/inputTitles";
 import CustomDataGrid from "@styles/tables";
 
 import { DeleteDepositById, GetDepositList, GetRefundReceipt } from "./queries";
+import {
+  Home as HomeIcon,
 
+} from "@mui/icons-material";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import moment from "moment";
+const sectionTitleContainerSx = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "rigth",
+};
 
 export const DepositListComponent = () => {
   const [filter, setFilter] = useState("");
@@ -353,23 +361,31 @@ export const DepositListComponent = () => {
 
   return (
     <>
-      <BackButton path="/administration" />
-      <Box
-        container
-        display="flex"
-        flexDirection="row"
-        justifyContent="space-between"
-      >
-        <Typography
-          letterSpacing={0}
-          fontSize="1.7rem"
-          fontWeight="regular"
-          marginBottom="0.7rem"
-          color="#5EA3A3"
-        >
-          Consulta de giro-emisor
+<Box sx={{ ...sectionTitleContainerSx }}>
+
+   <Box className="view-header">
+    <Link href="/dashboard" underline="none">
+                            <a>
+                            <HomeIcon
+                                fontSize="large" 
+                                sx={{ 
+                                  color: '#488b8f',
+                                  opacity: 0.8, // Ajusta la transparencia (0.8 = 80% visible)
+                                  strokeWidth: 1, // Grosor del contorno
+                                }} 
+                              />
+                          
+                            </a>
+                            
+                            </Link>
+      <Typography
+          className="view-title">
+          - Consulta de giro-emisor
         </Typography>
-        <Link href="/administration/deposit-emitter?register" underline="none">
+
+      
+   </Box>
+    <Link href="/administration/deposit-emitter?register" underline="none">
           <Button
             variant="standard"
             color="primary"
@@ -400,7 +416,11 @@ export const DepositListComponent = () => {
             </Typography>
           </Button>
         </Link>
-      </Box>
+
+</Box>
+
+      
+ 
       <Box container display="flex" flexDirection="column" mt={3}>
         <InputTitles>Buscar por</InputTitles>
         <Box

@@ -1,7 +1,10 @@
 import { useEffect } from "react";
 import { useState } from "react";
 import { ToastContainer } from "react-toastify";
+import {
+  Home as HomeIcon,
 
+} from "@mui/icons-material";
 import Link from "next/link";
 
 import { SearchOutlined } from "@mui/icons-material";
@@ -23,7 +26,11 @@ import CustomDataGrid from "@styles/tables";
 import { getNotifications, getOperationById, sendBuyOrder } from "./queries";
 
 import moment from "moment";
-
+const sectionTitleContainerSx = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "rigth",
+};
 export const SignatureListC = () => {
   const [data, setData] = useState([]);
   const [filter, setFilter] = useState("");
@@ -388,24 +395,34 @@ export const SignatureListC = () => {
 
   return (
     <>
-      <BackButton path="/pre-operations" />
-      <Box
-        container={"true"}
-        display="flex"
-        flexDirection="row"
-        justifyContent="space-between"
-        alignItems="center"
-      >
-        <Typography
-          letterSpacing={0}
-          fontSize="1.7rem"
-          fontWeight="regular"
-          marginBottom="0.7rem"
-          color="#5EA3A3"
-        >
-          Consulta de Aprobaciones
+    <Box sx={{ ...sectionTitleContainerSx }}>
+
+<Box
+className="view-header"
+  >
+    <Link href="/dashboard" underline="none">
+                            <a>
+                            <HomeIcon
+                                fontSize="large" 
+                                sx={{ 
+                                  color: '#488b8f',
+                                  opacity: 0.8, // Ajusta la transparencia (0.8 = 80% visible)
+                                  strokeWidth: 1, // Grosor del contorno
+                                }} 
+                              />
+                          
+                            </a>
+                            
+                            </Link>
+                            <Typography
+        className="view-title">
+          - Consulta de Aprobaciones
         </Typography>
-      </Box>
+
+  </Box>
+    </Box>
+       
+  
       <Box container={"true"} display="flex" flexDirection="column" mt={3}>
         <InputTitles>Buscar operación</InputTitles>
       </Box>

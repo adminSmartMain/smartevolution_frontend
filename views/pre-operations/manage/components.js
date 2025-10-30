@@ -34,7 +34,7 @@ import { differenceInDays, startOfDay, addDays } from "date-fns";
 import CheckIcon from '@mui/icons-material/Check';
 import ErrorIcon from '@mui/icons-material/Error'; // o cualquier otro ícono de error
 import { styled } from '@mui/material/styles';
-
+import { Toast } from "@components/toast";
 
 import EmitterSelector from "@components/selects/preOperationCreate/EmitterSelector";
 import PayerSelector from "@components/selects/preOperationCreate/PayerSelector";
@@ -317,13 +317,13 @@ const handleFileChange = (event, setFieldValue, index) => {
     // Validar tipo de archivo
     const validTypes = ['application/pdf', 'image/jpeg', 'image/png'];
     if (!validTypes.includes(selectedFile.type)) {
-      toast.error('Solo se permiten archivos PDF, JPEG o PNG');
+      Toast('Solo se permiten archivos PDF, JPEG o PNG','error');
       return;
     }
 
     // Validar tamaño (20MB máximo)
     if (selectedFile.size > 20 * 1024 * 1024) {
-      toast.error('El archivo no debe exceder los 20MB');
+      Toast('El archivo no debe exceder los 20MB','error');
       return;
     }
 
@@ -354,7 +354,7 @@ const handleFileChange = (event, setFieldValue, index) => {
     
     reader.onerror = (error) => {
       console.error('Error al leer el archivo:', error);
-      toast.error('Error al procesar el archivo');
+      Toast('Error al procesar el archivo','error');
     };
     
     reader.readAsDataURL(selectedFile);

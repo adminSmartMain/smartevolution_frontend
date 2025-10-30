@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
+import {
+  Home as HomeIcon,
 
+} from "@mui/icons-material";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -28,6 +31,11 @@ import {
 } from "./queries";
 
 let dataCount;
+const sectionTitleContainerSx = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "rigth",
+};
 
 export const AccountListComponent = () => {
   const [open, setOpen] = useState([false, "", null]);
@@ -432,24 +440,34 @@ export const AccountListComponent = () => {
 
   return (
     <>
-      <Box height="100%">
-        <BackButton path="/customers/customerList" />
-        <Box
-          container
-          display="flex"
-          flexDirection="row"
-          justifyContent="space-between"
-        >
-          <Typography
-            letterSpacing={0}
-            fontSize="1.7rem"
-            fontWeight="regular"
-            marginBottom="0.7rem"
-            color="#5EA3A3"
-          >
-            Consulta y gestión de cuentas
-          </Typography>
-          <Link href="account?register" underline="none">
+
+    <Box sx={{ ...sectionTitleContainerSx }}>
+
+      <Box className="view-header">
+            <Link href="/dashboard" underline="none">
+                    <a>
+                    <HomeIcon
+                        fontSize="large" 
+                        sx={{ 
+                          color: '#488b8f',
+                          opacity: 0.8, // Ajusta la transparencia (0.8 = 80% visible)
+                          strokeWidth: 1, // Grosor del contorno
+                        }} 
+                      />
+                  
+                    </a>
+                    
+                    </Link>
+
+                      <Typography
+                          className="view-title"
+                            >
+                        - Consulta y gestión de cuentas
+                      </Typography>
+
+      </Box>
+
+       <Link href="account?register" underline="none">
             <Button
               variant="standard"
               color="primary"
@@ -480,7 +498,8 @@ export const AccountListComponent = () => {
               </Typography>
             </Button>
           </Link>
-        </Box>
+    </Box>
+      <Box height="100%">
         <Box container display="flex" flexDirection="column" mt={3}>
           <InputTitles>Buscar por cliente</InputTitles>
           <Box>

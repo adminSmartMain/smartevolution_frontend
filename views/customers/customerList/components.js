@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
+import {
+  Home as HomeIcon,
 
+} from "@mui/icons-material";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -23,6 +26,14 @@ import CustomDataGrid from "@styles/tables";
 import { DeleteClientById, GetClientList } from "./queries";
 
 import moment from "moment";
+
+
+
+const sectionTitleContainerSx = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "rigth",
+};
 
 export const ClientListComponent = () => {
   const [open, setOpen] = useState([false, "", null]);
@@ -587,89 +598,102 @@ export const ClientListComponent = () => {
 
   return (
     <>
-      <BackButton path="/dashboard" />
-      <Box
-        container
-        display="flex"
-        flexDirection="row"
-        justifyContent="space-between"
-        alignItems="center"
-      >
-        <Typography
-          letterSpacing={0}
-          fontSize="1.7rem"
-          fontWeight="regular"
-          marginBottom="0.7rem"
-          color="#5EA3A3"
-        >
-          Consulta de Clientes
-        </Typography>
-        <Box display="flex" flexDirection="row">
-          <Link href="/customers?register" underline="none">
-            <Button
-              variant="standard"
-              color="primary"
-              size="large"
-              sx={{
-                height: "2.6rem",
-                backgroundColor: "transparent",
-                border: "1.4px solid #63595C",
-                borderRadius: "4px",
-              }}
-            >
-              <Typography
-                letterSpacing={0}
-                fontSize="80%"
-                fontWeight="bold"
-                color="#63595C"
-              >
-                Registrar nuevo cliente
-              </Typography>
+     
+      <Box sx={{ ...sectionTitleContainerSx }}>
 
-              <Typography
-                fontFamily="icomoon"
-                fontSize="1.2rem"
-                color="#63595C"
-                marginLeft="0.9rem"
-              >
-                &#xe927;
-              </Typography>
-            </Button>
-          </Link>
-          <Link href="/customers/accountList" underline="none">
-            <Button
-              variant="standard"
-              color="primary"
-              size="large"
-              sx={{
-                height: "2.6rem",
-                backgroundColor: "transparent",
-                border: "1.4px solid #63595C",
-                borderRadius: "4px",
-                ml: "0.5rem",
-              }}
-            >
-              <Typography
-                letterSpacing={0}
-                fontSize="80%"
-                fontWeight="bold"
-                color="#63595C"
-              >
-                Consulta y gestión de cuentas
-              </Typography>
+            <Box className="view-header">
+                
+                      <Link href="/dashboard" underline="none">
+                            <a>
+                            <HomeIcon
+                                fontSize="large" 
+                                sx={{ 
+                                  color: '#488b8f',
+                                  opacity: 0.8, // Ajusta la transparencia (0.8 = 80% visible)
+                                  strokeWidth: 1, // Grosor del contorno
+                                }} 
+                              />
+                          
+                            </a>
+                                              
+                          </Link>
+                      <Typography className="view-title">
+                      - Consulta de Clientes
+                    </Typography>
 
-              <Typography
-                fontFamily="icomoon"
-                fontSize="1.6rem"
-                color="#63595C"
-                marginLeft="0.9rem"
-              >
-                &#xe905;
-              </Typography>
-            </Button>
-          </Link>
-        </Box>
+                    </Box>
+                      <Link href="/customers?register" underline="none">
+                        <Button
+                          variant="standard"
+                          color="primary"
+                          size="large"
+                          sx={{
+                            height: "2.6rem",
+                            backgroundColor: "transparent",
+                            border: "1.4px solid #63595C",
+                            borderRadius: "4px",
+                          }}
+                        >
+                             
+                          <Typography
+                            letterSpacing={0}
+                            fontSize="80%"
+                            fontWeight="bold"
+                            color="#63595C"
+                          >
+                            Registrar nuevo cliente
+                          </Typography>
+
+                          <Typography
+                            fontFamily="icomoon"
+                            fontSize="1.2rem"
+                            color="#63595C"
+                            marginLeft="0.9rem"
+                          >
+                            &#xe927;
+                          </Typography>
+                        </Button>
+                      </Link>
+
+                      
+                      <Link href="/customers/accountList" underline="none">
+                        <Button
+                          variant="standard"
+                          color="primary"
+                          size="large"
+                          sx={{
+                            height: "2.6rem",
+                            backgroundColor: "transparent",
+                            border: "1.4px solid #63595C",
+                            borderRadius: "4px",
+                            ml: "0.5rem",
+                          }}
+                        >
+                          <Typography
+                            letterSpacing={0}
+                            fontSize="80%"
+                            fontWeight="bold"
+                            color="#63595C"
+                          >
+                            Consulta y gestión de cuentas
+                          </Typography>
+
+                          <Typography
+                            fontFamily="icomoon"
+                            fontSize="1.6rem"
+                            color="#63595C"
+                            marginLeft="0.9rem"
+                          >
+                            &#xe905;
+                          </Typography>
+                        </Button>
+                      </Link>
+
+
+                   
+          
       </Box>
+     
 
       <Box container display="flex" flexDirection="column" mt={3}>
         <InputTitles>Buscar cliente</InputTitles>

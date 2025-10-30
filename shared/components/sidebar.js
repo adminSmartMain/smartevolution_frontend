@@ -15,7 +15,7 @@ import {
   ExpandMore as ExpandMoreIcon,
 } from "@mui/icons-material";
 
-import React, { useCallback, useState, useEffect } from "react";
+import React, { useCallback, useState, useEffect, useRef } from "react";
 
 // ================== HOOK PERSONALIZADO PARA VENTANAS ==================
 const useWindowManager = () => {
@@ -231,13 +231,38 @@ const SubMenuItem = ({ subItem, onItemClick, isExpanded }) => {
   );
 };
 
-// 🔥 COMPONENTE HOVER SUBMENU MEJORADO
+// 🔥 COMPONENTE HOVER SUBMENU MEJORADO CON DELAY
 const HoverSubMenu = ({ subItems, anchor, visible, onClose, onItemClick }) => {
+  const timeoutRef = useRef(null);
+  const menuRef = useRef(null);
+
+  const handleMouseEnter = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    timeoutRef.current = setTimeout(() => {
+      onClose();
+    }, 300); // 300ms de delay antes de cerrar
+  };
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
   if (!visible || typeof window === "undefined") return null;
 
   const content = (
     <Paper
-      onMouseLeave={onClose}
+      ref={menuRef}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       sx={{
         position: "fixed",
         top: anchor.top,
@@ -282,9 +307,15 @@ const NavItemWithSubmenu = ({
 
   const [hoverVisible, setHoverVisible] = useState(false);
   const [anchor, setAnchor] = useState({ top: 0, left: 0 });
+  const timeoutRef = useRef(null);
 
   const handleMouseEnter = (e) => {
     if (!isExpanded && subItems?.length > 0) {
+      // Limpiar cualquier timeout pendiente
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      
       const rect = e.currentTarget.getBoundingClientRect();
       setAnchor({
         top: rect.top,
@@ -295,7 +326,12 @@ const NavItemWithSubmenu = ({
   };
 
   const handleMouseLeave = () => {
-    if (!isExpanded) setHoverVisible(false);
+    if (!isExpanded) {
+      // Agregar un pequeño delay antes de ocultar
+      timeoutRef.current = setTimeout(() => {
+        setHoverVisible(false);
+      }, 150); // 150ms de delay
+    }
   };
 
   const handleMainClick = (e) => {
@@ -305,6 +341,15 @@ const NavItemWithSubmenu = ({
     }
     if (!isExpanded) onItemClick?.();
   };
+
+  // Limpiar timeout al desmontar
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   const href = isExpanded && subItems?.length > 0 ? "#" : path.href;
 
@@ -346,7 +391,12 @@ const NavItemWithSubmenu = ({
             subItems={subItems}
             anchor={anchor}
             visible={hoverVisible}
-            onClose={() => setHoverVisible(false)}
+            onClose={() => {
+              if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+              }
+              setHoverVisible(false);
+            }}
             onItemClick={onItemClick}
           />
         )}
@@ -470,7 +520,7 @@ const PRIMARY_SECTIONS = [
           { 
             href: "/bills?=register", 
             text: "Extraer Factura", 
-            openInWindow: true,
+            openInWindow: false,
             windowFeatures: "width=800,height=600"
           },
           { 
@@ -497,8 +547,8 @@ const PRIMARY_SECTIONS = [
           { 
             href: "/operations/electronicSignature", 
             text: "Notificaciones de Compra", 
-            openInWindow: true,
-            windowFeatures: "width=900,height=700"
+            openInWindow: false,
+            
           },
           { href: "/operations", text: "Operaciones Aprobadas" },
           { href: "/administration/new-receipt/receiptList", text: "Consulta de Recaudos" }
