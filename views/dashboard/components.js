@@ -33,6 +33,8 @@ import {
   Legend
 } from "recharts";
 
+
+const API_URL=process.env.NEXT_PUBLIC_API_URL
 export const DashboardContent = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -53,7 +55,7 @@ export const DashboardContent = () => {
     try {
       setLoading(true);
       const response = await fetch(
-        `http://127.0.0.1:8000/api/dashboard?periodo=${selectedPeriod}`
+        `${API_URL}/dashboard?periodo=${selectedPeriod}`
       );
       const result = await response.json();
       if (result.success) setDashboardData(result.data);
