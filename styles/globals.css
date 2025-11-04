@@ -736,9 +736,9 @@ body {
 
 
 .view-title {
-  font-size: 1.5rem;               /* Tamaño de fuente estándar */
-  font-weight: 700;                /* Negrita */
-  color: var(--primary-color);     /* Usa el color principal */
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+  color: var(--primary-color) !important;     /* Usa el color principal */
   margin-bottom: 0px;   
   margin-top: 0px;          /* Espacio inferior */
   flex-wrap: wrap; /* permite que los textos salten de línea si es necesario */
