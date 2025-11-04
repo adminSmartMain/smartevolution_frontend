@@ -1315,11 +1315,13 @@ export const BrochureListComponent = () => {
                             </a>
                             
                             </Link>
-        <Typography
-          className="view-title"
-        >
-          - Consulta y gestión de Prospectos
-        </Typography>
+       <Typography 
+  variant="h5" 
+  component="h1" 
+  className="view-title"
+>
+  - Consulta y gestión de Prospectos
+</Typography>
          </Box>
            <Button
           variant="standard"
