@@ -472,7 +472,7 @@ opExpiration: values.opExpiration ? new Date(values.opExpiration).toISOString().
     Toast("Operación completada con éxito", "success");
     
  setTimeout(() => {
-      window.close();
+      //window.close();
     }, 1500); // 1.5 segundos para que el usuario vea el mensaje de éxito
     
   } catch (error) {

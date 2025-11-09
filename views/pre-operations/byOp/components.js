@@ -21,6 +21,11 @@ import { StandardTextField } from "@styles/fields/BaseField";
 import InputTitles from "@styles/inputTitles";
 import scrollSx from "@styles/scroll";
 import CustomDataGrid from "@styles/tables";
+
+import {
+  Home as HomeIcon,
+
+} from "@mui/icons-material";
 import { DeleteOperation, MassiveUpdateOperation, UpdateOperation,TypeOperation, } from "./queries";
 import { id } from "date-fns/locale";
 import moment from "moment";
@@ -44,12 +49,7 @@ import Pagination from '@mui/material/Pagination';
 import CircularProgress from '@mui/material/CircularProgress';
 import { Tooltip } from "@mui/material";
 // Estilos
-const sectionTitleContainerSx = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  mb: 1
-};
+
 const tableHeaderCellSx = {
       backgroundColor: "#F5F5F5",
       color: "#8C7E82",
@@ -117,6 +117,11 @@ const buttonHeaderPreopTitle = {
   "&:hover": {
     color: "#488B8F"
   }
+};
+const sectionTitleContainerSx = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "rigth",
 };
 
 // Componente de fila expandible
@@ -604,25 +609,37 @@ const handleTextFieldChange = (evt) => {
 
   return (
     <>
-      <BackButton path="/dashboard" />
-      
-      {/* Encabezado */}
-      <Box sx={sectionTitleContainerSx}>
-        <Typography
-          letterSpacing={0}
-          fontSize="1.7rem"
-          fontWeight="regular"
-          color="#5EA3A3"
-        >
-          Operaciones por Grupo
+<Box sx={{ ...sectionTitleContainerSx }}>
+<Box className="view-header">
+
+  <Link href="/dashboard" underline="none">
+                            <a>
+                            <HomeIcon
+                                fontSize="large" 
+                                sx={{ 
+                                  color: '#488b8f',
+                                  opacity: 0.8, // Ajusta la transparencia (0.8 = 80% visible)
+                                  strokeWidth: 1, // Grosor del contorno
+                                }} 
+                              />
+                          
+                            </a>
+                            
+                            </Link>
+                              <Typography
+        className="view-title">
+          - Operaciones por Grupo
         </Typography>
-            
-        <Link href="/operations" passHref>
+</Box>
+ <Link href="/operations" passHref>
           <Button sx={buttonHeaderPreopTitle}>
             Operaciones
           </Button>
         </Link>
-      </Box>
+</Box>
+      
+     
+
 
       {/* Barra de búsqueda y filtros */}
       <Box

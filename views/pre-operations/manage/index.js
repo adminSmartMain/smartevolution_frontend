@@ -411,7 +411,7 @@ const transformData = (data) => {
 // Efecto para manejar la alerta de saldo insuficiente
 useEffect(() => {
   if (dataCreateOperation?.data?.insufficientAccountBalance) {
-    toast(
+    Toast(
       "El monto de la operación es mayor al saldo disponible en la cuenta del cliente",
       "warning"
     );
@@ -480,15 +480,14 @@ const onSubmit = async (values, { setSubmitting }) => {
     setSuccess(true);
     console.log('✅ Todas las operaciones exitosas');
     
-    toast.info(
+    Toast(
       <div>
         <strong>¡Operaciones procesadas!</strong>
         <p>Se procesaron {facturasTransformadas.length} facturas correctamente</p>
         {facturasCreadas.length > 0 && (
           <p>Incluyendo {facturasCreadas.length} facturas creadas</p>
         )}
-      </div>,
-      { autoClose: 2000 }
+      </div>,'success'
     );
  
     await new Promise(resolve => setTimeout(resolve, 5000));
@@ -508,12 +507,12 @@ const onSubmit = async (values, { setSubmitting }) => {
       ? `Errores de validación: ${error.errors.join(', ')}`
       : error.message;
     
-    toast.error(
+    Toast(
       <div>
         <strong>¡Operación cancelada!</strong>
         <p>{errorMessage}</p>
       </div>,
-      { autoClose: 10000 }
+      'error'
     );
     
     if (window.navigator.vibrate) {
@@ -899,7 +898,7 @@ const verificarSaldosFacturas = async (billIds, facturasTransformadas) => {
 
 
 const executeAtomicOperations = async (operations) => {
-  const progressToast = toast.info(`Procesando ${operations.length} operaciones...`, { autoClose: false });
+  const progressToast =Toast(`Procesando ${operations.length} operaciones...`);
 
   try {
     // Preparar payload marcando primeras ocurrencias
@@ -916,7 +915,7 @@ const executeAtomicOperations = async (operations) => {
     const failed = response?.data.failed || [];
     const successful = response?.data.successful || [];
 
-    toast.dismiss(progressToast);
+    Toast(progressToast);
     
  
     return {
@@ -927,7 +926,7 @@ const executeAtomicOperations = async (operations) => {
     };
 
   } catch (error) {
-    toast.dismiss(progressToast);
+    Toast(progressToast,'error');
     return {
       success: false,
       error: error.response?.data?.message || error.message,
