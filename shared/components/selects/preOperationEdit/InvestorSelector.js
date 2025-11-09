@@ -6,6 +6,7 @@ import { TextField, Autocomplete} from '@mui/material';
 import { toast } from "react-toastify";
 import { differenceInDays, startOfDay, addDays } from "date-fns";
 import ErrorIcon from '@mui/icons-material/Error';
+import { Toast } from "@components/toast";
 
 export default function InvestorSelector({setFieldTouched,setFieldError,errors, touched, setFieldValue, values, index, factura, investors, cargarCuentas, cargarTasaDescuento, cargarBrokerFromInvestor, setClientInvestor}) {
 
@@ -73,7 +74,7 @@ export default function InvestorSelector({setFieldTouched,setFieldError,errors, 
                                                     // Verificar si tasaDescuento es undefined
                                                     if (!tasaDescuento) {
                                                         // Mostrar el mensaje de error usando Toast
-                                                      toast("Disculpe, el cliente seleccionado no tiene perfil de riesgo configurado. Por favor, agrege el perfil en el módulo de clientes", "error");
+                                                      Toast("Disculpe, el cliente seleccionado no tiene perfil de riesgo configurado. Por favor, agrege el perfil en el módulo de clientes", "warning");
                                                         return; // Detener la ejecución si tasaDescuento es undefined
                                                       }
                                              

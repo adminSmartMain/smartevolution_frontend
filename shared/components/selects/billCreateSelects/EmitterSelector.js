@@ -2,7 +2,7 @@ import React from "react";
 import { toast } from "react-toastify";
 import { Autocomplete, TextField, Box, Button } from "@mui/material";
 import ErrorIcon from '@mui/icons-material/Error';
-
+import { Toast } from "@components/toast";
 export default function EmitterSelector({
   errors,
   payers,
@@ -93,7 +93,7 @@ setFieldValue('billdId', values.factura);
   };
 
   const showRiskProfileError = () => {
-    toast(
+    Toast(
       <Box display="flex" alignItems="center">
         <ErrorIcon style={{ marginRight: '10px', color: '#d32f2f' }} />
         <span>
@@ -101,14 +101,7 @@ setFieldValue('billdId', values.factura);
           Por favor, agregue el perfil en el módulo de clientes
         </span>
       </Box>,
-      {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      }
+      'warning'
     );
   };
 

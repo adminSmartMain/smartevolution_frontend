@@ -1,186 +1,158 @@
-import { useContext, useMemo, useState } from "react";
-
+import { useContext, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
-
 import {
   AppBar,
   Avatar,
   Box,
-  Drawer,
-  IconButton,
+  Toolbar,
   Menu,
   MenuItem,
-  Toolbar,
-  Typography,
-  useMediaQuery,
+  IconButton,
 } from "@mui/material";
-
-import HeaderButton from "@styles/buttons/button_2";
-
-import Navbar from "./sidebar";
-
+import MenuIcon from "@mui/icons-material/Menu";
 import authContext from "@context/authContext";
 
-const navSpacingSx = {
+const getNavSpacingSx = {
   backgroundColor: "#EBEBEB",
-  borderBottom: "1.4px solid #5EA3A380",
-  p: "0% 5%",
-
-  justifyContent: "center",
-
-  "@media all and (display-mode: fullscreen)": {
-    height: "10vh",
-  },
-
-  "@media only screen and (max-width: 1600px)": {
-    "&": {
-      p: "0% max(2.5%, 32px)",
-    },
-  },
+  transition: "all 0.3s ease-in-out",
+  position: "fixed",
+  top: 0,
+  left: 0,
+  right: 0,
+  width: "100%",
+  zIndex: 1300,
 };
 
-const iconWrapperSx = {
-  width: 24,
-  height: 24,
-
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-
-  color: "#488B8F",
-  fontSize: 19,
-};
-
-const imageWrapperSx = {
-  aspectRatio: "90/30",
-  width: "max(90px + 2vw, 45px)",
-};
-
-const HomeIcon = (props) => {
-  const { sx, ...rest } = props;
-
-  return <Typography sx={{ ...sx }}></Typography>;
-};
-
-export default function Header() {
-  const [drawerOpen, setDrawerOpen] = useState(false);
+export default function Header({
+  isSidebarExpanded,
+  onToggleSidebar,
+  onToggleMobile,
+  user,
+}) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
-
-  const { user, logout } = useContext(authContext);
-
-  const downScale = useMediaQuery("(max-width: 1600px)");
+  const { logout } = useContext(authContext);
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
   };
 
-  const handleOpenDrawer = () => {
-    setDrawerOpen(true);
-  };
-
-  const handleCloseDrawer = (event) => {
-    if (
-      event.type === "keydown" &&
-      (event.key === "Tab" || event.key === "Shift")
-    ) {
-      return;
-    }
-
-    setDrawerOpen(false);
-  };
-
-  const handleClose = (evt, any) => {
+  const handleClose = (evt, reason) => {
     setAnchorEl(null);
-    if (!any) logout();
+    if (reason !== "backdropClick") {
+      logout();
+    }
   };
 
-  const nameInitials = useMemo(
-    () =>
-      (user &&
-        user.name
-          .split(" ")
-          .map((name, i) => {
-            if (i > 1 || !name) return;
-            return name[0].toUpperCase();
-          })
-          .join("")) ||
-      "XD",
-    [user.name]
-  );
+  const nameInitials = user?.name
+    ? user.name
+        .split(" ")
+        .map((n, i) => (i > 1 || !n ? "" : n[0]?.toUpperCase()))
+        .join("")
+    : "US";
 
   return (
-    <>
-      <AppBar
-        elevation={0}
-        position="relative" // static, fixed, absolute, sticky, relative
-        sx={{ ...navSpacingSx }}
+    <AppBar elevation={0} position="fixed" sx={getNavSpacingSx}>
+      <Toolbar
+        disableGutters
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          minHeight: "72px !important",
+          px: 0, // sin padding lateral
+        }}
       >
-        <Toolbar disableGutters>
-          <>
-            {downScale && (
-              <IconButton sx={{ mr: 1 }} onClick={handleOpenDrawer}>
-                <Box sx={{ ...iconWrapperSx }}>
-                  <i className="fas fa-bars" />
-                </Box>
-              </IconButton>
-            )}
+        {/* IZQUIERDA: Logo + Hamburguesa */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+          }}
+        >
+          {/* Logo - SOLO EN DESKTOP */}
+          <Box
+            sx={{
+              width: "130px",
+              height: "40px",
+              display: { xs: "none", lg: "flex" }, // ← OCULTO EN MÓVIL
+              alignItems: "center",
+              justifyContent: "flex-start",
+              ml: { xs: 1, md: 2 },
+            }}
+          >
+            <Image
+              src="/assets/Logo Smart - Lite.svg"
+              width={130}
+              height={40}
+              alt="Smart Evolution"
+              style={{
+                objectFit: "contain",
+              }}
+            />
+          </Box>
 
-            <Link href="/dashboard" passHref>
-              <a>
-                <Box sx={imageWrapperSx}>
-                  <Image
-                    layout="responsive"
-                    src="/assets/Logo Smart - Lite.svg"
-                    width={90}
-                    height={30}
-                    alt=""
-                  />
-                </Box>
-              </a>
-            </Link>
-          </>
+          {/* Botón hamburguesa - Desktop */}
+          <IconButton
+            onClick={onToggleSidebar}
+            sx={{
+              color: "text.primary",
+              display: { xs: "none", lg: "flex" },
+              ml: 0,
+            }}
+          >
+            <MenuIcon />
+          </IconButton>
 
-          <Box flexGrow={1} />
+          {/* Botón hamburguesa - Mobile */}
+          <IconButton
+            onClick={onToggleMobile}
+            sx={{
+              color: "text.primary",
+              display: { xs: "flex", lg: "none" },
+              ml: { xs: 1, lg: 0 }, // ← Margen en móvil para separar del borde
+            }}
+          >
+            <MenuIcon />
+          </IconButton>
+        </Box>
 
+        {/* DERECHA: Avatar */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "flex-end",
+            pr: { xs: 2, sm: 3, md: 4 },
+          }}
+        >
           <Avatar
-            id="menu-button"
-            aria-controls={open ? "basic-menu" : undefined}
-            aria-haspopup="true"
-            aria-expanded={open ? "true" : undefined}
             onClick={handleClick}
-            sx={{ backgroundColor: "#488B8F", fontSize: 16, cursor: "pointer" }}
+            sx={{
+              backgroundColor: "#488B8F",
+              fontSize: 16,
+              cursor: "pointer",
+              width: 40,
+              height: 40,
+            }}
           >
             {nameInitials}
           </Avatar>
-          <Menu
-            id="basic-menu"
-            anchorEl={anchorEl}
-            open={open}
-            onClose={handleClose}
-            MenuListProps={{
-              "aria-labelledby": "menu-button",
-            }}
-            transformOrigin={{ horizontal: "right", vertical: "top" }}
-            anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
-          >
-            <MenuItem dense onClick={handleClose}>
-              Cerrar sesión
-            </MenuItem>
-          </Menu>
-        </Toolbar>
-      </AppBar>
-
-      <Drawer anchor="left" open={drawerOpen} onClose={handleCloseDrawer}>
-        <Box sx={{ width: 300, height: "100vh" }}>
-          <Navbar
-            onClick={() => {
-              setDrawerOpen(false);
-            }}
-          />
         </Box>
-      </Drawer>
-    </>
+
+        <Menu
+          anchorEl={anchorEl}
+          open={open}
+          onClose={handleClose}
+          transformOrigin={{ horizontal: "right", vertical: "top" }}
+          anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+        >
+          <MenuItem dense onClick={handleClose}>
+            Cerrar sesión
+          </MenuItem>
+        </Menu>
+      </Toolbar>
+    </AppBar>
   );
 }

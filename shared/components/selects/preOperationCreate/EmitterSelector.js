@@ -7,6 +7,7 @@ import ErrorIcon from '@mui/icons-material/Error'; // o cualquier otro ícono de
 
 import { TextField } from '@mui/material';
 import { el } from "date-fns/locale";
+import { Toast } from "@components/toast";
 
 
 
@@ -33,7 +34,7 @@ export default function EmitterSelector({setClientPagador, orchestDisabled, setI
               event.stopPropagation();
 
               // 2. Opcional: Mostrar feedback al usuario
-              toast.info("No se puede borrar el emisor mientras existan facturas creadas");
+             Toast("No se puede borrar el emisor mientras existan facturas creadas");
 
               // 3. Forzar el valor actual
               return values.emitter;
@@ -228,20 +229,12 @@ export default function EmitterSelector({setClientPagador, orchestDisabled, setI
               // Mostrar toast/notificación
 
 
-              toast(
+              Toast(
                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <ErrorIcon style={{ marginRight: '10px', color: '#d32f2f' }} />
+                  
                   <span>Disculpe, el cliente seleccionado no tiene perfil de riesgo configurado. Por favor, agrege el perfil en el módulo de clientes</span>
                 </div>,
-                {
-                  position: "top-right",
-                  autoClose: 5000,
-                  hideProgressBar: false,
-                  closeOnClick: true,
-                  pauseOnHover: true,
-                  draggable: true,
-                  progress: undefined,
-                }
+                'warning'
               );
 
               return; // Detener la ejecución si tasaDescuento es undefined
@@ -332,17 +325,10 @@ export default function EmitterSelector({setClientPagador, orchestDisabled, setI
             if (!tasaDescuento) {
               // Mostrar el mensaje de error usando Toast
               // Mostrar toast/notificación
-              toast(<div style={{ display: 'flex', alignItems: 'center' }}>
+              Toast(<div style={{ display: 'flex', alignItems: 'center' }}>
                 <ErrorIcon style={{ marginRight: '10px', color: '#d32f2f' }} />
                 <span>Disculpe, el cliente seleccionado no tiene perfil de riesgo configurado. Por favor, agrege el perfil en el módulo de clientes</span>
-              </div>, {
-                position: "bottom-right",
-                autoClose: 5000,
-                hideProgressBar: false,
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true
-              });
+              </div>, 'warning');
 
               return; // Detener la ejecución si tasaDescuento es undefined
             }

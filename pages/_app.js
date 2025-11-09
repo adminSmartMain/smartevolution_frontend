@@ -6,13 +6,12 @@ import { useRouter } from "next/router";
 import { ThemeProvider } from "@mui/material/styles";
 
 import Layout from "@components/layout";
-
+import { SidebarProvider } from '@context/sideBarContext';
 import "../public/icomoon/style.css";
 import "../styles/globals.css";
 import theme from "../styles/themes";
 
 import { AuthProvider } from "@context/authContext";
-
 
 const pathsWithoutDefaultLayout = [
   "/",
@@ -41,7 +40,7 @@ function MyApp({ Component, pageProps }) {
     <>
       <ThemeProvider theme={theme}>
         <AuthProvider>
-      
+          <SidebarProvider>
 <>
             <Head>
               <title>Smart Evolution</title>
@@ -57,6 +56,7 @@ function MyApp({ Component, pageProps }) {
             )}
           </>
 
+          </SidebarProvider>
           
         </AuthProvider>
       </ThemeProvider>

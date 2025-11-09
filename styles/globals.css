@@ -272,11 +272,15 @@ body {
   margin: 20px 0;
 }
 
-.Toastify__toast--error {
-  border: 1px solid #eb5757;
-  border-radius: 50px !important;
-  background: #fae1e2 !important;
+:root .Toastify__toast--error {
+  background-color: #d80000 !important;
+  color: #ffffff !important;
+  border: 1px !important;
+  border-radius: 10px !important;
+
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.25) !important;
 }
+
 
 .Toastify__toast--error::after {
   position: absolute;
@@ -294,9 +298,9 @@ body {
   top: 6px;
 }
 .Toastify__toast--success {
-  border: 1px solid #3a9ea5 !important;
-  border-radius: 50px !important;
-  background: #f0f9fa !important;
+  border: 1px solid #00b050 !important;
+  border-radius: 10px !important;
+  background:#00b050!important;
   padding-left: 10px;
 }
 .Toastify__toast--success::before {
@@ -314,9 +318,9 @@ body {
   padding-top: 14px !important;
 }
 .Toastify__toast--warning {
-  border: 1px solid #e78326 !important;
-  border-radius: 50px !important;
-  background: #fadfc5 !important;
+  border: 1px solid #ffe609 !important;
+  border-radius: 10px !important;
+  background: #ffe609 !important;
 }
 .Toastify__toast--warning::before {
   position: relative;
@@ -335,8 +339,8 @@ body {
 
 .Toastify__toast--info {
   border: 1px solid #63b0cd !important;
-  border-radius: 50px !important;
-  background: white !important;
+  border-radius:10px !important;
+  background: #63b0cd !important;
 }
 
 .Toastify__toast--info::before {
@@ -505,11 +509,11 @@ body {
   }
   
   .badge.cancelada {
-    background-color: #488B8F; /* rojo  para 'Cancelado' */
+    background-color: #9B9B9B; /* rojo  para 'Cancelado' */
   }
   
   .badge.vencido {
-    background-color: #3f3f3f; /* Gris Naranja para 'Vencido' */
+    background-color: #CA0B0B; /* Gris Naranja para 'Vencido' */
   }
   
 
@@ -631,9 +635,6 @@ body {
   flex-wrap: wrap;  /* Permitir que los elementos se acomoden cuando no haya espacio suficiente */
 }
 
-.date-picker-container {
-  margin-right: 16px;
-}
 
 .button-header-preop {
   padding: 8px 16px;
@@ -661,27 +662,14 @@ body {
   border: 1px solid #488B8F; /* Borde azul */
   background-color: #488B8F;
   color: white; /* Texto azul */
-  margin-right: 10px; /* Espacio entre botones */
+  margin-right: 0px; /* Espacio entre botones */
   transition: background-color 0.3s;
-  margin-left: 10px;
+  margin-left: 0px;
   display: flex;
   align-items: center;
-  gap: 8px; /* Espacio entre texto e icono
+  gap: 8px; 
 }
 
-.button-header-preop:hover {
-  background-color: #E3F2FD; /* Azul muy claro al pasar mouse */
-}
-
-/* Estilo para el botón principal */
-.button-header-preop-primary {
-  background-color: #488B8F; /* Azul */
-  color: white;
-}
-
-.button-header-preop-primary:hover {
-  background-color: #488B8F; /* Azul un poco más oscuro */
-}
 
 .button-header-preop-title {
   padding: 6px 12px;       /* Reducido el padding */
@@ -694,11 +682,23 @@ body {
   cursor: pointer;
   transition: all 0.3s ease;
   margin-right: 10px;      /* Menor margen entre botones */
-  height: 32px;            /* Altura fija para consistencia */
+  height: 32px;  
+  width: 150px;          /* Altura fija para consistencia */
   display: inline-flex;    /* Para mejor alineación */
   align-items: center;     /* Centra el texto verticalmente */
   justify-content: center; /* Centra el texto horizontalmente */
 }
+/* Estilo para el botón principal */
+.button-header-preop-primary {
+  background-color: #488B8F; /* Azul */
+  color: white;
+}
+
+.button-header-preop-primary:hover {
+  background-color: #488B8F; /* Azul un poco más oscuro */
+}
+
+
 
 /* Efecto hover */
 .button-header-preop-title:hover {
@@ -730,4 +730,51 @@ body {
 .MuiInputBase-input.Mui-disabled {
   -webkit-text-fill-color: #333333 !important;
   color: #333333 !important;
+}
+
+
+
+
+.view-title {
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+  color: var(--primary-color) !important;     /* Usa el color principal */
+  margin-bottom: 0px;   
+  margin-top: 0px;          /* Espacio inferior */
+  flex-wrap: wrap; /* permite que los textos salten de línea si es necesario */
+}
+
+/* Título adaptado para móviles */
+@media (max-width: 768px) {
+  .view-title {
+    flex-direction: column;
+    align-items: flex-start; /* Alinea los textos a la izquierda */
+    font-size: 1.4rem;
+    margin-bottom: 12px;
+    
+  }
+}
+
+/* === Contenedor global de cabeceras de vista === */
+.view-header {
+  display: flex;
+
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+
+/* En móviles, el título arriba y el subtítulo debajo */
+@media (max-width: 768px) {
+  .view-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .view-header .view-title,
+  .view-header .view-subtitle {
+    width: 100%; /* Que ocupen todo el ancho disponible */
+  }
 }
