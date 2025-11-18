@@ -100,7 +100,7 @@ export default function EmitterSelector({
         p?.data?.document_number &&
         payerIdsUnicos.includes(p.data.document_number)
       );
-       console.log(pagadoresFiltrados)
+      
       setFieldValue('arrayPayers', pagadoresFiltrados);
     }
   };
@@ -121,7 +121,7 @@ export default function EmitterSelector({
       emisor?.data?.document_number === values.emitterId
     ) || null;
   };
-  console.log(integrationCode,integrationCode != "")
+
   return (
     <Autocomplete
       id="emitter-name"

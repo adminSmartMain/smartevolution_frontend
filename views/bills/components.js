@@ -14,7 +14,7 @@ import {
   IconButton,
   Switch,
   TextField,
-  Typography,
+  Typography, Modal,
 } from "@mui/material";
 import {
   GridToolbarContainer,
@@ -38,10 +38,60 @@ import CustomTooltip from "@styles/customTooltip";
 import InputTitles from "@styles/inputTitles";
 import CustomDataGrid from "@styles/tables";
 
-import { ReadBills, ReadCreditNotes, SaveBills } from "./queries";
+import { ReadBills, ReadCreditNotes, SaveBills,GetBillEvents } from "./queries";
 
 import moment from "moment";
-
+const SelectionModal = ({ open, onClose, onSelect }) => {
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      aria-labelledby="selection-modal"
+      aria-describedby="select-destination"
+    >
+      <Box sx={{
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: 400,
+        bgcolor: 'background.paper',
+        boxShadow: 24,
+        p: 4,
+        borderRadius: 2
+      }}>
+        <Typography variant="h6" component="h2" gutterBottom>
+          Seleccionar Destino
+        </Typography>
+        <Typography sx={{ mt: 2, mb: 3 }}>
+          ¿A dónde deseas enviar las facturas?
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+          <Button
+            variant="contained"
+            onClick={() => onSelect(true)}
+            sx={{
+              backgroundColor: "#488B8F",
+              "&:hover": { backgroundColor: "#3a7073" }
+            }}
+          >
+            Patrimonio Autonomo
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => onSelect(false)}
+            sx={{
+              backgroundColor: "#488B8F",
+              "&:hover": { backgroundColor: "#3a7073" }
+            }}
+          >
+            Smart Evolution
+          </Button>
+        </Box>
+      </Box>
+    </Modal>
+  );
+};
 export const BillsComponents = () => {
   const [rowsToModify, setRowsToModify] = useState([]);
   const [rowsToApplyRETIVA, setRowsToApplyRETIVA] = useState([]);
@@ -52,11 +102,17 @@ export const BillsComponents = () => {
   const [retIVA, setRetIVA] = useState({});
   const [retICA, setRetICA] = useState({});
   const [retFTE, setRetFTE] = useState({});
-
+  const [avisoModalOpen,setAvisoModalOpen]=useState(true)
+  // Estados para el modal de selección
+  const [showModal, setShowModal] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState(null);
+  const [fideicomiso, setFideicomiso] = useState(null); // Nuevo estado
   const billFile = useRef();
   const creditNoteFile = useRef();
-
-  const router = useRouter();
+const router = useRouter();
+const [showBillyModal, setShowBillyModal] = useState(false);
+const [duplicatedBillyList, setDuplicatedBillyList] = useState([]);
+  
 
   //Add a route to go back to the previous page
 
@@ -67,12 +123,18 @@ export const BillsComponents = () => {
     data: dataReadBills,
   } = useFetch({ service: ReadBills, init: false });
 
-  useEffect(() => {
-    if (filesBill && filesBill.length > 0) {
-      const billsToSend = { bills: filesBill };
-      fetchReadBills(billsToSend);
-    }
-  }, [filesBill]);
+// Reemplaza el useEffect actual por este:
+useEffect(() => {
+  if (filesBill && filesBill.length > 0 && fideicomiso !== null) {
+    const billsToSend = { 
+      bills: filesBill,
+      fideicomiso: fideicomiso 
+    };
+    fetchReadBills(billsToSend);
+    // Resetear el estado después de enviar
+    setFideicomiso(null);
+  }
+}, [filesBill, fideicomiso]);
 
   useToatsStatus(
     loadingReadBills,
@@ -83,26 +145,79 @@ export const BillsComponents = () => {
     errorReadBills?.message
   );
 
-  useToatsStatus(
-    loadingReadBills,
-    dataReadBills,
-    errorReadBills,
-    (loading, data, error) =>
-      data?.bills.length == 0 && data?.duplicatedBills.length > 0,
-    "Facturas cargadas anteriormente",
-    errorReadBills?.message
-  );
+// Toast para facturas duplicadas en Billy (warning)
+useToatsStatus(
+  loadingReadBills,
+  dataReadBills,
+  errorReadBills,
+  (loading, data, error) => data?.duplicatedBillyBills?.length > 0,
+  `⚠️ ${dataReadBills?.duplicatedBillyBills?.length} facturas ya existían en Billy`,
+  null,
+  "warning"
+);
 
-  const onChangeFilesExtractBill = async (e) => {
-    const files = e.target.files;
+// Toast para facturas duplicadas localmente (info)
+useEffect(() => {
+  if (dataReadBills?.duplicatedLocalBills?.length > 0) {
+    Toast(`${dataReadBills.duplicatedLocalBills.length} facturas ya estaban en la base de datos`,
+      "warning"
+    );
+  }
+}, [dataReadBills?.duplicatedLocalBills?.length]);
+// Toast para facturas fallidas (error)
+useToatsStatus(
+  loadingReadBills,
+  dataReadBills,
+  errorReadBills,
+  (loading, data, error) => data?.failedBills?.length > 0,
+  `❌ ${dataReadBills?.failedBills?.length} facturas no pudieron ser procesadas`,
+  "Revise los archivos e intente nuevamente",
+  "error"
+);
 
-    let b64Files = [];
-    for (const file of files) {
-      const b64File = await fileToBase64(file);
-      b64Files.push(b64File);
+// Efecto para mostrar modal cuando hay facturas duplicadas en Billy
+useEffect(() => {
+  if (!loadingReadBills && dataReadBills) {
+    const { duplicatedBillyBills = [] } = dataReadBills;
+
+    if (duplicatedBillyBills.length > 0) {
+      setDuplicatedBillyList(duplicatedBillyBills);
+      setShowBillyModal(true);
     }
-    setFilesBill(b64Files);
-  };
+  }
+}, [loadingReadBills, dataReadBills]);
+
+// También puedes agregar un toast combinado para el escenario mixto
+useToatsStatus(
+  loadingReadBills,
+  dataReadBills,
+  errorReadBills,
+  (loading, data, error) => {
+    if (!data) return false;
+    return data.bills?.length > 0 && 
+           (data.duplicatedBillyBills?.length > 0 || data.duplicatedLocalBills?.length > 0);
+  },
+  `📊 Resumen: ${dataReadBills?.bills?.length} nuevas, ${dataReadBills?.duplicatedBillyBills?.length} en Billy, ${dataReadBills?.duplicatedLocalBills?.length} en BD`,
+  null,
+  "info"
+);
+
+
+
+// Cambia la función onChangeFilesExtractBill por esta:
+const onChangeFilesExtractBill = async (e) => {
+  const files = e.target.files;
+
+  let b64Files = [];
+  for (const file of files) {
+    const b64File = await fileToBase64(file);
+    b64Files.push(b64File);
+  }
+  
+  // Guardar los archivos en base64 y mostrar modal
+  setPendingFiles(b64Files);
+  setShowModal(true);
+};
 
   const {
     fetch: fetchReadCreditNotes,
@@ -166,6 +281,8 @@ useEffect(() => {
       }, 2000);
     }
   }, [dataSaveBills]);
+
+
 
   const onChangeFilesCreditNote = (e) => {
     const formData = new FormData();
@@ -325,163 +442,238 @@ console.log(bill)
   }
 
   useEffect(() => {
+  const fetchBillsWithEvents = async () => {
     if (dataReadBills) {
       let Bills = [];
-      dataReadBills.bills.map((billToMap) => {
-        Bills.push({
-          id: billToMap.billId,
-          billId: billToMap.billId,
-          typeBill: billToMap.typeBill,
-          emitterName: billToMap.emitterName,
-          emitterId: billToMap.emitterId,
-          currentOwner: billToMap.currentOwner,
-          payerId: billToMap.payerId,
-          payerName: billToMap.payerName,
-          dateBill: billToMap.dateBill,
-          datePayment: billToMap.datePayment,
-          expirationDate: billToMap.datePayment,
-          billValue: billToMap.billValue,
-          iva: billToMap.iva,
-          cufe: billToMap.cufe,
-          file: billToMap.file,
+      
+      // Mapeo CORREGIDO de códigos de eventos API a UUID de la base de datos
+      const eventCodeToUUID = {
+        '030': '07c61f28-83f8-4f91-b965-f685f86cf6bf', // Acuse de recibo
+        '032': '141db270-23ec-49c1-87a7-352d5413d309', // Recibo del bien
+        '033': 'c508eeb3-e0e8-48e8-a26f-5295f95c1f1f', // Aceptación expresa
+        '034': 'e76e9b7a-baeb-4972-b76e-3a8ce2d4fa30', // Aceptación tácita
+        '036': 'b8d4f8d3-aded-4b1f-873e-46c89a2538ed', // Primera inscripción RADIAN
+        '037': '3ea77762-7208-457a-b035-70069ee42b5e', // Endoso con responsabilidad
+        '038': '0e333b6b-27b1-4aaf-87ce-ad60af6e52e6', // Endoso en garantía
+        '046': 'f5d475c0-4433-422f-b3d2-7964ea0aa5c4'  // Informe para el pago
+      };
 
-          events:
-            billToMap.events && billToMap.events.length > 0
-              ? billToMap.events
-              : [],
-          n_events:
-            billToMap.events && billToMap.events.length > 0
-              ? billToMap.events.length
-              : 0,
-          lastEventDate:
-            billToMap.events && billToMap.events.length > 0
-              ? getLastEvent(billToMap.events).date
-              : null,
-          lastEventDescription:
-            billToMap.events && billToMap.events.length > 0
-              ? getLastEvent(billToMap.events).description
-              : null,
-          ret_iva: retIVA[billToMap.billId] ? retIVA[billToMap.billId] : 0,
-          creditNotes:
-            dataReadCreditNotes !== null &&
-            dataReadCreditNotes !== undefined &&
-            dataReadCreditNotes !== []
-              ? dataReadCreditNotes.data?.filter(
-                  (creditNote) =>
-                    creditNote.associatedInvoice === billToMap.billId
-                )
-              : [],
-          creditNotesValue:
-            dataReadCreditNotes !== null &&
-            dataReadCreditNotes !== undefined &&
-            dataReadCreditNotes !== []
-              ? sumOfAllCreditNotes(dataReadCreditNotes.data, billToMap.billId)
-              : 0,
+      // Usar Promise.all para obtener eventos para todas las facturas
+      const billsWithEvents = await Promise.all(
+        dataReadBills.bills.map(async (billToMap) => {
+          try {
+            // Obtener los eventos desde la API usando el CUFE
+         
+            
+            // Extraer los eventos de la respuesta según la estructura de Postman
+            const eventsFromAPI = eventsData?.data?.attributes?.events || [];
+            
+            // Mapear los eventos al formato que necesitas CON LOS UUID CORRECTOS
+            const formattedEvents = eventsFromAPI.map(event => {
+              const eventUUID = eventCodeToUUID[event.code];
+              if (!eventUUID) {
+                console.warn(`Código de evento no mapeado: ${event.code}`);
+                return null; // Saltar eventos no mapeados
+              }
+              return {
+                event: eventUUID, // Usar el UUID de la base de datos
+                description: event.details?.[0]?.description || '',
+                date: event.details?.[0]?.timestamp 
+                  ? new Date(event.details[0].timestamp).toISOString().split('T')[0]
+                  : ''
+              };
+            }).filter(event => event !== null); // Filtrar eventos no mapeados
 
-          other_ret:
-            otherRet[billToMap.billId] && otherRet[billToMap.billId] !== ""
-              ? parseFloat(otherRet[billToMap.billId])
-              : 0,
-          ret_ica:
-            retICA[billToMap.billId] && retICA[billToMap.billId] !== ""
-              ? (retICA[billToMap.billId] / 100) * billToMap.billValue
-              : 0,
-          ret_fte:
-            retFTE[billToMap.billId] && retFTE[billToMap.billId] !== ""
-              ? (retFTE[billToMap.billId] / 100) * billToMap.billValue
-              : 0,
-          subTotal:
-            dataReadCreditNotes !== null &&
-            dataReadCreditNotes !== undefined &&
-            dataReadCreditNotes !== []
-              ? billToMap.subTotal -
-                sumOfAllCreditNotes(dataReadCreditNotes.data, billToMap.billId)
-              : billToMap.subTotal,
-          currentBalance:
-            dataReadCreditNotes !== null &&
-            dataReadCreditNotes !== undefined &&
-            dataReadCreditNotes !== []
-              ? Math.round(
-                  billToMap.subTotal -
-                    (retICA[billToMap.billId] && retICA[billToMap.billId] !== ""
-                      ? (retICA[billToMap.billId] / 100) * billToMap.billValue
-                      : 0) -
-                    (retFTE[billToMap.billId] && retFTE[billToMap.billId] !== ""
-                      ? (retFTE[billToMap.billId] / 100) * billToMap.billValue
-                      : 0) -
-                    (otherRet[billToMap.billId] &&
-                    otherRet[billToMap.billId] !== ""
-                      ? parseFloat(otherRet[billToMap.billId])
-                      : 0) -
-                    (retIVA[billToMap.billId] ? retIVA[billToMap.billId] : 0) -
-                    sumOfAllCreditNotes(
-                      dataReadCreditNotes.data,
-                      billToMap.billId
+            // Crear el objeto de factura con los eventos de la API
+            return {
+              id: billToMap.billId,
+              billId: billToMap.billId,
+              typeBill: billToMap.typeBill,
+              emitterName: billToMap.emitterName,
+              emitterId: billToMap.emitterId,
+              currentOwner: billToMap.currentOwner,
+              payerId: billToMap.payerId,
+              payerName: billToMap.payerName,
+              dateBill: billToMap.dateBill,
+              datePayment: billToMap.datePayment,
+              expirationDate: billToMap.datePayment,
+              billValue: billToMap.billValue,
+              iva: billToMap.iva,
+              cufe: billToMap.cufe,
+              file: billToMap.file,
+
+              // Usar los eventos desde la API CON UUID
+              events: formattedEvents,
+              n_events: formattedEvents.length,
+              lastEventDate: formattedEvents.length > 0
+                ? getLastEvent(formattedEvents).date
+                : null,
+              lastEventDescription: formattedEvents.length > 0
+                ? getLastEvent(formattedEvents).description
+                : null,
+              ret_iva: retIVA[billToMap.billId] ? retIVA[billToMap.billId] : 0,
+              creditNotes:
+                dataReadCreditNotes !== null &&
+                dataReadCreditNotes !== undefined &&
+                dataReadCreditNotes !== []
+                  ? dataReadCreditNotes.data?.filter(
+                      (creditNote) =>
+                        creditNote.associatedInvoice === billToMap.billId
                     )
-                )
-              : Math.round(
-                  billToMap.subTotal -
-                    (retICA[billToMap.billId] && retICA[billToMap.billId] !== ""
-                      ? (retICA[billToMap.billId] / 100) * billToMap.billValue
-                      : 0) -
-                    (retFTE[billToMap.billId] && retFTE[billToMap.billId] !== ""
-                      ? (retFTE[billToMap.billId] / 100) * billToMap.billValue
-                      : 0) -
-                    (otherRet[billToMap.billId] &&
-                    otherRet[billToMap.billId] !== ""
-                      ? parseFloat(otherRet[billToMap.billId])
-                      : 0) -
-                    (retIVA[billToMap.billId] ? retIVA[billToMap.billId] : 0)
-                ),
-                total:
-            dataReadCreditNotes !== null &&
-            dataReadCreditNotes !== undefined &&
-            dataReadCreditNotes !== []
-              ? Math.round(
-                  billToMap.subTotal -
-                    (retICA[billToMap.billId] && retICA[billToMap.billId] !== ""
-                      ? (retICA[billToMap.billId] / 100) * billToMap.billValue
-                      : 0) -
-                    (retFTE[billToMap.billId] && retFTE[billToMap.billId] !== ""
-                      ? (retFTE[billToMap.billId] / 100) * billToMap.billValue
-                      : 0) -
-                    (otherRet[billToMap.billId] &&
-                    otherRet[billToMap.billId] !== ""
-                      ? parseFloat(otherRet[billToMap.billId])
-                      : 0) -
-                    (retIVA[billToMap.billId] ? retIVA[billToMap.billId] : 0) -
-                    sumOfAllCreditNotes(
-                      dataReadCreditNotes.data,
-                      billToMap.billId
-                    )
-                )
-              : Math.round(
-                  billToMap.subTotal -
-                    (retICA[billToMap.billId] && retICA[billToMap.billId] !== ""
-                      ? (retICA[billToMap.billId] / 100) * billToMap.billValue
-                      : 0) -
-                    (retFTE[billToMap.billId] && retFTE[billToMap.billId] !== ""
-                      ? (retFTE[billToMap.billId] / 100) * billToMap.billValue
-                      : 0) -
-                    (otherRet[billToMap.billId] &&
-                    otherRet[billToMap.billId] !== ""
-                      ? parseFloat(otherRet[billToMap.billId])
-                      : 0) -
-                    (retIVA[billToMap.billId] ? retIVA[billToMap.billId] : 0)
-                ),
-        });
-        billToMap.sameCurrentOwner
-          ? null
-          : Toast(
-              "Algunas facturas no tienen el mismo legítimo tenedor",
-              "error"
-            );
-      });
+                  : [],
+              creditNotesValue:
+                dataReadCreditNotes !== null &&
+                dataReadCreditNotes !== undefined &&
+                dataReadCreditNotes !== []
+                  ? sumOfAllCreditNotes(dataReadCreditNotes.data, billToMap.billId)
+                  : 0,
 
-      setBill(Bills);
+              other_ret:
+                otherRet[billToMap.billId] && otherRet[billToMap.billId] !== ""
+                  ? parseFloat(otherRet[billToMap.billId])
+                  : 0,
+              ret_ica:
+                retICA[billToMap.billId] && retICA[billToMap.billId] !== ""
+                  ? (retICA[billToMap.billId] / 100) * billToMap.billValue
+                  : 0,
+              ret_fte:
+                retFTE[billToMap.billId] && retFTE[billToMap.billId] !== ""
+                  ? (retFTE[billToMap.billId] / 100) * billToMap.billValue
+                  : 0,
+              subTotal:
+                dataReadCreditNotes !== null &&
+                dataReadCreditNotes !== undefined &&
+                dataReadCreditNotes !== []
+                  ? billToMap.subTotal -
+                    sumOfAllCreditNotes(dataReadCreditNotes.data, billToMap.billId)
+                  : billToMap.subTotal,
+              currentBalance:
+                dataReadCreditNotes !== null &&
+                dataReadCreditNotes !== undefined &&
+                dataReadCreditNotes !== []
+                  ? Math.round(
+                      billToMap.subTotal -
+                        (retICA[billToMap.billId] && retICA[billToMap.billId] !== ""
+                          ? (retICA[billToMap.billId] / 100) * billToMap.billValue
+                          : 0) -
+                        (retFTE[billToMap.billId] && retFTE[billToMap.billId] !== ""
+                          ? (retFTE[billToMap.billId] / 100) * billToMap.billValue
+                          : 0) -
+                        (otherRet[billToMap.billId] &&
+                        otherRet[billToMap.billId] !== ""
+                          ? parseFloat(otherRet[billToMap.billId])
+                          : 0) -
+                        (retIVA[billToMap.billId] ? retIVA[billToMap.billId] : 0) -
+                        sumOfAllCreditNotes(
+                          dataReadCreditNotes.data,
+                          billToMap.billId
+                        )
+                    )
+                  : Math.round(
+                      billToMap.subTotal -
+                        (retICA[billToMap.billId] && retICA[billToMap.billId] !== ""
+                          ? (retICA[billToMap.billId] / 100) * billToMap.billValue
+                          : 0) -
+                        (retFTE[billToMap.billId] && retFTE[billToMap.billId] !== ""
+                          ? (retFTE[billToMap.billId] / 100) * billToMap.billValue
+                          : 0) -
+                        (otherRet[billToMap.billId] &&
+                        otherRet[billToMap.billId] !== ""
+                          ? parseFloat(otherRet[billToMap.billId])
+                          : 0) -
+                        (retIVA[billToMap.billId] ? retIVA[billToMap.billId] : 0)
+                    ),
+              total:
+                dataReadCreditNotes !== null &&
+                dataReadCreditNotes !== undefined &&
+                dataReadCreditNotes !== []
+                  ? Math.round(
+                      billToMap.subTotal -
+                        (retICA[billToMap.billId] && retICA[billToMap.billId] !== ""
+                          ? (retICA[billToMap.billId] / 100) * billToMap.billValue
+                          : 0) -
+                        (retFTE[billToMap.billId] && retFTE[billToMap.billId] !== ""
+                          ? (retFTE[billToMap.billId] / 100) * billToMap.billValue
+                          : 0) -
+                        (otherRet[billToMap.billId] &&
+                        otherRet[billToMap.billId] !== ""
+                          ? parseFloat(otherRet[billToMap.billId])
+                          : 0) -
+                        (retIVA[billToMap.billId] ? retIVA[billToMap.billId] : 0) -
+                        sumOfAllCreditNotes(
+                          dataReadCreditNotes.data,
+                          billToMap.billId
+                        )
+                    )
+                  : Math.round(
+                      billToMap.subTotal -
+                        (retICA[billToMap.billId] && retICA[billToMap.billId] !== ""
+                          ? (retICA[billToMap.billId] / 100) * billToMap.billValue
+                          : 0) -
+                        (retFTE[billToMap.billId] && retFTE[billToMap.billId] !== ""
+                          ? (retFTE[billToMap.billId] / 100) * billToMap.billValue
+                          : 0) -
+                        (otherRet[billToMap.billId] &&
+                        otherRet[billToMap.billId] !== ""
+                          ? parseFloat(otherRet[billToMap.billId])
+                          : 0) -
+                        (retIVA[billToMap.billId] ? retIVA[billToMap.billId] : 0)
+                    ),
+            };
+          } catch (error) {
+            console.error(`Error fetching events for bill ${billToMap.billId}:`, error);
+            // En caso de error, usar la estructura original sin eventos de API
+            return {
+              id: billToMap.billId,
+              billId: billToMap.billId,
+              typeBill: billToMap.typeBill,
+              emitterName: billToMap.emitterName,
+              emitterId: billToMap.emitterId,
+              currentOwner: billToMap.currentOwner,
+              payerId: billToMap.payerId,
+              payerName: billToMap.payerName,
+              dateBill: billToMap.dateBill,
+              datePayment: billToMap.datePayment,
+              expirationDate: billToMap.datePayment,
+              billValue: billToMap.billValue,
+              iva: billToMap.iva,
+              cufe: billToMap.cufe,
+              file: billToMap.file,
+
+              events:
+                billToMap.events && billToMap.events.length > 0
+                  ? billToMap.events
+                  : [],
+              n_events:
+                billToMap.events && billToMap.events.length > 0
+                  ? billToMap.events.length
+                  : 0,
+              lastEventDate:
+                billToMap.events && billToMap.events.length > 0
+                  ? getLastEvent(billToMap.events).date
+                  : null,
+              lastEventDescription:
+                billToMap.events && billToMap.events.length > 0
+                  ? getLastEvent(billToMap.events).description
+                  : null,
+              // ... (resto de las propiedades igual)
+            };
+          }
+        })
+      );
+
+      setBill(billsWithEvents);
+
+      // Verificar si alguna factura no tiene el mismo currentOwner
+      const hasDifferentOwner = dataReadBills.bills.some(bill => !bill.sameCurrentOwner);
+      if (hasDifferentOwner) {
+        Toast("Algunas facturas no tienen el mismo legítimo tenedor", "error");
+      }
     }
-  }, [dataReadBills, dataReadCreditNotes, retIVA, retICA, retFTE, otherRet]);
+  };
 
+  fetchBillsWithEvents();
+}, [dataReadBills, dataReadCreditNotes, retIVA, retICA, retFTE, otherRet]);
   console.log(bill)
 
   const columns = [
@@ -622,6 +814,8 @@ console.log(bill)
         </CustomTooltip>
       ),
     },
+
+
     {
       field: "payerName",
       headerName: "NOMBRE PAGADOR",
@@ -689,8 +883,20 @@ console.log(bill)
         );
       },
     },
-    {
+     {
       field: "datePayment",
+      headerName: "FECHA DE PAGO",
+      width: 120,
+      renderCell: (params) => {
+        return (
+          <InputTitles>
+            {params.value ? moment(params.value).format("DD/MM/YYYY") : ""}
+          </InputTitles>
+        );
+      },
+    },
+    {
+      field: "expirationDate",
       headerName: "FECHA VENCIMIENTO",
       width: 150,
       renderCell: (params) => {
@@ -960,6 +1166,20 @@ console.log(bill)
           style={{ display: "none" }}
           onChange={onChangeFilesExtractBill}
         />
+        {/* Modal de selección */}
+<SelectionModal
+  open={showModal}
+  onClose={() => {
+    setShowModal(false);
+    setPendingFiles(null);
+  }}
+  onSelect={(selection) => {
+    setShowModal(false);
+    // Guardar la selección y los archivos
+    setFideicomiso(selection);
+    setFilesBill(pendingFiles);
+  }}
+/>
         <Button
           variant="standard"
           startIcon={<UploadFileOutlinedIcon sx={{ color: "#488B8F" }} />}
@@ -1351,6 +1571,73 @@ console.log(bill)
           }}
         />
       </Box>
+                <Modal
+  open={showBillyModal}
+  onClose={() => setShowBillyModal(false)}
+  aria-labelledby="billy-duplicated-modal"
+  aria-describedby="billy-duplicated-description"
+>
+  <Box
+    sx={{
+      position: "absolute",
+      top: "50%",
+      left: "50%",
+      transform: "translate(-50%, -50%)",
+      width: 450,
+      bgcolor: "background.paper",
+      borderRadius: 2,
+      boxShadow: 24,
+      p: 4
+    }}
+  >
+    <Typography
+      id="billy-duplicated-modal"
+      variant="h6"
+      component="h2"
+      gutterBottom
+    >
+      Facturas ya registradas en Billy
+    </Typography>
+
+    <Typography id="billy-duplicated-description" sx={{ mb: 2 }}>
+      Las siguientes facturas ya están cargadas en Billy:
+    </Typography>
+
+    <Box
+      sx={{
+        maxHeight: 200,
+        overflowY: "auto",
+        mb: 3,
+        border: "1px solid #ddd",
+        borderRadius: 1,
+        p: 1
+      }}
+    >
+      {duplicatedBillyList.map((item, index) => (
+        <Typography
+          key={index}
+          variant="body2"
+          sx={{ borderBottom: "1px solid #eee", py: 1 }}
+        >
+          <strong>CUFE:</strong> {item.cufe}
+        </Typography>
+      ))}
+    </Box>
+
+    <Box sx={{ textAlign: "right" }}>
+      <Button
+        variant="contained"
+        onClick={() => setShowBillyModal(false)}
+        sx={{
+          backgroundColor: "#488B8F",
+          "&:hover": { backgroundColor: "#3a7073" }
+        }}
+      >
+        Entendido
+      </Button>
+    </Box>
+  </Box>
+</Modal>
 
       <ToastContainer
         position="top-right"

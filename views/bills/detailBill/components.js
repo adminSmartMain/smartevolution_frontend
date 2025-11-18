@@ -259,7 +259,7 @@ id,
   const [previewUrl, setPreviewUrl] = useState(null);
   const usuarioEncontrado = users?.data?.find(user => user.id ===  bill?.user_created_at);
   const usuarioEncontradoEdit = users?.data?.find(user => user.id === bill?.user_updated_at);
-  console.log(users,usuarioEncontrado,usuarioEncontradoEdit)
+
 
   const opcionesFormato = {
     dateStyle: 'short',
@@ -297,40 +297,14 @@ const debouncedCheckBill = debounce(async (billNumber, callback) => {
     }
   }, 500); // Espera 500ms después de la última escritura
 
-
-  const eventos = [
-    { codigo: '001', fecha: '2023-01-01T10:30:00', evento: 'Creación de factura' },
-    { codigo: '002', fecha: '2023-01-01T10:35:00', evento: 'Asignación de número de factura' },
-    { codigo: '003', fecha: '2023-01-01T11:15:00', evento: 'Registro de emisor' },
-    { codigo: '004', fecha: '2023-01-01T11:30:00', evento: 'Registro de cliente' },
-    { codigo: '005', fecha: '2023-01-01T12:45:00', evento: 'Adición de productos' },
-    { codigo: '006', fecha: '2023-01-01T13:20:00', evento: 'Cálculo de subtotal' },
-    { codigo: '007', fecha: '2023-01-01T14:00:00', evento: 'Aplicación de IVA' },
-    { codigo: '008', fecha: '2023-01-01T14:30:00', evento: 'Cálculo de total' },
-    { codigo: '009', fecha: '2023-01-02T09:15:00', evento: 'Corrección de datos del cliente' },
-    { codigo: '010', fecha: '2023-01-02T10:00:00', evento: 'Actualización de productos' },
-    { codigo: '011', fecha: '2023-01-02T11:30:00', evento: 'Ajuste de descuentos' },
-    { codigo: '012', fecha: '2023-01-02T12:45:00', evento: 'Revisión de impuestos' },
-    { codigo: '013', fecha: '2023-01-02T14:00:00', evento: 'Aprobación inicial' },
-    { codigo: '014', fecha: '2023-01-03T08:30:00', evento: 'Carga de archivo adjunto' },
-    { codigo: '015', fecha: '2023-01-03T09:45:00', evento: 'Verificación de datos' },
-    { codigo: '016', fecha: '2023-01-03T11:00:00', evento: 'Aprobación final' },
-    { codigo: '017', fecha: '2023-01-03T12:30:00', evento: 'Generación de PDF' },
-    { codigo: '018', fecha: '2023-01-03T14:15:00', evento: 'Envío al cliente' },
-    { codigo: '019', fecha: '2023-01-04T10:00:00', evento: 'Notificación de recepción' },
-    { codigo: '020', fecha: '2023-01-05T09:30:00', evento: 'Primer recordatorio de pago' },
-    { codigo: '021', fecha: '2023-01-10T10:15:00', evento: 'Segundo recordatorio de pago' },
-    { codigo: '022', fecha: '2023-01-15T11:00:00', evento: 'Pago parcial recibido' },
-    { codigo: '023', fecha: '2023-01-20T14:30:00', evento: 'Pago completo recibido' },
-    { codigo: '024', fecha: '2023-01-20T15:00:00', evento: 'Registro de pago en sistema' },
-    { codigo: '025', fecha: '2023-01-20T15:30:00', evento: 'Generación de recibo' },
-    { codigo: '026', fecha: '2023-01-20T16:00:00', evento: 'Envío de recibo al cliente' },
-    { codigo: '027', fecha: '2023-01-21T09:00:00', evento: 'Cierre de factura' },
-    { codigo: '028', fecha: '2023-01-22T10:00:00', evento: 'Archivado digital' },
-    { codigo: '029', fecha: '2023-01-23T11:00:00', evento: 'Notificación de cierre al cliente' },
-    { codigo: '030', fecha: '2023-01-31T12:00:00', evento: 'Registro en contabilidad general' }
-  ];
-
+  console.log(bill?.events)
+const eventos = bill?.events?.map(item => {
+  return {
+    codigo: item.code,
+    fecha: item.date, // Ya viene en formato YYYY-MM-DD
+    evento: item.event // description ahora viene en 'event'
+  };
+});
  const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -398,7 +372,7 @@ const debouncedCheckBill = debounce(async (billNumber, callback) => {
     return decimalPart ? `${formattedInteger}.${decimalPart}` : formattedInteger;
 };
 
-  console.log(dataTypeBill)
+ 
 
   const [initialPayer, setInitialPayer] = useState(null);
 
@@ -406,7 +380,7 @@ const debouncedCheckBill = debounce(async (billNumber, callback) => {
     const data = new FormData(event.currentTarget)
     const values = Array.from(data.values())
     const changedFields = values.filter(value => value.length);
-    console.log("changedFields")
+   
     
   }
 
@@ -477,7 +451,7 @@ const debouncedCheckBill = debounce(async (billNumber, callback) => {
   // Combinar el pagador inicial con los filtrados
 
 
-console.log(fileUrl)
+
 
 const handleConfirm = async (values, actions) => {
   try {
@@ -488,7 +462,7 @@ const handleConfirm = async (values, actions) => {
     actions.setSubmitting(false);
   }
 };
-  console.log(bill)
+
 
 
 
@@ -564,7 +538,7 @@ const handleConfirm = async (values, actions) => {
      );
      return existsInFiltered ? filteredPayers : [initialPayer, ...filteredPayers];
    }, [initialPayer, filteredPayers]);
- console.log(allPayers)
+ 
 
 const parseBackendDate = (dateString) => {
   if (!dateString) return null;
@@ -574,7 +548,7 @@ const parseBackendDate = (dateString) => {
   return new Date(date.getTime() + date.getTimezoneOffset() * 60000);
 };
 
-console.log( bill?.bill?.currentBalance)
+
  
   const initialValues2 = {
     emitter:  bill?.emitterName,
@@ -603,8 +577,6 @@ console.log( bill?.bill?.currentBalance)
 
   };
 
-  console.log(initialValues2)
-  console.log(bill)
 const handleClosePreview = () => {
   // Liberar recursos si es un objeto URL creado con URL.createObjectURL
   if (file && previewUrl) {
@@ -1399,9 +1371,9 @@ container
         </TableHead>
         <TableBody>
           {(rowsPerPage > 0
-            ? eventos.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+            ? eventos?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
             : eventos
-          ).map((evento, index) => (
+          )?.map((evento, index) => (
             <TableRow key={index}>
               <TableCell>{evento.codigo}</TableCell>
               <TableCell>
@@ -1422,7 +1394,7 @@ container
             <TablePagination
               rowsPerPageOptions={[15, 30, { label: 'Todos', value: -1 }]}
               colSpan={3}
-              count={eventos.length}
+              count={eventos?.length}
               rowsPerPage={rowsPerPage}
               page={page}
               SelectProps={{

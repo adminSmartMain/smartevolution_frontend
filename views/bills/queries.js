@@ -28,3 +28,21 @@ export const SaveBills = async (data) => {
   });
   return res.data;
 };
+export const GetBillEvents = async (cufe) => {
+  
+
+  try {
+    const res = await Axios.get(`https://api.billy.com.co/v2/invoices?cufe=${cufe}`, {
+      headers: {
+        authorization: "Bearer " + "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpaWQiOiItTkJ0MnktbG8yaENyeFNEUFdZOSIsInNjcCI6eyJpbnYiOjB9LCJpYXQiOjE3NjI3ODQxODAsImV4cCI6MTc5NDMyMDE4MCwic3ViIjoiR0JXdWZHcWZSc1ZFNUp3ZmxiTXdtNTVKeWZIMyIsImp0aSI6Ii1PZGk2emJ3YjFSZU1hQ05oSlNSIn0.Io2W8NumwKrTosCq9S_RnzqyMYX8IOJF89VhAiihhts",
+      },
+    });
+    
+    // Log para ver la respuesta del servidor
+    return res.data;
+
+  } catch (error) {
+    console.error("Error during GetBillEvents request:", error);  // Log para ver si hay algún error en la petición
+    throw error;  // Re-lanzar el error para que sea manejado por el código llamante si es necesario
+  }
+};

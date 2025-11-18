@@ -22,7 +22,7 @@ import {
   
 } from "./queries";
 import BillCreationComponent from "./components";
-import { Bills, billById, payerByBill,EditBill } from "./queries";
+import { Bills, billById, payerByBill,EditBill,GetBillEvents } from "./queries";
 export default function BillDetail() {
 // States
   const [created, setCreated] = useState(0);
@@ -63,7 +63,7 @@ export default function BillDetail() {
     }, [router.query]);
   
   
-  console.log(id)
+  
 
   // Queries
 
@@ -173,6 +173,8 @@ export default function BillDetail() {
       } =  useFetch({ service: TypeOperation, init: true });
 
 
+
+      
       useEffect(
 
       ()=>{
@@ -185,7 +187,7 @@ export default function BillDetail() {
 
       }, [id])
 
-      console.log(dataBill)
+     
 
     useEffect(() => {
       if (dataBill) {
@@ -195,7 +197,7 @@ export default function BillDetail() {
 
 
 
-    console.log(bill)
+  
   
     useEffect(() => {
       if (dataAllUsers) {
@@ -224,6 +226,7 @@ useEffect(() => {
     setTypeOp(typesID);
   }
 }, [dataTypeIdSelect, loadingTypeIdSelect, errorTypeIdSelect]);
+
 
 
 // GET CLIENTS (EMITTERS)
@@ -337,7 +340,7 @@ const onSubmit = async (values, { setSubmitting }) => {
   setIsModalOpen(true);
   setSubmitting(true);
   setSuccessA(null);
-  console.log(values.fechaEmision,values.DateExpiration,values.datePayment)
+
   const operationData = {
     
     currentBalance: Number(values.currentBalance) || 0,
@@ -417,6 +420,7 @@ const handleConfirm = async (values,actions) => {
        users={users}
        bill={bill}
        id={id}
+       
       />
     </>
   );
