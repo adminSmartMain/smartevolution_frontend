@@ -645,6 +645,10 @@ const handleOpenPreview = async () => {
 };
 
 // El resto del componente permanece exactamente igual
+const formatFecha = (fecha) => {
+  const [y, m, d] = fecha.split("-");
+  return `${d}/${m}/${y}`;
+};
 
 // Función para verificar el Blob
 const verifyBlob = async (blob) => {
@@ -1377,13 +1381,8 @@ container
             <TableRow key={index}>
               <TableCell>{evento.codigo}</TableCell>
               <TableCell>
-                {new Date(evento.fecha).toLocaleDateString('es-ES', {
-                  day: '2-digit',
-                  month: '2-digit',
-                  year: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                })}
+                {formatFecha(evento.fecha)}
+
               </TableCell>
               <TableCell>{evento.evento}</TableCell>
             </TableRow>
