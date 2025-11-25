@@ -11,6 +11,7 @@ import {
   DialogActions,
   IconButton,Tooltip,
 } from "@mui/material";
+import { useRouter } from "next/router";
 import { useFetch } from "@hooks/useFetch";
 import { debounce } from 'lodash';
 import { TextField, Grid } from '@mui/material';
@@ -27,6 +28,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import { styled } from '@mui/material/styles';
 import Image from 'next/image';
 import "react-toastify/dist/ReactToastify.css";
+
 import {
   Tabs,
   Tab,
@@ -36,7 +38,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Paper
+  Paper,Skeleton,
 } from '@mui/material';
 
 import {
@@ -261,6 +263,17 @@ id,
   const usuarioEncontradoEdit = users?.data?.find(user => user.id === bill?.user_updated_at);
 
 
+const router = useRouter();
+useEffect(() => {
+  if (router.query.tab !== undefined) {
+    const tabParam = Number(router.query.tab);
+
+    if (!isNaN(tabParam)) {
+      setActiveTab(tabParam);   // ← AQUÍ SE CAMBIA LA TAB ACTIVA
+    }
+  }
+}, [router.query.tab]);
+
   const opcionesFormato = {
     dateStyle: 'short',
     timeStyle: 'medium'
@@ -298,13 +311,15 @@ const debouncedCheckBill = debounce(async (billNumber, callback) => {
   }, 500); // Espera 500ms después de la última escritura
 
   console.log(bill?.events)
-const eventos = bill?.events?.map(item => {
-  return {
-    codigo: item.code,
-    fecha: item.date, // Ya viene en formato YYYY-MM-DD
-    evento: item.event // description ahora viene en 'event'
-  };
-});
+const eventos = bill?.events?.map(item => ({
+  codigo: item.code,
+  fecha: item.date,
+  evento: item.event
+})) || [];
+
+
+const emptyRows = !eventos || eventos.length === 0;
+
  const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -586,6 +601,7 @@ const handleClosePreview = () => {
   setPreviewUrl(null);
 };
 
+console.log(!dataBills)
 
 // Modifica la función handleOpenPreview para manejar XML
 const handleOpenPreview = async () => {
@@ -1345,73 +1361,111 @@ const verifyBlob = async (blob) => {
       ) : (
         // Contenido de la segunda pestaña (tabla de eventos)
         <Box sx={{ mt: 2 }}>
-<Box
-container
-            display="flex"
-            flexDirection="row"
-            justifyContent="space-between"
-            sx={{ ml: 0.5}}>
-  
-          <Typography
-          
-            letterSpacing={0}
-              fontSize="1.7rem"
-              fontWeight="regular"
-              marginBottom="0.7rem"
-              color="#000000ff">
+   {bill?.billId ? (
+  <Typography
+    sx={{ ml: 1 }}
+    letterSpacing={0}
+    fontSize="1.7rem"
+    fontWeight="regular"
+    mb={2}
+    color="#000"
+  >
+    {bill.billId}
+  </Typography>
+) : (
+  <Typography
+    sx={{ ml: 1 }}
+    letterSpacing={0}
+    fontSize="1.4rem"
+    fontWeight="regular"
+    mb={2}
+    color="gray"
+    fontStyle="italic"
+  >
+    Sin ID de factura
+  </Typography>
+)}
 
-            {bill?.billId}
-          </Typography>
 
-          </Box>
-     <TableContainer component={Paper}>
-      <Table sx={{ minWidth: 650 }} aria-label="tabla de eventos">
-        <TableHead>
-          <TableRow>
-            <TableCell><strong>Código</strong></TableCell>
-            <TableCell><strong>Fecha</strong></TableCell>
-            <TableCell><strong>Evento</strong></TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {(rowsPerPage > 0
-            ? eventos?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-            : eventos
-          )?.map((evento, index) => (
-            <TableRow key={index}>
-              <TableCell>{evento.codigo}</TableCell>
-              <TableCell>
-                {formatFecha(evento.fecha)}
+    <TableContainer component={Paper} sx={{ borderRadius: 2, p: 1 }}>
+      
+      {/* --------------------------- LOADING SKELETON --------------------------- */}
+      {!dataBills && (
+        <Box sx={{ p: 2 }}>
+          <Skeleton variant="rectangular" height={40} sx={{ mb: 2 }} />
 
-              </TableCell>
-              <TableCell>{evento.evento}</TableCell>
-            </TableRow>
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={i} variant="rectangular" height={35} sx={{ mb: 1 }} />
           ))}
-        </TableBody>
-        <TableFooter>
-          <TableRow>
-            <TablePagination
-              rowsPerPageOptions={[15, 30, { label: 'Todos', value: -1 }]}
-              colSpan={3}
-              count={eventos?.length}
-              rowsPerPage={rowsPerPage}
-              page={page}
-              SelectProps={{
-                inputProps: { 'aria-label': 'filas por página' },
-                native: true,
-              }}
-              onPageChange={handleChangePage}
-              onRowsPerPageChange={handleChangeRowsPerPage}
-              ActionsComponent={TablePaginationActions}
-              labelRowsPerPage="Eventos por página:"
-              labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
-            />
-          </TableRow>
-        </TableFooter>
-      </Table>
-    </TableContainer>
+
+          <Skeleton variant="rectangular" height={35} sx={{ mt: 2 }} />
         </Box>
       )}
+
+      {/* --------------------------- TABLA FINAL --------------------------- */}
+      {dataBills && (
+        <Table aria-label="tabla de eventos">
+          <TableHead>
+            <TableRow>
+              <TableCell><strong>Código</strong></TableCell>
+              <TableCell><strong>Fecha</strong></TableCell>
+              <TableCell><strong>Evento</strong></TableCell>
+            </TableRow>
+          </TableHead>
+
+          <TableBody>
+            {/* SIN EVENTOS */}
+            {eventos?.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={3} align="center" sx={{ py: 3 }}>
+                  <Typography color="gray" fontWeight="bold">
+                    No se encontraron eventos registrados
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            )}
+
+            {/* CON EVENTOS */}
+            {eventos?.length > 0 &&
+              eventos
+                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                .map((e, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{e?.codigo}</TableCell>
+                    <TableCell>{formatFecha(e?.fecha)}</TableCell>
+                    <TableCell>{e?.evento}</TableCell>
+                  </TableRow>
+                ))}
+          </TableBody>
+
+          {/* PAGINACIÓN */}
+          <TableFooter>
+            <TableRow>
+              <TablePagination
+                rowsPerPageOptions={[15]}
+                colSpan={3}
+                count={eventos?.length || 0}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                SelectProps={{
+                  native: true,
+                  disabled: true, // dropdown deshabilitado
+                }}
+                onPageChange={handleChangePage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+                labelRowsPerPage="Eventos por página:"
+                labelDisplayedRows={({ from, to, count }) =>
+                  `${count === 0 ? 0 : from}-${count === 0 ? 0 : to} de ${count}`
+                }
+              />
+            </TableRow>
+          </TableFooter>
+        </Table>
+      )}
+
+    </TableContainer>
+  </Box>
+)}
 
       {/* Modales y otros componentes que necesites */}
       <FilePreviewModal 

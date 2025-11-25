@@ -25,18 +25,14 @@ import BillCreationComponent from "./components";
 import { Bills, billById, payerByBill,EditBill,GetBillEvents } from "./queries";
 export default function BillDetail() {
 // States
-  const [created, setCreated] = useState(0);
-  const [updated, setUpdated] = useState(0);
+ 
   const [opId, setOpId] = useState(null);
   const [id, setId] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const [operation, setOperation] = useState([]);
-  const [isAddingBill, setIsAddingBill] = useState(false);
-  const [isCreatingBill, setIsCreatingBill] = useState(false);
+
   const [payer, setPayer] = useState([]);
   const [client, setClient] = useState([]);
   const [users, setUsers] = useState([]);
-  const [investor,setInvestor]=useState([])
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [success, setSuccessA] = useState(null);
   const [typeOp, setTypeOp] = useState([]);

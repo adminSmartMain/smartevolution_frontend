@@ -3,6 +3,7 @@ import { ToastContainer } from "react-toastify";import {
   Home as HomeIcon,
 
 } from "@mui/icons-material";
+import EventIcon from '@mui/icons-material/Event';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import DownloadIcon from '@mui/icons-material/Download';
@@ -358,10 +359,10 @@ export const BillsComponents = () => {
     handleOpenWindow("/bills/createBill");
   };
 
-  const handleOpenDetailBill = (id) => {
-    handleOpenWindow(`/bills/detailBill?id=${id}`);
-  };
-
+const handleOpenDetailBill = (id, tab = 0) => {
+  console.log(tab)
+  handleOpenWindow(`/bills/detailBill?id=${id}&tab=${tab}`);
+};
   const handleOpenEditBill = (id) => {
     handleOpenWindow(`/bills/editBill?id=${id}`);
   };
@@ -829,10 +830,9 @@ export const BillsComponents = () => {
               }}
             >
               <MenuItem
-                onClick={() => {
-                  handleOpenDetailBill(selectedRow.id);
-
-                }}
+               onClick={() => {
+                handleOpenDetailBill(selectedRow.id); // 1 = Tab de eventos
+              }}
               >
                 <ListItemIcon>
                   <VisibilityIcon fontSize="small" />
@@ -867,7 +867,17 @@ export const BillsComponents = () => {
                 </ListItemIcon>
                 Editar factura
               </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  handleOpenDetailBill(selectedRow.id, 1);
 
+                }}
+              >
+                <ListItemIcon>
+                  <EventIcon fontSize="small" />
+                </ListItemIcon>
+                Ver Eventos
+              </MenuItem>
               <MenuItem
                 onClick={() => {
                   if (selectedRow.associatedOperation != null) {
@@ -887,6 +897,8 @@ export const BillsComponents = () => {
                 </ListItemIcon>
                 Eliminar
               </MenuItem>
+
+
             </Menu>
 
 
