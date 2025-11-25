@@ -336,7 +336,7 @@ const transformData = (data) => {
   const processedBillIds = {}; // Para rastrear billIds ya procesados
 
   return data.facturas.map((factura) => {
-    console.log(factura.isReBuy)
+  
     const baseStructure = {
       billId: factura.billId,
       is_creada: factura.is_creada || false,
@@ -429,13 +429,12 @@ const onSubmit = async (values, { setSubmitting }) => {
   setSubmitting(true);
 
   try {
-    console.log('🚀 INICIANDO onSubmit con valores:', values);
+
     
     await validationSchema.validate(values, { abortEarly: false });
     
     const facturasTransformadas = transformData(values);
-    console.log('📋 Facturas transformadas:', facturasTransformadas);
-    
+   
     // Validación adicional para facturas creadas
     const facturasCreadas = facturasTransformadas.filter(f => f.is_creada);
     const billCodesUnicos = [...new Set(
@@ -444,18 +443,17 @@ const onSubmit = async (values, { setSubmitting }) => {
         .filter(code => code) // Filtramos códigos nulos/undefined
     )];
     
-    console.log('📊 Facturas creadas:', facturasCreadas.length);
-    console.log('📊 Bill codes únicos:', billCodesUnicos);
+
     
     if (facturasCreadas.length > billCodesUnicos.length) {
       console.warn("⚠️ Advertencia: Algunas facturas creadas no tienen billCode o están duplicados");
     }
 
     const billIds = [...new Set(facturasTransformadas.map(op => op.billId))];
-    console.log('📋 Bill IDs únicos a verificar:', billIds);
+   
     
     const saldoValido = await verificarSaldosFacturas(billIds, facturasTransformadas);
-    console.log('✅ Resultado verificación saldos:', saldoValido);
+
     
     if (!saldoValido.todasValidas) {
       console.error('❌ Error de validación de saldos:', saldoValido.mensajeError);
@@ -463,10 +461,10 @@ const onSubmit = async (values, { setSubmitting }) => {
     }
     
     // Ejecución de operaciones
-    console.log('🚀 Ejecutando operaciones atómicas...');
+
     const { success, successfulOperations, failedOperations } = await executeAtomicOperations(facturasTransformadas);
     
-    console.log('📊 Resultado operaciones:', { success, successful: successfulOperations?.length, failed: failedOperations?.length });
+   
     
     if (failedOperations?.length > 0) {
       console.error('❌ Operaciones fallidas:', failedOperations);
@@ -478,7 +476,7 @@ const onSubmit = async (values, { setSubmitting }) => {
     }
 
     setSuccess(true);
-    console.log('✅ Todas las operaciones exitosas');
+
     
     Toast(
       <div>
@@ -494,7 +492,7 @@ const onSubmit = async (values, { setSubmitting }) => {
     setIsModalOpen(false);
 
     setTimeout(() => {
-      console.log('🔄 Cerrando ventana...');
+     
       window.close();
     }, 1500);
     
@@ -521,15 +519,12 @@ const onSubmit = async (values, { setSubmitting }) => {
   } finally {
     setLoading(false);
     setSubmitting(false);
-    console.log('🏁 Finalizando onSubmit');
+
   }
 };
 const verificarSaldosFacturas = async (billIds, facturasTransformadas) => {
   try {
-    console.log('🔍 INICIANDO verificarSaldosFacturas');
-    console.log('📋 billIds recibidos:', billIds);
-    console.log('📋 facturasTransformadas:', facturasTransformadas);
-
+ 
     if (!Array.isArray(billIds) || billIds.length === 0) {
       throw new Error("No se proporcionaron IDs de facturas válidos");
     }
@@ -541,14 +536,13 @@ const verificarSaldosFacturas = async (billIds, facturasTransformadas) => {
       is_creada: facturasTransformadas[index]?.is_creada || false
     }));
     
-    console.log('📊 billIdsConEstado:', billIdsConEstado);
+   
     
     // Filtrar para obtener solo los únicos, manteniendo el estado is_creada
      const billIdsUnicos = Array.from(new Map(
       billIdsConEstado.map(item => [`${item.billId}_${item.emitterId}`, item])
     ).values());
 
-    console.log('🔍 billIdsUnicos:', billIdsUnicos);
 
     // 2. Obtenemos los datos de todas las facturas únicas
     const resultadosUnicos = await Promise.all(
@@ -557,8 +551,7 @@ const verificarSaldosFacturas = async (billIds, facturasTransformadas) => {
         const emitterId = billIdInfo.emitterId;
         const is_creada = billIdInfo.is_creada;
         
-         console.log(`📡 Consultando API para billId: ${billIdStr}, emitterId: ${emitterId}, is_creada: ${is_creada}`);
-        
+         
         try {
 
             let url = `${process.env.NEXT_PUBLIC_API_URL}/bill/?bill_operation=${billIdStr}`;
@@ -571,11 +564,11 @@ const verificarSaldosFacturas = async (billIds, facturasTransformadas) => {
               headers: {
                 Authorization: `Bearer ${localStorage.getItem("access-token")}`,
               },
-              timeout: 10000,
+              //timeout: 10000,
             }
           );
 
-          console.log(`✅ Respuesta API para ${billIdStr}:`, response.data);
+
 
           if (!response.data) {
             throw new Error("Respuesta vacía del servidor");
@@ -587,7 +580,7 @@ const verificarSaldosFacturas = async (billIds, facturasTransformadas) => {
           if (response.data.data) {
             if (response.data.data.id || response.data.data.billId) {
               factura = response.data.data;
-              console.log(`📋 Factura obtenida para ${billIdStr}:`, factura);
+  
             } else {
               console.error('❌ Formato de data no reconocido:', response.data.data);
               throw new Error("Formato de data no reconocido");
@@ -595,17 +588,17 @@ const verificarSaldosFacturas = async (billIds, facturasTransformadas) => {
           } else if (response.data.id || response.data.billId) {
             // Backup por si alguna vez devuelve directamente
             factura = response.data;
-            console.log(`📋 Factura obtenida directamente de response.data:`, factura);
+    
           } else {
             console.error('❌ Formato de respuesta no reconocido:', response.data);
             throw new Error("Formato de respuesta no reconocido");
           }
 
-          console.log(`📋 Factura obtenida para ${billIdStr}:`, factura);
+
 
           // Si la factura fue creada en el sistema (is_creada = true), no hacemos validaciones estrictas
            if (is_creada) {
-            console.log(`🟢 Factura ${billIdStr} es creada - validación relajada`);
+ 
             return {
               billId: billIdStr,
               emitterId: emitterId,
@@ -617,7 +610,7 @@ const verificarSaldosFacturas = async (billIds, facturasTransformadas) => {
           }
 
           // Validaciones solo para facturas NO creadas en el sistema
-          console.log(`🔵 Factura ${billIdStr} NO es creada - validación estricta`);
+      
           
           if (factura.state !== true && factura.state !== undefined) {
             console.error(`❌ Factura ${billIdStr} no está activa:`, factura.state);
@@ -649,7 +642,7 @@ const verificarSaldosFacturas = async (billIds, facturasTransformadas) => {
             
             // Si la factura fue creada en el sistema, permitimos que continúe
             if (is_creada) {
-              console.log(`🟡 Factura ${billIdStr} es creada pero tuvo error, continuando...`);
+  
               
               // Buscar el amount en las facturas transformadas
               const facturaCorrespondiente = facturasTransformadas.find(f => 
@@ -658,7 +651,7 @@ const verificarSaldosFacturas = async (billIds, facturasTransformadas) => {
               
               const amount = facturaCorrespondiente?.dataSent?.amount || 0;
               
-              console.log(`🟡 Monto encontrado para factura creada ${billIdStr}:`, amount);
+              
               
               return {
                 billId: billIdStr,
@@ -690,7 +683,7 @@ const verificarSaldosFacturas = async (billIds, facturasTransformadas) => {
       })
     );
 
-    console.log('📊 resultadosUnicos:', resultadosUnicos);
+
 
     // 3. Mapeamos los resultados a todas las facturas (incluyendo duplicados)
     const resultados = billIds.map((billId, index) => {
@@ -698,7 +691,7 @@ const verificarSaldosFacturas = async (billIds, facturasTransformadas) => {
       const resultadoUnico = resultadosUnicos.find(r => r.billId === billIdStr);
       const is_creada = facturasTransformadas[index]?.is_creada || false;
       
-      console.log(`📋 Mapeando resultado para ${billIdStr}, is_creada: ${is_creada}`, resultadoUnico);
+   
       
       if (!resultadoUnico || (resultadoUnico.status !== "success" && !is_creada)) {
         const errorResult = {
@@ -710,7 +703,7 @@ const verificarSaldosFacturas = async (billIds, facturasTransformadas) => {
           tipoError: "ERROR_VERIFICACION",
           is_creada: is_creada
         };
-        console.log(`❌ Resultado inválido para ${billIdStr}:`, errorResult);
+        
         return errorResult;
       }
 
@@ -720,11 +713,11 @@ const verificarSaldosFacturas = async (billIds, facturasTransformadas) => {
         is_creada: is_creada
       };
       
-      console.log(`✅ Resultado válido para ${billIdStr}:`, result);
+
       return result;
     });
 
-    console.log('📊 Resultados después del mapeo:', resultados);
+
 
     // 4. Ahora validamos las reglas para cada factura
     const resultadosFinales = billIds.map((billId, index) => {
@@ -732,11 +725,11 @@ const verificarSaldosFacturas = async (billIds, facturasTransformadas) => {
       const resultado = resultados[index];
       const is_creada = resultado.is_creada;
       
-      console.log(`🔍 Validando reglas para ${billIdStr}, is_creada: ${is_creada}`, resultado);
+  
 
       // Si ya hay un error y NO es una factura creada, lo mantenemos
       if (resultado.status !== "success" && !is_creada) {
-        console.log(`❌ Manteniendo error previo para ${billIdStr}`);
+  
         return resultado;
       }
 
@@ -744,8 +737,6 @@ const verificarSaldosFacturas = async (billIds, facturasTransformadas) => {
       const facturasConMismoId = facturasTransformadas.filter(f => String(f.billId).trim() === billIdStr);
       const facturaOperacion = facturasTransformadas[index];
       
-      console.log(`📋 Facturas con mismo ID ${billIdStr}:`, facturasConMismoId);
-      console.log(`📋 Factura operación:`, facturaOperacion);
 
       if (!facturaOperacion) {
         const errorResult = {
@@ -756,13 +747,13 @@ const verificarSaldosFacturas = async (billIds, facturasTransformadas) => {
           tipoError: "ERROR_OPERACION",
           is_creada: is_creada
         };
-        console.log(`❌ No se encontró factura en operación:`, errorResult);
+
         return errorResult;
       }
 
       // Para facturas creadas en el sistema, validaciones relajadas
       if (is_creada) {
-        console.log(`🟢 Validación relajada para factura creada ${billIdStr}`);
+   
         
         // Solo verificamos que el amount sea positivo
         if (facturaOperacion.dataSent.amount <= 0) {
@@ -774,7 +765,7 @@ const verificarSaldosFacturas = async (billIds, facturasTransformadas) => {
             tipoError: "MONTO_INVALIDO",
             is_creada: true
           };
-          console.log(`❌ Monto inválido para factura creada:`, errorResult);
+          
           return errorResult;
         }
         
@@ -784,7 +775,7 @@ const verificarSaldosFacturas = async (billIds, facturasTransformadas) => {
           status: "success",
           is_creada: true
         };
-        console.log(`✅ Factura creada válida:`, successResult);
+
         return successResult;
       }
 
@@ -798,7 +789,7 @@ const verificarSaldosFacturas = async (billIds, facturasTransformadas) => {
           tipoError: "SALDO_CERO",
           is_creada: false
         };
-        console.log(`❌ Saldo cero para factura no creada:`, errorResult);
+
         return errorResult;
       }
 
@@ -806,7 +797,7 @@ const verificarSaldosFacturas = async (billIds, facturasTransformadas) => {
       if (facturasConMismoId.length > 1) {
         const totalAmount = facturasConMismoId.reduce((sum, f) => sum + f.dataSent.amount, 0);
         
-        console.log(`📊 Factura duplicada ${billIdStr}: totalAmount=${totalAmount}, currentBalance=${resultado.currentBalance}`);
+       
         
         if (totalAmount > resultado.currentBalance) {
           const errorResult = {
@@ -817,13 +808,13 @@ const verificarSaldosFacturas = async (billIds, facturasTransformadas) => {
             tipoError: "MONTO_EXCEDIDO",
             is_creada: false
           };
-          console.log(`❌ Monto excedido en factura duplicada:`, errorResult);
+ 
           return errorResult;
         }
       } 
       // REGLA 3: Para facturas únicas, amount vs currentBalance
       else if (facturaOperacion.dataSent.amount > resultado.currentBalance) {
-        console.log(`📊 Factura única ${billIdStr}: amount=${facturaOperacion.dataSent.amount}, currentBalance=${resultado.currentBalance}`);
+        
         
         const errorResult = {
           ...resultado,
@@ -833,7 +824,7 @@ const verificarSaldosFacturas = async (billIds, facturasTransformadas) => {
           tipoError: "MONTO_EXCEDIDO",
           is_creada: false
         };
-        console.log(`❌ Monto excedido en factura única:`, errorResult);
+        
         return errorResult;
       }
 
@@ -844,11 +835,10 @@ const verificarSaldosFacturas = async (billIds, facturasTransformadas) => {
         status: "success",
         is_creada: false
       };
-      console.log(`✅ Factura válida después de todas las validaciones:`, successResult);
+  
       return successResult;
     });
 
-    console.log('📊 Resultados finales:', resultadosFinales);
 
     // 5. Clasificación de resultados finales
     const facturasValidas = resultadosFinales.filter(r => r.valida);
@@ -856,11 +846,7 @@ const verificarSaldosFacturas = async (billIds, facturasTransformadas) => {
     const facturasConMontoExcedido = resultadosFinales.filter(r => r.tipoError === "MONTO_EXCEDIDO");
     const otrosErrores = resultadosFinales.filter(r => !r.valida && r.tipoError !== "SALDO_CERO" && r.tipoError !== "MONTO_EXCEDIDO");
 
-    console.log('📊 Clasificación:');
-    console.log('✅ Facturas válidas:', facturasValidas.length);
-    console.log('❌ Facturas con saldo cero:', facturasConSaldoCero.length);
-    console.log('❌ Facturas con monto excedido:', facturasConMontoExcedido.length);
-    console.log('❌ Otros errores:', otrosErrores.length);
+
 
     // 6. Preparar mensaje de error compuesto
     let mensajeError = "";
@@ -886,7 +872,6 @@ const verificarSaldosFacturas = async (billIds, facturasTransformadas) => {
       mensajeError: mensajeError.trim()
     };
 
-    console.log('🎯 Resultado final de verificación:', resultadoFinal);
     return resultadoFinal;
 
   } catch (error) {
