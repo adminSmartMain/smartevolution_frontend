@@ -1134,7 +1134,7 @@ const verifyBlob = async (blob) => {
                       </Grid>
                       <Grid item xs={12} md={4}>
                         <RetIvaSelector
-                          values={values}
+                          values={values }
                           setFieldValue={setFieldValue}
                           formatNumberWithThousandsSeparator={formatNumberWithThousandsSeparator}
                           parseFloat={parseFloat}

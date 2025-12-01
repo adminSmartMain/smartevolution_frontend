@@ -83,7 +83,7 @@ export const BillsComponents = () => {
     data: data,
   } = useFetch({
     service: (args) => GetBillList({ ...filters, page }),
-    init: true,
+    init: false,
   });
 
   const {

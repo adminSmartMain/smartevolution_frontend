@@ -413,39 +413,7 @@ useEffect(() => {
 console.log(bill)
 
 
-  function CustomToolbar() {
-    const apiRef = useGridApiContext();
-    const handleExport = (options) => apiRef.current.exportDataAsCsv(options);
-useEffect(() => {
-  if (!loadingReadBills) {
-
-    // --- Error de conexión ---
-    if (errorReadBills?.message === "Network Error") {
-      setProcessError("Error de conexión. Reintentando automáticamente…");
-      setLoadingBillsProcess(false);
-      return;
-    }
-
-    // --- Backend caído (503) ---
-    if (errorReadBills?.status === 503) {
-      setProcessError("Servicio no disponible. Estamos trabajando para resolverlo.");
-      setLoadingBillsProcess(false);
-      return;
-    }
-
-    // --- Timeout o backend no responde ---
-    if (errorReadBills?.message?.includes("timeout")) {
-      setProcessError("Tiempo de espera agotado (30s). Intente nuevamente.");
-      setLoadingBillsProcess(false);
-      return;
-    }
-
-    // SI TODO OK → dejar de mostrar loader
-    if (dataReadBills?.bills?.length >= 0) {
-      setLoadingBillsProcess(false);
-    }
-  }
-}, [loadingReadBills, errorReadBills, dataReadBills]);
+  
 
 
 useEffect(() => {
@@ -477,118 +445,9 @@ useEffect(() => {
     }
   }, [dataSaveBills]);
 
-  
-    return (
-      <GridToolbarContainer
-        sx={{
-          justifyContent: "right",
-        }}
-      >
-        <Box
-          display="flex"
-          flexDirection="column"
-          mr={5}
-          mb={1}
-          border="1px solid #333333"
-          padding={1}
-          borderRadius={1}
-        >
-          <Box display="flex" flexDirection="row">
-            <InputTitles sx={{ color: "#8C7E82" }}>
-              Suma de subtotales
-            </InputTitles>
-            <InputTitles sx={{ ml: 2 }}>
-              {bill
-                .reduce((acc, bill) => acc + bill.subTotal, 0)
-                .toLocaleString("en-US", {
-                  style: "currency",
-                  currency: "USD",
-                })}
-            </InputTitles>
-          </Box>
-          <Box display="flex" flexDirection="row">
-            <InputTitles sx={{ color: "#8C7E82" }}>
-              Suma de totales:
-            </InputTitles>
-            <InputTitles sx={{ ml: 5 }}>
-              {bill
-                .reduce((acc, bill) => acc + bill.total, 0)
-                .toLocaleString("en-US", {
-                  style: "currency",
-                  currency: "USD",
-                })}
-            </InputTitles>
-          </Box>
-        </Box>
-
-        <Button
-          variant="standard"
-          disabled={bill.length === 0}
-          onClick={() => handleExport({ getRowsToExport: getAllRows })}
-          sx={{
-            backgroundColor: bill.length === 0 ? "#CECECE" : "#488B8F",
-            borderRadius: "4px",
-            color: "#FFFFFF",
-            height: "3rem",
-            fontSize: "0.7rem",
-            fontFamily: "Montserrat",
-            fontWeight: "bold",
-            "&:hover": {
-              backgroundColor: "#5EA3A3",
-            },
-            marginRight: "1rem",
-          }}
-          aria-label="add"
-        >
-          EXPORTAR CSV
-          <i
-            className="fa-regular fa-download"
-            style={{ marginLeft: 4, fontSize: "medium" }}
-          ></i>
-        </Button>
-<Button
-  variant="contained"
-  onClick={() => {
-    const bills = { bills: bill };
-    console.log(bills);
-    fetchSaveBills(bills);
-  }}
-  disabled={!bill || bill.length === 0 || loadingSaveBills || wasSaved}
-  sx={{
-    backgroundColor: (!bill || bill.length === 0 || loadingSaveBills || wasSaved) ? "#CECECE" : (wasSaved ? "#4caf50" : "#488B8F"),
-    borderRadius: "4px",
-    color: (!bill || bill.length === 0 || loadingSaveBills || wasSaved) ? "#5f5f5f" : "#FFFFFF",
-    height: "3rem",
-    fontSize: "0.7rem",
-    fontFamily: "Montserrat",
-    fontWeight: "bold",
-    "&:hover": {
-      backgroundColor: (!bill || bill.length === 0 || loadingSaveBills || wasSaved) ? "#CECECE" : (wasSaved ? "#4caf50" : "#5EA3A3"),
-    },
-    "&.Mui-disabled": {
-      backgroundColor: "#CECECE !important",
-      color: "#a7a7a7ff !important",
-    }
-  }}
-  aria-label="add"
-  startIcon={
-    loadingSaveBills ? (
-      <CircularProgress size={16} color="inherit" />
-    ) : (
-      <SaveOutlined sx={{ fontSize: "medium" }} />
-    )
-  }
->
-  {loadingSaveBills ? "GUARDANDO..." : wasSaved ? "GUARDADO" : "GUARDAR MODIFICACIONES"}
-</Button>
-      </GridToolbarContainer>
-    );
+  //CustomToolbar
 
 
-
-
-
-  }
 
 const handleCellEditCommit = (params) => {
   if (params.field === "datePayment") {
@@ -809,16 +668,23 @@ const handleCellEditCommit = (params) => {
           </Typography>
         );
       },
-      valueGetter: (params) => {
-        switch (params.value) {
-          case "a7c70741-8c1a-4485-8ed4-5297e54a978a":
+     valueGetter: (params) => {
+    switch (params.value) {
+        case "a7c70741-8c1a-4485-8ed4-5297e54a978a":
             return "FV-TV";
-          case "29113618-6ab8-4633-aa8e-b3d6f242e8a4":
+
+        case "29113618-6ab8-4633-aa8e-b3d6f242e8a4":
             return "ENDOSADO";
-          default:
+
+        /* 👉 AGREGA TU NUEVO ID AQUÍ */
+        case "dcec6f03-5dc1-42ea-a525-afada28686da":
+            return "RECHAZADO";
+
+        default:
             return "FV";
-        }
-      },
+    }
+},
+
     },
     {
       field: "emitterName",
@@ -1260,6 +1126,157 @@ const handleCellEditCommit = (params) => {
       },
     },
   ];
+
+
+  
+
+
+    function CustomToolbar() {
+    const apiRef = useGridApiContext();
+    const handleExport = (options) => apiRef.current.exportDataAsCsv(options);
+useEffect(() => {
+  if (!loadingReadBills) {
+
+    // --- Error de conexión ---
+    if (errorReadBills?.message === "Network Error") {
+      setProcessError("Error de conexión. Reintentando automáticamente…");
+      setLoadingBillsProcess(false);
+      return;
+    }
+
+    // --- Backend caído (503) ---
+    if (errorReadBills?.status === 503) {
+      setProcessError("Servicio no disponible. Estamos trabajando para resolverlo.");
+      setLoadingBillsProcess(false);
+      return;
+    }
+
+    // --- Timeout o backend no responde ---
+    if (errorReadBills?.message?.includes("timeout")) {
+      setProcessError("Tiempo de espera agotado (30s). Intente nuevamente.");
+      setLoadingBillsProcess(false);
+      return;
+    }
+
+    // SI TODO OK → dejar de mostrar loader
+    if (dataReadBills?.bills?.length >= 0) {
+      setLoadingBillsProcess(false);
+    }
+  }
+}, [loadingReadBills, errorReadBills, dataReadBills]);
+    return (
+      <GridToolbarContainer
+        sx={{
+          justifyContent: "right",
+        }}
+      >
+        <Box
+          display="flex"
+          flexDirection="column"
+          mr={5}
+          mb={1}
+          border="1px solid #333333"
+          padding={1}
+          borderRadius={1}
+        >
+          <Box display="flex" flexDirection="row">
+            <InputTitles sx={{ color: "#8C7E82" }}>
+              Suma de subtotales
+            </InputTitles>
+            <InputTitles sx={{ ml: 2 }}>
+              {bill
+                .reduce((acc, bill) => acc + bill.subTotal, 0)
+                .toLocaleString("en-US", {
+                  style: "currency",
+                  currency: "USD",
+                })}
+            </InputTitles>
+          </Box>
+          <Box display="flex" flexDirection="row">
+            <InputTitles sx={{ color: "#8C7E82" }}>
+              Suma de totales:
+            </InputTitles>
+            <InputTitles sx={{ ml: 5 }}>
+              {bill
+                .reduce((acc, bill) => acc + bill.total, 0)
+                .toLocaleString("en-US", {
+                  style: "currency",
+                  currency: "USD",
+                })}
+            </InputTitles>
+          </Box>
+        </Box>
+
+        <Button
+          variant="standard"
+          disabled={bill.length === 0}
+          onClick={() => handleExport({ getRowsToExport: getAllRows })}
+          sx={{
+            backgroundColor: bill.length === 0 ? "#CECECE" : "#488B8F",
+            borderRadius: "4px",
+            color: "#FFFFFF",
+            height: "3rem",
+            fontSize: "0.7rem",
+            fontFamily: "Montserrat",
+            fontWeight: "bold",
+            "&:hover": {
+              backgroundColor: "#5EA3A3",
+            },
+            marginRight: "1rem",
+          }}
+          aria-label="add"
+        >
+          EXPORTAR CSV
+          <i
+            className="fa-regular fa-download"
+            style={{ marginLeft: 4, fontSize: "medium" }}
+          ></i>
+        </Button>
+<Button
+  variant="contained"
+  onClick={() => {
+    const bills = { bills: bill };
+    console.log(bills);
+    fetchSaveBills(bills);
+  }}
+  disabled={!bill || bill.length === 0 || loadingSaveBills || wasSaved}
+  sx={{
+    backgroundColor: (!bill || bill.length === 0 || loadingSaveBills || wasSaved) ? "#CECECE" : (wasSaved ? "#4caf50" : "#488B8F"),
+    borderRadius: "4px",
+    color: (!bill || bill.length === 0 || loadingSaveBills || wasSaved) ? "#5f5f5f" : "#FFFFFF",
+    height: "3rem",
+    fontSize: "0.7rem",
+    fontFamily: "Montserrat",
+    fontWeight: "bold",
+    "&:hover": {
+      backgroundColor: (!bill || bill.length === 0 || loadingSaveBills || wasSaved) ? "#CECECE" : (wasSaved ? "#4caf50" : "#5EA3A3"),
+    },
+    "&.Mui-disabled": {
+      backgroundColor: "#CECECE !important",
+      color: "#a7a7a7ff !important",
+    }
+  }}
+  aria-label="add"
+  startIcon={
+    loadingSaveBills ? (
+      <CircularProgress size={16} color="inherit" />
+    ) : (
+      <SaveOutlined sx={{ fontSize: "medium" }} />
+    )
+  }
+>
+  {loadingSaveBills ? "GUARDANDO..." : wasSaved ? "GUARDADO" : "GUARDAR MODIFICACIONES"}
+</Button>
+      </GridToolbarContainer>
+
+      
+    );
+
+
+
+
+
+  }
 return (
   <>
     {/* HEADER */}
@@ -1298,372 +1315,361 @@ return (
       </Breadcrumbs>
 
       {/* ----- BOTONES DE ARCHIVO ----- */}
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: { xs: "column", sm: "row" },
-            gap: 1,
-            ml: { md: "auto" }, // empuja a la derecha en escritorio
-            width: { xs: "100%", md: "auto" },
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: { xs: "column", sm: "row" },
+          gap: 1,
+          ml: { md: "auto" },
+          width: { xs: "100%", md: "auto" },
+        }}
+      >
+       <Button
+  disabled={loadingBillsProcess}
+  startIcon={<UploadFileOutlinedIcon sx={{ color: "#488B8F" }} />}
+  sx={{
+    border: "2px solid #488B8F",
+    borderRadius: "4px",
+    height: "3rem",
+    width: { xs: "100%", sm: "auto" },
+    textTransform: "none",
+    transition: "all 0.25s ease-in-out",
+    backgroundColor: "white",
+    color: "#488B8F",
+
+    "& .MuiTypography-root": {
+      transition: "all 0.25s ease-in-out",
+      color: "#488B8F",
+    },
+
+    "& .MuiButton-startIcon svg": {
+      transition: "all 0.25s ease-in-out",
+    },
+
+    "&:hover": {
+      backgroundColor: "#488B8F",
+      color: "#ffffff",
+
+      "& .MuiTypography-root": {
+        color: "#ffffff",
+      },
+
+      "& .MuiButton-startIcon svg": {
+        color: "#ffffff",
+      },
+    },
+  }}
+  onClick={() => billFile.current.click()}
+>
+  <Typography
+    letterSpacing={0}
+    fontSize="90%"
+    fontWeight="bold"
+    // ❌ SIN hover acá
+  >
+    Extraer Factura
+  </Typography>
+</Button>
+
+
+        <input
+          ref={billFile}
+          id="extractBill"
+          type="file"
+          multiple
+          style={{ display: "none" }}
+          onChange={onChangeFilesExtractBill}
+        />
+
+        {/* Modal de selección */}
+        <SelectionModal
+          open={showModal}
+          onClose={() => {
+            setShowModal(false);
+            setPendingFiles(null);
           }}
-        >
-          <Button
-            variant="standard"
-            disabled={loadingBillsProcess}
-            startIcon={<UploadFileOutlinedIcon sx={{ color: "#488B8F" }} />}
-            sx={{
-              border: "2px solid #488B8F",
-              borderRadius: "4px",
-              "&:hover": { backgroundColor: "#B5D1C9" },
-              height: "3rem",
-              width: { xs: "100%", sm: "auto" },
-            }}
-            onClick={() => {
-              billFile.current.click();
-            }}
-          >
-            <Typography
-              letterSpacing={0}
-              fontSize="90%"
-              fontWeight="bold"
-              color="#488B8F"
-            >
-              Extraer Factura
-            </Typography>
-          </Button>
+          onSelect={(selection) => {
+            setShowModal(false);
+            setFideicomiso(selection);
+            setFilesBill(pendingFiles);
+            setLoadingBillsProcess(true);
+            setProcessError(null);
+          }}
+        />
 
-          <input
-            ref={billFile}
-            id="extractBill"
-            type="file"
-            multiple
-            style={{ display: "none" }}
-            onChange={onChangeFilesExtractBill}
-          />
+       <Button
+  disabled={loadingBillsProcess}
+  startIcon={<UploadFileOutlinedIcon sx={{ color: "#488B8F" }} />}
+  sx={{
+    border: "2px solid #488B8F",
+    borderRadius: "4px",
+    height: "3rem",
+    width: { xs: "100%", sm: "auto" },
+    textTransform: "none",
+    transition: "all 0.25s ease-in-out",
+    backgroundColor: "white",
+    color: "#488B8F",
 
-          {/* Modal de selección */}
-          <SelectionModal
-            open={showModal}
-            onClose={() => {
-              setShowModal(false);
-              setPendingFiles(null);
-            }}
-            onSelect={(selection) => {
-              setShowModal(false);
-              setFideicomiso(selection);
-              setFilesBill(pendingFiles);
-              setLoadingBillsProcess(true);
-              setProcessError(null);
-            }}
-          />
+    "& .MuiTypography-root": {
+      transition: "all 0.25s ease-in-out",
+      color: "#488B8F",
+    },
 
-          <Button
-            variant="standard"
-            startIcon={<UploadFileOutlinedIcon sx={{ color: "#488B8F" }} />}
-            sx={{
-              border: "2px solid #488B8F",
-              borderRadius: "4px",
-              "&:hover": { backgroundColor: "#B5D1C9" },
-              height: "3rem",
-              width: { xs: "100%", sm: "auto" }, // << sin 30rem fijos
-            }}
-            onClick={() => {
-              creditNoteFile.current.click();
-            }}
-          >
-            <Typography
-              letterSpacing={0}
-              fontSize="90%"
-              fontWeight="bold"
-              color="#488B8F"
-            >
-              Extraer Notas de Crédito
-            </Typography>
-          </Button>
+    "& .MuiButton-startIcon svg": {
+      transition: "all 0.25s ease-in-out",
+    },
 
-          <input
-            ref={creditNoteFile}
-            id="extractCreditNotes"
-            type="file"
-            multiple
-            style={{ display: "none" }}
-            onChange={onChangeFilesCreditNote}
-          />
-        </Box>
+    "&:hover": {
+      backgroundColor: "#488B8F",
+      color: "#ffffff",
+
+      "& .MuiTypography-root": {
+        color: "#ffffff",
+      },
+
+      "& .MuiButton-startIcon svg": {
+        color: "#ffffff",
+      },
+    },
+  }}
+  onClick={() => creditNoteFile.current.click()}
+>
+  <Typography
+    letterSpacing={0}
+    fontSize="90%"
+    fontWeight="bold"
+    // ❌ SIN hover acá
+  >
+    Extraer Notas de Crédito
+  </Typography>
+</Button>
+
+        <input
+          ref={creditNoteFile}
+          id="extractCreditNotes"
+          type="file"
+          multiple
+          style={{ display: "none" }}
+          onChange={onChangeFilesCreditNote}
+        />
+      </Box>
     </Box>
 
     {/* CONTENIDO */}
     <Box display="flex" flexDirection="column" mt="1.5rem">
-      {/* FILA SUPERIOR: RETENCIONES + BOTONES */}
+      {/* FILA SUPERIOR: TOOLBAR + RETENCIONES */}
       <Box
         sx={{
           display: "flex",
           flexDirection: { xs: "column", md: "row" },
           flexWrap: "wrap",
           alignItems: { xs: "stretch", md: "center" },
+          justifyContent: "space-between",
           gap: 2,
           mt: "0.5rem",
           width: "100%",
         }}
       >
-        {/* ----- Valor Ret. ICA ----- */}
+        {/* SECCIÓN IZQUIERDA: RETENCIONES */}
         <Box
           sx={{
             display: "flex",
+            flexDirection: { xs: "column", sm: "row" },
+            gap: 2,
+            flexWrap: "wrap",
             alignItems: "center",
-            gap: 1,
-            flexShrink: 0,
           }}
         >
-          <Typography
-            letterSpacing={0}
-            fontSize="85%"
-            fontWeight="bold"
-            color={rowsToModify.length === 0 ? "#488B8F50" : "#488B8F"}
-            textTransform="uppercase"
-          >
-            Valor Ret. ICA
-          </Typography>
-
-          <TextField
-            id="ICA"
-            placeholder="0,00"
-            onChange={(e) => {
-              const value = e.target.value;
-              if (value > 100 || value < 0) {
-                Toast("El valor debe estar entre 0 y 100", "error");
-                e.target.value = "";
-                const billsWithRetICA = rowsToModify.reduce(
-                  (acc, curr) => ((acc[curr.billId] = 0), acc),
-                  {}
-                );
-                setRetICA(billsWithRetICA);
-              } else {
-                const billsWithRetICA = rowsToModify.reduce(
-                  (acc, curr) => ((acc[curr.billId] = value), acc),
-                  {}
-                );
-                setRetICA(billsWithRetICA);
-              }
-            }}
-            disabled={rowsToModify.length === 0}
-            type="number"
-            variant="standard"
+          {/* Valor RET ICA */}
+          <Box
             sx={{
-              backgroundColor: "#488B8F1A",
-              opacity: rowsToModify.length === 0 ? "0.5" : "1",
-              border: "1px solid #488B8F",
-              borderRadius: "4px",
-              padding: "10px",
-              height: "0.8rem",
-              width: "5rem",
-              textAlign: "right",
-              alignContent: "center",
-              "input::-webkit-outer-spin-button": {
-                WebkitAppearance: "none",
-                margin: 0,
-              },
-              "input::-webkit-inner-spin-button": {
-                WebkitAppearance: "none",
-                margin: 0,
-              },
-              "& .MuiInputBase-input": {
-                padding: "2px",
-                color: "#488B8F",
-                fontSize: "0.9rem",
-                fontWeight: "600",
-                textAlign: "right",
-                "&::placeholder": {
-                  color: "#488B8F",
-                  fontSize: "0.9rem",
-                  fontWeight: "600",
-                  textAlign: "right",
-                  opacity: 1,
-                },
-              },
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 2,
+              bgcolor: "white",
+              borderRadius: "12px",
+              border: "1px solid #E0E0E0",
+              padding: "6px 10px",
+              minWidth: "150px",
+              height: "40px",
+              boxShadow: "0px 1px 3px rgba(0,0,0,0.08)",
             }}
-            InputProps={{
-              disableUnderline: true,
-              sx: { mt: "-5px" },
-              endAdornment: (
-                <i
-                  style={{ color: "#5EA3A3" }}
-                  className="fa-light fa-percent"
-                ></i>
-              ),
-            }}
-          />
-
-          <IconButton
-            aria-label="save"
-            disabled={rowsToModify.length === 0}
-            sx={{
-              opacity: rowsToModify.length === 0 ? "0.5" : "1",
-              width: "2rem",
-              height: "2.2rem",
-              backgroundColor: "#488B8F",
-              borderRadius: "4px",
-              "&:hover": {
-                backgroundColor: "#488B8F80",
-                transition: "0.3s",
-              },
-              "&:disabled": {
-                backgroundColor: "#488B8F",
-              },
-            }}
-            onClick={() => {}}
           >
-            <ArrowForward sx={{ color: "white" }} />
-          </IconButton>
-        </Box>
+            <Box>
+              <Typography
+                letterSpacing={0}
+                fontSize="0.75rem"
+                fontWeight="600"
+                color="#7A7A7A"
+                sx={{ lineHeight: "12px" }}
+              >
+                Valor RET. ICA
+              </Typography>
 
-        {/* ----- Valor Ret. FTE ----- */}
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 1,
-            flexShrink: 0,
-          }}
-        >
-          <Typography
-            letterSpacing={0}
-            fontSize="85%"
-            fontWeight="bold"
-            color={rowsToModify.length === 0 ? "#488B8F50" : "#488B8F"}
-            textTransform="uppercase"
-          >
-            Valor Ret. FTE
-          </Typography>
+              <TextField
+                id="ICA"
+                placeholder="0,00"
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value > 100 || value < 0) {
+                    Toast("El valor debe estar entre 0 y 100", "error");
+                    e.target.value = "";
+                    const billsWithRetICA = rowsToModify.reduce(
+                      (acc, curr) => ((acc[curr.billId] = 0), acc),
+                      {}
+                    );
+                    setRetICA(billsWithRetICA);
+                  } else {
+                    const billsWithRetICA = rowsToModify.reduce(
+                      (acc, curr) => ((acc[curr.billId] = value), acc),
+                      {}
+                    );
+                    setRetICA(billsWithRetICA);
+                  }
+                }}
+                disabled={rowsToModify.length === 0}
+                type="number"
+                variant="standard"
+                sx={{
+                  mt: "3px",
+                  width: "60px",
+                  height: "23px",
+                  "& .MuiInputBase-input": {
+                    padding: "3px 4px",
+                    fontSize: "0.85rem",
+                    fontWeight: "700",
+                    textAlign: "right",
+                    color: "#12A39C",
+                  },
+                  "input::-webkit-inner-spin-button": { WebkitAppearance: "none" },
+                  "input::-webkit-outer-spin-button": { WebkitAppearance: "none" },
+                }}
+                InputProps={{
+                  disableUnderline: true,
+                  endAdornment: (
+                    <i
+                      style={{ color: "#12A39C", marginLeft: "4px" }}
+                      className="fa-light fa-percent"
+                    ></i>
+                  ),
+                }}
+              />
+            </Box>
 
-          <TextField
-            id="FTE"
-            placeholder="0,00"
-            onChange={(e) => {
-              const value = e.target.value;
-              if (value > 100 || value < 0) {
-                Toast("El valor debe estar entre 0 y 100", "error");
-                e.target.value = "";
-                const billsWithRetFTE = rowsToModify.reduce(
-                  (acc, curr) => ((acc[curr.billId] = 0), acc),
-                  {}
-                );
-                setRetFTE(billsWithRetFTE);
-              } else {
-                const billsWithRetFTE = rowsToModify.reduce(
-                  (acc, curr) => ((acc[curr.billId] = value), acc),
-                  {}
-                );
-                setRetFTE(billsWithRetFTE);
-              }
-            }}
-            disabled={rowsToModify.length === 0}
-            type="number"
-            variant="standard"
+            <IconButton
+              aria-label="save"
+              disabled={rowsToModify.length === 0}
+              onClick={() => {}}
+              sx={{
+                width: "2.2rem",
+                height: "2.2rem",
+                backgroundColor: "#12A39C",
+                borderRadius: "8px",
+                "&:hover": { backgroundColor: "#00B4FF90" },
+                opacity: rowsToModify.length === 0 ? 0.4 : 1,
+              }}
+            >
+              <ArrowForward sx={{ color: "white", fontSize: "1.5rem" }} />
+            </IconButton>
+          </Box>
+
+          {/* Valor RET FTE */}
+          <Box
             sx={{
-              backgroundColor: "#488B8F1A",
-              opacity: rowsToModify.length === 0 ? "0.5" : "1",
-              border: "1px solid #488B8F",
-              borderRadius: "4px",
-              padding: "10px",
-              height: "0.8rem",
-              width: "5rem",
-              textAlign: "right",
-              alignContent: "center",
-              "input::-webkit-outer-spin-button": {
-                WebkitAppearance: "none",
-                margin: 0,
-              },
-              "input::-webkit-inner-spin-button": {
-                WebkitAppearance: "none",
-                margin: 0,
-              },
-              "& .MuiInputBase-input": {
-                padding: "2px",
-                color: "#488B8F",
-                fontSize: "0.9rem",
-                fontWeight: "600",
-                textAlign: "right",
-                "&::placeholder": {
-                  color: "#488B8F",
-                  fontSize: "0.9rem",
-                  fontWeight: "600",
-                  textAlign: "right",
-                  opacity: 1,
-                },
-              },
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 2,
+              bgcolor: "white",
+              borderRadius: "12px",
+              border: "1px solid #E0E0E0",
+              padding: "6px 10px",
+              minWidth: "150px",
+              height: "40px",
+              boxShadow: "0px 1px 3px rgba(0,0,0,0.08)",
             }}
-            InputProps={{
-              disableUnderline: true,
-              sx: { mt: "-5px" },
-              endAdornment: (
-                <i
-                  style={{ color: "#5EA3A3" }}
-                  className="fa-light fa-percent"
-                ></i>
-              ),
-            }}
-          />
-
-          <IconButton
-            aria-label="save"
-            disabled={rowsToModify.length === 0}
-            sx={{
-              opacity: rowsToModify.length === 0 ? "0.5" : "1",
-              width: "2rem",
-              height: "2.2rem",
-              backgroundColor: "#488B8F",
-              borderRadius: "4px",
-              "&:hover": {
-                backgroundColor: "#488B8F80",
-                transition: "0.3s",
-              },
-              "&:disabled": {
-                backgroundColor: "#488B8F",
-              },
-            }}
-            onClick={() => {}}
           >
-            <ArrowForward sx={{ color: "white" }} />
-          </IconButton>
-        </Box>
+            <Box>
+              <Typography
+                letterSpacing={0}
+                fontSize="0.75rem"
+                fontWeight="600"
+                color="#7A7A7A"
+                sx={{ lineHeight: "12px" }}
+              >
+                Valor RET. FTE
+              </Typography>
 
-        {/* ----- Aplicar RET IVA a todo ----- */}
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 1,
-            flexShrink: 0,
-          }}
-        >
-          <Typography
-            letterSpacing={0}
-            fontSize="85%"
-            fontWeight="bold"
-            color={rowsToModify.length === 0 ? "#488B8F50" : "#488B8F"}
-            textTransform="uppercase"
-          >
-            Aplicar RET. IVA a todo
-          </Typography>
+              <TextField
+                id="FTE"
+                placeholder="0,00"
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value > 100 || value < 0) {
+                    Toast("El valor debe estar entre 0 y 100", "error");
+                    e.target.value = "";
+                    const billsWithRetFTE = rowsToModify.reduce(
+                      (acc, curr) => ((acc[curr.billId] = 0), acc),
+                      {}
+                    );
+                    setRetFTE(billsWithRetFTE);
+                  } else {
+                    const billsWithRetFTE = rowsToModify.reduce(
+                      (acc, curr) => ((acc[curr.billId] = value), acc),
+                      {}
+                    );
+                    setRetFTE(billsWithRetFTE);
+                  }
+                }}
+                disabled={rowsToModify.length === 0}
+                type="number"
+                variant="standard"
+                sx={{
+                  mt: "3px",
+                  width: "60px",
+                  height: "23px",
+                  "& .MuiInputBase-input": {
+                    padding: "3px 4px",
+                    fontSize: "0.85rem",
+                    fontWeight: "700",
+                    textAlign: "right",
+                    color: "#12A39C",
+                  },
+                  "input::-webkit-inner-spin-button": { WebkitAppearance: "none" },
+                  "input::-webkit-outer-spin-button": { WebkitAppearance: "none" },
+                }}
+                InputProps={{
+                  disableUnderline: true,
+                  endAdornment: (
+                    <i
+                      style={{ color: "#12A39C", marginLeft: "4px" }}
+                      className="fa-light fa-percent"
+                    ></i>
+                  ),
+                }}
+              />
+            </Box>
 
-          <IconButton
-            aria-label="save"
-            disabled={rowsToModify.length === 0}
-            sx={{
-              opacity: rowsToModify.length === 0 ? "0.5" : "1",
-              width: "2rem",
-              height: "2.2rem",
-              backgroundColor: "#488B8F",
-              borderRadius: "4px",
-              "&:hover": {
-                backgroundColor: "#488B8F80",
-                transition: "0.3s",
-              },
-              "&:disabled": {
-                backgroundColor: "#488B8F",
-              },
-            }}
+            <IconButton
+              aria-label="save"
+              disabled={rowsToModify.length === 0}
+              onClick={() => {}}
+              sx={{
+                width: "2.2rem",
+                height: "2.2rem",
+                backgroundColor: "#12A39C",
+                borderRadius: "8px",
+                "&:hover": { backgroundColor: "#00B4FF90" },
+                opacity: rowsToModify.length === 0 ? 0.4 : 1,
+              }}
+            >
+              <ArrowForward sx={{ color: "white", fontSize: "1.5rem" }} />
+            </IconButton>
+          </Box>
+
+          {/* Aplicar RET. IVA a todo */}
+          <Box
             onClick={() => {
               if (rowsToModify.length === rowsToApplyRETIVA.length) {
                 setRowsToApplyRETIVA([]);
@@ -1680,19 +1686,162 @@ return (
                 });
               }
             }}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: rowsToModify.length === 0 ? "not-allowed" : "pointer",
+              bgcolor: "white",
+              borderRadius: "12px",
+              border: "2px solid #12A39C",
+              padding: "6px 14px",
+              minWidth: "150px",
+              height: "40px",
+              opacity: rowsToModify.length === 0 ? 0.4 : 1,
+              transition: "all 0.25s ease-in-out",
+              "&:hover": {
+                backgroundColor: rowsToModify.length === 0 ? "white" : "#12A39C15",
+                borderColor: rowsToModify.length === 0 ? "#12A39C" : "#0E8F77",
+              },
+            }}
           >
-            <ArrowForward sx={{ color: "white" }} />
-          </IconButton>
+            <Typography
+              letterSpacing={0}
+              fontSize="0.85rem"
+              fontWeight="700"
+              color={rowsToModify.length === 0 ? "#488B8F50" : "#12A39C"}
+              sx={{
+                transition: "all 0.25s ease-in-out",
+                "&:hover": {
+                  color: rowsToModify.length === 0 ? "#488B8F50" : "#0E8F77",
+                },
+              }}
+              textAlign="center"
+            >
+              Aplicar RET. IVA a todo
+            </Typography>
+          </Box>
         </Box>
 
-        
+        {/* SECCIÓN DERECHA: TOOLBAR (CONTENIDO DEL CUSTOM TOOLBAR) */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+            flexWrap: "wrap",
+            justifyContent: "flex-end",
+          }}
+        >
+          {/* Resumen de totales */}
+          <Box
+            display="flex"
+            flexDirection="column"
+            mr={5}
+            mb={1}
+            border="1px solid #488B8f"
+            padding={1}
+            borderRadius={1}
+          >
+            <Box display="flex" flexDirection="row">
+              <InputTitles sx={{ color: "#8C7E82", border:'1px',borderColor:'#488B8f' }}>
+                Suma de subtotales
+              </InputTitles>
+              <InputTitles sx={{ ml: 2 }}>
+                {bill
+                  .reduce((acc, bill) => acc + bill.subTotal, 0)
+                  .toLocaleString("en-US", {
+                    style: "currency",
+                    currency: "USD",
+                  })}
+              </InputTitles>
+            </Box>
+            <Box display="flex" flexDirection="row">
+              <InputTitles sx={{ color: "#8C7E82" }}>
+                Suma de totales:
+              </InputTitles>
+              <InputTitles sx={{ ml: 5 }}>
+                {bill
+                  .reduce((acc, bill) => acc + bill.total, 0)
+                  .toLocaleString("en-US", {
+                    style: "currency",
+                    currency: "USD",
+                  })}
+              </InputTitles>
+            </Box>
+          </Box>
+
+          {/* Botones */}
+          <Box display="flex" gap={1}>
+            <Button
+              variant="standard"
+              disabled={bill.length === 0}
+              onClick={() => {
+                // Necesitarás implementar la exportación manualmente
+                // o usar una referencia al DataGrid
+                console.log("Exportar CSV");
+              }}
+              sx={{
+                backgroundColor: bill.length === 0 ? "#CECECE" : "#488B8F",
+                borderRadius: "4px",
+                color: "#FFFFFF",
+                height: "3rem",
+                fontSize: "0.7rem",
+                fontFamily: "Montserrat",
+                fontWeight: "bold",
+                "&:hover": {
+                  backgroundColor: "#5EA3A3",
+                },
+                marginRight: "1rem",
+              }}
+              aria-label="add"
+            >
+              EXPORTAR CSV
+              <i
+                className="fa-regular fa-download"
+                style={{ marginLeft: 4, fontSize: "medium" }}
+              ></i>
+            </Button>
+
+            <Button
+              variant="contained"
+              onClick={() => {
+                const bills = { bills: bill };
+                console.log(bills);
+                fetchSaveBills(bills);
+              }}
+              disabled={!bill || bill.length === 0 || loadingSaveBills || wasSaved}
+              sx={{
+                backgroundColor: (!bill || bill.length === 0 || loadingSaveBills || wasSaved) ? "#CECECE" : (wasSaved ? "#4caf50" : "#488B8F"),
+                borderRadius: "4px",
+                color: (!bill || bill.length === 0 || loadingSaveBills || wasSaved) ? "#5f5f5f" : "#FFFFFF",
+                height: "3rem",
+                fontSize: "0.7rem",
+                fontFamily: "Montserrat",
+                fontWeight: "bold",
+                "&:hover": {
+                  backgroundColor: (!bill || bill.length === 0 || loadingSaveBills || wasSaved) ? "#CECECE" : (wasSaved ? "#4caf50" : "#5EA3A3"),
+                },
+                "&.Mui-disabled": {
+                  backgroundColor: "#CECECE !important",
+                  color: "#a7a7a7ff !important",
+                }
+              }}
+              aria-label="add"
+              startIcon={
+                loadingSaveBills ? (
+                  <CircularProgress size={16} color="inherit" />
+                ) : (
+                  <SaveOutlined sx={{ fontSize: "medium" }} />
+                )
+              }
+            >
+              {loadingSaveBills ? "GUARDANDO..." : wasSaved ? "GUARDADO" : "GUARDAR MODIFICACIONES"}
+            </Button>
+          </Box>
+        </Box>
       </Box>
     </Box>
-
-    {/* RESTO IGUAL */}
-    <Divider
-      sx={{ marginTop: 2, marginBottom: 4, backgroundColor: "#B5D1C9" }}
-    />
 
     {loadingBillsProcess ? (
       <Box
@@ -1773,8 +1922,8 @@ return (
         disableColumnMenu
         checkboxSelection
         sx={{
-  mt: { xs: 2, md: 4 }   // ← Evita que la tabla desaparezca en móviles
-}}
+          mt: { xs: 2, md: 4 }
+        }}
         onSelectionModelChange={(ids) => onRowsSelectionHandler(ids)}
         components={{
           ColumnSortedAscendingIcon: () => (
@@ -1800,7 +1949,6 @@ return (
               No hay datos para mostrar
             </Typography>
           ),
-          Toolbar: CustomToolbar,
         }}
       />
     )}
@@ -1817,9 +1965,9 @@ return (
           top: "50%",
           left: "50%",
           transform: "translate(-50%, -50%)",
-           width: { xs: "90%", sm: "430px" },   // RESPONSIVE
-      maxHeight: "90vh",                   // RESPONSIVE
-      overflowY: "auto",                   // RESPONSIVE
+          width: { xs: "90%", sm: "430px" },
+          maxHeight: "90vh",
+          overflowY: "auto",
           bgcolor: "background.paper",
           borderRadius: 2,
           boxShadow: 24,

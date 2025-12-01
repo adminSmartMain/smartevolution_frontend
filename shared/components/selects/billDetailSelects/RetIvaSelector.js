@@ -16,8 +16,10 @@ export default function RetIvaSelector({values, setFieldValue,formatNumberWithTh
         disabled
         type='text'
         value={
-          formatNumberWithThousandsSeparator( values?.ret_iva)
-        }
+          formatNumberWithThousandsSeparator(
+  ((values?.ret_iva ?? 0) * 1).toFixed(2)
+)
+}
     
         onChange={(e) => {
             const rawValue = e.target.value.replace(/[^\d]/g, "");
