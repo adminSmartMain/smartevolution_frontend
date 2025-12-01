@@ -480,16 +480,22 @@ const handleOpenDetailBill = (id, tab = 0) => {
 
         );
       },
-      valueGetter: (params) => {
-        switch (params.value) {
-          case "a7c70741-8c1a-4485-8ed4-5297e54a978a":
+       valueGetter: (params) => {
+    switch (params.value) {
+        case "a7c70741-8c1a-4485-8ed4-5297e54a978a":
             return "FV-TV";
-          case "29113618-6ab8-4633-aa8e-b3d6f242e8a4":
+
+        case "29113618-6ab8-4633-aa8e-b3d6f242e8a4":
             return "ENDOSADO";
-          default:
+
+        /* 👉 AGREGA TU NUEVO ID AQUÍ */
+        case "dcec6f03-5dc1-42ea-a525-afada28686da":
+            return "RECHAZADO";
+
+        default:
             return "FV";
-        }
-      },
+    }
+},
     },
     {
       field: "billId",
