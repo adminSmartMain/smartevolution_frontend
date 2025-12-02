@@ -378,12 +378,6 @@ const handleOpenDetailBill = (id, tab = 0) => {
     data: dataTypeBill,
   } = useFetch({ service: getTypeBill, init: true });
 
-  // Llamada única al montar (opcional si init: true ya lo hace)
-  useEffect(() => {
-    if (!dataTypeBill) {
-      fetchTypeBill();
-    }
-  }, []);
 
   // Transformación segura de los datos
   useEffect(() => {
@@ -480,22 +474,26 @@ const handleOpenDetailBill = (id, tab = 0) => {
 
         );
       },
-       valueGetter: (params) => {
-    switch (params.value) {
-        case "a7c70741-8c1a-4485-8ed4-5297e54a978a":
-            return "FV-TV";
+    valueGetter: (params) => {
+    const val = params.value;
 
-        case "29113618-6ab8-4633-aa8e-b3d6f242e8a4":
-            return "ENDOSADO";
+    switch (val) {
 
-        /* 👉 AGREGA TU NUEVO ID AQUÍ */
         case "dcec6f03-5dc1-42ea-a525-afada28686da":
             return "RECHAZADO";
 
+        case "29113618-6ab8-4633-aa8e-b3d6f242e8a4":
+            return "ENDOSADA";
+
+        case "a7c70741-8c1a-4485-8ed4-5297e54a978a":
+            return "FV-TV";
+
+        case "fdb5feb4-24e9-41fc-9689-31aff60b76c9":
         default:
             return "FV";
     }
-},
+}
+,
     },
     {
       field: "billId",

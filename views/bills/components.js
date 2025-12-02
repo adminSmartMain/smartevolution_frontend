@@ -669,7 +669,10 @@ const handleCellEditCommit = (params) => {
         );
       },
      valueGetter: (params) => {
+
+      console.log(params.value)
     switch (params.value) {
+      
         case "a7c70741-8c1a-4485-8ed4-5297e54a978a":
             return "FV-TV";
 
