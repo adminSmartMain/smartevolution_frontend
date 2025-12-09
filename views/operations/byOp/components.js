@@ -3,7 +3,7 @@ import { ToastContainer } from "react-toastify";
 import { useRouter } from 'next/router';
 import Link from "next/link";
 import { SearchOutlined } from "@mui/icons-material";
-import { Box, Button, Fade, FormControl, Grid, IconButton, InputLabel, MenuItem, Select, TextField, Typography, Menu, InputAdornment, Paper } from "@mui/material";
+import { Breadcrumbs, Box, Button, Fade, FormControl, Grid, IconButton, InputLabel, MenuItem, Select, TextField, Typography, Menu, InputAdornment, Paper } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import Modal from "@components/modals/modal";
 import TitleModal from "@components/modals/titleModal";
@@ -21,6 +21,7 @@ import { StandardTextField } from "@styles/fields/BaseField";
 import InputTitles from "@styles/inputTitles";
 import scrollSx from "@styles/scroll";
 import CustomDataGrid from "@styles/tables";
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 
 import {
   Home as HomeIcon,
@@ -610,9 +611,16 @@ const handleTextFieldChange = (evt) => {
   return (
     <>
 <Box sx={{ ...sectionTitleContainerSx }}>
-<Box className="view-header">
 
-  <Link href="/dashboard" underline="none">
+  
+   
+<Box className="view-header">
+   <Breadcrumbs
+        separator={<NavigateNextIcon fontSize="small" />}
+        aria-label="breadcrumb"
+        sx={{ ml: 1, mb: 0 }}
+      >
+        <Link href="/dashboard" underline="none">
                             <a>
                             <HomeIcon
                                 fontSize="large" 
@@ -626,10 +634,28 @@ const handleTextFieldChange = (evt) => {
                             </a>
                             
                             </Link>
-                              <Typography
-        className="view-title">
-          - Operaciones por Grupo
+      <Link
+          underline="hover"
+          color="#5EA3A3"
+          href="/operations"
+          sx={{ fontSize: "1.3rem" }}
+        >
+       <Typography
+                    className="view-title"
+                  >
+    Operaciones
         </Typography>
+      
+        </Link>
+
+         <Typography
+                    className="view-title"
+                  >
+          Por grupo
+        </Typography>
+      </Breadcrumbs>
+  
+       
 </Box>
  <Link href="/operations" passHref>
           <Button sx={buttonHeaderPreopTitle}>

@@ -854,7 +854,7 @@ const handleTextFieldChange = (evt) => {
       </Menu>
 
   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
-    <Link href="/pre-operations/byOp" underline="none">
+    <Link href="/operations/byOp" underline="none">
       <button className="button-header-preop-title">Ver por Grupos</button>
     </Link>
 

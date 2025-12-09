@@ -1306,13 +1306,15 @@ return (
           href="/bills/billList"
           sx={{ fontSize: "1.3rem" }}
         >
-          Consulta de Facturas
+     <Typography component="h1" className="view-title">
+ Consulta de Facturas
+             
+          </Typography>
+         
         </Link>
 
-        <Typography
-          color="#5EA3A3"
-          sx={{ fontSize: "1.3rem", fontWeight: "medium" }}
-        >
+     <Typography
+                   component="h1" className="view-title">
           Facturas Electrónicas
         </Typography>
       </Breadcrumbs>
@@ -1327,52 +1329,52 @@ return (
           width: { xs: "100%", md: "auto" },
         }}
       >
-       <Button
-  disabled={loadingBillsProcess}
-  startIcon={<UploadFileOutlinedIcon sx={{ color: "#488B8F" }} />}
-  sx={{
-    border: "2px solid #488B8F",
-    borderRadius: "4px",
-    height: "3rem",
-    width: { xs: "100%", sm: "auto" },
-    textTransform: "none",
-    transition: "all 0.25s ease-in-out",
-    backgroundColor: "white",
-    color: "#488B8F",
+              <Button
+          disabled={loadingBillsProcess}
+          startIcon={<UploadFileOutlinedIcon sx={{ color: "#488B8F" }} />}
+          sx={{
+            border: "2px solid #488B8F",
+            borderRadius: "4px",
+            height: "3rem",
+            width: { xs: "100%", sm: "auto" },
+            textTransform: "none",
+            transition: "all 0.25s ease-in-out",
+            backgroundColor: "white",
+            color: "#488B8F",
 
-    "& .MuiTypography-root": {
-      transition: "all 0.25s ease-in-out",
-      color: "#488B8F",
-    },
+            "& .MuiTypography-root": {
+              transition: "all 0.25s ease-in-out",
+              color: "#488B8F",
+            },
 
-    "& .MuiButton-startIcon svg": {
-      transition: "all 0.25s ease-in-out",
-    },
+            "& .MuiButton-startIcon svg": {
+              transition: "all 0.25s ease-in-out",
+            },
 
-    "&:hover": {
-      backgroundColor: "#488B8F",
-      color: "#ffffff",
+            "&:hover": {
+              backgroundColor: "#488B8F",
+              color: "#ffffff",
 
-      "& .MuiTypography-root": {
-        color: "#ffffff",
-      },
+              "& .MuiTypography-root": {
+                color: "#ffffff",
+              },
 
-      "& .MuiButton-startIcon svg": {
-        color: "#ffffff",
-      },
-    },
-  }}
-  onClick={() => billFile.current.click()}
->
-  <Typography
-    letterSpacing={0}
-    fontSize="90%"
-    fontWeight="bold"
-    // ❌ SIN hover acá
-  >
-    Extraer Factura
-  </Typography>
-</Button>
+              "& .MuiButton-startIcon svg": {
+                color: "#ffffff",
+              },
+            },
+          }}
+          onClick={() => billFile.current.click()}
+        >
+          <Typography
+            letterSpacing={0}
+            fontSize="90%"
+            fontWeight="bold"
+            // ❌ SIN hover acá
+          >
+            Extraer Factura
+          </Typography>
+        </Button>
 
 
         <input

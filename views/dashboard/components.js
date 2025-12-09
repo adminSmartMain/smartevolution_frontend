@@ -255,21 +255,22 @@ const TrendIndicator = ({ metricKey }) => {
   ];
 
   return (
-    <Box sx={{ py: 3 }}>
+    <Box sx={{ py: 1 }}>
       {/* Encabezado + Filtros */}
       {loading ? (
         <HeaderSkeleton />
       ) : (
-        <Box sx={{ mb: 6, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}>
+        <Box sx={{ mb: '16px', display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}>
           
-<Box>
-  <Typography variant="h6" fontWeight="bold" color="#5B898E" className="view-title">
-    Dashboard de Operaciones
-  </Typography>
-  <Typography variant="body2" color="text.secondary">
-    Actualizado: {dashboardData?.ultima_actualizacion || new Date().toLocaleString("es-ES")}
-  </Typography>
-</Box>
+          <Box>
+            <Typography
+                             component="h1" className="view-title">
+              Estadísticas Generales
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Actualizado: {dashboardData?.ultima_actualizacion || new Date().toLocaleString("es-ES")}
+            </Typography>
+          </Box>
 
           {/* Select de filtros */}
           <FormControl size="small" sx={{ minWidth: 180, mt: { xs: 2, sm: 0 } }}>
