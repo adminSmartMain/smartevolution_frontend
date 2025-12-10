@@ -79,6 +79,8 @@ import RetIcaSelector from "@components/selects/billDetailSelects/RetIcaSelector
 import RetIvaSelector from "@components/selects/billDetailSelects/RetIvaSelector";
 import IvaSelector from "@components/selects/billDetailSelects/IvaSelector";
 import OtrasRetSelector from "@components/selects/billDetailSelects/OtrasRetSelector";
+import CurrentOwnerSelector from "@components/selects/billDetailSelects/CurrentOwnerSelector";
+import CufeSelector from  "@components/selects/billDetailSelects/CufeSelector";
 import fileToBase64 from "@lib/fileToBase64";
 import ModalConfirmation from "@components/modals/createBillModals/modalConfirmation";
 import ProcessModal from "@components/modals/createBillModals/processModal";
@@ -564,9 +566,13 @@ const parseBackendDate = (dateString) => {
 };
 
 
+console.log(bill)
  
   const initialValues2 = {
     emitter:  bill?.emitterName,
+    cufe:bill?.cufe,
+    currentOwnerName:bill?.currentOwnerName,
+    currentOwnerid:bill?.currentOwnerId,
     nombrePagador:  bill?.payerName,
     filtroEmitterPagador: { emitter: "", payer: "" },
     currentBalance: bill?.currentBalance,
@@ -857,7 +863,7 @@ const verifyBlob = async (blob) => {
               return(
                 <Form translate="no" onChange={handleOnChange}>
                   <Grid container spacing={2}>
-                    <Grid item xs={12} md={4}>
+                    <Grid item xs={12} md={2}>
                       <TypeBillSelector 
                         errors={errors}
                         setFieldTouched={setFieldTouched}
@@ -869,7 +875,7 @@ const verifyBlob = async (blob) => {
                       />
                     </Grid>
 
-                    <Grid item xs={12} md={4}>
+                    <Grid item xs={12} md={2}>
                       <BillManualSelector
                         values={values}
                         setFieldValue={setFieldValue}
@@ -882,8 +888,18 @@ const verifyBlob = async (blob) => {
                         debouncedCheckBill={debouncedCheckBill}
                       />
                     </Grid>
+                    <Grid item xs={12} md={5}>
+                      <CufeSelector
+                         values={values}
+                          setFieldValue={setFieldValue}
+                          errors={errors}
+                          integrationCode={bill?.Cufe}
+                          formatNumberWithThousandsSeparator={formatNumberWithThousandsSeparator}
+                          parseFloat={parseFloat}
+                        />
+                    </Grid>
                     
-                    <Grid item xs={12} md={4}>
+                    <Grid item xs={12} md={3}>
                       <SaldoDisponibleSelector
                         values={values}
                         setFieldValue={setFieldValue}
@@ -1055,7 +1071,26 @@ const verifyBlob = async (blob) => {
 
                     {/* Segunda fila */}
                     <Grid container item xs={12} spacing={2}>
-                      <Grid item xs={12} md={6}>
+
+                      <Grid item xs={12} md={4}>
+                      <CurrentOwnerSelector
+                        errors={errors}
+                        payers={payers}
+                        setFieldTouched={setFieldTouched}
+                        setFieldValue={setFieldValue}
+                        setFieldError={setFieldError}
+                        touched={touched}
+                        values={values}
+                        emisores={emisores}
+                        fetchBrokerByClient={fetchBrokerByClient}
+                        cargarFacturas={cargarFacturas}
+                        cargarTasaDescuento={cargarTasaDescuento}
+                        setClientWithoutBroker={setClientWithoutBroker}
+                        setOpenEmitterBrokerModal={setOpenEmitterBrokerModal}
+                        integrationCode={bill?.integrationCode}
+                      />
+                    </Grid>
+                      <Grid item xs={12} md={4}>
                         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                           <div style={{ flex: 1 }}>
                             <PayerSelector
@@ -1104,7 +1139,7 @@ const verifyBlob = async (blob) => {
                         </div>    
                       </Grid>
 
-                      <Grid item xs={12} md={6}>
+                      <Grid item xs={12} md={4}>
                         <SubTotalSelector
                           values={values}
                           setFieldValue={setFieldValue}
