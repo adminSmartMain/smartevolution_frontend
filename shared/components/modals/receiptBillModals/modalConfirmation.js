@@ -21,7 +21,18 @@ export default function ModalConfirmation({
   const getTypeName = (typeId) => {
     return TYPE_MAPPING[typeId] || typeId; // Devuelve el nombre mapeado o el UUID si no está en el mapeo
   };
-
+   const formatNumberWithThousandsSeparator = (value) => {
+    if (value === undefined || value === null) return '';
+    
+    // Convert to string and split into integer and decimal parts
+    const [integerPart, decimalPart] = value.toString().split('.');
+    
+    // Format only the integer part with commas
+    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    
+    // Combine with decimal part if it exists
+    return decimalPart ? `${formattedInteger}.${decimalPart}` : formattedInteger;
+};
   return (
     <Dialog 
       open={showConfirmationModal} 
@@ -40,7 +51,7 @@ export default function ModalConfirmation({
           ¿Estás seguro de registrar este recaudo?
         </Typography>
         <Typography variant="body2">
-          <strong>Monto:</strong> {values.payedAmount}
+          <strong>Monto:</strong> {formatNumberWithThousandsSeparator(values.payedAmount)}
         </Typography>
         <Typography variant="body2">
           <strong>Tipo:</strong> {getTypeName(values.typeReceipt)}
