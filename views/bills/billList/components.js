@@ -544,6 +544,18 @@ const handleOpenDetailBill = (id, tab = 0) => {
         );
       },
     }, {
+      field: "created_at",
+      headerName: "Creado en",
+      width: 81,
+      flex: 1,     // Desactiva el crecimiento flexible
+      renderCell: (params) => {
+        return (
+          <InputTitles>
+            {params.value ? moment(params.value).format("DD/MM/YYYY") : ""}
+          </InputTitles>
+        );
+      },
+    }, {
       field: "DateBill",
       headerName: "Emitido",
       width: 81,
@@ -996,6 +1008,7 @@ const handleOpenDetailBill = (id, tab = 0) => {
         Total: bill.subTotal,
         typeBill: bill.typeBill,
         DateBill: bill.dateBill,
+        created_at:bill.created_at,
         DatePayment: bill.datePayment,
         expirationDate: bill.expirationDate,
         currentBalance: bill.currentBalance,
@@ -1235,7 +1248,14 @@ const handleOpenDetailBill = (id, tab = 0) => {
                     height: 20
                   }}
                 >
-                  <CloseIcon fontSize="small" />
+                  <CloseIcon fontSize="small" sx={{
+                   
+                    color: "#488b8f",
+                    '&:hover': {
+                      backgroundColor: "#ffffff20"
+                    },
+                    
+                  }} />
                 </IconButton>
               ) : (
                 <ArrowDropDownIcon sx={{ fontSize: "16px", color: "#488B8F" }} />
@@ -1317,7 +1337,14 @@ const handleOpenDetailBill = (id, tab = 0) => {
                     height: 20
                   }}
                 >
-                  <CloseIcon fontSize="small" />
+                  <CloseIcon fontSize="small" sx={{
+                   
+                    color: "#488b8f",
+                    '&:hover': {
+                      backgroundColor: "#ffffff20"
+                    },
+                    
+                  }}  />
                 </IconButton>
               ) : (
                 <ArrowDropDownIcon sx={{ fontSize: "16px", color: "#488B8F" }} />
