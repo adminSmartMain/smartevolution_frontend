@@ -489,6 +489,7 @@ const handleOpenDetailBill = (id, tab = 0) => {
             return "FV-TV";
 
         case "fdb5feb4-24e9-41fc-9689-31aff60b76c9":
+          return "FV";
         default:
             return "FV";
     }
@@ -981,6 +982,8 @@ const handleOpenDetailBill = (id, tab = 0) => {
 
   const [bill, setBill] = useState([]);
 
+
+  console.log(data)
   useEffect(() => {
     const bill =
       data?.results?.map((bill) => ({
