@@ -3,6 +3,14 @@ import { ToastContainer } from "react-toastify";import {
   Home as HomeIcon,
 
 } from "@mui/icons-material";
+import IntegrationInstructionsIcon from '@mui/icons-material/IntegrationInstructions';
+import AddBoxIcon from '@mui/icons-material/AddBox';
+import Skeleton from '@mui/material/Skeleton';
+import TuneIcon from '@mui/icons-material/Tune';
+import Chip from '@mui/material/Chip';
+
+
+
 import EventIcon from '@mui/icons-material/Event';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -50,6 +58,66 @@ import {
 import FileSaver, { saveAs } from "file-saver";
 import moment from "moment";
 
+
+const TableSkeleton = ({ rows = 15, columns = 9 }) => {
+  return (
+    <Box
+      sx={{
+        border: '1px solid #e0e0e0',
+        borderRadius: '4px',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Header */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: `repeat(${columns}, 1fr)`,
+          backgroundColor: '#f5f5f5',
+          borderBottom: '2px solid #e0e0e0',
+          px: 2,
+          py: 1,
+        }}
+      >
+        {Array.from({ length: columns }).map((_, i) => (
+          <Skeleton
+            key={i}
+            variant="text"
+            height={40}
+            sx={{ mx: 1 }}
+          />
+        ))}
+      </Box>
+
+      {/* Rows */}
+      {Array.from({ length: rows }).map((_, rowIndex) => (
+        <Box
+          key={rowIndex}
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: `repeat(${columns}, 1fr)`,
+            px: 2,
+            py: 1,
+            borderBottom: '1px solid #f0f0f0',
+          }}
+        >
+          {Array.from({ length: columns }).map((_, colIndex) => (
+            <Skeleton
+              key={colIndex}
+              variant="rectangular"
+              height={55}
+              sx={{
+                mx: 1,
+                borderRadius: '4px',
+              }}
+            />
+          ))}
+        </Box>
+      ))}
+    </Box>
+  );
+};
+
 //comentario de prueba
 export const BillsComponents = () => {
   const [filter, setFilter] = useState("");
@@ -59,7 +127,7 @@ export const BillsComponents = () => {
   const [anchorElChannel, setAnchorElChannel] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [search, setSearch] = useState("");
-  const [optionsTypeBill, setOptionsTypeBill] = useState("");
+  const [optionsTypeBill, setOptionsTypeBill] = useState([]); // CAMBIADO: de "" a []
   const [page, setPage] = useState(1);
   const formatOptions = {
     style: "currency",
@@ -74,6 +142,16 @@ export const BillsComponents = () => {
   const [selectedOptionTypeBill, setSelectedOptionTypeBill] = useState(null);
   const [selectedOptionChannel, setSelectedOptionChannel] = useState(null);
 
+const [anchorElFilters, setAnchorElFilters] = useState(null);
+const openFilters = Boolean(anchorElFilters);
+
+const handleOpenFilters = (e) => {
+  setAnchorElFilters(e.currentTarget);
+};
+
+const handleCloseFilters = () => {
+  setAnchorElFilters(null);
+};
 
   // Hooks
   const {
@@ -496,91 +574,128 @@ const handleOpenDetailBill = (id, tab = 0) => {
 }
 ,
     },
-    {
-      field: "billId",
-      headerName: "ID",
-      width: 110,
-      flex: 1,    // Desactiva el crecimiento flexible
-      renderCell: (params) => {
-        return (
-          <Box display="flex" flexDirection="column">
-            <CustomTooltip
-              title={params.value}
-              arrow
-              placement="bottom-start"
-              TransitionComponent={Fade}
-              PopperProps={{
-                modifiers: [
-                  {
-                    name: "offset",
-                    options: {
-                      offset: [0, 0],
-                    },
-                  },
-                ],
-              }}
-            >
-              <InputTitles>{params.value}</InputTitles>
-            </CustomTooltip>
+  {
+  field: "billInfo",
+  headerName: "ID / Información",
+  minWidth: 150,
+  flex: 1,
+  sortable: false,
+  renderCell: (params) => {
+    const { billId, created_at, integrationCode } = params.row;
 
-            {params.row.integrationCode && (
-              <Box
-                sx={{
-                  backgroundColor: "#488B8F",
-                  color: "white",
-                  borderRadius: "12px",
-                  padding: "2px 8px",
-                  fontSize: "0.7rem",
-                  fontWeight: "bold",
-                  marginTop: "4px",
-                  display: "inline-block",
-                  alignSelf: "flex-start",
-                }}
-              >
-                Autogestión
-              </Box>
-            )}
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          gap: "1px",
+          overflow: "hidden",
+          marginBottom: "10px",
+          marginLeft: "20px",
+        }}
+      >
+        {/* Línea 1: ID */}
+        <Typography
+          sx={{
+            fontWeight: 800,
+            fontSize: "0.8rem",
+            color: "#488B8F",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          {billId}
+        </Typography>
+
+        {/* Línea 2: Fecha de creación */}
+        <Typography
+          sx={{
+            fontSize: "0.8rem",
+            color: "#9e9e9e",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {created_at ? moment(created_at).format("DD/MM/YYYY") : ""}
+        </Typography>
+
+        {/* Línea 3: Badge Autogestión */}
+        {integrationCode && (
+          <Box
+            sx={{
+              alignSelf: "flex-start",
+              backgroundColor: "#488B8F",
+              color: "#ffff",
+              borderRadius: "10px",
+              px: 1,
+              py: "1px",
+              fontSize: "0.6rem",
+              fontWeight: 500,
+              lineHeight: 1.2,
+            }}
+          >
+            Autogestión
           </Box>
-        );
-      },
-    }, {
-      field: "created_at",
-      headerName: "Creado en",
-      width: 81,
-      flex: 1,     // Desactiva el crecimiento flexible
-      renderCell: (params) => {
-        return (
-          <InputTitles>
-            {params.value ? moment(params.value).format("DD/MM/YYYY") : ""}
-          </InputTitles>
-        );
-      },
-    }, {
-      field: "DateBill",
-      headerName: "Emitido",
-      width: 81,
-      flex: 1,     // Desactiva el crecimiento flexible
-      renderCell: (params) => {
-        return (
-          <InputTitles>
-            {params.value ? moment(params.value).format("DD/MM/YYYY") : ""}
-          </InputTitles>
-        );
-      },
-    },
-    {
-      field: "expirationDate",
-      headerName: "Vence",
-      width: 81,
-      flex: 1,     // Desactiva el crecimiento flexible
-      renderCell: (params) => {
-        return (
-          <InputTitles>
-            {params.value ? moment(params.value).format("DD/MM/YYYY") : ""}
-          </InputTitles>
-        );
-      },
-    },
+        )}
+      </Box>
+    );
+  },
+}
+
+, {
+  field: "datesInfo",
+  headerName: "Emitido / Vence",
+  minWidth: 140,
+  flex: 1,
+  sortable: false,
+  renderCell: (params) => {
+    const { DateBill, expirationDate } = params.row;
+
+    const isExpired =
+      expirationDate &&
+      moment(expirationDate).isBefore(moment(), "day");
+
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          gap: "2px",
+          overflow: "hidden",
+        }}
+      >
+        {/* Nivel 1: Fecha de emisión */}
+        <Typography
+          sx={{
+            fontSize: "0.75rem",
+            fontWeight: 500,
+            whiteSpace: "nowrap",
+          }}
+        >
+          {DateBill ? moment(DateBill).format("DD/MM/YYYY") : ""}
+        </Typography>
+
+        {/* Nivel 2: Fecha de vencimiento */}
+        <Typography
+          sx={{
+            fontSize: "0.65rem",
+            color: isExpired ? "#d32f2f" : "#9e9e9e",
+            fontWeight: isExpired ? 600 : 400,
+            whiteSpace: "nowrap",
+          }}
+        >
+          Vence:{" "}
+          {expirationDate
+            ? moment(expirationDate).format("DD/MM/YYYY")
+            : ""}
+        </Typography>
+      </Box>
+    );
+  },
+}
+,
     {
       field: "Emitter",
       headerName: "Emisor",
@@ -725,36 +840,46 @@ const handleOpenDetailBill = (id, tab = 0) => {
       },
     },
     {
-      field: "associatedOperation",
-      headerName: "OpId",
-      width: 130,
-      flex: 1,
-      renderCell: (params) => {
-        const displayValue = params.value !== null ? params.value : "NO ASOCIADA";
-        const tooltipTitle = params.value !== null ? params.value : "NO ASOCIADA";
+  field: "associatedOperation",
+  headerName: "OpId",
+  width: 130,
+  flex: 1,
+  renderCell: (params) => {
+    const hasAssociation = params.value !== null && params.value !== undefined;
 
-        return (
-          <Tooltip
-            title={tooltipTitle}
-            arrow
-            placement="bottom-start"
-            TransitionComponent={Fade}
-            PopperProps={{
-              modifiers: [
-                {
-                  name: "offset",
-                  options: {
-                    offset: [0, 0],
-                  },
-                },
-              ],
-            }}
-          >
-            <InputTitles>{displayValue}</InputTitles>
-          </Tooltip>
-        );
-      },
-    },
+    const displayValue = hasAssociation ? params.value : "S/A";
+    const tooltipTitle = hasAssociation
+      ? params.value
+      : "Sin Asociación a una operación";
+
+    return (
+      <Tooltip
+        title={tooltipTitle}
+        arrow
+        placement="bottom-start"
+        TransitionComponent={Fade}
+        PopperProps={{
+          modifiers: [
+            {
+              name: "offset",
+              options: { offset: [0, 0] },
+            },
+          ],
+        }}
+      >
+        <InputTitles
+          sx={{
+            color: hasAssociation ? "inherit" : "#9e9e9e",
+            fontStyle: hasAssociation ? "normal" : "italic",
+          }}
+        >
+          {displayValue}
+        </InputTitles>
+      </Tooltip>
+    );
+  },
+}
+,
 
 
 
@@ -1146,304 +1271,341 @@ const handleOpenDetailBill = (id, tab = 0) => {
           </Box>
           {/* Tus otros elementos aquí */}
         </Box>
-<Box sx={{ 
-  display: 'flex', 
-  flexDirection: { xs: 'column', lg: 'row' },
-  alignItems: { lg: 'center' },
-  gap: { xs: 1, md: 1.5, lg: 2 },
-  mt: 2,
-  width: '100%'
-}}>
-  {/* CAMPO DE BÚSQUEDA */}
- <Box
+<Box sx={{ width: '100%', mt: 2 }}>
+  {/* GRID PRINCIPAL CON FILTROS EN LA MISMA LÍNEA - MODIFICADO */}
+  <Box
   sx={{
-    flex: { lg: '1 1 300px' }, // crece y se reduce según espacio
-    minWidth: '250px',
-    maxWidth: { lg: '450px' },
+    display: 'flex',
+    alignItems: 'center',
+    gap: 2,
+    width: '100%',
+    flexWrap: 'nowrap',
+
+    '@media (max-width: 1100px)': {
+      flexDirection: 'column',
+      alignItems: 'stretch',
+      gap: 2,
+    },
   }}
 >
-              <TextField
-            variant="outlined"
-            id="searchBar"
-            size="small"
-            placeholder="Buscar por ID, Emisor, pagador u operacion (OpID)..."
-            value={search}
-            onChange={(evt) => handleTextFieldChange(evt, "investor")}
-            onKeyPress={(event) => {
-              if (event.key === "Enter") {
-                const valueToSearch = search || ""; // Si está vacío, manda cadena vacía
-                updateFilters(valueToSearch, "multi"); // realiza la búsqueda, incluso si el valor está vacío
-              }
-            }}
-               sx={{
+
+    {/* ================= BUSCADOR ================= */}
+<Box
+  sx={{
+    flexBasis: '320px',     // ancho base real
+    flexGrow: 0,            // ❌ NO crece
+    flexShrink: 0,          // ❌ NO se achica
+    maxWidth: 380,
+  }}
+>
+
+      <TextField
+        variant="outlined"
+        size="small"
+        placeholder="Buscar por ID, Emisor, pagador u operación (OpID)..."
+        value={search}
+        onChange={handleTextFieldChange}
+        onKeyPress={(event) => {
+          if (event.key === 'Enter') {
+            updateFilters(search || '', 'multi');
+          }
+        }}
+        sx={{
           width: '100%',
-          minWidth: '250px',
-          maxWidth: { xs: '100%', lg: '100%', xl: '450px' },
           '& .MuiOutlinedInput-root': {
             height: 35,
             fontSize: '14px',
-            paddingRight: 0,
-          },
-          '& .MuiInputBase-input': {
-            padding: '6px 8px',
           },
         }}
-            InputProps={{
-              endAdornment: search && (
-                <InputAdornment position="end">
-                  <IconButton
-                    onClick={handleClearSearch}
-                    size="small"
-                    edge="end"
-                  >
-                    <ClearIcon sx={{ color: "#488b8f", fontSize: '18px' }} />
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-          />
-          </Box>
-  <Box sx={{
-    flex: { lg: '1 1 auto' },
+        InputProps={{
+          endAdornment: search && (
+            <InputAdornment position="end">
+              <IconButton onClick={handleClearSearch} size="small">
+                <ClearIcon sx={{ color: '#488b8f', fontSize: 18 }} />
+              </IconButton>
+            </InputAdornment>
+          ),
+        }}
+      />
+    </Box>
+
+    {/* ================= CONTENEDOR DE FILTROS Y ACCIONES ================= */}
+<Box
+  sx={{
     display: 'flex',
-    flexDirection: { xs: 'column', sm: 'row' },
-   gap: { xs: 1, sm: 1.5, lg: 1.2, xl: 1.5 },
-    alignItems: { xs: 'stretch', sm: 'center' },
-    justifyContent: { xs: 'center', sm: 'flex-start', lg: 'flex-end' }, // flex-start para usar todo el espacio
+    alignItems: 'center',
+    gap: 1,
+    flexGrow: 1,           // ✅ se queda con TODO lo demás
+    minWidth: 0,           // 🔑 CLAVE para evitar overflow
     flexWrap: 'wrap',
-    width: { xs: '100%', sm: 'auto' },
-    mt: { xs: 2, sm: 0, lg: 0 },
-    minWidth: 0 // Permite que se comprima correctamente
-    
-  }}>
-            {/*BOTON DE POR TIPO */}
-            <button
-              onClick={handleClickTypeBill}
-              className="button-header-preop-title"
-              style={{
-                display: 'flex',
-                
-                alignItems: 'center',
-                gap: '4px',
-                position: 'relative',
-                paddingRight: selectedOptionTypeBill ? '32px' : '8px'
-              }}
-            >
-              {selectedOptionTypeBill?.label || "Por Tipo"}
-              {selectedOptionTypeBill ? (
-                <IconButton
-                  size="small"
-                  onClick={(e) => {
-                    e.stopPropagation(); // Evitar que se abra el menú
-                    handleClearTypeBill();
-                  }}
-                  sx={{
-                    position: 'absolute',
-                    right: '4px',
-                    color: "#ffff",
-                    '&:hover': {
-                      backgroundColor: "#ffffff20"
-                    },
-                    width: 20,
-                    height: 20
-                  }}
-                >
-                  <CloseIcon fontSize="small" sx={{
-                   
-                    color: "#488b8f",
-                    '&:hover': {
-                      backgroundColor: "#ffffff20"
-                    },
-                    
-                  }} />
-                </IconButton>
-              ) : (
-                <ArrowDropDownIcon sx={{ fontSize: "16px", color: "#488B8F" }} />
-              )}
-            </button>
-            <Menu
-              anchorEl={anchorElTypeBill}
-              open={Boolean(anchorElTypeBill)}
-              onClose={handleCloseTypeBill}
-              anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-              transformOrigin={{ vertical: "top", horizontal: "left" }}
-              PaperProps={{
-                sx: {
-                  maxHeight: 300,
-                  width: "250px"
-                }
-              }}
-            >
-              {loadingTypeBill ? (
-                <MenuItem disabled>
-                  <CircularProgress size={20} />
-                  Cargando opciones...
-                </MenuItem>
-              ) : errorTypeBill ? (
-                <MenuItem disabled sx={{ color: "error.main" }}>
-                  Error al cargar opciones
-                </MenuItem>
-              ) : (
-                Array.isArray(optionsTypeBill) && optionsTypeBill.map((option) => (
-                  <MenuItem
-                    key={option.value}
-                    onClick={() => handleSelectTypeBill(option)}
-                    selected={selectedOptionTypeBill?.value === option.value}
-                    sx={{
-                      '&.Mui-selected': {
-                        backgroundColor: "#488B8F10",
-                        '&:hover': {
-                          backgroundColor: "#488B8F15"
-                        }
-                      }
-                    }}
-                  >
-                    <ListItemText primary={option.label} />
-                    {selectedOptionTypeBill?.value === option.value && (
-                      <CheckIcon fontSize="small" sx={{ ml: 1, color: "#488B8F" }} />
-                    )}
-                  </MenuItem>
-                ))
-              )}
-            </Menu>
-            {/*BOTON DE POR CANAL */}
-            <button
-              onClick={handleClickChannel}
-              className="button-header-preop-title"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                position: 'relative',
-                paddingRight: selectedOptionChannel ? '32px' : '8px'
-              }}
-            >
-              {selectedOptionChannel?.label || "Por Canal"}
-              {selectedOptionChannel ? (
-                <IconButton
-                  size="small"
-                  onClick={(e) => {
-                    e.stopPropagation(); // Evitar que se abra el menú
-                    handleClearByChannel();
-                  }}
-                  sx={{
-                    position: 'absolute',
-                    right: '4px',
-                    color: "#ffff",
-                    '&:hover': {
-                      backgroundColor: "#ffffff20"
-                    },
-                    width: 20,
-                    height: 20
-                  }}
-                >
-                  <CloseIcon fontSize="small" sx={{
-                   
-                    color: "#488b8f",
-                    '&:hover': {
-                      backgroundColor: "#ffffff20"
-                    },
-                    
-                  }}  />
-                </IconButton>
-              ) : (
-                <ArrowDropDownIcon sx={{ fontSize: "16px", color: "#488B8F" }} />
-              )}
-            </button>
-            <Menu
-              anchorEl={anchorElChannel}
-              open={Boolean(anchorElChannel)}
-              onClose={handleCloseChannel}
-              anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-              transformOrigin={{ vertical: "top", horizontal: "left" }}
-              PaperProps={{
-                sx: {
-                  maxHeight: 300,
-                  width: "250px"
-                }
-              }}
-            >
-              {loadingTypeBill ? (
-                <MenuItem disabled>
-                  <CircularProgress size={20} />
-                  Cargando opciones...
-                </MenuItem>
-              ) : errorTypeBill ? (
-                <MenuItem disabled sx={{ color: "error.main" }}>
-                  Error al cargar opciones
-                </MenuItem>
-              ) : (
-                Array.isArray(optionByChannel) && optionByChannel.map((option) => (
-                  <MenuItem
-                    key={option.value}
-                    onClick={() => handleSelectChannel(option)}
-                    selected={selectedOptionChannel?.value === option.value}
-                    sx={{
-                      '&.Mui-selected': {
-                        backgroundColor: "#488B8F10",
-                        '&:hover': {
-                          backgroundColor: "#488B8F15"
-                        }
-                      }
-                    }}
-                  >
-                    <ListItemText primary={option.label} />
-                    {selectedOptionChannel?.value === option.value && (
-                      <CheckIcon fontSize="small" sx={{ ml: 1, color: "#488B8F" }} />
-                    )}
-                  </MenuItem>
-                ))
-              )}
-            </Menu>
-            <AdvancedDateRangePicker
-              className="date-picker"
-              onApply={handleDateRangeApply}
-              onClean={handleClear}
-            />
-            <Link href="/bills?=register" underline="none">
-              <button
-                className="button-header-bill button-header-bill-primary"
-                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-              >
-                Extraer Facturas
-                <span
-                  style={{
-                    fontFamily: 'icomoon',
-                    fontSize: '1rem',
-                    color: '#FFF'
-                  }}
-                >
-                  &#xe927;
-                </span>
-              </button>
-            </Link>
-            <button
-              className="button-header-bill button-header-bill-primary"
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-              onClick={handleOpenRegisterOperation}
-            >
-              Registrar Factura Manual
-              <span
-                style={{
-                  fontFamily: 'icomoon',
-                  fontSize: '1rem',
-                  color: '#FFF'
-                }}
-              >
-                &#xe927;
-              </span>
-            </button>
-            <IconButton onClick={handleMenuClickCSV} className="context-menu">
-              <MoreVertIcon />
-            </IconButton>
-            <Menu anchorEl={anchorElCSV} open={openMenuCSV} onClose={handleCloseMenuCSV}>
-              <MenuItem onClick={handleExportExcel}>Exportar a CSV</MenuItem>
-            </Menu>
-          </Box>
-        </Box>
+
+    '@media (max-width: 1100px)': {
+      width: '100%',
+    },
+  }}
+>
+
+      {/* Botón principal de filtros */}
+      <Button
+        onClick={handleOpenFilters}
+        variant="outlined"
+        startIcon={<TuneIcon />}
+        sx={{
+          borderColor: '#488B8F',
+          color: '#488B8F',
+          fontSize: '0.85rem',
+          height: 35,
+          minWidth: 'auto',
+          px: 2,
+          whiteSpace: 'nowrap',
+          flexShrink: 0,
+          '&:hover': {
+            borderColor: '#488B8F',
+            backgroundColor: '#488B8F10'
+          }
+        }}
+      >
+        Filtros {(selectedOptionTypeBill || selectedOptionChannel) ? `(${Number(!!selectedOptionTypeBill) + Number(!!selectedOptionChannel)})` : ''}
+      </Button>
+
+      {/* Pills de filtros activos - DENTRO DEL MISMO CONTENEDOR */}
+      {selectedOptionTypeBill && (
+        <Chip
+          label={`Tipo: ${selectedOptionTypeBill.label}`}
+          onDelete={handleClearTypeBill}
+          deleteIcon={<CloseIcon />}
+          sx={{
+            backgroundColor: '#488B8F10',
+            color: '#488B8F',
+            border: '1px solid #488B8F30',
+            fontSize: '0.65rem',
+height: 24,
+px: 1,
+
+            '& .MuiChip-deleteIcon': {
+              color: '#488B8F',
+              fontSize: '0.9rem',
+              '&:hover': { color: '#488B8F' }
+            }
+          }}
+        />
+      )}
+
+      {selectedOptionChannel && (
+        <Chip
+          label={`Canal: ${selectedOptionChannel.label}`}
+          onDelete={handleClearByChannel}
+          deleteIcon={<CloseIcon />}
+          sx={{
+            backgroundColor: '#488B8F10',
+            color: '#488B8F',
+            border: '1px solid #488B8F30',
+            fontSize: '0.5rem',
+         fontSize: '0.65rem',
+height: 24,
+px: 1,
+
+            '& .MuiChip-deleteIcon': {
+              color: '#488B8F',
+              fontSize: '0.9rem',
+              '&:hover': { color: '#488B8F' }
+            }
+          }}
+        />
+      )}
+
+    </Box>
+
+    {/* ================= ACCIONES DERECHAS ================= */}
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1,
+        whiteSpace: 'nowrap',
+        flexWrap: 'nowrap',
+        flexShrink: 0,
+        // 👉 SOLO EN CASO EXTREMO
+        '@media (max-width: 1100px)': {
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'flex-start',
+          width: '100%',
+          flexWrap: 'wrap',
+        },
+      }}
+    >
+      {/* DATE PICKER */}
+      <AdvancedDateRangePicker
+        className="date-picker"
+        onApply={handleDateRangeApply}
+        onClean={handleClear}
+      />
+
+      {/* EXTRAER */}
+      <Tooltip title="Extraer facturas" arrow>
+        <Link href="/bills?=register" underline="none">
+          <IconButton
+            sx={{
+              border: '1px solid #488B8F30',
+              borderRadius: '8px',
+              color: '#488B8F',
+              px: 1,
+              gap: '4px',
+              height: 35,
+              '&:hover': {
+                backgroundColor: '#488B8F15',
+                color: '#2F6F73',
+              },
+            }}
+          >
+            <IntegrationInstructionsIcon fontSize="small" />
+            <Typography fontSize="0.75rem">Extraer</Typography>
+          </IconButton>
+        </Link>
+      </Tooltip>
+
+      {/* REGISTRO MANUAL */}
+      <Tooltip title="Registro manual" arrow>
+        <IconButton
+          onClick={handleOpenRegisterOperation}
+          sx={{
+            border: '1px solid #488B8F30',
+            borderRadius: '8px',
+            color: '#488B8F',
+            px: 1,
+            gap: '4px',
+            height: 35,
+            '&:hover': {
+              backgroundColor: '#488B8F15',
+              color: '#2F6F73',
+            },
+          }}
+        >
+          <AddBoxIcon fontSize="small" />
+          <Typography fontSize="0.75rem">Registro</Typography>
+        </IconButton>
+      </Tooltip>
+
+      {/* MENU CSV */}
+      <IconButton onClick={handleMenuClickCSV}>
+        <MoreVertIcon />
+      </IconButton>
+    </Box>
+  </Box>
+</Box>
+
       </Box>
 
+      {/* Menu de selección de filtros */}
+      <Menu
+        anchorEl={anchorElFilters}
+        open={openFilters}
+        onClose={handleCloseFilters}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        transformOrigin={{ vertical: "top", horizontal: "left" }}
+        PaperProps={{
+          sx: {
+            maxHeight: 400,
+            width: "280px",
+            mt: 1
+          }
+        }}
+      >
+        {/* Sección Tipo de Factura */}
+        <MenuItem disabled sx={{ pt: 1, pb: 1, backgroundColor: '#f5f5f5' }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: '#488B8F' }}>
+            Tipo de Factura
+          </Typography>
+        </MenuItem>
 
+        {loadingTypeBill ? (
+          <MenuItem disabled sx={{ justifyContent: 'center', py: 2 }}>
+            <CircularProgress size={20} sx={{ mr: 1 }} />
+            Cargando tipos...
+          </MenuItem>
+        ) : errorTypeBill ? (
+          <MenuItem disabled sx={{ color: 'error.main', py: 2 }}>
+            Error al cargar tipos
+          </MenuItem>
+        ) : (
+          optionsTypeBill.map((option) => (
+            <MenuItem
+              key={option.value}
+              onClick={() => handleSelectTypeBill(option)}
+              selected={selectedOptionTypeBill?.value === option.value}
+              sx={{
+                '&.Mui-selected': {
+                  backgroundColor: "#488B8F10",
+                  '&:hover': {
+                    backgroundColor: "#488B8F15"
+                  }
+                }
+              }}
+            >
+              <ListItemText 
+                primary={option.label} 
+                primaryTypographyProps={{ fontSize: '0.9rem' }}
+              />
+              {selectedOptionTypeBill?.value === option.value && (
+                <CheckIcon fontSize="small" sx={{ ml: 1, color: "#488B8F" }} />
+              )}
+            </MenuItem>
+          ))
+        )}
+
+        <Box sx={{ borderTop: '1px solid #eee', my: 1 }} />
+
+        {/* Sección Canal */}
+        <MenuItem disabled sx={{ pt: 1, pb: 1, backgroundColor: '#f5f5f5' }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: '#488B8F' }}>
+            Canal
+          </Typography>
+        </MenuItem>
+
+        {optionByChannel.map((option) => (
+          <MenuItem
+            key={option.value}
+            onClick={() => handleSelectChannel(option)}
+            selected={selectedOptionChannel?.value === option.value}
+            sx={{
+              '&.Mui-selected': {
+                backgroundColor: "#488B8F10",
+                '&:hover': {
+                  backgroundColor: "#488B8F15"
+                }
+              }
+            }}
+          >
+            <ListItemText 
+              primary={option.label} 
+              primaryTypographyProps={{ fontSize: '0.9rem' }}
+            />
+            {selectedOptionChannel?.value === option.value && (
+              <CheckIcon fontSize="small" sx={{ ml: 1, color: "#488B8F" }} />
+            )}
+          </MenuItem>
+        ))}
+
+        {/* Acciones del menú */}
+        <Box sx={{ borderTop: '1px solid #eee', mt: 1, pt: 1 }}>
+          <MenuItem 
+            onClick={() => {
+              handleClearTypeBill();
+              handleClearByChannel();
+              handleCloseFilters();
+            }}
+            disabled={!selectedOptionTypeBill && !selectedOptionChannel}
+            sx={{ 
+              justifyContent: 'center',
+              fontSize: '0.85rem',
+              color: (selectedOptionTypeBill || selectedOptionChannel) ? '#488B8F' : 'text.disabled'
+            }}
+          >
+            Limpiar todos los filtros
+          </MenuItem>
+        </Box>
+      </Menu>
 
       <Box
         container
@@ -1454,13 +1616,18 @@ const handleOpenDetailBill = (id, tab = 0) => {
         height="100%"
         sx={{ ...tableWrapperSx }}
       >
-        <CustomDataGrid
-          rows={bill}
-          columns={columns}
-          pageSize={15}
-          rowsPerPageOptions={[5]}
-          disableSelectionOnClick
-          disableColumnMenu
+        {loading ? (
+  <TableSkeleton rows={8} columns={columns.length} />
+) : (
+  <CustomDataGrid
+    rows={bill}
+    columns={columns}
+    pageSize={15}
+    rowsPerPageOptions={[5]}
+    disableSelectionOnClick
+    disableColumnMenu
+    rowHeight={56}
+    loading={false} // ya no lo necesita
 
 
           sx={{
@@ -1595,8 +1762,11 @@ const handleOpenDetailBill = (id, tab = 0) => {
               color: "#5EA3A3",
             },
           }}
-          loading={loading}
+          
         />
+
+           
+)}
       </Box>
       <ToastContainer
         position="top-right"

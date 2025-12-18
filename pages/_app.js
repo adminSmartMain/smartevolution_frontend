@@ -10,7 +10,7 @@ import { SidebarProvider } from '@context/sideBarContext';
 import "../public/icomoon/style.css";
 import "../styles/globals.css";
 import theme from "../styles/themes";
-
+import SecurityDialog from "@components/modals/infoModal";
 import { AuthProvider } from "@context/authContext";
 
 const pathsWithoutDefaultLayout = [
@@ -41,7 +41,8 @@ function MyApp({ Component, pageProps }) {
       <ThemeProvider theme={theme}>
         <AuthProvider>
           <SidebarProvider>
-<>
+<>      
+<SecurityDialog />
             <Head>
               <title>Smart Evolution</title>
             </Head>
