@@ -596,18 +596,20 @@ const handleOpenDetailBill = (id, tab = 0) => {
         }}
       >
         {/* Línea 1: ID */}
-        <Typography
-          sx={{
-            fontWeight: 800,
-            fontSize: "0.8rem",
-            color: "#488B8F",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}
-        >
-          {billId}
-        </Typography>
+<Typography
+  sx={{
+    fontWeight: 900,              // ✅ bold real
+    fontSize: '0.85rem',          // ✅ tamaño correcto
+    color: '#488B8F !important',  // ✅ evita override del DataGrid
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    lineHeight: 1.2,
+  }}
+>
+  {billId}
+</Typography>
+
 
         {/* Línea 2: Fecha de creación */}
         <Typography
@@ -1239,7 +1241,7 @@ const handleOpenDetailBill = (id, tab = 0) => {
           sx={{
             display: 'flex',
             flexDirection: 'row',
-            mt: 2,
+            mt: 0,
             alignItems: 'center',
             justifyContent: 'space-between',
             gap: 3,
@@ -1248,80 +1250,82 @@ const handleOpenDetailBill = (id, tab = 0) => {
             flexWrap: 'wrap'
           }}
         >
-          <Box className="view-header">
-            <Link href="/dashboard" underline="none">
-              <a>
-                 <HomeIcon
-                                        fontSize="large" 
-                                        sx={{ 
-                                          color: '#488b8f',
-                                          opacity: 0.8, // Ajusta la transparencia (0.8 = 80% visible)
-                                          strokeWidth: 1, // Grosor del contorno
-                                        }} 
-                                      />
-
-              </a>
-
-            </Link>
-            <Typography
-              className="view-title"
-            >
-              - Consulta de facturas
-            </Typography>
-          </Box>
-          {/* Tus otros elementos aquí */}
-        </Box>
-<Box sx={{ width: '100%', mt: 2 }}>
-  {/* GRID PRINCIPAL CON FILTROS EN LA MISMA LÍNEA - MODIFICADO */}
-  <Box
+        <Box
+  className="view-header"
   sx={{
     display: 'flex',
     alignItems: 'center',
-    gap: 2,
-    width: '100%',
-    flexWrap: 'nowrap',
-
-    '@media (max-width: 1100px)': {
-      flexDirection: 'column',
-      alignItems: 'stretch',
-      gap: 2,
+    gap: 1,
+     // ⬅ reduce separación con filtros
+    '@media (max-width: 1300px)': {
+      mb: 0,
     },
   }}
 >
+  <HomeIcon
+    fontSize="medium"
+    sx={{ color: '#488B8F', opacity: 0.85 }}
+  />
+  <Typography
+    sx={{
+      fontSize: '1.1rem',
+      fontWeight: 600,
+      color: '#488B8F',
+      '@media (max-width: 1300px)': {
+        fontSize: '1rem',
+      },
+    }}
+  >
+    Consulta de facturas
+  </Typography>
+</Box>
 
+          {/* Tus otros elementos aquí */}
+        </Box>
+<Box sx={{ width: '100%', mt: 2 }}>
+  {/* ================= GRID PRINCIPAL ================= */}
+  <Box
+    sx={{
+      display: 'grid',
+      gridTemplateColumns: '360px 1fr auto',
+      alignItems: 'center',
+      gap: 2,
+      width: '100%',
+
+      /* 🔥 SOLO CUANDO YA NO CABE FÍSICAMENTE */
+      '@media (max-width: 1024px)': {
+        gridTemplateColumns: '1fr',
+        rowGap: 2,
+      },
+    }}
+  >
     {/* ================= BUSCADOR ================= */}
-<Box
-  sx={{
-    flexBasis: '320px',     // ancho base real
-    flexGrow: 0,            // ❌ NO crece
-    flexShrink: 0,          // ❌ NO se achica
-    maxWidth: 380,
-  }}
->
-
+    <Box sx={{ maxWidth: 360 }}>
       <TextField
-        variant="outlined"
+        fullWidth
         size="small"
         placeholder="Buscar por ID, Emisor, pagador u operación (OpID)..."
         value={search}
         onChange={handleTextFieldChange}
-        onKeyPress={(event) => {
-          if (event.key === 'Enter') {
+        onKeyPress={(e) => {
+          if (e.key === 'Enter') {
             updateFilters(search || '', 'multi');
           }
         }}
         sx={{
-          width: '100%',
           '& .MuiOutlinedInput-root': {
             height: 35,
             fontSize: '14px',
+          },
+          '& .MuiInputBase-input': {
+            padding: '6px 8px',
           },
         }}
         InputProps={{
           endAdornment: search && (
             <InputAdornment position="end">
-              <IconButton onClick={handleClearSearch} size="small">
-                <ClearIcon sx={{ color: '#488b8f', fontSize: 18 }} />
+              <IconButton size="small" onClick={handleClearSearch}>
+                <ClearIcon sx={{ color: '#488B8F', fontSize: 18 }} />
               </IconButton>
             </InputAdornment>
           ),
@@ -1329,133 +1333,121 @@ const handleOpenDetailBill = (id, tab = 0) => {
       />
     </Box>
 
-    {/* ================= CONTENEDOR DE FILTROS Y ACCIONES ================= */}
+    {/* ================= FILTROS + PILLS ================= */}
+{/* ================= FILTROS + PILLS ================= */}
 <Box
   sx={{
     display: 'flex',
-    alignItems: 'center',
+    alignItems: 'center',     // 🔑 alinea con date picker
     gap: 1,
-    flexGrow: 1,           // ✅ se queda con TODO lo demás
-    minWidth: 0,           // 🔑 CLAVE para evitar overflow
-    flexWrap: 'wrap',
-
-    '@media (max-width: 1100px)': {
-      width: '100%',
-    },
+    minWidth: 0,
   }}
 >
+  {/* BOTÓN FILTROS */}
+  <Button
+    onClick={handleOpenFilters}
+    variant="outlined"
+    startIcon={<TuneIcon fontSize="small" />}
+    sx={{
+      height: 34,
+      px: 1.5,
+      borderColor: '#488B8F',
+      color: '#488B8F',
+      fontSize: '0.75rem',
+      whiteSpace: 'nowrap',
+      flexShrink: 0,
+      '&:hover': {
+        backgroundColor: '#488B8F10',
+      },
+    }}
+  >
+    Filtros
+    {(selectedOptionTypeBill || selectedOptionChannel) &&
+      ` (${Number(!!selectedOptionTypeBill) + Number(!!selectedOptionChannel)})`}
+  </Button>
 
-      {/* Botón principal de filtros */}
-      <Button
-        onClick={handleOpenFilters}
-        variant="outlined"
-        startIcon={<TuneIcon />}
+  {/* COLUMNA COMPACTA DE CHIPS */}
+  <Box
+    sx={{
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center', // 🔑 centra verticalmente
+      gap: '2px',
+    }}
+  >
+    {selectedOptionTypeBill && (
+      <Chip
+        size="small"
+        label={`Tipo: ${selectedOptionTypeBill.label}`}
+        onDelete={handleClearTypeBill}
         sx={{
-          borderColor: '#488B8F',
+          height: 20,
+          fontSize: '0.6rem',
+          px: 0.5,
+          backgroundColor: '#488B8F08',
           color: '#488B8F',
-          fontSize: '0.85rem',
-          height: 35,
-          minWidth: 'auto',
-          px: 2,
-          whiteSpace: 'nowrap',
-          flexShrink: 0,
-          '&:hover': {
-            borderColor: '#488B8F',
-            backgroundColor: '#488B8F10'
-          }
+          border: '1px solid #488B8F30',
+
+          '& .MuiChip-deleteIcon': {
+            fontSize: '0.8rem',
+            color: '#488B8F',
+          },
         }}
-      >
-        Filtros {(selectedOptionTypeBill || selectedOptionChannel) ? `(${Number(!!selectedOptionTypeBill) + Number(!!selectedOptionChannel)})` : ''}
-      </Button>
+      />
+    )}
 
-      {/* Pills de filtros activos - DENTRO DEL MISMO CONTENEDOR */}
-      {selectedOptionTypeBill && (
-        <Chip
-          label={`Tipo: ${selectedOptionTypeBill.label}`}
-          onDelete={handleClearTypeBill}
-          deleteIcon={<CloseIcon />}
-          sx={{
-            backgroundColor: '#488B8F10',
+    {selectedOptionChannel && (
+      <Chip
+        size="small"
+        label={`Canal: ${selectedOptionChannel.label}`}
+        onDelete={handleClearByChannel}
+        sx={{
+          height: 20,
+          fontSize: '0.6rem',
+          px: 0.5,
+          backgroundColor: '#488B8F08',
+          color: '#488B8F',
+          border: '1px solid #488B8F30',
+
+          '& .MuiChip-deleteIcon': {
+            fontSize: '0.8rem',
             color: '#488B8F',
-            border: '1px solid #488B8F30',
-            fontSize: '0.65rem',
-height: 24,
-px: 1,
+          },
+        }}
+      />
+    )}
+  </Box>
+</Box>
 
-            '& .MuiChip-deleteIcon': {
-              color: '#488B8F',
-              fontSize: '0.9rem',
-              '&:hover': { color: '#488B8F' }
-            }
-          }}
-        />
-      )}
 
-      {selectedOptionChannel && (
-        <Chip
-          label={`Canal: ${selectedOptionChannel.label}`}
-          onDelete={handleClearByChannel}
-          deleteIcon={<CloseIcon />}
-          sx={{
-            backgroundColor: '#488B8F10',
-            color: '#488B8F',
-            border: '1px solid #488B8F30',
-            fontSize: '0.5rem',
-         fontSize: '0.65rem',
-height: 24,
-px: 1,
-
-            '& .MuiChip-deleteIcon': {
-              color: '#488B8F',
-              fontSize: '0.9rem',
-              '&:hover': { color: '#488B8F' }
-            }
-          }}
-        />
-      )}
-
-    </Box>
-
-    {/* ================= ACCIONES DERECHAS ================= */}
+    {/* ================= ACCIONES DERECHA ================= */}
     <Box
       sx={{
         display: 'flex',
         alignItems: 'center',
         gap: 1,
         whiteSpace: 'nowrap',
-        flexWrap: 'nowrap',
         flexShrink: 0,
-        // 👉 SOLO EN CASO EXTREMO
-        '@media (max-width: 1100px)': {
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'flex-start',
-          width: '100%',
-          flexWrap: 'wrap',
-        },
       }}
     >
-      {/* DATE PICKER */}
       <AdvancedDateRangePicker
         className="date-picker"
         onApply={handleDateRangeApply}
         onClean={handleClear}
       />
 
-      {/* EXTRAER */}
       <Tooltip title="Extraer facturas" arrow>
         <Link href="/bills?=register" underline="none">
           <IconButton
             sx={{
+              height: 35,
               border: '1px solid #488B8F30',
               borderRadius: '8px',
               color: '#488B8F',
               px: 1,
               gap: '4px',
-              height: 35,
               '&:hover': {
                 backgroundColor: '#488B8F15',
-                color: '#2F6F73',
               },
             }}
           >
@@ -1465,20 +1457,18 @@ px: 1,
         </Link>
       </Tooltip>
 
-      {/* REGISTRO MANUAL */}
       <Tooltip title="Registro manual" arrow>
         <IconButton
           onClick={handleOpenRegisterOperation}
           sx={{
+            height: 35,
             border: '1px solid #488B8F30',
             borderRadius: '8px',
             color: '#488B8F',
             px: 1,
             gap: '4px',
-            height: 35,
             '&:hover': {
               backgroundColor: '#488B8F15',
-              color: '#2F6F73',
             },
           }}
         >
@@ -1487,13 +1477,14 @@ px: 1,
         </IconButton>
       </Tooltip>
 
-      {/* MENU CSV */}
       <IconButton onClick={handleMenuClickCSV}>
         <MoreVertIcon />
       </IconButton>
     </Box>
   </Box>
 </Box>
+
+
 
       </Box>
 
