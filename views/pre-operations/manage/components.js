@@ -311,7 +311,7 @@ const [hasShownIntegrationModal, setHasShownIntegrationModal] = useState(false);
   
 const handleFileChange = (event, setFieldValue, index) => {
   const selectedFile = event.target?.files[0];
-  console.log(selectedFile);
+
   
   if (selectedFile) {
     // Validar tipo de archivo
@@ -353,7 +353,7 @@ const handleFileChange = (event, setFieldValue, index) => {
     };
     
     reader.onerror = (error) => {
-      console.error('Error al leer el archivo:', error);
+
       Toast('Error al procesar el archivo','error');
     };
     
@@ -584,7 +584,7 @@ const handleFileChange = (event, setFieldValue, index) => {
   // Dentro de tu componente
   const [billExists, setBillExists] = useState(false);
   const [isCreatingOp, setIsCreatingOp] = useState(false);
-  console.log(isCreatingOp)
+
   useEffect(() => {
     if (!isCreatingOp) return;
     function handleOnBeforeUnload(event) {
@@ -602,7 +602,7 @@ const handleFileChange = (event, setFieldValue, index) => {
     const data = new FormData(event.currentTarget)
     const values = Array.from(data.values())
     const changedFields = values.filter(value => value.length);
-    console.log("changedFields")
+
     setIsCreatingOp(true)
   }
 
@@ -676,7 +676,7 @@ const renderPreviewContent = () => {
   return <Typography>No hay archivo para previsualizar</Typography>;
 };
 
-console.log(orchestIntegrationCode)
+
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={esLocale}>
       {/* Para mostrar los toast */}
