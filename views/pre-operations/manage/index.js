@@ -2,14 +2,14 @@
 import { useEffect, useState } from "react";
 import { useBeforeunload } from "react-beforeunload";
 // Alerts
-import { ToastContainer } from "react-toastify";
+import { ToastContainer,toast  } from "react-toastify";
 import * as Yup from 'yup';
 import { useRouter } from "next/router";
 
 import { Toast } from "@components/toast";
 
 import { useFetch } from "@hooks/useFetch";
-import { toast } from "react-toastify";
+
 import Axios from "axios";
 
 // Components
@@ -883,39 +883,33 @@ const verificarSaldosFacturas = async (billIds, facturasTransformadas) => {
 
 
 const executeAtomicOperations = async (operations) => {
-  const progressToast =Toast(`Procesando ${operations.length} operaciones...`);
+  Toast(`Procesando ${operations.length} operaciones...`, "info");
 
   try {
-    // Preparar payload marcando primeras ocurrencias
     const payload = operations.map((op, index) => ({
       ...op.dataSent,
-      _isFirstOccurrence: operations.findIndex(
-        o => o.billId === op.billId
-      ) === index
+      _isFirstOccurrence:
+        operations.findIndex(o => o.billId === op.billId) === index
     }));
 
-    const response = await createOperationFetch(payload, payload[0]?.opId);
+    await createOperationFetch(payload, payload[0]?.opId);
 
-    // Procesar resultados
-    const failed = response?.data.failed || [];
-    const successful = response?.data.successful || [];
+    // 👇 AQUÍ está la respuesta REAL
+    const failed = dataCreateOperation?.data?.failed || [];
+    const successful = dataCreateOperation?.data?.successful || [];
 
-    Toast(progressToast);
-    
- 
     return {
-      success: failed.length === 0, // true solo si no hay fallos
+      success: failed.length === 0,
       successfulOperations: successful,
       failedOperations: failed,
       totalOperations: operations.length
     };
 
   } catch (error) {
-    Toast(progressToast,'error');
     return {
       success: false,
-      error: error.response?.data?.message || error.message,
-      totalOperations: operations?.length
+      error: error.message || 'Error procesando operaciones',
+      totalOperations: operations.length
     };
   }
 };
