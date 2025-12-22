@@ -11,23 +11,34 @@ import {
 } from '@mui/material';
 import { Lock as LockIcon, Close as CloseIcon } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
+import { useRouter } from 'next/router';
 
 const CHRISTMAS_IMAGE =
   'https://devsmartevolution.s3.us-east-1.amazonaws.com/Imagenes/tarjeta-navidad+v3.png';
 
 const SecurityDialog = () => {
   const theme = useTheme();
+  const router = useRouter();
+
   const [open, setOpen] = useState(false);
   const [isDecember, setIsDecember] = useState(false);
+  const [enabled, setEnabled] = useState(false); // 👈 control de ruta
 
   useEffect(() => {
-    // 🛡️ solo navegador
+    // 🛡️ Solo navegador
     if (typeof window === 'undefined') return;
+
+    // 🚫 solo /dashboard
+    if (router.pathname !== '/dashboard') {
+      setEnabled(false);
+      return;
+    }
+
+    setEnabled(true);
 
     const today = new Date().toDateString();
     const lastShownDate = localStorage.getItem('securityDialogLastShown');
 
-    // detectar mes
     const month = new Date().getMonth(); // 0=ene ... 11=dic
     setIsDecember(month === 11);
 
@@ -35,11 +46,14 @@ const SecurityDialog = () => {
       setOpen(true);
       localStorage.setItem('securityDialogLastShown', today);
     }
-  }, []);
+  }, [router.pathname]);
 
   const handleClose = () => {
     setOpen(false);
   };
+
+  // 🚫 NO renderizar nada fuera de /dashboard
+  if (!enabled) return null;
 
   return (
     <Dialog
@@ -60,25 +74,24 @@ const SecurityDialog = () => {
         // 🎄 DICIEMBRE → TARJETA NAVIDAD
         <>
           <DialogContent
-  sx={{
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    py: 3,
-  }}
->
-  <img
-    src={CHRISTMAS_IMAGE}
-    alt="Tarjeta de Navidad"
-    style={{
-      maxWidth: '820px',   // 👈 controla tamaño
-      width: '100%',
-      height: 'auto',
-      borderRadius: '8px',
-    }}
-  />
-</DialogContent>
-
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              py: 3
+            }}
+          >
+            <img
+              src={CHRISTMAS_IMAGE}
+              alt="Tarjeta de Navidad"
+              style={{
+                maxWidth: '820px',
+                width: '100%',
+                height: 'auto',
+                borderRadius: '8px'
+              }}
+            />
+          </DialogContent>
 
           <DialogActions>
             <Button
