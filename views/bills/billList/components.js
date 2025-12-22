@@ -519,8 +519,8 @@ const handleOpenDetailBill = (id, tab = 0) => {
     {
       field: "typeBill",
       headerName: "Tipo",
-      width: 100,
-      flex: 1,     // Desactiva el crecimiento flexible
+      width: 80,
+         // Desactiva el crecimiento flexible
       renderCell: (params) => {
         return (
           <Box
@@ -629,7 +629,7 @@ const handleOpenDetailBill = (id, tab = 0) => {
               alignSelf: "flex-start",
               backgroundColor: "#488B8F",
               color: "#ffff",
-              borderRadius: "10px",
+              borderRadius: "4px",
               px: 1,
               py: "1px",
               fontSize: "0.6rem",
@@ -1346,7 +1346,7 @@ const handleOpenDetailBill = (id, tab = 0) => {
    sx={{
     height: 35,
     border: '1px solid var(--primary-color)',
-    borderRadius: '8px',
+    borderRadius: '4px',
     color: 'var(--primary-color)',
     px: 1,
     gap: '4px',
@@ -1445,7 +1445,7 @@ const handleOpenDetailBill = (id, tab = 0) => {
   sx={{
     height: 35,
     border: '1px solid var(--primary-color)',
-    borderRadius: '8px',
+    borderRadius: '4px',
     color: 'var(--primary-color)',
     px: 1,
     gap: '4px',
@@ -1476,7 +1476,7 @@ const handleOpenDetailBill = (id, tab = 0) => {
           sx={{
     height: 35,
     border: '1px solid var(--primary-color)',
-    borderRadius: '8px',
+    borderRadius: '4px',
     color: 'var(--primary-color)',
     px: 1,
     gap: '4px',

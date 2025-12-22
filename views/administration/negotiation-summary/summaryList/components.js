@@ -222,7 +222,7 @@ export const SummaryListComponent = () => {
                 fontFamily="icomoon"
                 fontSize="1.9rem"
                 color="#999999"
-                borderRadius="5px"
+                borderRadius="4px"
                 sx={{
                   "&:hover": {
                     backgroundColor: "#B5D1C980",
@@ -270,7 +270,7 @@ export const SummaryListComponent = () => {
                 style={{
                   fontSize: "1.3rem",
                   color: "#999999",
-                  borderRadius: "5px",
+                  borderRadius: "4px",
 
                   "&:hover": {
                     backgroundColor: "#B5D1C980",
@@ -987,7 +987,7 @@ const setQuickFilter = (type) => {
   alignItems="center"
   sx={{
     border: "1px solid #488f8f",
-    borderRadius: "10px",
+    borderRadius: "4px",
     padding: "4px",
     backgroundColor: "#f8f9fa",
     width: "100%",
@@ -1044,7 +1044,7 @@ const setQuickFilter = (type) => {
       sx={{
     width: { xs: "100%", md: "auto" },
     border: "2px solid #488B8F",
-    borderRadius: "10px",
+    borderRadius: "4px",
     height: "2.5rem",
     textTransform: "none",
     color: "#488B8F",
@@ -1088,7 +1088,7 @@ const setQuickFilter = (type) => {
     sx={{
       width: { xs: "100%", md: "auto" },
       border: "2px solid #488B8F",
-      borderRadius: "10px",
+      borderRadius: "4px",
       height: "2.5rem",
       textTransform: "none",
       color: "#488B8F",
