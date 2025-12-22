@@ -1238,6 +1238,7 @@ const handleOpenDetailBill = (id, tab = 0) => {
 
       <Box container display="flex" flexDirection="column" mt={-3}>
         <Box
+          className="view-header"
           sx={{
             display: 'flex',
             flexDirection: 'row',
@@ -1251,7 +1252,7 @@ const handleOpenDetailBill = (id, tab = 0) => {
           }}
         >
         <Box
-  className="view-header"
+
   sx={{
     display: 'flex',
     alignItems: 'center',
@@ -1260,22 +1261,16 @@ const handleOpenDetailBill = (id, tab = 0) => {
     '@media (max-width: 1300px)': {
       mb: 0,
     },
+    mt:'20px'
   }}
 >
   <HomeIcon
     fontSize="medium"
     sx={{ color: '#488B8F', opacity: 0.85 }}
   />
-  <Typography
-    sx={{
-      fontSize: '1.1rem',
-      fontWeight: 600,
-      color: '#488B8F',
-      '@media (max-width: 1300px)': {
-        fontSize: '1rem',
-      },
-    }}
-  >
+ <Typography
+      className="view-title"
+    >
     Consulta de facturas
   </Typography>
 </Box>
@@ -1348,18 +1343,26 @@ const handleOpenDetailBill = (id, tab = 0) => {
     onClick={handleOpenFilters}
     variant="outlined"
     startIcon={<TuneIcon fontSize="small" />}
-    sx={{
-      height: 34,
-      px: 1.5,
-      borderColor: '#488B8F',
-      color: '#488B8F',
-      fontSize: '0.75rem',
-      whiteSpace: 'nowrap',
-      flexShrink: 0,
-      '&:hover': {
-        backgroundColor: '#488B8F10',
-      },
-    }}
+   sx={{
+    height: 35,
+    border: '1px solid var(--primary-color)',
+    borderRadius: '8px',
+    color: 'var(--primary-color)',
+    px: 1,
+    gap: '4px',
+    transition: 'all 0.2s ease-in-out',
+
+    '&:hover': {
+      color: 'var(--white-color)',
+      backgroundColor: 'var(--secondary-color)',
+      borderColor: 'var(--primary-color)',
+    },
+
+    // asegura que icono y texto cambien también
+    '&:hover svg, &:hover p': {
+      color: 'var(--white-color)',
+    },
+  }}
   >
     Filtros
     {(selectedOptionTypeBill || selectedOptionChannel) &&
@@ -1438,22 +1441,32 @@ const handleOpenDetailBill = (id, tab = 0) => {
 
       <Tooltip title="Extraer facturas" arrow>
         <Link href="/bills?=register" underline="none">
-          <IconButton
-            sx={{
-              height: 35,
-              border: '1px solid #488B8F30',
-              borderRadius: '8px',
-              color: '#488B8F',
-              px: 1,
-              gap: '4px',
-              '&:hover': {
-                backgroundColor: '#488B8F15',
-              },
-            }}
-          >
-            <IntegrationInstructionsIcon fontSize="small" />
-            <Typography fontSize="0.75rem">Extraer</Typography>
-          </IconButton>
+        <IconButton
+  sx={{
+    height: 35,
+    border: '1px solid var(--primary-color)',
+    borderRadius: '8px',
+    color: 'var(--primary-color)',
+    px: 1,
+    gap: '4px',
+    transition: 'all 0.2s ease-in-out',
+
+    '&:hover': {
+      color: 'var(--white-color)',
+      backgroundColor: 'var(--secondary-color)',
+      borderColor: 'var(--primary-color)',
+    },
+
+    // asegura que icono y texto cambien también
+    '&:hover svg, &:hover p': {
+      color: 'var(--white-color)',
+    },
+  }}
+>
+  <IntegrationInstructionsIcon fontSize="small" />
+  <Typography fontSize="0.75rem">Extraer</Typography>
+</IconButton>
+
         </Link>
       </Tooltip>
 
@@ -1461,16 +1474,25 @@ const handleOpenDetailBill = (id, tab = 0) => {
         <IconButton
           onClick={handleOpenRegisterOperation}
           sx={{
-            height: 35,
-            border: '1px solid #488B8F30',
-            borderRadius: '8px',
-            color: '#488B8F',
-            px: 1,
-            gap: '4px',
-            '&:hover': {
-              backgroundColor: '#488B8F15',
-            },
-          }}
+    height: 35,
+    border: '1px solid var(--primary-color)',
+    borderRadius: '8px',
+    color: 'var(--primary-color)',
+    px: 1,
+    gap: '4px',
+    transition: 'all 0.2s ease-in-out',
+
+    '&:hover': {
+      color: 'var(--white-color)',
+      backgroundColor: 'var(--secondary-color)',
+      borderColor: 'var(--primary-color)',
+    },
+
+    // asegura que icono y texto cambien también
+    '&:hover svg, &:hover p': {
+      color: 'var(--white-color)',
+    },
+  }}
         >
           <AddBoxIcon fontSize="small" />
           <Typography fontSize="0.75rem">Registro</Typography>

@@ -936,27 +936,29 @@ const setQuickFilter = (type) => {
   return (
     <>
      
-  <Box
-className="view-header"
-  >
+<Box
+  className="view-header"
+  sx={{
+    display: "flex",
+    flexDirection: { xs: "column", sm: "row" },
+    alignItems: { xs: "flex-start", sm: "center" },
+    gap: { xs: 1, sm: 0.5 },
+  }}
+>
   <Link href="/dashboard" underline="none">
-              <a>
-                 <HomeIcon
-                                        fontSize="large" 
-                                        sx={{ 
-                                          color: '#488b8f',
-                                          opacity: 0.8, // Ajusta la transparencia (0.8 = 80% visible)
-                                          strokeWidth: 1, // Grosor del contorno
-                                        }} 
-                                      />
+    <a>
+      <HomeIcon
+        fontSize="large"
+        sx={{
+          color: "#488b8f",
+          opacity: 0.8,
+        }}
+      />
+    </a>
+  </Link>
 
-              </a>
-
-            </Link>
-  <Typography
-   className="view-title"
-  >
-    - Consulta de resumen de negociación
+  <Typography className="view-title">
+    Consulta de resumen de negociación
   </Typography>
 </Box>
 
@@ -970,32 +972,29 @@ className="view-header"
 
 <Box
   display="flex"
-  alignItems="center" // Alinea los elementos verticalmente
-  justifyContent="space-between" // Espaciado entre los elementos
   sx={{
-    width: '100%', // Asegura que el contenedor ocupe todo el ancho disponible
-    padding: '20px', // Espaciado interno
-    gap: '10px', // Espacio entre los elementos
-    marginRight: '10px', // Ajuste de margen derecho
-    marginLeft: '10px', // Ajuste de margen izquierdo
+    flexDirection: { xs: "column", md: "row" },
+    alignItems: { xs: "stretch", md: "center" },
+    justifyContent: "space-between",
+    width: "100%",
+    gap: { xs: 1.5, md: 2 },
   }}
 >
+
   {/* Filtro */}
-  <Box
+<Box
   display="flex"
   alignItems="center"
-  gap="8px"
   sx={{
-    border: '1px solid #488f8f', // Borde del filtro
-    borderRadius: '4px', // Bordes redondeados
-    padding: '4px', // Espaciado interno
-    backgroundColor: '#f8f9fa', // Fondo del filtro
-    flex: 1, // Ocupa el máximo espacio disponible
-    height:'29px',
-    marginRight:'30px',
-   
+    border: "1px solid #488f8f",
+    borderRadius: "10px",
+    padding: "4px",
+    backgroundColor: "#f8f9fa",
+    width: "100%",
+    height: "30px",
   }}
 >
+
 <TextField
     placeholder="Ingrese número de operación o emisor"
     variant="standard"
@@ -1042,17 +1041,36 @@ className="view-header"
     onClick={handleOpenPicker}
     variant="outlined"
     startIcon={<CalendarTodayIcon />}
-    sx={{
-      textTransform: 'none',
-      borderColor: '#488b8f',
-      color: '#488b8f',
-      whiteSpace: 'nowrap', // Evita que el texto se divida en líneas
-      backgroundColor: '#f8f9fa',
-      width: '280px',
-      height:'41px',
-      marginRight:'27px',
-     
-    }}
+      sx={{
+    width: { xs: "100%", md: "auto" },
+    border: "2px solid #488B8F",
+    borderRadius: "10px",
+    height: "2.5rem",
+    textTransform: "none",
+    color: "#488B8F",
+
+            "& .MuiTypography-root": {
+              transition: "all 0.25s ease-in-out",
+              color: "#488B8F",
+            },
+
+            "& .MuiButton-startIcon svg": {
+              transition: "all 0.25s ease-in-out",
+            },
+
+            "&:hover": {
+              backgroundColor: "#488B8F",
+              color: "#ffffff",
+
+              "& .MuiTypography-root": {
+                color: "#ffffff",
+              },
+
+              "& .MuiButton-startIcon svg": {
+                color: "#ffffff",
+              },
+            },
+          }}
   >
     {/* {startDatePicker && endDatePicker
       ? `${format(new Date(startDatePicker), 'dd/MM/yyyy')} - ${format(new Date(endDatePicker), 'dd/MM/yyyy')}`
@@ -1064,20 +1082,39 @@ className="view-header"
   </Button>
 
   {/* Botón para registrar un nuevo resumen */}
-  <Link
-    href="/administration/negotiation-summary?register"
-    underline="none"
-  >
-    <Button
-      variant="outlined"
-      color="primary"
-      size="large"
-      sx={{
-        height: '2.6rem',
-        backgroundColor: 'transparent',
-        border: '1.4px solid #63595C',
-        borderRadius: '4px',
-      }}
+<Link href="/administration/negotiation-summary?register" underline="none">
+  <Button
+    variant="outlined"
+    sx={{
+      width: { xs: "100%", md: "auto" },
+      border: "2px solid #488B8F",
+      borderRadius: "10px",
+      height: "2.5rem",
+      textTransform: "none",
+      color: "#488B8F",
+
+            "& .MuiTypography-root": {
+              transition: "all 0.25s ease-in-out",
+              color: "#488B8F",
+            },
+
+            "& .MuiButton-startIcon svg": {
+              transition: "all 0.25s ease-in-out",
+            },
+
+            "&:hover": {
+              backgroundColor: "#488B8F",
+              color: "#ffffff",
+
+              "& .MuiTypography-root": {
+                color: "#ffffff",
+              },
+
+              "& .MuiButton-startIcon svg": {
+                color: "#ffffff",
+              },
+            },
+          }}
     >
       <Tooltip title="Registrar Nuevo Resumen de Negociación" placement="top">
         <Box display="flex" alignItems="center" >

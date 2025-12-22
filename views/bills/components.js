@@ -1283,7 +1283,15 @@ useEffect(() => {
 return (
   <>
     {/* HEADER */}
-    <Box display="flex" flexDirection="row" alignItems="center">
+    <Box
+  display="flex"
+  alignItems="center"
+  flexWrap="wrap"
+  gap={1}
+  sx={{
+    rowGap: { xs: 1, md: 0.5 },
+  }}
+>
       <Link href="/dashboard" passHref>
         <HomeIcon
           fontSize="large"
@@ -1335,7 +1343,10 @@ return (
           sx={{
             border: "2px solid #488B8F",
             borderRadius: "4px",
-            height: "3rem",
+               height: { xs: "3rem", md: "2.4rem" },
+    fontSize: { xs: "0.85rem", md: "0.75rem" },
+    paddingX: { md: 1.5 },
+    whiteSpace: "nowrap",
             width: { xs: "100%", sm: "auto" },
             textTransform: "none",
             transition: "all 0.25s ease-in-out",
@@ -1408,7 +1419,10 @@ return (
   sx={{
     border: "2px solid #488B8F",
     borderRadius: "4px",
-    height: "3rem",
+       height: { xs: "3rem", md: "2.4rem" },
+    fontSize: { xs: "0.85rem", md: "0.75rem" },
+    paddingX: { md: 1.5 },
+    whiteSpace: "nowrap",
     width: { xs: "100%", sm: "auto" },
     textTransform: "none",
     transition: "all 0.25s ease-in-out",
@@ -1463,52 +1477,48 @@ return (
     {/* CONTENIDO */}
     <Box display="flex" flexDirection="column" mt="1.5rem">
       {/* FILA SUPERIOR: TOOLBAR + RETENCIONES */}
-      <Box
+     <Box
+    sx={{
+      display: "flex",
+      flexDirection: { xs: "column", md: "row" },
+      alignItems: { xs: "stretch", md: "center" },
+      justifyContent: "space-between",
+      gap: { xs: 2, md: 1.5 },
+      width: "100%",
+    }}
+  >
+        {/* SECCIÓN IZQUIERDA: RETENCIONES */}
+         <Box
+      sx={{
+        display: "flex",
+        flexDirection: { xs: "column", md: "row" },
+        gap: { xs: 2, md: 1.5 },
+        alignItems: "center",
+      }}
+    >
+          {/* Valor RET ICA */}
+             <Box
         sx={{
           display: "flex",
-          flexDirection: { xs: "column", md: "row" },
-          flexWrap: "wrap",
-          alignItems: { xs: "stretch", md: "center" },
+          alignItems: "center",
           justifyContent: "space-between",
-          gap: 2,
-          mt: "0.5rem",
-          width: "100%",
+          gap: 1,
+          bgcolor: "white",
+          borderRadius: "12px",
+          border: "1px solid #E0E0E0",
+          padding: { xs: "6px 10px", md: "4px 8px" },
+          minWidth: { xs: "100%", md: "120px" },
+          height: { xs: "40px", md: "34px" },
+          boxShadow: "0px 1px 3px rgba(0,0,0,0.08)",
         }}
       >
-        {/* SECCIÓN IZQUIERDA: RETENCIONES */}
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: { xs: "column", sm: "row" },
-            gap: 2,
-            flexWrap: "wrap",
-            alignItems: "center",
-          }}
-        >
-          {/* Valor RET ICA */}
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 2,
-              bgcolor: "white",
-              borderRadius: "12px",
-              border: "1px solid #E0E0E0",
-              padding: "6px 10px",
-              minWidth: "150px",
-              height: "40px",
-              boxShadow: "0px 1px 3px rgba(0,0,0,0.08)",
-            }}
-          >
             <Box>
-              <Typography
-                letterSpacing={0}
-                fontSize="0.75rem"
-                fontWeight="600"
-                color="#7A7A7A"
-                sx={{ lineHeight: "12px" }}
-              >
+               <Typography
+            fontSize="clamp(0.65rem, 0.7vw, 0.75rem)"
+            fontWeight={600}
+            color="#7A7A7A"
+            lineHeight="12px"
+          >
                 Valor RET. ICA
               </Typography>
 
@@ -1536,17 +1546,15 @@ return (
                 disabled={rowsToModify.length === 0}
                 type="number"
                 variant="standard"
-                sx={{
-                  mt: "3px",
-                  width: "60px",
-                  height: "23px",
-                  "& .MuiInputBase-input": {
-                    padding: "3px 4px",
-                    fontSize: "0.85rem",
-                    fontWeight: "700",
-                    textAlign: "right",
-                    color: "#12A39C",
-                  },
+                 sx={{
+              width: { xs: "60px", md: "48px" },
+              "& .MuiInputBase-input": {
+                padding: "2px 4px",
+                fontSize: "clamp(0.7rem, 0.75vw, 0.85rem)",
+                fontWeight: 700,
+                textAlign: "right",
+                color: "#12A39C",
+              },
                   "input::-webkit-inner-spin-button": { WebkitAppearance: "none" },
                   "input::-webkit-outer-spin-button": { WebkitAppearance: "none" },
                 }}
@@ -1566,43 +1574,42 @@ return (
               aria-label="save"
               disabled={rowsToModify.length === 0}
               onClick={() => {}}
-              sx={{
-                width: "2.2rem",
-                height: "2.2rem",
-                backgroundColor: "#12A39C",
-                borderRadius: "8px",
-                "&:hover": { backgroundColor: "#00B4FF90" },
-                opacity: rowsToModify.length === 0 ? 0.4 : 1,
-              }}
+               sx={{
+            width: { xs: "2.2rem", md: "1.9rem" },
+            height: { xs: "2.2rem", md: "1.9rem" },
+            backgroundColor: "#12A39C",
+            borderRadius: "8px",
+            opacity: rowsToModify.length === 0 ? 0.4 : 1,
+            "&:hover": { backgroundColor: "#00B4FF90" },
+          }}
             >
               <ArrowForward sx={{ color: "white", fontSize: "1.5rem" }} />
             </IconButton>
           </Box>
 
           {/* Valor RET FTE */}
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 2,
-              bgcolor: "white",
-              borderRadius: "12px",
-              border: "1px solid #E0E0E0",
-              padding: "6px 10px",
-              minWidth: "150px",
-              height: "40px",
-              boxShadow: "0px 1px 3px rgba(0,0,0,0.08)",
-            }}
-          >
+           <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 1,
+          bgcolor: "white",
+          borderRadius: "12px",
+          border: "1px solid #E0E0E0",
+          padding: { xs: "6px 10px", md: "4px 8px" },
+          minWidth: { xs: "100%", md: "120px" },
+          height: { xs: "40px", md: "34px" },
+          boxShadow: "0px 1px 3px rgba(0,0,0,0.08)",
+        }}
+      >
             <Box>
-              <Typography
-                letterSpacing={0}
-                fontSize="0.75rem"
-                fontWeight="600"
-                color="#7A7A7A"
-                sx={{ lineHeight: "12px" }}
-              >
+                 <Typography
+            fontSize="clamp(0.65rem, 0.7vw, 0.75rem)"
+            fontWeight={600}
+            color="#7A7A7A"
+            lineHeight="12px"
+          >
                 Valor RET. FTE
               </Typography>
 
@@ -1630,17 +1637,15 @@ return (
                 disabled={rowsToModify.length === 0}
                 type="number"
                 variant="standard"
-                sx={{
-                  mt: "3px",
-                  width: "60px",
-                  height: "23px",
-                  "& .MuiInputBase-input": {
-                    padding: "3px 4px",
-                    fontSize: "0.85rem",
-                    fontWeight: "700",
-                    textAlign: "right",
-                    color: "#12A39C",
-                  },
+               sx={{
+              width: { xs: "60px", md: "48px" },
+              "& .MuiInputBase-input": {
+                padding: "2px 4px",
+                fontSize: "clamp(0.7rem, 0.75vw, 0.85rem)",
+                fontWeight: 700,
+                textAlign: "right",
+                color: "#12A39C",
+              },
                   "input::-webkit-inner-spin-button": { WebkitAppearance: "none" },
                   "input::-webkit-outer-spin-button": { WebkitAppearance: "none" },
                 }}
@@ -1660,14 +1665,14 @@ return (
               aria-label="save"
               disabled={rowsToModify.length === 0}
               onClick={() => {}}
-              sx={{
-                width: "2.2rem",
-                height: "2.2rem",
-                backgroundColor: "#12A39C",
-                borderRadius: "8px",
-                "&:hover": { backgroundColor: "#00B4FF90" },
-                opacity: rowsToModify.length === 0 ? 0.4 : 1,
-              }}
+            sx={{
+            width: { xs: "2.2rem", md: "1.9rem" },
+            height: { xs: "2.2rem", md: "1.9rem" },
+            backgroundColor: "#12A39C",
+            borderRadius: "8px",
+            opacity: rowsToModify.length === 0 ? 0.4 : 1,
+            "&:hover": { backgroundColor: "#00B4FF90" },
+          }}
             >
               <ArrowForward sx={{ color: "white", fontSize: "1.5rem" }} />
             </IconButton>
@@ -1692,28 +1697,24 @@ return (
               }
             }}
             sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: rowsToModify.length === 0 ? "not-allowed" : "pointer",
-              bgcolor: "white",
-              borderRadius: "12px",
-              border: "2px solid #12A39C",
-              padding: "6px 14px",
-              minWidth: "150px",
-              height: "40px",
-              opacity: rowsToModify.length === 0 ? 0.4 : 1,
-              transition: "all 0.25s ease-in-out",
-              "&:hover": {
-                backgroundColor: rowsToModify.length === 0 ? "white" : "#12A39C15",
-                borderColor: rowsToModify.length === 0 ? "#12A39C" : "#0E8F77",
-              },
-            }}
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          minWidth: { xs: "100%", md: "130px" },
+          height: { xs: "40px", md: "34px" },
+          padding: { xs: "6px 14px", md: "4px 10px" },
+          borderRadius: "12px",
+          border: "2px solid #12A39C",
+          bgcolor: "white",
+          opacity: rowsToModify.length === 0 ? 0.4 : 1,
+          transition: "all 0.25s ease-in-out",
+          cursor: rowsToModify.length === 0 ? "not-allowed" : "pointer",
+        }}
           >
             <Typography
               letterSpacing={0}
-              fontSize="0.85rem"
-              fontWeight="700"
+              fontSize="clamp(0.7rem, 0.8vw, 0.85rem)"
+          fontWeight={700}
               color={rowsToModify.length === 0 ? "#488B8F50" : "#12A39C"}
               sx={{
                 transition: "all 0.25s ease-in-out",
@@ -1730,24 +1731,20 @@ return (
 
         {/* SECCIÓN DERECHA: TOOLBAR (CONTENIDO DEL CUSTOM TOOLBAR) */}
         <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 2,
-            flexWrap: "wrap",
-            justifyContent: "flex-end",
-          }}
-        >
-          {/* Resumen de totales */}
-          <Box
-            display="flex"
-            flexDirection="column"
-            mr={5}
-            mb={1}
-            border="1px solid #488B8f"
-            padding={1}
-            borderRadius={1}
-          >
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: 1.5,
+      }}
+    >
+      <Box
+        sx={{
+          border: "1px solid #488B8f",
+          borderRadius: 1,
+          padding: { xs: 1, md: 0.5 },
+          fontSize: "clamp(0.7rem, 0.75vw, 0.85rem)",
+        }}
+      >
             <Box display="flex" flexDirection="row">
               <InputTitles sx={{ color: "#8C7E82", border:'1px',borderColor:'#488B8f' }}>
                 Suma de subtotales
