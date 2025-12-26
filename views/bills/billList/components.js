@@ -576,8 +576,8 @@ const handleOpenDetailBill = (id, tab = 0) => {
     },
   {
   field: "billInfo",
-  headerName: "ID / Información",
-  minWidth: 150,
+  headerName: "ID / Creada",
+  minWidth: 120,
   flex: 1,
   sortable: false,
   renderCell: (params) => {
@@ -589,10 +589,10 @@ const handleOpenDetailBill = (id, tab = 0) => {
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
-          gap: "1px",
+          //gap: "1px",
           overflow: "hidden",
           marginBottom: "10px",
-          marginLeft: "20px",
+          marginLeft: "10px",
         }}
       >
         {/* Línea 1: ID */}
@@ -844,8 +844,8 @@ const handleOpenDetailBill = (id, tab = 0) => {
     {
   field: "associatedOperation",
   headerName: "OpId",
-  width: 130,
-  flex: 1,
+  width: 80,
+
   renderCell: (params) => {
     const hasAssociation = params.value !== null && params.value !== undefined;
 
