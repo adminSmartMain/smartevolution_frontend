@@ -368,12 +368,18 @@ useEffect(() => {
       } 
       
      
-
-    if (errorCreateSummary) {
-      typeof errorCreateSummary.message === "object"
-        ? Toast(`${Object.values(errorCreateSummary.message)}`, "error")
-        : Toast(`${errorCreateSummary.message}`, "error");
-    }
+if (errorCreateSummary) {
+  if (typeof errorCreateSummary.message === "object") {
+    // Si es un array u objeto, mostrar un toast por cada error
+    const errorMessages = Object.values(errorCreateSummary.message);
+    errorMessages.forEach(errorMsg => {
+      Toast(`${errorMsg}`, "error");
+    });
+  } else {
+    // Si es un string, mostrar un solo toast
+    Toast(`${errorCreateSummary.message}`, "error");
+  }
+}
   }, [dataCreateSummary, errorCreateSummary, notFound, router]);
 
 

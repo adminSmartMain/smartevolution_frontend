@@ -6,39 +6,39 @@ import AttachMoneyIcon from "@mui/icons-material/AttachMoney"; // Icono del dól
 
 
 
-export default function RetIvaSelector({values, setFieldValue,formatNumberWithThousandsSeparator,parseFloat}) {
+export default function CufeSelector({values, setFieldValue,formatNumberWithThousandsSeparator,parseFloat,errors,integrationCode}) {
 
     return (<TextField
-        id={`RetIva`}
-        data-testid="campo-RetIva"
-        label="RETIVA"
+        id={`Cufe`}
+        data-testid="campo-Cufe"
+        label="CUFE"
         fullWidth
-        disabled
         type='text'
+        disabled
         value={
-          formatNumberWithThousandsSeparator(
-  ((values?.ret_iva ?? 0) * 1).toFixed(2)
-)
-}
+         values?.cufe
+        }
     
         onChange={(e) => {
             const rawValue = e.target.value.replace(/[^\d]/g, "");
 
-
-  
-                setFieldValue(`ret_iva`, parseFloat(rawValue));
-          
+                   const valor_recibir= (Number(values.iva) +Number(rawValue))-(Number(values.ret_iva) + Number(values.ret_ica) + Number(values.ret_fte) + Number(values.other_ret));
+                    const total=Number(values.iva)+Number(rawValue)
+                setFieldValue(`subTotal`, parseFloat(rawValue));
+          setFieldValue(`currentBalance`, parseFloat(valor_recibir));
+          setFieldValue(`total`, parseFloat(total));
         }}
         onFocus={(e) => {
             // Al hacer foco, removemos el formato para permitir la edición del valor numérico
-            e.target.value = values.ret_iva ? values.ret_iva.toString() : "";
+            e.target.value = values.subTotal ? values.subTotal.toString() : "";
         }}
-     
+     error={Boolean(errors.subTotal)}
+          helperText={errors.subTotal}
         onBlur={(e) => {
                     // Al perder el foco, aplicar el formato de separadores de miles y asegurarse que sea un número entero
                     const rawValue = e.target.value.replace(/[^\d]/g, "");
                     const valorFuturoManual = parseFloat(rawValue) || 0;
-                    setFieldValue(`ret_iva`, valorFuturoManual);
+                    setFieldValue(`subTotal`, valorFuturoManual);
                 }}
 
         InputLabelProps={{

@@ -16,7 +16,7 @@ export default function OtrasRetSelector({values, setFieldValue,formatNumberWith
         disabled
         type='text'
         value={
-          formatNumberWithThousandsSeparator( values?.other_ret)
+          formatNumberWithThousandsSeparator( ((values?.other_ret ?? 0)* 1).toFixed(2))
         }
     
         onChange={(e) => {

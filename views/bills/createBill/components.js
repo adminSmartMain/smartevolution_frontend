@@ -30,7 +30,7 @@ import Image from 'next/image';
 import "react-toastify/dist/ReactToastify.css";
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import FilterAltOffIcon from '@mui/icons-material/FilterAltOff';
-
+import {Toast} from '@components/toast'
 import { Bills, GetBillFraction, GetRiskProfile, BrokerByClient, AccountsFromClient,getTypeBill } from "./queries";
 import { parseISO } from "date-fns";
 import { differenceInDays, startOfDay, addDays } from "date-fns";
@@ -270,12 +270,11 @@ const [showAllPayers, setShowAllPayers] = useState(false);
 
 
 
-  // Función para formatear el número con separadores de miles
-  const formatNumberWithThousandsSeparator = (value) => {
-    if (value === undefined || value === null) return '';
-    return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  };
-
+// Función para formatear el número con separadores de miles y signo de $
+const formatNumberWithThousandsSeparator = (value) => {
+  if (value === undefined || value === null) return '';
+  return '$' + ' ' + value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+};
 
 
   const [initialPayer, setInitialPayer] = useState(null);
@@ -297,13 +296,13 @@ const [showAllPayers, setShowAllPayers] = useState(false);
     // Validar tipo de archivo
     const validTypes = ['application/pdf', 'image/jpeg', 'image/png'];
     if (!validTypes.includes(selectedFile.type)) {
-      toast.error('Solo se permiten archivos PDF, JPEG o PNG');
+      Toast('Solo se permiten archivos PDF, JPEG o PNG','error');
       return;
     }
 
     // Validar tamaño (20MB máximo)
     if (selectedFile.size > 20 * 1024 * 1024) {
-      toast.error('El archivo no debe exceder los 20MB');
+      Toast('El archivo no debe exceder los 20MB','error');
       return;
     }
 
@@ -329,7 +328,7 @@ const [showAllPayers, setShowAllPayers] = useState(false);
     
     reader.onerror = (error) => {
       console.error('Error al leer el archivo:', error);
-      toast.error('Error al procesar el archivo');
+      Toast('Error al procesar el archivo','error');
     };
     
     reader.readAsDataURL(selectedFile);
@@ -444,7 +443,7 @@ const handleSubmit = async (values, actions) => {
   };
 const handleOpenPreview = () => {
     if (!file && !fileUrl) {
-      toast.warning('No hay archivo para previsualizar');
+      Toast('No hay archivo para previsualizar','warning');
       return;
     }
     setOpenPreview(true);

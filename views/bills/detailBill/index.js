@@ -22,21 +22,17 @@ import {
   
 } from "./queries";
 import BillCreationComponent from "./components";
-import { Bills, billById, payerByBill,EditBill } from "./queries";
+import { Bills, billById, payerByBill,EditBill,GetBillEvents } from "./queries";
 export default function BillDetail() {
 // States
-  const [created, setCreated] = useState(0);
-  const [updated, setUpdated] = useState(0);
+ 
   const [opId, setOpId] = useState(null);
   const [id, setId] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const [operation, setOperation] = useState([]);
-  const [isAddingBill, setIsAddingBill] = useState(false);
-  const [isCreatingBill, setIsCreatingBill] = useState(false);
+
   const [payer, setPayer] = useState([]);
   const [client, setClient] = useState([]);
   const [users, setUsers] = useState([]);
-  const [investor,setInvestor]=useState([])
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [success, setSuccessA] = useState(null);
   const [typeOp, setTypeOp] = useState([]);
@@ -63,7 +59,7 @@ export default function BillDetail() {
     }, [router.query]);
   
   
-  console.log(id)
+  
 
   // Queries
 
@@ -173,6 +169,8 @@ export default function BillDetail() {
       } =  useFetch({ service: TypeOperation, init: true });
 
 
+
+      
       useEffect(
 
       ()=>{
@@ -185,7 +183,7 @@ export default function BillDetail() {
 
       }, [id])
 
-      console.log(dataBill)
+     
 
     useEffect(() => {
       if (dataBill) {
@@ -195,7 +193,7 @@ export default function BillDetail() {
 
 
 
-    console.log(bill)
+  
   
     useEffect(() => {
       if (dataAllUsers) {
@@ -224,6 +222,7 @@ useEffect(() => {
     setTypeOp(typesID);
   }
 }, [dataTypeIdSelect, loadingTypeIdSelect, errorTypeIdSelect]);
+
 
 
 // GET CLIENTS (EMITTERS)
@@ -337,7 +336,7 @@ const onSubmit = async (values, { setSubmitting }) => {
   setIsModalOpen(true);
   setSubmitting(true);
   setSuccessA(null);
-  console.log(values.fechaEmision,values.DateExpiration,values.datePayment)
+
   const operationData = {
     
     currentBalance: Number(values.currentBalance) || 0,
@@ -417,6 +416,7 @@ const handleConfirm = async (values,actions) => {
        users={users}
        bill={bill}
        id={id}
+       
       />
     </>
   );

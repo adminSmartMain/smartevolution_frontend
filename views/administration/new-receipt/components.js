@@ -887,7 +887,23 @@ const getColorByType = (typeId) => {
       </Box>
     </Typography>
   </Grid>
-
+  <Grid item xs={12} md={6}>
+    <Typography variant="body1">
+      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Valor Futuro:</Box>
+      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
+        {formatNumberWithThousandsSeparator(data?.amount)}
+      </Box>
+    </Typography>
+  </Grid>
+     {/* Nombre del inversionista */}
+  <Grid item xs={12} md={6}>
+    <Typography variant="body1">
+      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Fecha Inicio:</Box>
+      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
+        {formatDateToDDMMYYYY(data?.opDate)}
+      </Box>
+    </Typography>
+  </Grid>
   {/* Valor Nominal */}
   <Grid item xs={12} md={6}>
     <Typography variant="body1">
@@ -897,15 +913,10 @@ const getColorByType = (typeId) => {
       </Box>
     </Typography>
   </Grid>
-    {/* Nombre del inversionista */}
-  <Grid item xs={12} md={6}>
-    <Typography variant="body1">
-      <Box component="span" fontWeight="500" mr={2} fontSize="1.1rem">Fecha Inicio:</Box>
-      <Box component="span" color="#5EA3A3" fontSize="1.1rem">
-        {formatDateToDDMMYYYY(data?.opDate)}
-      </Box>
-    </Typography>
-  </Grid>
+  
+
+  
+ 
   {/* Nombre del inversionista */}
   <Grid item xs={12} md={6}>
     <Typography variant="body1">

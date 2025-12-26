@@ -11,6 +11,7 @@ import {
   DialogActions,
   IconButton,Tooltip,
 } from "@mui/material";
+import { useRouter } from "next/router";
 import { useFetch } from "@hooks/useFetch";
 import { debounce } from 'lodash';
 import { TextField, Grid } from '@mui/material';
@@ -27,6 +28,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import { styled } from '@mui/material/styles';
 import Image from 'next/image';
 import "react-toastify/dist/ReactToastify.css";
+
 import {
   Tabs,
   Tab,
@@ -36,7 +38,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Paper
+  Paper,Skeleton,
 } from '@mui/material';
 
 import {
@@ -77,6 +79,8 @@ import RetIcaSelector from "@components/selects/billDetailSelects/RetIcaSelector
 import RetIvaSelector from "@components/selects/billDetailSelects/RetIvaSelector";
 import IvaSelector from "@components/selects/billDetailSelects/IvaSelector";
 import OtrasRetSelector from "@components/selects/billDetailSelects/OtrasRetSelector";
+import CurrentOwnerSelector from "@components/selects/billDetailSelects/CurrentOwnerSelector";
+import CufeSelector from  "@components/selects/billDetailSelects/CufeSelector";
 import fileToBase64 from "@lib/fileToBase64";
 import ModalConfirmation from "@components/modals/createBillModals/modalConfirmation";
 import ProcessModal from "@components/modals/createBillModals/processModal";
@@ -259,7 +263,18 @@ id,
   const [previewUrl, setPreviewUrl] = useState(null);
   const usuarioEncontrado = users?.data?.find(user => user.id ===  bill?.user_created_at);
   const usuarioEncontradoEdit = users?.data?.find(user => user.id === bill?.user_updated_at);
-  console.log(users,usuarioEncontrado,usuarioEncontradoEdit)
+
+
+const router = useRouter();
+useEffect(() => {
+  if (router.query.tab !== undefined) {
+    const tabParam = Number(router.query.tab);
+
+    if (!isNaN(tabParam)) {
+      setActiveTab(tabParam);   // ← AQUÍ SE CAMBIA LA TAB ACTIVA
+    }
+  }
+}, [router.query.tab]);
 
   const opcionesFormato = {
     dateStyle: 'short',
@@ -297,39 +312,15 @@ const debouncedCheckBill = debounce(async (billNumber, callback) => {
     }
   }, 500); // Espera 500ms después de la última escritura
 
+  console.log(bill?.events)
+const eventos = bill?.events?.map(item => ({
+  codigo: item.code,
+  fecha: item.date,
+  evento: item.event
+})) || [];
 
-  const eventos = [
-    { codigo: '001', fecha: '2023-01-01T10:30:00', evento: 'Creación de factura' },
-    { codigo: '002', fecha: '2023-01-01T10:35:00', evento: 'Asignación de número de factura' },
-    { codigo: '003', fecha: '2023-01-01T11:15:00', evento: 'Registro de emisor' },
-    { codigo: '004', fecha: '2023-01-01T11:30:00', evento: 'Registro de cliente' },
-    { codigo: '005', fecha: '2023-01-01T12:45:00', evento: 'Adición de productos' },
-    { codigo: '006', fecha: '2023-01-01T13:20:00', evento: 'Cálculo de subtotal' },
-    { codigo: '007', fecha: '2023-01-01T14:00:00', evento: 'Aplicación de IVA' },
-    { codigo: '008', fecha: '2023-01-01T14:30:00', evento: 'Cálculo de total' },
-    { codigo: '009', fecha: '2023-01-02T09:15:00', evento: 'Corrección de datos del cliente' },
-    { codigo: '010', fecha: '2023-01-02T10:00:00', evento: 'Actualización de productos' },
-    { codigo: '011', fecha: '2023-01-02T11:30:00', evento: 'Ajuste de descuentos' },
-    { codigo: '012', fecha: '2023-01-02T12:45:00', evento: 'Revisión de impuestos' },
-    { codigo: '013', fecha: '2023-01-02T14:00:00', evento: 'Aprobación inicial' },
-    { codigo: '014', fecha: '2023-01-03T08:30:00', evento: 'Carga de archivo adjunto' },
-    { codigo: '015', fecha: '2023-01-03T09:45:00', evento: 'Verificación de datos' },
-    { codigo: '016', fecha: '2023-01-03T11:00:00', evento: 'Aprobación final' },
-    { codigo: '017', fecha: '2023-01-03T12:30:00', evento: 'Generación de PDF' },
-    { codigo: '018', fecha: '2023-01-03T14:15:00', evento: 'Envío al cliente' },
-    { codigo: '019', fecha: '2023-01-04T10:00:00', evento: 'Notificación de recepción' },
-    { codigo: '020', fecha: '2023-01-05T09:30:00', evento: 'Primer recordatorio de pago' },
-    { codigo: '021', fecha: '2023-01-10T10:15:00', evento: 'Segundo recordatorio de pago' },
-    { codigo: '022', fecha: '2023-01-15T11:00:00', evento: 'Pago parcial recibido' },
-    { codigo: '023', fecha: '2023-01-20T14:30:00', evento: 'Pago completo recibido' },
-    { codigo: '024', fecha: '2023-01-20T15:00:00', evento: 'Registro de pago en sistema' },
-    { codigo: '025', fecha: '2023-01-20T15:30:00', evento: 'Generación de recibo' },
-    { codigo: '026', fecha: '2023-01-20T16:00:00', evento: 'Envío de recibo al cliente' },
-    { codigo: '027', fecha: '2023-01-21T09:00:00', evento: 'Cierre de factura' },
-    { codigo: '028', fecha: '2023-01-22T10:00:00', evento: 'Archivado digital' },
-    { codigo: '029', fecha: '2023-01-23T11:00:00', evento: 'Notificación de cierre al cliente' },
-    { codigo: '030', fecha: '2023-01-31T12:00:00', evento: 'Registro en contabilidad general' }
-  ];
+
+const emptyRows = !eventos || eventos.length === 0;
 
  const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -398,7 +389,7 @@ const debouncedCheckBill = debounce(async (billNumber, callback) => {
     return decimalPart ? `${formattedInteger}.${decimalPart}` : formattedInteger;
 };
 
-  console.log(dataTypeBill)
+ 
 
   const [initialPayer, setInitialPayer] = useState(null);
 
@@ -406,7 +397,7 @@ const debouncedCheckBill = debounce(async (billNumber, callback) => {
     const data = new FormData(event.currentTarget)
     const values = Array.from(data.values())
     const changedFields = values.filter(value => value.length);
-    console.log("changedFields")
+   
     
   }
 
@@ -477,7 +468,7 @@ const debouncedCheckBill = debounce(async (billNumber, callback) => {
   // Combinar el pagador inicial con los filtrados
 
 
-console.log(fileUrl)
+
 
 const handleConfirm = async (values, actions) => {
   try {
@@ -488,7 +479,7 @@ const handleConfirm = async (values, actions) => {
     actions.setSubmitting(false);
   }
 };
-  console.log(bill)
+
 
 
 
@@ -564,7 +555,7 @@ const handleConfirm = async (values, actions) => {
      );
      return existsInFiltered ? filteredPayers : [initialPayer, ...filteredPayers];
    }, [initialPayer, filteredPayers]);
- console.log(allPayers)
+ 
 
 const parseBackendDate = (dateString) => {
   if (!dateString) return null;
@@ -574,10 +565,14 @@ const parseBackendDate = (dateString) => {
   return new Date(date.getTime() + date.getTimezoneOffset() * 60000);
 };
 
-console.log( bill?.bill?.currentBalance)
+
+console.log(bill)
  
   const initialValues2 = {
     emitter:  bill?.emitterName,
+    cufe:bill?.cufe,
+    currentOwnerName:bill?.currentOwnerName,
+    currentOwnerid:bill?.currentOwnerId,
     nombrePagador:  bill?.payerName,
     filtroEmitterPagador: { emitter: "", payer: "" },
     currentBalance: bill?.currentBalance,
@@ -603,8 +598,6 @@ console.log( bill?.bill?.currentBalance)
 
   };
 
-  console.log(initialValues2)
-  console.log(bill)
 const handleClosePreview = () => {
   // Liberar recursos si es un objeto URL creado con URL.createObjectURL
   if (file && previewUrl) {
@@ -614,6 +607,7 @@ const handleClosePreview = () => {
   setPreviewUrl(null);
 };
 
+console.log(!dataBills)
 
 // Modifica la función handleOpenPreview para manejar XML
 const handleOpenPreview = async () => {
@@ -673,6 +667,10 @@ const handleOpenPreview = async () => {
 };
 
 // El resto del componente permanece exactamente igual
+const formatFecha = (fecha) => {
+  const [y, m, d] = fecha.split("-");
+  return `${d}/${m}/${y}`;
+};
 
 // Función para verificar el Blob
 const verifyBlob = async (blob) => {
@@ -865,7 +863,7 @@ const verifyBlob = async (blob) => {
               return(
                 <Form translate="no" onChange={handleOnChange}>
                   <Grid container spacing={2}>
-                    <Grid item xs={12} md={4}>
+                    <Grid item xs={12} md={2}>
                       <TypeBillSelector 
                         errors={errors}
                         setFieldTouched={setFieldTouched}
@@ -877,7 +875,7 @@ const verifyBlob = async (blob) => {
                       />
                     </Grid>
 
-                    <Grid item xs={12} md={4}>
+                    <Grid item xs={12} md={2}>
                       <BillManualSelector
                         values={values}
                         setFieldValue={setFieldValue}
@@ -890,8 +888,18 @@ const verifyBlob = async (blob) => {
                         debouncedCheckBill={debouncedCheckBill}
                       />
                     </Grid>
+                    <Grid item xs={12} md={5}>
+                      <CufeSelector
+                         values={values}
+                          setFieldValue={setFieldValue}
+                          errors={errors}
+                          integrationCode={bill?.Cufe}
+                          formatNumberWithThousandsSeparator={formatNumberWithThousandsSeparator}
+                          parseFloat={parseFloat}
+                        />
+                    </Grid>
                     
-                    <Grid item xs={12} md={4}>
+                    <Grid item xs={12} md={3}>
                       <SaldoDisponibleSelector
                         values={values}
                         setFieldValue={setFieldValue}
@@ -1063,7 +1071,26 @@ const verifyBlob = async (blob) => {
 
                     {/* Segunda fila */}
                     <Grid container item xs={12} spacing={2}>
-                      <Grid item xs={12} md={6}>
+
+                      <Grid item xs={12} md={4}>
+                      <CurrentOwnerSelector
+                        errors={errors}
+                        payers={payers}
+                        setFieldTouched={setFieldTouched}
+                        setFieldValue={setFieldValue}
+                        setFieldError={setFieldError}
+                        touched={touched}
+                        values={values}
+                        emisores={emisores}
+                        fetchBrokerByClient={fetchBrokerByClient}
+                        cargarFacturas={cargarFacturas}
+                        cargarTasaDescuento={cargarTasaDescuento}
+                        setClientWithoutBroker={setClientWithoutBroker}
+                        setOpenEmitterBrokerModal={setOpenEmitterBrokerModal}
+                        integrationCode={bill?.integrationCode}
+                      />
+                    </Grid>
+                      <Grid item xs={12} md={4}>
                         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                           <div style={{ flex: 1 }}>
                             <PayerSelector
@@ -1112,7 +1139,7 @@ const verifyBlob = async (blob) => {
                         </div>    
                       </Grid>
 
-                      <Grid item xs={12} md={6}>
+                      <Grid item xs={12} md={4}>
                         <SubTotalSelector
                           values={values}
                           setFieldValue={setFieldValue}
@@ -1142,7 +1169,7 @@ const verifyBlob = async (blob) => {
                       </Grid>
                       <Grid item xs={12} md={4}>
                         <RetIvaSelector
-                          values={values}
+                          values={values }
                           setFieldValue={setFieldValue}
                           formatNumberWithThousandsSeparator={formatNumberWithThousandsSeparator}
                           parseFloat={parseFloat}
@@ -1369,78 +1396,111 @@ const verifyBlob = async (blob) => {
       ) : (
         // Contenido de la segunda pestaña (tabla de eventos)
         <Box sx={{ mt: 2 }}>
-<Box
-container
-            display="flex"
-            flexDirection="row"
-            justifyContent="space-between"
-            sx={{ ml: 0.5}}>
-  
-          <Typography
-          
-            letterSpacing={0}
-              fontSize="1.7rem"
-              fontWeight="regular"
-              marginBottom="0.7rem"
-              color="#000000ff">
+   {bill?.billId ? (
+  <Typography
+    sx={{ ml: 1 }}
+    letterSpacing={0}
+    fontSize="1.7rem"
+    fontWeight="regular"
+    mb={2}
+    color="#000"
+  >
+    {bill.billId}
+  </Typography>
+) : (
+  <Typography
+    sx={{ ml: 1 }}
+    letterSpacing={0}
+    fontSize="1.4rem"
+    fontWeight="regular"
+    mb={2}
+    color="gray"
+    fontStyle="italic"
+  >
+    Sin ID de factura
+  </Typography>
+)}
 
-            {bill?.billId}
-          </Typography>
 
-          </Box>
-     <TableContainer component={Paper}>
-      <Table sx={{ minWidth: 650 }} aria-label="tabla de eventos">
-        <TableHead>
-          <TableRow>
-            <TableCell><strong>Código</strong></TableCell>
-            <TableCell><strong>Fecha</strong></TableCell>
-            <TableCell><strong>Evento</strong></TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {(rowsPerPage > 0
-            ? eventos.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-            : eventos
-          ).map((evento, index) => (
-            <TableRow key={index}>
-              <TableCell>{evento.codigo}</TableCell>
-              <TableCell>
-                {new Date(evento.fecha).toLocaleDateString('es-ES', {
-                  day: '2-digit',
-                  month: '2-digit',
-                  year: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                })}
-              </TableCell>
-              <TableCell>{evento.evento}</TableCell>
-            </TableRow>
+    <TableContainer component={Paper} sx={{ borderRadius: 2, p: 1 }}>
+      
+      {/* --------------------------- LOADING SKELETON --------------------------- */}
+      {!dataBills && (
+        <Box sx={{ p: 2 }}>
+          <Skeleton variant="rectangular" height={40} sx={{ mb: 2 }} />
+
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={i} variant="rectangular" height={35} sx={{ mb: 1 }} />
           ))}
-        </TableBody>
-        <TableFooter>
-          <TableRow>
-            <TablePagination
-              rowsPerPageOptions={[15, 30, { label: 'Todos', value: -1 }]}
-              colSpan={3}
-              count={eventos.length}
-              rowsPerPage={rowsPerPage}
-              page={page}
-              SelectProps={{
-                inputProps: { 'aria-label': 'filas por página' },
-                native: true,
-              }}
-              onPageChange={handleChangePage}
-              onRowsPerPageChange={handleChangeRowsPerPage}
-              ActionsComponent={TablePaginationActions}
-              labelRowsPerPage="Eventos por página:"
-              labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
-            />
-          </TableRow>
-        </TableFooter>
-      </Table>
-    </TableContainer>
+
+          <Skeleton variant="rectangular" height={35} sx={{ mt: 2 }} />
         </Box>
       )}
+
+      {/* --------------------------- TABLA FINAL --------------------------- */}
+      {dataBills && (
+        <Table aria-label="tabla de eventos">
+          <TableHead>
+            <TableRow>
+              <TableCell><strong>Código</strong></TableCell>
+              <TableCell><strong>Fecha</strong></TableCell>
+              <TableCell><strong>Evento</strong></TableCell>
+            </TableRow>
+          </TableHead>
+
+          <TableBody>
+            {/* SIN EVENTOS */}
+            {eventos?.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={3} align="center" sx={{ py: 3 }}>
+                  <Typography color="gray" fontWeight="bold">
+                    No se encontraron eventos registrados
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            )}
+
+            {/* CON EVENTOS */}
+            {eventos?.length > 0 &&
+              eventos
+                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                .map((e, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{e?.codigo}</TableCell>
+                    <TableCell>{formatFecha(e?.fecha)}</TableCell>
+                    <TableCell>{e?.evento}</TableCell>
+                  </TableRow>
+                ))}
+          </TableBody>
+
+          {/* PAGINACIÓN */}
+          <TableFooter>
+            <TableRow>
+              <TablePagination
+                rowsPerPageOptions={[15]}
+                colSpan={3}
+                count={eventos?.length || 0}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                SelectProps={{
+                  native: true,
+                  disabled: true, // dropdown deshabilitado
+                }}
+                onPageChange={handleChangePage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+                labelRowsPerPage="Eventos por página:"
+                labelDisplayedRows={({ from, to, count }) =>
+                  `${count === 0 ? 0 : from}-${count === 0 ? 0 : to} de ${count}`
+                }
+              />
+            </TableRow>
+          </TableFooter>
+        </Table>
+      )}
+
+    </TableContainer>
+  </Box>
+)}
 
       {/* Modales y otros componentes que necesites */}
       <FilePreviewModal 
