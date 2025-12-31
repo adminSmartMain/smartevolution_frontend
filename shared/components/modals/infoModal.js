@@ -14,7 +14,7 @@ import { useTheme } from '@mui/material/styles';
 import { useRouter } from 'next/router';
 
 const CHRISTMAS_IMAGE =
-  'https://devsmartevolution.s3.us-east-1.amazonaws.com/Imagenes/tarjeta-navidad+v3.png';
+  'https://devsmartevolution.s3.us-east-1.amazonaws.com/Imagenes/2026.gif';
 
 const SecurityDialog = () => {
   const theme = useTheme();
