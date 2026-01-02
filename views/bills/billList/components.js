@@ -9,7 +9,8 @@ import Skeleton from '@mui/material/Skeleton';
 import TuneIcon from '@mui/icons-material/Tune';
 import Chip from '@mui/material/Chip';
 
-
+import { Breadcrumbs} from "@mui/material";
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 
 import EventIcon from '@mui/icons-material/Event';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -1264,20 +1265,56 @@ const handleOpenDetailBill = (id, tab = 0) => {
     mt:'20px'
   }}
 >
-  <HomeIcon
-    fontSize="medium"
-    sx={{ color: '#488B8F', opacity: 0.85 }}
-  />
- <Typography
-      className="view-title"
-    >
-    Consulta de facturas
-  </Typography>
+
+<Typography
+                                  letterSpacing={0}
+                                  fontSize="1.7rem"
+                                  fontWeight="regular"
+                                  marginBottom="0.7rem"
+                                  color="#5EA3A3"
+                                >
+                                    <Breadcrumbs
+                                separator={<NavigateNextIcon fontSize="small" />}
+                                aria-label="breadcrumb"
+                                sx={{ ml: 1, mt: 1 }}
+                              >
+                                <Link href="/dashboard" underline="none">
+                          <a>
+                             <HomeIcon
+                                                    fontSize="large" 
+                                                    sx={{ 
+                                                      color: '#488b8f',
+                                                      opacity: 0.8, // Ajusta la transparencia (0.8 = 80% visible)
+                                                      strokeWidth: 1, // Grosor del contorno
+                                                    }} 
+                                                  />
+            
+                          </a>
+            
+                        </Link>
+                                <Link
+                                  underline="hover"
+                                  color="#5EA3A3"
+                                  href="/administration"
+                                  sx={{ fontSize: "1.3rem" }}
+                                >
+                             <Typography component="h1" className="view-title">
+                        
+                         Consulta de Facturas
+                                     
+                                  </Typography>
+                                 
+                                </Link>
+                        
+                           
+                              </Breadcrumbs>
+                        
+                                </Typography>
 </Box>
 
           {/* Tus otros elementos aquí */}
         </Box>
-<Box sx={{ width: '100%', mt: 2 }}>
+<Box sx={{ width: '100%', mt: 1 }}>
   {/* ================= GRID PRINCIPAL ================= */}
   <Box
     sx={{

@@ -46,7 +46,67 @@ import { GetNegotiationSummaryPDF, GetSummaryList } from "./queries";
 import ClearIcon from '@mui/icons-material/Clear';
 
 import moment from "moment";
+import { Breadcrumbs} from "@mui/material";
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
+import Skeleton from '@mui/material/Skeleton';
+const TableSkeleton = ({ rows = 15, columns = 9 }) => {
+  return (
+    <Box
+      sx={{
+        border: '1px solid #e0e0e0',
+        borderRadius: '4px',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Header */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: `repeat(${columns}, 1fr)`,
+          backgroundColor: '#f5f5f5',
+          borderBottom: '2px solid #e0e0e0',
+          px: 2,
+          py: 1,
+        }}
+      >
+        {Array.from({ length: columns }).map((_, i) => (
+          <Skeleton
+            key={i}
+            variant="text"
+            height={40}
+            sx={{ mx: 1 }}
+          />
+        ))}
+      </Box>
 
+      {/* Rows */}
+      {Array.from({ length: rows }).map((_, rowIndex) => (
+        <Box
+          key={rowIndex}
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: `repeat(${columns}, 1fr)`,
+            px: 2,
+            py: 1,
+            borderBottom: '1px solid #f0f0f0',
+          }}
+        >
+          {Array.from({ length: columns }).map((_, colIndex) => (
+            <Skeleton
+              key={colIndex}
+              variant="rectangular"
+              height={55}
+              sx={{
+                mx: 1,
+                borderRadius: '4px',
+              }}
+            />
+          ))}
+        </Box>
+      ))}
+    </Box>
+  );
+};
 
 const StyledButton = styled(Button)`
   color: #488b8f;
@@ -945,21 +1005,58 @@ const setQuickFilter = (type) => {
     gap: { xs: 1, sm: 0.5 },
   }}
 >
-  <Link href="/dashboard" underline="none">
-    <a>
-      <HomeIcon
-        fontSize="large"
-        sx={{
-          color: "#488b8f",
-          opacity: 0.8,
-        }}
-      />
-    </a>
-  </Link>
 
-  <Typography className="view-title">
-    Consulta de resumen de negociación
-  </Typography>
+               <Typography
+                      letterSpacing={0}
+                      fontSize="1.7rem"
+                      fontWeight="regular"
+                      marginBottom="0.7rem"
+                      color="#5EA3A3"
+                    >
+                        <Breadcrumbs
+                    separator={<NavigateNextIcon fontSize="small" />}
+                    aria-label="breadcrumb"
+                    sx={{ ml: 1, mt: 1 }}
+                  >
+                    <Link href="/dashboard" underline="none">
+              <a>
+                 <HomeIcon
+                                        fontSize="large" 
+                                        sx={{ 
+                                          color: '#488b8f',
+                                          opacity: 0.8, // Ajusta la transparencia (0.8 = 80% visible)
+                                          strokeWidth: 1, // Grosor del contorno
+                                        }} 
+                                      />
+
+              </a>
+
+            </Link>
+                    <Link
+                      underline="hover"
+                      color="#5EA3A3"
+                      href="/administration"
+                      sx={{ fontSize: "1.3rem" }}
+                    >
+                 <Typography component="h1" className="view-title">
+            
+            Administración
+                         
+                      </Typography>
+                     
+                    </Link>
+            
+                 <Typography
+                               component="h1" className="view-title">
+               Consulta de resumen de negociación
+                    </Typography>
+                  </Breadcrumbs>
+            
+                    </Typography>
+  
+
+
+ 
 </Box>
 
 
@@ -987,10 +1084,10 @@ const setQuickFilter = (type) => {
   alignItems="center"
   sx={{
     border: "1px solid #488f8f",
-    borderRadius: "4px",
+    borderRadius: "8px",
     padding: "4px",
     backgroundColor: "#f8f9fa",
-    width: "100%",
+    width: "50rem",
     height: "30px",
   }}
 >
@@ -1233,7 +1330,10 @@ const setQuickFilter = (type) => {
 
 
    
-
+      
+        {loading ? (
+  <TableSkeleton rows={8} columns={columns.length} />
+) : (
 
       <Box
         sx={{ ...tableWrapperSx }}
@@ -1423,6 +1523,8 @@ const setQuickFilter = (type) => {
           }}
           loading={loading}
         />
+
+        
         <TitleModal
           open={open}
           handleClose={handleClose}
@@ -1453,6 +1555,7 @@ const setQuickFilter = (type) => {
           </Box>
         </TitleModal>
       </Box>
+       )}
     </>
   );
 };

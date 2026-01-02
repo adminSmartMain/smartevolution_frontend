@@ -22,13 +22,77 @@ import InputTitles from "@styles/inputTitles";
 import CustomDataGrid from "@styles/tables";
 
 import { DeleteDepositById, GetDepositList, GetRefundReceipt } from "./queries";
+
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+import moment from "moment";
+
+import { Breadcrumbs} from "@mui/material";
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
+
+import Skeleton from '@mui/material/Skeleton';
 import {
   Home as HomeIcon,
 
 } from "@mui/icons-material";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
-import moment from "moment";
+const TableSkeleton = ({ rows = 15, columns = 9 }) => {
+  return (
+    <Box
+      sx={{
+        border: '1px solid #e0e0e0',
+        borderRadius: '4px',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Header */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: `repeat(${columns}, 1fr)`,
+          backgroundColor: '#f5f5f5',
+          borderBottom: '2px solid #e0e0e0',
+          px: 2,
+          py: 1,
+        }}
+      >
+        {Array.from({ length: columns }).map((_, i) => (
+          <Skeleton
+            key={i}
+            variant="text"
+            height={40}
+            sx={{ mx: 1 }}
+          />
+        ))}
+      </Box>
+
+      {/* Rows */}
+      {Array.from({ length: rows }).map((_, rowIndex) => (
+        <Box
+          key={rowIndex}
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: `repeat(${columns}, 1fr)`,
+            px: 2,
+            py: 1,
+            borderBottom: '1px solid #f0f0f0',
+          }}
+        >
+          {Array.from({ length: columns }).map((_, colIndex) => (
+            <Skeleton
+              key={colIndex}
+              variant="rectangular"
+              height={55}
+              sx={{
+                mx: 1,
+                borderRadius: '4px',
+              }}
+            />
+          ))}
+        </Box>
+      ))}
+    </Box>
+  );
+};
 const sectionTitleContainerSx = {
   display: "flex",
   justifyContent: "space-between",
@@ -364,24 +428,54 @@ export const DepositListComponent = () => {
 <Box sx={{ ...sectionTitleContainerSx }}>
 
    <Box className="view-header">
-    <Link href="/dashboard" underline="none">
-                            <a>
-                            <HomeIcon
-                                fontSize="large" 
-                                sx={{ 
-                                  color: '#488b8f',
-                                  opacity: 0.8, // Ajusta la transparencia (0.8 = 80% visible)
-                                  strokeWidth: 1, // Grosor del contorno
-                                }} 
-                              />
-                          
-                            </a>
-                            
-                            </Link>
-      <Typography
-          className="view-title">
-          - Consulta de giro-emisor
-        </Typography>
+    <Typography
+                      letterSpacing={0}
+                      fontSize="1.7rem"
+                      fontWeight="regular"
+                      marginBottom="0.7rem"
+                      color="#5EA3A3"
+                    >
+                        <Breadcrumbs
+                    separator={<NavigateNextIcon fontSize="small" />}
+                    aria-label="breadcrumb"
+                    sx={{ ml: 1, mt: 1 }}
+                  >
+                    <Link href="/dashboard" underline="none">
+              <a>
+                 <HomeIcon
+                                        fontSize="large" 
+                                        sx={{ 
+                                          color: '#488b8f',
+                                          opacity: 0.8, // Ajusta la transparencia (0.8 = 80% visible)
+                                          strokeWidth: 1, // Grosor del contorno
+                                        }} 
+                                      />
+
+              </a>
+
+            </Link>
+                    <Link
+                      underline="hover"
+                      color="#5EA3A3"
+                      href="/administration"
+                      sx={{ fontSize: "1.3rem" }}
+                    >
+                 <Typography component="h1" className="view-title">
+            
+            Administración
+                         
+                      </Typography>
+                     
+                    </Link>
+            
+                 <Typography
+                               component="h1" className="view-title">
+             Consulta de giro-emisor
+                    </Typography>
+                  </Breadcrumbs>
+            
+                    </Typography>
+   
 
       
    </Box>
@@ -390,6 +484,7 @@ export const DepositListComponent = () => {
             variant="standard"
             color="primary"
             size="large"
+            className="button-header-preop-title"
             sx={{
               height: "2.6rem",
               backgroundColor: "transparent",
@@ -399,7 +494,7 @@ export const DepositListComponent = () => {
           >
             <Typography
               letterSpacing={0}
-              fontSize="80%"
+              fontSize="60%"
               fontWeight="bold"
               color="#63595C"
             >
@@ -408,9 +503,9 @@ export const DepositListComponent = () => {
 
             <Typography
               fontFamily="icomoon"
-              fontSize="1.2rem"
+              fontSize="0.9rem"
               color="#63595C"
-              marginLeft="0.9rem"
+              marginLeft="0.1rem"
             >
               &#xe927;
             </Typography>
@@ -436,6 +531,7 @@ export const DepositListComponent = () => {
             onClick={() => {
               setFilter(filter === "emitter" ? "" : "emitter");
             }}
+            className="button-header-preop-title"
             sx={{
               height: "2rem",
               backgroundColor: "transparent",
@@ -461,6 +557,7 @@ export const DepositListComponent = () => {
             onClick={() => {
               setFilter(filter === "id" ? "" : "id");
             }}
+            className="button-header-preop-title"
             sx={{
               height: "2rem",
               backgroundColor: "transparent",
@@ -484,6 +581,7 @@ export const DepositListComponent = () => {
             variant="standard"
             size="medium"
             fetch
+            className="button-header-preop-title"
             onClick={() => {
               setFilter(filter === "date" ? "" : "date");
             }}
@@ -530,6 +628,10 @@ export const DepositListComponent = () => {
           />
         </Box>
       </Box>
+
+                   {loading ? (
+  <TableSkeleton rows={8} columns={15} />
+) : ( 
       <Box
         container
         marginTop={4}
@@ -645,6 +747,7 @@ export const DepositListComponent = () => {
           loading={loading}
         />
       </Box>
+       )}
     </>
   );
 };

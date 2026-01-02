@@ -24,7 +24,14 @@ import {
   GetBrokerList,
   GetBrokerListByQuery,
 } from "./queries";
+import { Breadcrumbs} from "@mui/material";
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 
+import Skeleton from '@mui/material/Skeleton';
+import {
+  Home as HomeIcon,
+
+} from "@mui/icons-material";
 let dataCount;
 
 export const BrokerListComponent = () => {
@@ -378,22 +385,59 @@ export const BrokerListComponent = () => {
 
   return (
     <>
-      <BackButton path="/dashboard" />
+     
       <Box
         container
         display="flex"
         flexDirection="row"
         justifyContent="space-between"
       >
-        <Typography
-          letterSpacing={0}
-          fontSize="1.7rem"
-          fontWeight="regular"
-          marginBottom="0.7rem"
-          color="#5EA3A3"
-        >
-          Consulta de Corredores
-        </Typography>
+
+           <Typography
+                              letterSpacing={0}
+                              fontSize="1.7rem"
+                              fontWeight="regular"
+                              marginBottom="0.7rem"
+                              color="#5EA3A3"
+                            >
+                                <Breadcrumbs
+                            separator={<NavigateNextIcon fontSize="small" />}
+                            aria-label="breadcrumb"
+                            sx={{ ml: 1, mt: 1 }}
+                          >
+                            <Link href="/dashboard" underline="none">
+                      <a>
+                         <HomeIcon
+                                                fontSize="large" 
+                                                sx={{ 
+                                                  color: '#488b8f',
+                                                  opacity: 0.8, // Ajusta la transparencia (0.8 = 80% visible)
+                                                  strokeWidth: 1, // Grosor del contorno
+                                                }} 
+                                              />
+        
+                      </a>
+        
+                    </Link>
+                            <Link
+                              underline="hover"
+                              color="#5EA3A3"
+                              href="/administration"
+                              sx={{ fontSize: "1.3rem" }}
+                            >
+                         <Typography component="h1" className="view-title">
+                    
+                      Consulta de Corredores
+                                 
+                              </Typography>
+                             
+                            </Link>
+                    
+                       
+                          </Breadcrumbs>
+                    
+                            </Typography>
+    
         <Link href="/brokers?register" underline="none">
           <Button
             variant="standard"

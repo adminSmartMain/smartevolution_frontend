@@ -436,6 +436,7 @@ className="view-header"
         <Button
           variant="standard"
           size="medium"
+          className="button-header-preop-title"
           onClick={() => {
             setFilter(filter === "opId" ? "" : "opId");
           }}
@@ -464,6 +465,7 @@ className="view-header"
         <Button
           variant="standard"
           size="medium"
+          className="button-header-preop-title"
           onClick={() => {
             setFilter(filter === "investor" ? "" : "investor");
           }}

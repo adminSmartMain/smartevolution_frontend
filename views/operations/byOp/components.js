@@ -50,7 +50,65 @@ import Pagination from '@mui/material/Pagination';
 import CircularProgress from '@mui/material/CircularProgress';
 import { Tooltip } from "@mui/material";
 // Estilos
+import Skeleton from '@mui/material/Skeleton';
+const TableSkeleton = ({ rows = 15, columns = 9 }) => {
+  return (
+    <Box
+      sx={{
+        border: '1px solid #e0e0e0',
+        borderRadius: '4px',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Header */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: `repeat(${columns}, 1fr)`,
+          backgroundColor: '#f5f5f5',
+          borderBottom: '2px solid #e0e0e0',
+          px: 2,
+          py: 1,
+        }}
+      >
+        {Array.from({ length: columns }).map((_, i) => (
+          <Skeleton
+            key={i}
+            variant="text"
+            height={40}
+            sx={{ mx: 1 }}
+          />
+        ))}
+      </Box>
 
+      {/* Rows */}
+      {Array.from({ length: rows }).map((_, rowIndex) => (
+        <Box
+          key={rowIndex}
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: `repeat(${columns}, 1fr)`,
+            px: 2,
+            py: 1,
+            borderBottom: '1px solid #f0f0f0',
+          }}
+        >
+          {Array.from({ length: columns }).map((_, colIndex) => (
+            <Skeleton
+              key={colIndex}
+              variant="rectangular"
+              height={55}
+              sx={{
+                mx: 1,
+                borderRadius: '4px',
+              }}
+            />
+          ))}
+        </Box>
+      ))}
+    </Box>
+  );
+};
 const tableHeaderCellSx = {
       backgroundColor: "#F5F5F5",
       color: "#8C7E82",
@@ -765,27 +823,9 @@ const handleTextFieldChange = (evt) => {
       
       {/* Tabla principal */}
               {/* Indicador de carga centrado solo en la tabla */}
-  {loading && (
-    <Box
-      sx={{
-        position: 'absolute',
-        top: '60%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        zIndex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: 1,
-       
-      }}
-    >
-      <CircularProgress sx={{ color: '#488B8F' }} />
-      <Typography variant="body2" color="#488B8F">
-        Cargando operaciones...
-      </Typography>
-    </Box>
-  )}
+          {loading ? (
+  <TableSkeleton rows={8} columns={15} />
+) : ( 
       <TableContainer 
         component={Paper} 
         sx={{ 
@@ -816,6 +856,7 @@ const handleTextFieldChange = (evt) => {
           </TableBody>
         </Table>
       </TableContainer>
+      )}
   {/* Paginación */}
       {/* Reemplaza el Box de Pagination actual por este: */}
  <Box

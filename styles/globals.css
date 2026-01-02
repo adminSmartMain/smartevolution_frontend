@@ -778,3 +778,59 @@ body {
     width: 100%; /* Que ocupen todo el ancho disponible */
   }
 }
+.btn-outline {
+  height: 35px;
+  border: 1px solid var(--primary-color);
+  border-radius: 4px;
+  color: var(--primary-color);
+  padding-left: 8px;   /* px: 1 en MUI equivale a 8px por defecto */
+  padding-right: 8px;
+  gap: 4px;
+  transition: all 0.2s ease-in-out;
+
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Hover del botón */
+.btn-outline:hover {
+  color: var(--white-color);
+  background-color: var(--secondary-color);
+  border-color: var(--primary-color);
+}
+
+/* Hover del icono (svg) y del texto dentro del botón */
+.btn-outline:hover svg,
+.btn-outline:hover p {
+  color: var(--white-color);
+  fill: var(--white-color); /* por si el svg usa fill en vez de color */
+}
+.button-header-preop-title {
+  height: 35px;
+  border: 1px solid var(--primary-color);
+  border-radius: 4px;
+  color: var(--primary-color);
+  gap: 4px;
+  transition: all 0.2s ease-in-out;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  background: transparent;
+  cursor: pointer;
+}
+
+.button-header-preop-title:hover {
+  color: var(--white-color);
+  background-color: var(--secondary-color);
+  border-color: var(--primary-color);
+}
+
+/* Si dentro del botón hay svg o texto */
+.button-header-preop-title:hover svg,
+.button-header-preop-title:hover p,
+.button-header-preop-title:hover span {
+  color: var(--white-color);
+  fill: var(--white-color);
+}

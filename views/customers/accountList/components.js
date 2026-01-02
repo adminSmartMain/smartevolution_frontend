@@ -30,6 +30,67 @@ import {
   GetAccountListByQuery,
 } from "./queries";
 
+
+
+import Skeleton from '@mui/material/Skeleton';
+const TableSkeleton = ({ rows = 15, columns = 9 }) => {
+  return (
+    <Box
+      sx={{
+        border: '1px solid #e0e0e0',
+        borderRadius: '4px',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Header */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: `repeat(${columns}, 1fr)`,
+          backgroundColor: '#f5f5f5',
+          borderBottom: '2px solid #e0e0e0',
+          px: 2,
+          py: 1,
+        }}
+      >
+        {Array.from({ length: columns }).map((_, i) => (
+          <Skeleton
+            key={i}
+            variant="text"
+            height={40}
+            sx={{ mx: 1 }}
+          />
+        ))}
+      </Box>
+
+      {/* Rows */}
+      {Array.from({ length: rows }).map((_, rowIndex) => (
+        <Box
+          key={rowIndex}
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: `repeat(${columns}, 1fr)`,
+            px: 2,
+            py: 1,
+            borderBottom: '1px solid #f0f0f0',
+          }}
+        >
+          {Array.from({ length: columns }).map((_, colIndex) => (
+            <Skeleton
+              key={colIndex}
+              variant="rectangular"
+              height={55}
+              sx={{
+                mx: 1,
+                borderRadius: '4px',
+              }}
+            />
+          ))}
+        </Box>
+      ))}
+    </Box>
+  );
+};
 let dataCount;
 const sectionTitleContainerSx = {
   display: "flex",
@@ -82,7 +143,8 @@ export const AccountListComponent = () => {
     {
       field: "Customer",
       headerName: "CLIENTE",
-      width: 300,
+      width: 400,
+      flex:3,
       renderCell: (params) => {
         return (
           <CustomTooltip
@@ -139,8 +201,9 @@ export const AccountListComponent = () => {
     },
     {
       field: "Status",
-      headerName: "ESTADO",
+      headerName: <p>ESTADO</p>,
       width: 130,
+      flex:1,
       renderCell: (params) => {
         return params.value === true ? (
           <>
@@ -187,6 +250,7 @@ export const AccountListComponent = () => {
       width: 50,
       sortable: false,
       filterable: false,
+      flex:1,
       renderCell: (params) => {
         return (
           <Link href={`/customers/account?preview=${params.row.id}`}>
@@ -232,6 +296,7 @@ export const AccountListComponent = () => {
       width: 50,
       sortable: false,
       filterable: false,
+      flex:1,
       renderCell: (params) => {
         return (
           <Link href={`account?modify=${params.row.id}`}>
@@ -277,6 +342,7 @@ export const AccountListComponent = () => {
       width: 50,
       sortable: false,
       filterable: false,
+      flex:1,
       renderCell: (params) => {
         return (
           <>
@@ -472,6 +538,7 @@ export const AccountListComponent = () => {
               variant="standard"
               color="primary"
               size="large"
+              className="button-header-preop-title"
               sx={{
                 height: "2.6rem",
                 backgroundColor: "transparent",
@@ -481,7 +548,7 @@ export const AccountListComponent = () => {
             >
               <Typography
                 letterSpacing={0}
-                fontSize="80%"
+                fontSize="60%"
                 fontWeight="bold"
                 color="#63595C"
               >
@@ -490,7 +557,7 @@ export const AccountListComponent = () => {
 
               <Typography
                 fontFamily="icomoon"
-                fontSize="1.6rem"
+                fontSize="1rem"
                 color="#63595C"
                 marginLeft="0.9rem"
               >
@@ -527,6 +594,10 @@ export const AccountListComponent = () => {
             />
           </Box>
         </Box>
+
+            {loading ? (
+  <TableSkeleton rows={8} columns={columns.length} />
+) : (   
         <Box
           marginTop={4}
           display="flex"
@@ -635,8 +706,11 @@ export const AccountListComponent = () => {
             }}
             loading={loading}
           />
+         
         </Box>
+           )}
       </Box>
+      
     </>
   );
 };

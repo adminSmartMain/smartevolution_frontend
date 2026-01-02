@@ -27,7 +27,65 @@ import { DeleteClientById, GetClientList } from "./queries";
 
 import moment from "moment";
 
+import Skeleton from '@mui/material/Skeleton';
+const TableSkeleton = ({ rows = 15, columns = 9 }) => {
+  return (
+    <Box
+      sx={{
+        border: '1px solid #e0e0e0',
+        borderRadius: '4px',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Header */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: `repeat(${columns}, 1fr)`,
+          backgroundColor: '#f5f5f5',
+          borderBottom: '2px solid #e0e0e0',
+          px: 2,
+          py: 1,
+        }}
+      >
+        {Array.from({ length: columns }).map((_, i) => (
+          <Skeleton
+            key={i}
+            variant="text"
+            height={40}
+            sx={{ mx: 1 }}
+          />
+        ))}
+      </Box>
 
+      {/* Rows */}
+      {Array.from({ length: rows }).map((_, rowIndex) => (
+        <Box
+          key={rowIndex}
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: `repeat(${columns}, 1fr)`,
+            px: 2,
+            py: 1,
+            borderBottom: '1px solid #f0f0f0',
+          }}
+        >
+          {Array.from({ length: columns }).map((_, colIndex) => (
+            <Skeleton
+              key={colIndex}
+              variant="rectangular"
+              height={55}
+              sx={{
+                mx: 1,
+                borderRadius: '4px',
+              }}
+            />
+          ))}
+        </Box>
+      ))}
+    </Box>
+  );
+};
 
 const sectionTitleContainerSx = {
   display: "flex",
@@ -627,17 +685,14 @@ export const ClientListComponent = () => {
                           variant="standard"
                           color="primary"
                           size="large"
-                          sx={{
-                            height: "2.6rem",
-                            backgroundColor: "transparent",
-                            border: "1.4px solid #63595C",
-                            borderRadius: "4px",
-                          }}
+                          
+           className="button-header-preop-title"
+                       
                         >
                              
                           <Typography
                             letterSpacing={0}
-                            fontSize="80%"
+                            fontSize="60%"
                             fontWeight="bold"
                             color="#63595C"
                           >
@@ -646,9 +701,9 @@ export const ClientListComponent = () => {
 
                           <Typography
                             fontFamily="icomoon"
-                            fontSize="1.2rem"
+                            fontSize="1rem"
                             color="#63595C"
-                            marginLeft="0.9rem"
+                            marginLeft="0.1rem"
                           >
                             &#xe927;
                           </Typography>
@@ -661,17 +716,11 @@ export const ClientListComponent = () => {
                           variant="standard"
                           color="primary"
                           size="large"
-                          sx={{
-                            height: "2.6rem",
-                            backgroundColor: "transparent",
-                            border: "1.4px solid #63595C",
-                            borderRadius: "4px",
-                            ml: "0.5rem",
-                          }}
+                         className="button-header-preop-title"
                         >
                           <Typography
                             letterSpacing={0}
-                            fontSize="80%"
+                            fontSize="60%"
                             fontWeight="bold"
                             color="#63595C"
                           >
@@ -680,9 +729,9 @@ export const ClientListComponent = () => {
 
                           <Typography
                             fontFamily="icomoon"
-                            fontSize="1.6rem"
+                            fontSize="1rem"
                             color="#63595C"
-                            marginLeft="0.9rem"
+                            marginLeft="0.1rem"
                           >
                             &#xe905;
                           </Typography>
@@ -707,6 +756,7 @@ export const ClientListComponent = () => {
           <Button
             variant="standard"
             size="medium"
+            className="button-header-preop-title"
             onClick={() => {
               setFilter(filter === "client" ? "" : "client");
             }}
@@ -732,6 +782,7 @@ export const ClientListComponent = () => {
           <Button
             variant="standard"
             size="medium"
+            className="button-header-preop-title"
             sx={{
               height: "2rem",
               backgroundColor: "transparent",
@@ -774,6 +825,10 @@ export const ClientListComponent = () => {
           />
         </Box>
       </Box>
+
+            {loading ? (
+  <TableSkeleton rows={8} columns={columns.length} />
+) : (  
       <Box
         container
         marginTop={4}
@@ -875,6 +930,7 @@ export const ClientListComponent = () => {
           loading={loading}
         />
       </Box>
+       )}
     </>
   );
 };

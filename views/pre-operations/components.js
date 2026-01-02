@@ -6,6 +6,7 @@ import {
   Home as HomeIcon,
 
 } from "@mui/icons-material";
+
 import { Box, Button, Fade, FormControl, Grid, IconButton, InputLabel,Menu, MenuItem, InputAdornment , Select, TextField, Typography } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import Modal from "@components/modals/modal";
@@ -40,7 +41,67 @@ import ListItemText from '@mui/material/ListItemText';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import CloseIcon from "@mui/icons-material/Close";
 import CheckIcon from "@mui/icons-material/Check";
+import { Breadcrumbs} from "@mui/material";
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
+import Skeleton from '@mui/material/Skeleton';
+const TableSkeleton = ({ rows = 15, columns = 9 }) => {
+  return (
+    <Box
+      sx={{
+        border: '1px solid #e0e0e0',
+        borderRadius: '4px',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Header */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: `repeat(${columns}, 1fr)`,
+          backgroundColor: '#f5f5f5',
+          borderBottom: '2px solid #e0e0e0',
+          px: 2,
+          py: 1,
+        }}
+      >
+        {Array.from({ length: columns }).map((_, i) => (
+          <Skeleton
+            key={i}
+            variant="text"
+            height={40}
+            sx={{ mx: 1 }}
+          />
+        ))}
+      </Box>
 
+      {/* Rows */}
+      {Array.from({ length: rows }).map((_, rowIndex) => (
+        <Box
+          key={rowIndex}
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: `repeat(${columns}, 1fr)`,
+            px: 2,
+            py: 1,
+            borderBottom: '1px solid #f0f0f0',
+          }}
+        >
+          {Array.from({ length: columns }).map((_, colIndex) => (
+            <Skeleton
+              key={colIndex}
+              variant="rectangular"
+              height={55}
+              sx={{
+                mx: 1,
+                borderRadius: '4px',
+              }}
+            />
+          ))}
+        </Box>
+      ))}
+    </Box>
+  );
+};
 
 const sectionTitleContainerSx = {
   display: "flex",
@@ -103,7 +164,7 @@ const RegisterButton = (props) => {
 };
   return (
     
-    <button className="button-header-preop button-header-preop-primary"
+    <button className="button-header-preop-title"
         onClick={handleOpenRegisterOperation}
        
       >
@@ -169,7 +230,7 @@ export const OperationsComponents = ({
         if (error.response?.status === 500) {
           results[opId] = false; // No tiene resumen
         } else {
-          console.error(`Error verificando resumen para opId ${opId}:`, error);
+          
           results[opId] = false;
         }
       }
@@ -1253,31 +1314,52 @@ const updateFilters = (value, field) => {
   
   {/* Parte izquierda - Icono y título */}
   <Box className="view-header">
-    <Link href="/dashboard" passHref>
-      <Box 
-        component="a" 
-        sx={{ 
-          display: 'flex',
-          padding: { xs: '4px', sm: '0px' } // Más espacio táctil en móvil
-        }}
-      >
-        <HomeIcon
-                        fontSize="large" 
-                        sx={{ 
-                          color: '#488b8f',
-                          opacity: 0.8, // Ajusta la transparencia (0.8 = 80% visible)
-                          strokeWidth: 1, // Grosor del contorno
-                        }} 
-                      />
-      </Box>
-      
-    </Link>
-    
+
     <Typography
-      className="view-title"
-    >
-      - Operaciones por Aprobar
-    </Typography>
+                                  letterSpacing={0}
+                                  fontSize="1.7rem"
+                                  fontWeight="regular"
+                                  marginBottom="0.7rem"
+                                  color="#5EA3A3"
+                                >
+                                    <Breadcrumbs
+                                separator={<NavigateNextIcon fontSize="small" />}
+                                aria-label="breadcrumb"
+                                sx={{ ml: 1, mt: 1 }}
+                              >
+                                <Link href="/dashboard" underline="none">
+                          <a>
+                             <HomeIcon
+                                                    fontSize="large" 
+                                                    sx={{ 
+                                                      color: '#488b8f',
+                                                      opacity: 0.8, // Ajusta la transparencia (0.8 = 80% visible)
+                                                      strokeWidth: 1, // Grosor del contorno
+                                                    }} 
+                                                  />
+            
+                          </a>
+            
+                        </Link>
+                                <Link
+                                  underline="hover"
+                                  color="#5EA3A3"
+                                  href="/administration"
+                                  sx={{ fontSize: "1.3rem" }}
+                                >
+                             <Typography component="h1" className="view-title">
+                        
+                         Operaciones por Aprobar
+                                     
+                                  </Typography>
+                                 
+                                </Link>
+                        
+                           
+                              </Breadcrumbs>
+                        
+                                </Typography>
+
   </Box>
        
   {/* Parte derecha - Botones */}
@@ -1465,7 +1547,7 @@ const updateFilters = (value, field) => {
 </Menu>
 
 
-    <button className="button-header-preop" onClick={handleOpenModal}>Valor a Girar</button>
+    <button className="button-header-preop-title" onClick={handleOpenModal}>Valor a Girar</button>
     <ModalValorAGirar open={openModal} handleClose={handleCloseModal} data={mockData} />
 
     <AdvancedDateRangePicker
@@ -1488,28 +1570,9 @@ const updateFilters = (value, field) => {
 </Box>
 
 
- {loading && (
-    <Box
-      sx={{
-        position: 'absolute',
-        top: '60%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        zIndex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: 1,
-        
-       
-      }}
-    >
-      <CircularProgress sx={{ color: '#488B8F' }} />
-      <Typography variant="body2" color="#488B8F">
-        Cargando operaciones...
-      </Typography>
-    </Box>
-  )}
+      {loading ? (
+  <TableSkeleton rows={8} columns={columns.length} />
+) : (
 
       <Box sx={{ ...tableWrapperSx }}>
       <CustomDataGrid
@@ -1643,6 +1706,8 @@ const updateFilters = (value, field) => {
         />
         
       </Box>
+
+       )}   
       <TitleModal
         open={open[0]}
         handleClose={handleClose}
@@ -1761,7 +1826,7 @@ const updateFilters = (value, field) => {
           </Box>
         </Box>
       </Modal>
-      
+  
       <ToastContainer
         position="top-right"
         autoClose={50000}

@@ -28,6 +28,69 @@ import {
   Clear as ClearIcon,
   KeyboardArrowDown as KeyboardArrowDownIcon
 } from '@mui/icons-material';
+
+import Skeleton from '@mui/material/Skeleton';
+import { Breadcrumbs} from "@mui/material";
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
+const TableSkeleton = ({ rows = 15, columns = 9 }) => {
+  return (
+    <Box
+      sx={{
+        border: '1px solid #e0e0e0',
+        borderRadius: '4px',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Header */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: `repeat(${columns}, 1fr)`,
+          backgroundColor: '#f5f5f5',
+          borderBottom: '2px solid #e0e0e0',
+          px: 2,
+          py: 1,
+        }}
+      >
+        {Array.from({ length: columns }).map((_, i) => (
+          <Skeleton
+            key={i}
+            variant="text"
+            height={40}
+            sx={{ mx: 1 }}
+          />
+        ))}
+      </Box>
+
+      {/* Rows */}
+      {Array.from({ length: rows }).map((_, rowIndex) => (
+        <Box
+          key={rowIndex}
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: `repeat(${columns}, 1fr)`,
+            px: 2,
+            py: 1,
+            borderBottom: '1px solid #f0f0f0',
+          }}
+        >
+          {Array.from({ length: columns }).map((_, colIndex) => (
+            <Skeleton
+              key={colIndex}
+              variant="rectangular"
+              height={55}
+              sx={{
+                mx: 1,
+                borderRadius: '4px',
+              }}
+            />
+          ))}
+        </Box>
+      ))}
+    </Box>
+  );
+};
+
 const sectionTitleContainerSx = {
   display: "flex",
   justifyContent: "space-between",
@@ -794,7 +857,21 @@ const receipt =
        <Box sx={{ ...sectionTitleContainerSx }}>
 
 <Box className="view-header">
-  <Link href="/dashboard" underline="none">
+  
+
+               <Typography
+                      letterSpacing={0}
+                      fontSize="1.7rem"
+                      fontWeight="regular"
+                      marginBottom="0.7rem"
+                      color="#5EA3A3"
+                    >
+                        <Breadcrumbs
+                    separator={<NavigateNextIcon fontSize="small" />}
+                    aria-label="breadcrumb"
+                    sx={{ ml: 1, mt: 1 }}
+                  >
+                    <Link href="/dashboard" underline="none">
               <a>
                  <HomeIcon
                                         fontSize="large" 
@@ -808,12 +885,28 @@ const receipt =
               </a>
 
             </Link>
-       <Typography
-         
-          className="view-title"
-        >
-           - Consulta de recaudos
-          </Typography>
+                    <Link
+                      underline="hover"
+                      color="#5EA3A3"
+                      href="/administration"
+                      sx={{ fontSize: "1.3rem" }}
+                    >
+                 <Typography component="h1" className="view-title">
+            
+            Administración
+                         
+                      </Typography>
+                     
+                    </Link>
+            
+                 <Typography
+                               component="h1" className="view-title">
+              Consulta de recaudos
+                    </Typography>
+                  </Breadcrumbs>
+            
+                    </Typography>
+       
 </Box>
        
         <Box sx={{ ...sectionTitleContainerSx }}>
@@ -968,6 +1061,10 @@ const receipt =
     </Menu>
   </Box>
 </Box>
+
+   {loading ? (
+  <TableSkeleton rows={8} columns={columns.length} />
+) : (
 <Box
   container
   marginTop={4}
@@ -1143,6 +1240,7 @@ const receipt =
     loading={loading}
   />
 </Box>
+)}   
     </>
   );
 };

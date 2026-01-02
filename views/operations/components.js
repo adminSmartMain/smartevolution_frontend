@@ -45,6 +45,68 @@ import { Tooltip } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import moment from "moment";
 import { getOperationsVersionTwo,getOperationsVersionTwo2 } from "./queries";
+import { Breadcrumbs} from "@mui/material";
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
+import Skeleton from '@mui/material/Skeleton';
+const TableSkeleton = ({ rows = 15, columns = 9 }) => {
+  return (
+    <Box
+      sx={{
+        border: '1px solid #e0e0e0',
+        borderRadius: '4px',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Header */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: `repeat(${columns}, 1fr)`,
+          backgroundColor: '#f5f5f5',
+          borderBottom: '2px solid #e0e0e0',
+          px: 2,
+          py: 1,
+        }}
+      >
+        {Array.from({ length: columns }).map((_, i) => (
+          <Skeleton
+            key={i}
+            variant="text"
+            height={40}
+            sx={{ mx: 1 }}
+          />
+        ))}
+      </Box>
+
+      {/* Rows */}
+      {Array.from({ length: rows }).map((_, rowIndex) => (
+        <Box
+          key={rowIndex}
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: `repeat(${columns}, 1fr)`,
+            px: 2,
+            py: 1,
+            borderBottom: '1px solid #f0f0f0',
+          }}
+        >
+          {Array.from({ length: columns }).map((_, colIndex) => (
+            <Skeleton
+              key={colIndex}
+              variant="rectangular"
+              height={55}
+              sx={{
+                mx: 1,
+                borderRadius: '4px',
+              }}
+            />
+          ))}
+        </Box>
+      ))}
+    </Box>
+  );
+};
+
 
 const sectionTitleContainerSx = {
   display: "flex",
@@ -675,26 +737,50 @@ const handleTextFieldChange = (evt) => {
      
       <Box sx={{ ...sectionTitleContainerSx }}>
         <Box  className="view-header">
-
-            <Link href="/dashboard" underline="none">
-                    <a>
-                    <HomeIcon
-                        fontSize="large" 
-                        sx={{ 
-                          color: '#488b8f',
-                          opacity: 0.8, // Ajusta la transparencia (0.8 = 80% visible)
-                          strokeWidth: 1, // Grosor del contorno
-                        }} 
-                      />
-                  
-                    </a>
-                    
-                    </Link>
-                  <Typography
-                    className="view-title"
-                  >
-                    - Operaciones Aprobadas
-                  </Typography>
+<Typography
+                                  letterSpacing={0}
+                                  fontSize="1.7rem"
+                                  fontWeight="regular"
+                                  marginBottom="0.7rem"
+                                  color="#5EA3A3"
+                                >
+                                    <Breadcrumbs
+                                separator={<NavigateNextIcon fontSize="small" />}
+                                aria-label="breadcrumb"
+                                sx={{ ml: 1, mt: 0 }}
+                              >
+                                <Link href="/dashboard" underline="none">
+                          <a>
+                             <HomeIcon
+                                                    fontSize="large" 
+                                                    sx={{ 
+                                                      color: '#488b8f',
+                                                      opacity: 0.8, // Ajusta la transparencia (0.8 = 80% visible)
+                                                      strokeWidth: 1, // Grosor del contorno
+                                                    }} 
+                                                  />
+            
+                          </a>
+            
+                        </Link>
+                                <Link
+                                  underline="hover"
+                                  color="#5EA3A3"
+                                  href="/administration"
+                                  sx={{ fontSize: "1.3rem" }}
+                                >
+                             <Typography component="h1" className="view-title">
+                        
+                         Operaciones Aprobadas
+                                     
+                                  </Typography>
+                                 
+                                </Link>
+                        
+                           
+                              </Breadcrumbs>
+                        
+                                </Typography>
         </Box>
                 
 
@@ -861,7 +947,7 @@ const handleTextFieldChange = (evt) => {
  
 
 
-    <button className="button-header-preop" onClick={handleOpenModal}>Valor a Girar</button>
+    <button className="button-header-preop-title" onClick={handleOpenModal}>Valor a Girar</button>
     <ModalValorAGirar open={openModal} handleClose={handleCloseModal} data={calcs} />
 
     <AdvancedDateRangePicker
@@ -887,28 +973,9 @@ const handleTextFieldChange = (evt) => {
 </Box>
        
       
-  {loading && (
-    <Box
-      sx={{
-        position: 'absolute',
-        top: '60%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        zIndex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: 1,
-        
-       
-      }}
-    >
-      <CircularProgress sx={{ color: '#488B8F' }} />
-      <Typography variant="body2" color="#488B8F">
-        Cargando operaciones...
-      </Typography>
-    </Box>
-  )}
+        {loading ? (
+  <TableSkeleton rows={8} columns={columns.length} />
+) : (
       <Box sx={{ ...tableWrapperSx }}>
         <CustomDataGrid
           rows={rows}
@@ -1035,6 +1102,8 @@ const handleTextFieldChange = (evt) => {
           }}
         />
       </Box>
+      )}
     </>
+    
   );
 };
