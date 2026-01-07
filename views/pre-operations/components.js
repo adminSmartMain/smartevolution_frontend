@@ -139,53 +139,62 @@ const SortIcon = () => (
 );
 
 const RegisterButton = (props) => {
-  const { ...rest } = props;
- // Función que maneja la apertura de la ventana de registro de operación
+  const { fullWidth = false, style, ...rest } = props;
 
- const [anchorEl, setAnchorEl] = useState(null); // Estado para controlar el menú
- const openMenu = Boolean(anchorEl); // Determina si el menú está abierto
+  const [openWindow, setOpenWindow] = useState(null);
 
- //Estado de la pestana de registro de operacion
+  const handleOpenRegisterOperation = () => {
+    if (openWindow && !openWindow.closed) {
+      openWindow.focus();
+    } else {
+      const newWindow = window.open(
+        "/pre-operations/manage",
+        "_blank",
+        "width=800,height=600"
+      );
+      setOpenWindow(newWindow);
 
- const [openWindow, setOpenWindow] = useState(null); // Estado para almacenar la referencia de la ventana
- const handleOpenRegisterOperation = () => {
-  if (openWindow && !openWindow.closed) {
-    // Si la ventana ya está abierta, solo le damos el foco (la trae al frente)
-    openWindow.focus();
-  } else {
-    // Si la ventana no está abierta, la abrimos y guardamos la referencia
-    const newWindow = window.open("/pre-operations/manage", "_blank", "width=800, height=600");
-    setOpenWindow(newWindow); // Guardamos la referencia de la ventana
-    // Escuchar el evento de cierre de la ventana
-    newWindow.onbeforeunload = () => {
-      setOpenWindow(null); // Restablecer la referencia cuando la ventana se cierre
-    };
-  }
-};
+      newWindow.onbeforeunload = () => {
+        setOpenWindow(null);
+      };
+    }
+  };
+
   return (
-    
-    <button className="button-header-preop-title"
-        onClick={handleOpenRegisterOperation}
-       
-      >
-         Registrar operacion
+    <button
+      className="button-header-preop-title"
+      onClick={handleOpenRegisterOperation}
+      style={{
+        width: fullWidth ? "100%" : "auto",
+        ...style,
+      }}
+      {...rest}
+    >
+      Registrar operación
     </button>
- );
+  );
 };
+
 
 const SellOrderButton = (props) => {
   const { ...rest } = props;
 
   return (
     <Link href="/operations/electronicSignature" underline="none">
-      <button className="button-header-preop-title">
-     
-          Notificaciones de Compra
-       
-        </button>
+      <button
+        className="button-header-preop-title"
+        style={{
+          width: "100%",          // ✅ ocupa toda la celda en móvil
+          boxSizing: "border-box",
+          whiteSpace: "nowrap",
+        }}
+      >
+        Notificaciones de Compra
+      </button>
     </Link>
   );
 };
+
 
 export const OperationsComponents = ({
   rows,
@@ -1302,272 +1311,282 @@ const updateFilters = (value, field) => {
   return (
     <>
     
-     <Box sx={{ 
-  ...sectionTitleContainerSx, 
-  display: 'flex', 
-  flexDirection: { xs: 'column', sm: 'row' }, // Columna en móvil, fila en tablet+
-  alignItems: { xs: 'flex-start', sm: 'center' },
-  justifyContent: 'space-between',
-  gap: { xs: 2, sm: 0 },
-  padding: { xs: 1, sm: 0 }
-}}>
-  
-  {/* Parte izquierda - Icono y título */}
-  <Box className="view-header">
-
-    <Typography
-                                  letterSpacing={0}
-                                  fontSize="1.7rem"
-                                  fontWeight="regular"
-                                  marginBottom="0.7rem"
-                                  color="#5EA3A3"
-                                >
-                                    <Breadcrumbs
-                                separator={<NavigateNextIcon fontSize="small" />}
-                                aria-label="breadcrumb"
-                                sx={{ ml: 1, mt: 1 }}
-                              >
-                                <Link href="/dashboard" underline="none">
-                          <a>
-                             <HomeIcon
-                                                    fontSize="large" 
-                                                    sx={{ 
-                                                      color: '#488b8f',
-                                                      opacity: 0.8, // Ajusta la transparencia (0.8 = 80% visible)
-                                                      strokeWidth: 1, // Grosor del contorno
-                                                    }} 
-                                                  />
-            
-                          </a>
-            
-                        </Link>
-                                <Link
-                                  underline="hover"
-                                  color="#5EA3A3"
-                                  href="/administration"
-                                  sx={{ fontSize: "1.3rem" }}
-                                >
-                             <Typography component="h1" className="view-title">
-                        
-                         Operaciones por Aprobar
-                                     
-                                  </Typography>
-                                 
-                                </Link>
-                        
-                           
-                              </Breadcrumbs>
-                        
-                                </Typography>
-
-  </Box>
-       
-  {/* Parte derecha - Botones */}
-  <Box sx={{ 
-    display: 'flex', 
-    alignItems: 'center',
+ <Box
+  sx={{
+    display: "grid",
+    gridTemplateColumns: { xs: "1fr", sm: "1fr auto" },
+    alignItems: "center",
     gap: { xs: 1, sm: 2 },
-    flexWrap: { xs: 'wrap', sm: 'nowrap' },
-    width: { xs: '100%', sm: 'auto' },
-    justifyContent: { xs: 'space-between', sm: 'flex-end' }
-  }}>
-    
-    {/* Botón Operaciones */}
+    width: "100%",
+    mb: 2,
+  }}
+>
+  {/* ✅ IZQUIERDA: TÍTULO */}
+  <Box className="view-header">
+    <Typography
+      letterSpacing={0}
+      fontSize="1.7rem"
+      fontWeight="regular"
+      marginBottom="0.7rem"
+      color="#5EA3A3"
+    >
+      <Breadcrumbs
+        separator={<NavigateNextIcon fontSize="small" />}
+        aria-label="breadcrumb"
+        sx={{ ml: 1, mt: 1 }}
+      >
+        <Link href="/dashboard" underline="none">
+          <a>
+            <HomeIcon
+              fontSize="large"
+              sx={{
+                color: "#488b8f",
+                opacity: 0.8,
+                strokeWidth: 1,
+              }}
+            />
+          </a>
+        </Link>
+
+        <Link
+          underline="hover"
+          color="#5EA3A3"
+          href="/administration"
+          sx={{ fontSize: "1.3rem" }}
+        >
+          <Typography component="h1" className="view-title">
+            Operaciones por Aprobar
+          </Typography>
+        </Link>
+      </Breadcrumbs>
+    </Typography>
+  </Box>
+
+  {/* ✅ DERECHA: BOTONES */}
+  <Box
+    sx={{
+      display: { xs: "grid", sm: "flex" },
+      gridTemplateColumns: { xs: "1fr 1fr", sm: "none" },
+      gap: { xs: 1, sm: 2 },
+      alignItems: "center",
+      width: { xs: "100%", sm: "auto" },
+      justifyContent: { sm: "flex-end" },
+    }}
+  >
+    {/* ✅ Botón Operaciones */}
     <Link href="/operations" passHref>
-      <Box 
+      <Box
         component="button"
         className="button-header-preop-title"
         sx={{
-          padding: { xs: '8px 12px', sm: '10px 16px' },
-          fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1rem' },
-          minWidth: { xs: '100px', sm: '120px' },
-          whiteSpace: 'nowrap'
+          width: "100%", // ✅ en móvil ocupa la columna
+          whiteSpace: "nowrap",
         }}
       >
         Operaciones
       </Box>
     </Link>
-    
-    {/* Botón Sell Order */}
-    <Box sx={{
-      transform: { xs: 'scale(0.9)', sm: 'scale(1)' },
-      marginLeft: { xs: 0, sm: 1 }
-    }}>
+
+    {/* ✅ SellOrderButton envuelto */}
+    <Box sx={{ width: "100%" }}>
       <SellOrderButton />
     </Box>
   </Box>
 </Box>
 
-      <Box
+
+
+    <Box
   sx={{
-    display: 'flex',
-    flexWrap: 'wrap',
+    display: "grid",
+    gridTemplateColumns: { xs: "1fr", sm: "1fr auto" },
     gap: 2,
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-    mb: 2
+    alignItems: "center",
+    width: "100%",
+    mb: 2,
   }}
 >
-<TextField
-  variant="outlined"
-  id="searchBar"
-  size="small"
-  placeholder="Buscar por ID, Factura, Emisor o Inversionista."
-  value={search}
-  onChange={(evt) => handleTextFieldChange(evt, "investor")}
-  onKeyPress={(event) => {
-    if (event.key === "Enter") {
-      const valueToSearch = search || ""; // Si está vacío, manda cadena vacía
-      updateFilters(valueToSearch, "multi"); // realiza la búsqueda, incluso si el valor está vacío
-    }
-  }}
-  sx={{
-    flexGrow: 1,
-    minWidth: '250px',
-    maxWidth: '580px',
-    '& .MuiOutlinedInput-root': {
-      height: 35,
-      fontSize: '14px',
-      paddingRight: 0,
-    },
-    '& .MuiInputBase-input': {
-      padding: '6px 8px',
-    },
-  }}
-  InputProps={{
-    endAdornment: search && (
-      <InputAdornment position="end">
-        <IconButton 
-          onClick={handleClearSearch}
-          size="small"
-          edge="end"
-        >
-          <ClearIcon sx={{ color: "#488b8f", fontSize: '18px' }} />
-        </IconButton>
-      </InputAdornment>
-    ),
-  }}
-/>
-
-
-  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
-  
-<button
-        onClick={handleClickStatus}
-        className="button-header-preop-title"
-        style={{ 
-            display: 'flex', 
-    alignItems: 'center', 
-    gap: '4px',
-    position: 'relative',
-          paddingRight: selectedStatus ? '32px' : '8px',
-       
-        }}
-      >
-        {selectedStatus?.label || "Por Estado"}
-        
-        {selectedStatus ? (
-          <IconButton
-            size="small"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleClearStatus();
-            }}
-            sx={{
-              position: 'absolute',
-              right: '4px',
-              color: "#ffff",
-              '&:hover': {
-                backgroundColor: "#ffffff20"
-              },
-              width: 20,
-              height: 20
-            }}
-          >
-            <CloseIcon fontSize="small" />
+  {/* 🔎 BUSCADOR */}
+  <TextField
+    variant="outlined"
+    id="searchBar"
+    size="small"
+    placeholder="Buscar por ID, Factura, Emisor o Inversionista."
+    value={search}
+    onChange={(evt) => handleTextFieldChange(evt, "investor")}
+    onKeyPress={(event) => {
+      if (event.key === "Enter") {
+        const valueToSearch = search || "";
+        updateFilters(valueToSearch, "multi");
+      }
+    }}
+    sx={{
+      width: "100%",
+      maxWidth: { sm: "580px" }, // ✅ desktop mantiene max
+      "& .MuiOutlinedInput-root": {
+        height: 35,
+        fontSize: "14px",
+        paddingRight: 0,
+      },
+      "& .MuiInputBase-input": {
+        padding: "6px 8px",
+      },
+    }}
+    InputProps={{
+      endAdornment: search && (
+        <InputAdornment position="end">
+          <IconButton onClick={handleClearSearch} size="small" edge="end">
+            <ClearIcon sx={{ color: "#488b8f", fontSize: "18px" }} />
           </IconButton>
-        ) : (
-          <ArrowDropDownIcon sx={{ fontSize: "16px", color: "#488B8F" }} />
-        )}
-      </button>
-<Menu
-  anchorEl={anchorElStatus}
-  open={Boolean(anchorElStatus)}
-  onClose={handleCloseStatus}
-  anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-  transformOrigin={{ vertical: "top", horizontal: "left" }}
-  
->
-  {statusOptions.map((option) => (
-    <MenuItem
-      key={option.value}
-      onClick={() => handleSelectStatus(option)}
-      selected={selectedStatus?.value === option.value}
-      disableGutters
-      sx={{
-        '&.Mui-selected': {
-          backgroundColor: "#488B8F10",
-          '&:hover': {
-            backgroundColor: "#488B8F15"
-          }
-        },
-        px: 0.5,          // reduce padding horizontal
-        py: 0.25,         // reduce padding vertical
-        minHeight: "auto", // quita alto mínimo de MUI
+        </InputAdornment>
+      ),
+    }}
+  />
+
+  {/* 🎛 BOTONES */}
+  <Box
+    sx={{
+      display: "grid",
+
+      // ✅ móvil: 2 columnas
+      gridTemplateColumns: { xs: "1fr 1fr", sm: "auto auto auto auto auto" },
+
+      // ✅ separaciones
+      gap: 1,
+
+      alignItems: "center",
+
+      // ✅ en desktop se alinea a la derecha
+      justifyContent: { sm: "flex-end" },
+
+      width: "100%",
+    }}
+  >
+    {/* ✅ Estado */}
+    <button
+      onClick={handleClickStatus}
+      className="button-header-preop-title"
+      style={{
+        width: "100%",
         display: "flex",
-        justifyContent: "space-between",
+        justifyContent: "center",
         alignItems: "center",
-        gap: "4px"
+        gap: "4px",
+        position: "relative",
+        paddingRight: selectedStatus ? "32px" : "8px",
       }}
     >
-      {/* 🔹 Badge */}
-       <span
-        className={option.badgeClass}
-        style={{
-          display: "inline-block",
-          padding: "4px 10px",
-          borderRadius: "6px",
-          fontSize: "0.85rem",
-          fontWeight: 600,
-          minWidth: "100px", // todos iguales de ancho
-          textAlign: "center",
-          lineHeight: 1.2
-        }}
-      >
-        {option.label}
-      </span>
+      {selectedStatus?.label || "Por Estado"}
 
-      {/* 🔹 Check alineado a la derecha */}
-      {selectedStatus?.value === option.value && (
-        <CheckIcon fontSize="small" sx={{ color: "#488B8F" }} />
+      {selectedStatus ? (
+        <IconButton
+          size="small"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleClearStatus();
+          }}
+          sx={{
+            position: "absolute",
+            right: "4px",
+            color: "#ffff",
+            "&:hover": { backgroundColor: "#ffffff20" },
+            width: 20,
+            height: 20,
+          }}
+        >
+          <CloseIcon fontSize="small" />
+        </IconButton>
+      ) : (
+        <ArrowDropDownIcon sx={{ fontSize: "16px", color: "#488B8F" }} />
       )}
-    </MenuItem>
-  ))}
-</Menu>
+    </button>
 
+    <Menu
+      anchorEl={anchorElStatus}
+      open={Boolean(anchorElStatus)}
+      onClose={handleCloseStatus}
+      anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+      transformOrigin={{ vertical: "top", horizontal: "left" }}
+    >
+      {statusOptions.map((option) => (
+        <MenuItem
+          key={option.value}
+          onClick={() => handleSelectStatus(option)}
+          selected={selectedStatus?.value === option.value}
+          disableGutters
+          sx={{
+            "&.Mui-selected": {
+              backgroundColor: "#488B8F10",
+              "&:hover": { backgroundColor: "#488B8F15" },
+            },
+            px: 0.5,
+            py: 0.25,
+            minHeight: "auto",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: "4px",
+          }}
+        >
+          <span
+            className={option.badgeClass}
+            style={{
+              display: "inline-block",
+              padding: "4px 10px",
+              borderRadius: "6px",
+              fontSize: "0.85rem",
+              fontWeight: 600,
+              minWidth: "100px",
+              textAlign: "center",
+              lineHeight: 1.2,
+            }}
+          >
+            {option.label}
+          </span>
 
-    <button className="button-header-preop-title" onClick={handleOpenModal}>Valor a Girar</button>
+          {selectedStatus?.value === option.value && (
+            <CheckIcon fontSize="small" sx={{ color: "#488B8F" }} />
+          )}
+        </MenuItem>
+      ))}
+    </Menu>
+
+    {/* ✅ Valor a Girar */}
+    <button
+      className="button-header-preop-title"
+      onClick={handleOpenModal}
+      style={{ width: "100%" }}
+    >
+      Valor a Girar
+    </button>
     <ModalValorAGirar open={openModal} handleClose={handleCloseModal} data={mockData} />
 
-    <AdvancedDateRangePicker
-      
-      className="date-picker"
-      onApply={handleDateRangeApply}
-      onClean={handleClear}
-      
-    />
+    {/* ✅ Date Picker (fila completa en móvil) */}
+    <Box sx={{ gridColumn: { xs: "span 2", sm: "auto" } }}>
+      <AdvancedDateRangePicker
+        className="date-picker"
+        onApply={handleDateRangeApply}
+        onClean={handleClear}
+      />
+    </Box>
 
-    <RegisterButton />
+    {/* ✅ Registrar (fila completa en móvil) */}
+    <Box sx={{ gridColumn: { xs: "span 2", sm: "auto" } }}>
+      <RegisterButton fullWidth />
+    </Box>
 
-    <IconButton onClick={handleMenuClickCSV} className="context-menu">
-      <MoreVertIcon />
-    </IconButton>
-    <Menu anchorEl={anchorElCSV} open={openMenuCSV} onClose={handleCloseMenuCSV}>
-      <MenuItem onClick={handleExportExcel}>Exportar a CSV</MenuItem>
-    </Menu>
+    {/* ✅ Menú CSV */}
+    <Box sx={{ justifySelf: { xs: "end", sm: "auto" } }}>
+      <IconButton onClick={handleMenuClickCSV} className="context-menu">
+        <MoreVertIcon />
+      </IconButton>
+      <Menu anchorEl={anchorElCSV} open={openMenuCSV} onClose={handleCloseMenuCSV}>
+        <MenuItem onClick={handleExportExcel}>Exportar a CSV</MenuItem>
+      </Menu>
+    </Box>
   </Box>
 </Box>
+
 
 
       {loading ? (

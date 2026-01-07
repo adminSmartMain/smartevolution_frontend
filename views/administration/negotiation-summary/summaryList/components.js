@@ -1066,10 +1066,9 @@ const setQuickFilter = (type) => {
 
 
 
-
 <Box
-  display="flex"
   sx={{
+    display: "flex",
     flexDirection: { xs: "column", md: "row" },
     alignItems: { xs: "stretch", md: "center" },
     justifyContent: "space-between",
@@ -1077,256 +1076,138 @@ const setQuickFilter = (type) => {
     gap: { xs: 1.5, md: 2 },
   }}
 >
-
-  {/* Filtro */}
-<Box
-  display="flex"
-  alignItems="center"
-  sx={{
-    border: "1px solid #488f8f",
-    borderRadius: "8px",
-    padding: "4px",
-    backgroundColor: "#f8f9fa",
-    width: "50rem",
-    height: "30px",
-  }}
->
-
-<TextField
-    placeholder="Ingrese número de operación o emisor"
-    variant="standard"
-    value={filterInput}
-    onChange={handleFilterChange}
-    onKeyPress={handleKeyPress} // Agregar manejo de tecla Enter
-    required
-    InputProps={{
+  {/* ✅ FILTRO */}
+  <Box
+    display="flex"
+    alignItems="center"
+    sx={{
+      border: "1px solid #488f8f",
+      borderRadius: "8px",
+      padding: "4px",
+      backgroundColor: "#f8f9fa",
+      height: "30px",
+      width: { xs: "100%", md: "50rem" },
+      maxWidth: "100%",
+      boxSizing: "border-box",
+    }}
+  >
+    <TextField
+      placeholder="Ingrese número de operación o emisor"
+      variant="standard"
+      value={filterInput}
+      onChange={handleFilterChange}
+      onKeyPress={handleKeyPress}
+      required
+      InputProps={{
         disableUnderline: true,
         sx: {
-            fontSize: '0.875rem',
-            color: '#6c757d',
-            height: '7px',
+          fontSize: "0.875rem",
+          color: "#6c757d",
         },
-    }}
-    sx={{
-        flex: 1,
-        '& .MuiInputBase-root': {
-            padding: '8px',
-        },
-    }}
-/>
-
-  <Button
-    onClick={clearFilters}
-    variant="text"
-    size="small"
-    sx={{
-      minWidth: 'unset', // Elimina el ancho mínimo predeterminado
-      padding: '4px 6px', // Ajusta el padding interno
-      height: '32px', // Define una altura específica
-      lineHeight: '1.2', // Ajusta la altura de línea para el contenido del botón
-      color: '#488f8f', // Color del botón
-      
-    }}
-  >
-    <ClearIcon />
-  </Button>
-</Box>
-
-
-  {/* Botón para abrir el rango de fechas */}
-  <Button
-    onClick={handleOpenPicker}
-    variant="outlined"
-    startIcon={<CalendarTodayIcon />}
+      }}
       sx={{
-    width: { xs: "100%", md: "auto" },
-    border: "2px solid #488B8F",
-    borderRadius: "4px",
-    height: "2.5rem",
-    textTransform: "none",
-    color: "#488B8F",
+        flex: 1,
+        "& .MuiInputBase-root": {
+          padding: "8px",
+        },
+      }}
+    />
 
-            "& .MuiTypography-root": {
-              transition: "all 0.25s ease-in-out",
-              color: "#488B8F",
-            },
-
-            "& .MuiButton-startIcon svg": {
-              transition: "all 0.25s ease-in-out",
-            },
-
-            "&:hover": {
-              backgroundColor: "#488B8F",
-              color: "#ffffff",
-
-              "& .MuiTypography-root": {
-                color: "#ffffff",
-              },
-
-              "& .MuiButton-startIcon svg": {
-                color: "#ffffff",
-              },
-            },
-          }}
-  >
-    {/* {startDatePicker && endDatePicker
-      ? `${format(new Date(startDatePicker), 'dd/MM/yyyy')} - ${format(new Date(endDatePicker), 'dd/MM/yyyy')}`
-      : 'Seleccionar rango'} */}
-
-    {startDatePicker && endDatePicker
-      ? `${format(parseISO(startDatePicker), "dd/MM/yyyy")} - ${format(parseISO(endDatePicker), "dd/MM/yyyy")}`
-      : "Seleccionar rango"}
-  </Button>
-
-  {/* Botón para registrar un nuevo resumen */}
-<Link href="/administration/negotiation-summary?register" underline="none">
-  <Button
-    variant="outlined"
-    sx={{
-      width: { xs: "100%", md: "auto" },
-      border: "2px solid #488B8F",
-      borderRadius: "4px",
-      height: "2.5rem",
-      textTransform: "none",
-      color: "#488B8F",
-
-            "& .MuiTypography-root": {
-              transition: "all 0.25s ease-in-out",
-              color: "#488B8F",
-            },
-
-            "& .MuiButton-startIcon svg": {
-              transition: "all 0.25s ease-in-out",
-            },
-
-            "&:hover": {
-              backgroundColor: "#488B8F",
-              color: "#ffffff",
-
-              "& .MuiTypography-root": {
-                color: "#ffffff",
-              },
-
-              "& .MuiButton-startIcon svg": {
-                color: "#ffffff",
-              },
-            },
-          }}
+    <Button
+      onClick={clearFilters}
+      variant="text"
+      size="small"
+      sx={{
+        minWidth: "unset",
+        padding: "4px 6px",
+        height: "32px",
+        lineHeight: "1.2",
+        color: "#488f8f",
+      }}
     >
-      <Tooltip title="Registrar Nuevo Resumen de Negociación" placement="top">
-        <Box display="flex" alignItems="center" >
-          <Typography
-            letterSpacing={0}
-            fontSize="0.875rem"
-            fontWeight="bold"
-            color="#63595C"
-          >
-            Nuevo Resumen
-          </Typography>
-          <Typography
-            fontFamily="icomoon"
-            fontSize="1.2rem"
-            color="#63595C"
-            marginLeft="0.9rem"
-          >
-            &#xe927;
-          </Typography>
-        </Box>
-      </Tooltip>
+      <ClearIcon />
     </Button>
-  </Link>
-</Box>
+  </Box>
 
-{/* Popover para rango de fechas */}
-<Popover
-        open={openPicker}
-        anchorEl={anchorEl}
-        onClose={handleClosePickerSimple}
-        anchorOrigin={{
-          vertical: "bottom",
-          horizontal: "left",
-        }}
-        transformOrigin={{
-          vertical: "top",
-          horizontal: "left",
+  {/* ✅ BOTONES */}
+  <Box
+    sx={{
+      display: { xs: "grid", md: "flex" },
+      gridTemplateColumns: { xs: "1fr 1fr", md: "none" },
+      gap: { xs: 1, md: 2 },
+      width: { xs: "100%", md: "auto" },
+      justifyContent: { md: "flex-end" },
+      alignItems: "center",
+    }}
+  >
+    {/* ✅ RANGO FECHAS */}
+    <Button
+      onClick={handleOpenPicker}
+      variant="outlined"
+      startIcon={<CalendarTodayIcon />}
+      sx={{
+        width: { xs: "100%", md: "auto" },
+        border: "2px solid #488B8F",
+        borderRadius: "4px",
+        height: "2.5rem",
+        textTransform: "none",
+        color: "#488B8F",
+        "& .MuiTypography-root": {
+          transition: "all 0.25s ease-in-out",
+          color: "#488B8F",
+        },
+        "& .MuiButton-startIcon svg": {
+          transition: "all 0.25s ease-in-out",
+        },
+        "&:hover": {
+          backgroundColor: "#488B8F",
+          color: "#ffffff",
+          "& .MuiTypography-root": { color: "#ffffff" },
+          "& .MuiButton-startIcon svg": { color: "#ffffff" },
+        },
+      }}
+    >
+      {startDatePicker && endDatePicker
+        ? `${format(parseISO(startDatePicker), "dd/MM/yyyy")} - ${format(parseISO(endDatePicker), "dd/MM/yyyy")}`
+        : "Seleccionar rango"}
+    </Button>
+
+    {/* ✅ NUEVO RESUMEN */}
+    <Link href="/administration/negotiation-summary?register" underline="none">
+      <Button
+        variant="outlined"
+        sx={{
+          width: { xs: "100%", md: "auto" },
+          border: "2px solid #488B8F",
+          borderRadius: "4px",
+          height: "2.5rem",
+          textTransform: "none",
+          color: "#488B8F",
+          "& .MuiTypography-root": {
+            transition: "all 0.25s ease-in-out",
+            color: "#488B8F",
+          },
+          "&:hover": {
+            backgroundColor: "#488B8F",
+            color: "#ffffff",
+            "& .MuiTypography-root": { color: "#ffffff" },
+          },
         }}
       >
-         <Box sx={{ padding: 2, width: 300 }}>
-          <Typography variant="subtitle2" gutterBottom>
-            Seleccionar Rango de Fechas
-          </Typography>
-
-          <Grid container spacing={2}>
-            <Grid item xs={6}>
-              <TextField
-                fullWidth
-                type="date"
-                label="Fecha Inicio"
-                value={startDatePicker}
-                onChange={(e) => handleDateChange("start", e.target.value)}
-                InputLabelProps={{ shrink: true }}
-                error={!!errorPicker && errorPicker.includes("inicio")}
-                helperText={errorPicker && errorPicker.includes("inicio") ? errorPicker : ""}
-              />
-            </Grid>
-            <Grid item xs={6}>
-              <TextField
-                fullWidth
-                type="date"
-                label="Fecha Fin"
-                value={endDatePicker}
-                onChange={(e) => handleDateChange("end", e.target.value)}
-                InputLabelProps={{ shrink: true }}
-                error={!!errorPicker && errorPicker.includes("fin")}
-                helperText={errorPicker && errorPicker.includes("fin") ? errorPicker : ""}
-              />
-            </Grid>
-          </Grid>
-
-          {/* Filtros rápidos */}
-          <Box sx={{ marginTop: 2 }}>
-            <Typography variant="subtitle2" gutterBottom>
-              Filtros Rápidos
+        <Tooltip title="Registrar Nuevo Resumen de Negociación" placement="top">
+          <Box display="flex" alignItems="center">
+            <Typography fontSize="0.875rem" fontWeight="bold">
+              Nuevo Resumen
             </Typography>
-            <StyledButton fullWidth onClick={() => setQuickFilter("today")}>
-              Hoy
-            </StyledButton>
-            <StyledButton fullWidth onClick={() => setQuickFilter("thisWeek")}>
-              Esta Semana
-            </StyledButton>
-            <StyledButton fullWidth onClick={() => setQuickFilter("lastWeek")}>
-              Semana Anterior
-            </StyledButton>
-            <StyledButton fullWidth onClick={() => setQuickFilter("thisMonth")}>
-              Este Mes
-            </StyledButton>
-            <StyledButton fullWidth onClick={() => setQuickFilter("lastMonth")}>
-              Mes Anterior
-            </StyledButton>
+            <Typography fontFamily="icomoon" fontSize="1.2rem" ml={1}>
+              &#xe927;
+            </Typography>
           </Box>
-
-          {/* Botones de acciones */}
-          <Box sx={{ display: "flex", justifyContent: "space-between", marginTop: 2 }}>
-            <Button
-              variant="text"
-              onClick={handleClear}
-              sx={{
-                textTransform: "none",
-                color: "#488b8f",
-                "&:hover": {
-                  color: "#376b6d",
-                },
-              }}
-            >
-              Limpiar
-            </Button>
-            <StyledApplyButton 
-            onClick={handleClosePicker}
-            disabled={!!errorPicker}
-            >Aplicar</StyledApplyButton>
-          </Box>
-        </Box>
-      </Popover>
+        </Tooltip>
+      </Button>
+    </Link>
+  </Box>
+</Box>
 
 
    

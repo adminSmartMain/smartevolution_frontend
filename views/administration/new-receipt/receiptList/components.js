@@ -913,154 +913,193 @@ const receipt =
       
               </Box>
       </Box>
-
-            <Box
+<Box
   sx={{
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: 2,
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-    mb: 2
+    width: "100%",
+    mb: 2,
+
+    // ✅ Desktop sigue igual
+    display: { xs: "flex", sm: "flex" },
+    flexDirection: { xs: "column", sm: "row" },
+
+    // ✅ gap coherente
+    gap: { xs: 1.2, sm: 2 },
+
+    // ✅ en desktop alineado centro
+    alignItems: { xs: "stretch", sm: "center" },
+
+    // ✅ en desktop se distribuye igual que antes
+    justifyContent: { sm: "space-between" },
   }}
 >
-<TextField
-  variant="outlined"
-  id="searchBar"
-  size="small"
-  placeholder="Buscar por OpID o factura"
-  value={search}
-  onChange={(evt) => handleTextFieldChange(evt, "investor")}
-  onKeyPress={(event) => {
-    if (event.key === "Enter") {
-      const valueToSearch = search || ""; // Si está vacío, manda cadena vacía
-      updateFilters(valueToSearch, "multi"); // realiza la búsqueda, incluso si el valor está vacío
-    }
-  }}
-  sx={{
-    flexGrow: 1,
-    minWidth: '250px',
-    maxWidth: '580px',
-    '& .MuiOutlinedInput-root': {
-      height: 35,
-      fontSize: '14px',
-      paddingRight: 0,
-    },
-    '& .MuiInputBase-input': {
-      padding: '6px 8px',
-    },
-  }}
-  InputProps={{
-    endAdornment: search && (
-      <InputAdornment position="end">
-        <IconButton 
-          onClick={handleClearSearch}
-          size="small"
-          edge="end"
-        >
-          <ClearIcon sx={{ color: "#488b8f", fontSize: '18px' }} />
-        </IconButton>
-      </InputAdornment>
-    ),
-  }}
-/>
-
-
-{/* Filtro por estado */}
-
-  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
-  
-      <Button
-      className="button-header-preop-title"
+  {/* 🔎 BUSCADOR */}
+  <TextField
     variant="outlined"
-    onClick={handleClickStatus}
-    sx={{
-      justifyContent: 'space-between',
-      minWidth: 200,
-      textTransform: 'none',
-      color: selectedStatus ? 'text.primary' : 'text.secondary',
-      borderColor: selectedStatus ? 'primary.main' : 'grey.400',
-      '&:hover': {
-        borderColor: selectedStatus ? 'primary.dark' : 'grey.600'
+    id="searchBar"
+    size="small"
+    placeholder="Buscar por OpID o factura"
+    value={search}
+    onChange={(evt) => handleTextFieldChange(evt, "investor")}
+    onKeyPress={(event) => {
+      if (event.key === "Enter") {
+        const valueToSearch = search || "";
+        updateFilters(valueToSearch, "multi");
       }
     }}
+    sx={{
+      width: { xs: "100%", sm: "480px" },
+      flexGrow: 1,
+      maxWidth: "580px",
+      "& .MuiOutlinedInput-root": {
+        height: 35,
+        fontSize: "14px",
+        paddingRight: 0,
+      },
+      "& .MuiInputBase-input": {
+        padding: "6px 8px",
+      },
+    }}
+    InputProps={{
+      endAdornment: search && (
+        <InputAdornment position="end">
+          <IconButton onClick={handleClearSearch} size="small" edge="end">
+            <ClearIcon sx={{ color: "#488b8f", fontSize: "18px" }} />
+          </IconButton>
+        </InputAdornment>
+      ),
+    }}
+  />
+
+  {/* ✅ BLOQUE DERECHO */}
+  <Box
+    sx={{
+      display: "grid",
+
+      // ✅ móvil todo en 1 columna
+      gridTemplateColumns: { xs: "1fr", sm: "auto auto auto" },
+
+      // ✅ desktop lo mantiene en fila
+      alignItems: "center",
+      justifyContent: { sm: "flex-end" },
+
+      gap: { xs: 1, sm: 1.2 },
+
+      width: { xs: "100%", sm: "auto" },
+    }}
   >
-    {selectedStatus ? selectedStatus.description : 'Seleccionar estado'}
-    <KeyboardArrowDownIcon sx={{ ml: 1, fontSize: 18 }} />
-  </Button>
-  
-  {selectedStatus && (
-    <IconButton 
-      onClick={handleClearStatus}
-      size="small"
-      sx={{ 
-        color: 'grey.500',
-        '&:hover': {
-          color: 'error.main',
-          backgroundColor: 'error.light'
-        }
-      }}
-    >
-      <ClearIcon fontSize="small" />
-    </IconButton>
-  )}
-  
-  <Menu
-    anchorEl={anchorElStatus}
-    open={openStatus}
-    onClose={handleCloseStatus}
-    anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-    transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-  >
-    {dataReceipt?.data?.map((status) => (
-      <MenuItem
-        key={status.id}
-        onClick={() => handleSelectStatus(status)}
-        selected={selectedStatus?.id === status.id}
+    {/* ✅ ESTADO (full en móvil, auto en desktop) */}
+    <Box sx={{ display: "flex", gap: 1, width: "100%" }}>
+      <Button
+        className="button-header-preop-title"
+        variant="outlined"
+        onClick={handleClickStatus}
         sx={{
-          '&.Mui-selected': {
-            backgroundColor: '#488B8F10',
-            '&:hover': {
-              backgroundColor: '#488B8F15'
-            }
+          width: { xs: "100%", sm: "auto" }, // ✅ full en móvil
+          justifyContent: "space-between",
+          minWidth: { xs: "100%", sm: 200 },
+          height: 36,
+          textTransform: "none",
+          whiteSpace: "nowrap",
+          color: selectedStatus ? "text.primary" : "text.secondary",
+          borderColor: selectedStatus ? "primary.main" : "grey.400",
+          "&:hover": {
+            borderColor: selectedStatus ? "primary.dark" : "grey.600",
           },
-          px: 2,
-          py: 1,
-          minWidth: 200,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
         }}
       >
-        <span>{status.description}</span>
-        {selectedStatus?.id === status.id && (
-          <CheckIcon fontSize="small" sx={{ color: '#488B8F', ml: 1 }} />
-        )}
-      </MenuItem>
-    ))}
-  </Menu>
+        {selectedStatus ? selectedStatus.description : "Seleccionar estado"}
+        <KeyboardArrowDownIcon sx={{ ml: 1, fontSize: 18 }} />
+      </Button>
 
-{/* fin Filtro por estado */}
+      {selectedStatus && (
+        <IconButton
+          onClick={handleClearStatus}
+          size="small"
+          sx={{
+            color: "grey.500",
+            "&:hover": {
+              color: "error.main",
+              backgroundColor: "error.light",
+            },
+          }}
+        >
+          <ClearIcon fontSize="small" />
+        </IconButton>
+      )}
+    </Box>
 
-    <AdvancedDateRangePicker
-      
-      className="date-picker"
-      onApply={handleDateRangeApply}
-      onClean={handleClear}
-      
-    />
-
- 
-
-    <IconButton onClick={handleMenuClickCSV} className="context-menu">
-      <MoreVertIcon />
-    </IconButton>
-    <Menu anchorEl={anchorElCSV} open={openMenuCSV} onClose={handleCloseMenuCSV}>
-      <MenuItem onClick={handleExportExcel}>Exportar a CSV</MenuItem>
+    {/* ✅ Menu estados */}
+    <Menu
+      anchorEl={anchorElStatus}
+      open={openStatus}
+      onClose={handleCloseStatus}
+      anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+      transformOrigin={{ vertical: "top", horizontal: "left" }}
+    >
+      {dataReceipt?.data?.map((status) => (
+        <MenuItem
+          key={status.id}
+          onClick={() => handleSelectStatus(status)}
+          selected={selectedStatus?.id === status.id}
+          sx={{
+            "&.Mui-selected": {
+              backgroundColor: "#488B8F10",
+              "&:hover": {
+                backgroundColor: "#488B8F15",
+              },
+            },
+            px: 2,
+            py: 1,
+            minWidth: 200,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <span>{status.description}</span>
+          {selectedStatus?.id === status.id && (
+            <CheckIcon fontSize="small" sx={{ color: "#488B8F", ml: 1 }} />
+          )}
+        </MenuItem>
+      ))}
     </Menu>
+
+    {/* ✅ DATEPICKER + MENU 3 PUNTOS: misma fila en móvil */}
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: { xs: "1fr auto", sm: "auto auto" },
+        gap: 1,
+        alignItems: "center",
+        width: "100%",
+      }}
+    >
+      <Box sx={{ width: "100%" }}>
+        <AdvancedDateRangePicker
+          className="date-picker"
+          onApply={handleDateRangeApply}
+          onClean={handleClear}
+        />
+      </Box>
+
+      <IconButton
+        onClick={handleMenuClickCSV}
+        className="context-menu"
+        sx={{
+          justifySelf: "end",
+          p: 0.5,
+        }}
+      >
+        <MoreVertIcon />
+      </IconButton>
+
+      <Menu anchorEl={anchorElCSV} open={openMenuCSV} onClose={handleCloseMenuCSV}>
+        <MenuItem onClick={handleExportExcel}>Exportar a CSV</MenuItem>
+      </Menu>
+    </Box>
   </Box>
 </Box>
+
 
    {loading ? (
   <TableSkeleton rows={8} columns={columns.length} />
