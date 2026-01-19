@@ -113,7 +113,7 @@ const SelectionModal = ({ open, onClose, onSelect }) => {
           gap: 4
         }}>
 
-          {/* BOTÓN Patrimonio Autónomo */}
+          {/* BOTÓN Patrimonio Autónomo 
           <Button
             onClick={() => onSelect(true)}
             sx={{
@@ -134,7 +134,7 @@ const SelectionModal = ({ open, onClose, onSelect }) => {
             }}
           >
             Patrimonio Autónomo
-          </Button>
+          </Button>*/}
 
           {/* BOTÓN Smart Evolution */}
           <Button
