@@ -312,12 +312,36 @@ const debouncedCheckBill = debounce(async (billNumber, callback) => {
     }
   }, 500); // Espera 500ms después de la última escritura
 
-  console.log(bill?.events)
-const eventos = bill?.events?.map(item => ({
-  codigo: item.code,
-  fecha: item.date,
-  evento: item.event
-})) || [];
+console.log(bill?.events);
+
+const eventos =
+  Array.from(
+    new Map(
+      (bill?.events || [])
+        .map((item) => {
+          const texto =
+            item.description ||
+            item.dianDescription ||
+            item.supplierDescription ||
+            item.event ||
+            "";
+
+          return {
+            codigo: item.code || "",
+            fecha: item.date || "",
+            evento: (texto || "").trim(),
+          };
+        })
+        // ❌ saca los que quedaron vacíos
+        .filter((e) => e.codigo && e.fecha && e.evento)
+        // ✅ key única: code|date|evento normalizado
+        .map((e) => [
+          `${e.codigo}|${e.fecha}|${e.evento.toLowerCase().replace(/\s+/g, " ").trim()}`,
+          e,
+        ])
+    ).values()
+  ) || [];
+
 
 
 const emptyRows = !eventos || eventos.length === 0;
