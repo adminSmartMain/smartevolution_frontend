@@ -314,6 +314,32 @@ const debouncedCheckBill = debounce(async (billNumber, callback) => {
 
 console.log(bill?.events);
 
+
+function formatISODate(iso, { timeZone = "UTC", withSeconds = true } = {}) {
+  if (!iso) return "";
+
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return String(iso);
+
+  return new Intl.DateTimeFormat("es-CO", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    ...(withSeconds ? { second: "2-digit" } : {}),
+    hour12: false,
+    timeZone, // "UTC" para que coincida con la Z; o "America/Bogota" si quieres local
+  })
+    .format(d)
+    .replace(",", "");
+}
+function toTs(iso) {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? null : d.getTime();
+}
+
+
 const eventos =
   Array.from(
     new Map(
@@ -328,19 +354,18 @@ const eventos =
 
           return {
             codigo: item.code || "",
-            fecha: item.date || "",
+            fechaTs: toTs(item.date), // ✅ para ordenar
+            fecha: formatISODate(item.date, { timeZone: "UTC" }), // ✅ para mostrar
             evento: (texto || "").trim(),
           };
         })
-        // ❌ saca los que quedaron vacíos
-        .filter((e) => e.codigo && e.fecha && e.evento)
-        // ✅ key única: code|date|evento normalizado
+        .filter((e) => e.codigo && e.fechaTs && e.evento) // usa fechaTs para validar
         .map((e) => [
-          `${e.codigo}|${e.fecha}|${e.evento.toLowerCase().replace(/\s+/g, " ").trim()}`,
+          `${e.codigo}|${e.fechaTs}|${e.evento.toLowerCase().replace(/\s+/g, " ").trim()}`,
           e,
         ])
     ).values()
-  ) || [];
+  ).sort((a, b) => a.fechaTs - b.fechaTs) || [];
 
 
 
@@ -690,11 +715,7 @@ const handleOpenPreview = async () => {
   }
 };
 
-// El resto del componente permanece exactamente igual
-const formatFecha = (fecha) => {
-  const [y, m, d] = fecha.split("-");
-  return `${d}/${m}/${y}`;
-};
+
 
 // Función para verificar el Blob
 const verifyBlob = async (blob) => {
@@ -1467,7 +1488,7 @@ const verifyBlob = async (blob) => {
           <TableHead>
             <TableRow>
               <TableCell><strong>Código</strong></TableCell>
-              <TableCell><strong>Fecha</strong></TableCell>
+              <TableCell><strong>Fecha y Hora</strong></TableCell>
               <TableCell><strong>Evento</strong></TableCell>
             </TableRow>
           </TableHead>
@@ -1491,7 +1512,7 @@ const verifyBlob = async (blob) => {
                 .map((e, index) => (
                   <TableRow key={index}>
                     <TableCell>{e?.codigo}</TableCell>
-                    <TableCell>{formatFecha(e?.fecha)}</TableCell>
+                    <TableCell>{e?.fecha}</TableCell>
                     <TableCell>{e?.evento}</TableCell>
                   </TableRow>
                 ))}
