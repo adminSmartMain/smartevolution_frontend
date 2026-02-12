@@ -36,9 +36,8 @@ export default function TypeIDSelect({ formik, disabled }) {
 
   return (
     <>
-      <Box position="relative">
-        <Box width="17vw">
-          <InputTitles marginBottom={2}>Tipo de identificación</InputTitles>
+ 
+          
           <Autocomplete
             disablePortal
             disabled={disabled}
@@ -55,7 +54,7 @@ export default function TypeIDSelect({ formik, disabled }) {
             color="#5EA3A3"
             value={
               typeID.filter(
-                (option) => option.value === formik.values.type_identity
+                (option) => option.value === formik?.values.type_identity
               )[0] || null
             }
             popupIcon={<KeyboardArrowDownIcon sx={{ color: "#5EA3A3" }} />}
@@ -66,12 +65,12 @@ export default function TypeIDSelect({ formik, disabled }) {
                 {...params}
                 placeholder="Tipo de identificación"
                 error={
-                  formik.touched.type_identity &&
-                  Boolean(formik.errors.type_identity)
+                  formik?.touched.type_identity &&
+                  Boolean(formik?.errors.type_identity)
                 }
                 sx={
-                  formik.touched.type_identity &&
-                  Boolean(formik.errors.type_identity)
+                  formik?.touched.type_identity &&
+                  Boolean(formik?.errors.type_identity)
                     ? { border: "1.4px solid #E6643180" }
                     : null
                 }
@@ -79,17 +78,17 @@ export default function TypeIDSelect({ formik, disabled }) {
                   ...params.InputProps,
                   disableUnderline: true,
                   sx: {
-                    marginTop: "-7px",
+                    marginTop: "-5px",
                   },
                 }}
               />
             )}
           />
-        </Box>
+       
         <HelperText mt={0.8}>
-          {formik.touched.type_identity && formik.errors.type_identity}
+          {formik?.touched.type_identity && formik?.errors.type_identity}
         </HelperText>
-      </Box>
+      
     </>
   );
 }

@@ -39,19 +39,19 @@ export default function CitySelect({ formik, disabled }) {
 
   useEffect(() => {
     if (
-      formik.values.department !== undefined &&
-      formik.values.department !== null
+      formik?.values.department !== undefined &&
+      formik?.values.department !== null
     ) {
-      fetch({ department: formik.values.department });
+      fetch({ department: formik?.values.department });
     } else {
       setCity([]);
     }
-  }, [formik.values.department]);
+  }, [formik?.values.department]);
 
   return (
-    <Box ml="3rem" width="17vw">
+ 
       <Box>
-        <InputTitles marginBottom={2}>Ciudad</InputTitles>
+ 
         <Autocomplete
           id="city"
           disablePortal
@@ -79,10 +79,10 @@ export default function CitySelect({ formik, disabled }) {
               name="city"
               id="cityTextField"
               placeholder="Ciudad"
-              value={formik.values.city}
-              error={formik.touched.city && Boolean(formik.errors.city)}
+              value={formik?.values.city}
+              error={formik?.touched.city && Boolean(formik.errors.city)}
               sx={
-                formik.touched.city && Boolean(formik.errors.city)
+                formik?.touched.city && Boolean(formik.errors.city)
                   ? { border: "1.4px solid #E6643180" }
                   : null
               }
@@ -97,9 +97,9 @@ export default function CitySelect({ formik, disabled }) {
           )}
         />
         <HelperText mt={0.8}>
-          {formik.touched.city && formik.errors.city}
+          {formik?.touched.city && formik?.errors.city}
         </HelperText>
       </Box>
-    </Box>
+  
   );
 }

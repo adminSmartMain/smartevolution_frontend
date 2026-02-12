@@ -48,7 +48,7 @@ export default function AccountTypeSelect({ formik, width }) {
       width: "17vw",
     }}>
       <Box>
-        <InputTitles marginBottom={2}>Tipo de cuenta</InputTitles>
+        <InputTitles marginBottom={1}>Tipo de cuenta</InputTitles>
         <Autocomplete
           id="account_type"
           disablePortal

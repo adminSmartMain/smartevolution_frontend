@@ -51,16 +51,9 @@ export default function BankSelect({ formik, width, disabled }) {
   console.log(bank)
 
   return (
-    <Box
-      sx={{
-        ["@media (max-height: 900px)"]: {
-          width: width ? width : "17vw",
-        },
-        width: "17vw",
-      }}
-    >
-      <Box>
-        <InputTitles marginBottom={2}>Banco</InputTitles>
+   
+      <>
+      <InputTitles marginBottom={1}>Banco</InputTitles>
         <Autocomplete
           id="bank"
           disablePortal
@@ -105,7 +98,9 @@ export default function BankSelect({ formik, width, disabled }) {
           )}
         />
         <HelperText>{formik.touched.bank && formik.errors.bank}</HelperText>
-      </Box>
-    </Box>
+      
+      </>
+        
+   
   );
 }
