@@ -990,7 +990,7 @@ const lastOp = lastOpRaw && moment(lastOpRaw).isValid()
                 modifiers: [{ name: "offset", options: { offset: [0, -15] } }],
               }}
             >
-           {/*   <Typography
+             <Typography
                 fontFamily="icomoon"
                 fontSize="1.9rem"
                 color="#999999"
@@ -1001,7 +1001,7 @@ const lastOp = lastOpRaw && moment(lastOpRaw).isValid()
                 }}
               >
                 &#xe922;
-              </Typography>*/}
+              </Typography>
             </CustomTooltip>
 
             <Typography sx={{ fontSize: 13, fontWeight: 700, color: "#4b4b4b" }}>
@@ -1021,7 +1021,7 @@ const lastOp = lastOpRaw && moment(lastOpRaw).isValid()
                 modifiers: [{ name: "offset", options: { offset: [0, -15] } }],
               }}
             >
-             {/*  <Typography
+              <Typography
                 fontFamily="icomoon"
                 fontSize="1.9rem"
                 color="#999999"
@@ -1032,7 +1032,7 @@ const lastOp = lastOpRaw && moment(lastOpRaw).isValid()
                 }}
               >
                 &#xe901;
-              </Typography> */}
+              </Typography> 
             </CustomTooltip>
 
             <Typography sx={{ fontSize: 13, fontWeight: 700, color: "#4b4b4b" }}>
@@ -1052,7 +1052,7 @@ const lastOp = lastOpRaw && moment(lastOpRaw).isValid()
                 modifiers: [{ name: "offset", options: { offset: [0, -15] } }],
               }}
             >
-              {/*<Typography
+              <Typography
                 fontFamily="icomoon"
                 fontSize="1.9rem"
                 color="#999999"
@@ -1063,7 +1063,7 @@ const lastOp = lastOpRaw && moment(lastOpRaw).isValid()
                 }}
               >
                 &#xe901;
-              </Typography>*/}
+              </Typography>
             </CustomTooltip>
 
             <Typography sx={{ fontSize: 13, fontWeight: 700, color: "#4b4b4b" }}>
@@ -1084,7 +1084,7 @@ const lastOp = lastOpRaw && moment(lastOpRaw).isValid()
                 modifiers: [{ name: "offset", options: { offset: [0, -15] } }],
               }}
             >
-              {/*<Typography
+             <Typography
                 fontFamily="icomoon"
                 fontSize="1.9rem"
                 color="#999999"
@@ -1095,7 +1095,7 @@ const lastOp = lastOpRaw && moment(lastOpRaw).isValid()
                 }}
               >
                 &#xe901;
-              </Typography>*/}
+              </Typography>
             </CustomTooltip>
 
             <Typography sx={{ fontSize: 13, fontWeight: 700, color: "#4b4b4b" }}>
@@ -1116,7 +1116,7 @@ const lastOp = lastOpRaw && moment(lastOpRaw).isValid()
                 modifiers: [{ name: "offset", options: { offset: [0, -15] } }],
               }}
             >
-              {/*<Typography
+              <Typography
                 fontFamily="icomoon"
                 fontSize="1.9rem"
                 color="#999999"
@@ -1127,7 +1127,7 @@ const lastOp = lastOpRaw && moment(lastOpRaw).isValid()
                 }}
               >
                 &#xe901;
-              </Typography>*/}
+              </Typography>
             </CustomTooltip>
 
             <Typography sx={{ fontSize: 13, fontWeight: 700, color: "#4b4b4b" }}>
@@ -1147,7 +1147,7 @@ const lastOp = lastOpRaw && moment(lastOpRaw).isValid()
                 modifiers: [{ name: "offset", options: { offset: [0, -15] } }],
               }}
             >
-             {/* <Typography
+             <Typography
                 fontFamily="icomoon"
                 fontSize="1.9rem"
                 color="#999999"
@@ -1158,7 +1158,7 @@ const lastOp = lastOpRaw && moment(lastOpRaw).isValid()
                 }}
               >
                 &#xe901;
-              </Typography>*/}
+              </Typography>
             </CustomTooltip>
 
             <Typography sx={{ fontSize: 13, fontWeight: 700, color: "#4b4b4b" }}>
@@ -1178,7 +1178,7 @@ const lastOp = lastOpRaw && moment(lastOpRaw).isValid()
                 modifiers: [{ name: "offset", options: { offset: [0, -15] } }],
               }}
             >
-             {/* <Typography
+              <Typography
                 fontFamily="icomoon"
                 fontSize="1.9rem"
                 color="#999999"
@@ -1189,7 +1189,7 @@ const lastOp = lastOpRaw && moment(lastOpRaw).isValid()
                 }}
               >
                 &#xe900;
-              </Typography>*/}
+              </Typography>
             </CustomTooltip>
 
             <Typography sx={{ fontSize: 13, fontWeight: 700, color: "#4b4b4b" }}>
@@ -1210,7 +1210,7 @@ const lastOp = lastOpRaw && moment(lastOpRaw).isValid()
                 modifiers: [{ name: "offset", options: { offset: [0, -15] } }],
               }}
             >
-              {/*<Typography
+              <Typography
                 fontFamily="icomoon"
                 fontSize="1.9rem"
                 color="#999999"
@@ -1221,7 +1221,7 @@ const lastOp = lastOpRaw && moment(lastOpRaw).isValid()
                 }}
               >
                 &#xe901;
-              </Typography>*/}
+              </Typography>
             </CustomTooltip>
 
             <Typography sx={{ fontSize: 13, fontWeight: 700, color: "#4b4b4b" }}>

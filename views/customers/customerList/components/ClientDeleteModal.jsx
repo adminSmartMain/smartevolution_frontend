@@ -10,7 +10,7 @@ import GreenButtonModal from "@styles/buttons/yesButtonModal";
 
 import InputTitles from "@styles/inputTitles";
 
-export const ClientDeleteModal = ({
+export  const ClientDeleteModal = ({
 
     handleClose,
     open,
@@ -83,3 +83,5 @@ export const ClientDeleteModal = ({
         </>
     )
 }
+
+export default ClientDeleteModal
