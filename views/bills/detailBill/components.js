@@ -1,10 +1,11 @@
-import { useEffect, useState, useContext, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import { 
   Box, 
   Button, 
+  Grid,
   Typography,
-  Modal,
+  TextField,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -14,7 +15,6 @@ import {
 import { useRouter } from "next/router";
 import { useFetch } from "@hooks/useFetch";
 import { debounce } from 'lodash';
-import { TextField, Grid } from '@mui/material';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import esLocale from 'date-fns/locale/es';
@@ -42,12 +42,6 @@ import {
 } from '@mui/material';
 
 import {
-
-
-
-
-
-
   TableFooter,
   TablePagination,
 
@@ -62,7 +56,7 @@ import {
 import "react-toastify/dist/ReactToastify.css";
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import FilterAltOffIcon from '@mui/icons-material/FilterAltOff';
-import { Bills, GetBillFraction, GetRiskProfile, BrokerByClient, AccountsFromClient,getTypeBill } from "./queries";
+import { Bills, GetRiskProfile, BrokerByClient, AccountsFromClient,getTypeBill } from "./queries";
 import { parseISO } from "date-fns";
 import InfoIcon from '@mui/icons-material/Info';
 
@@ -81,9 +75,18 @@ import IvaSelector from "@components/selects/billDetailSelects/IvaSelector";
 import OtrasRetSelector from "@components/selects/billDetailSelects/OtrasRetSelector";
 import CurrentOwnerSelector from "@components/selects/billDetailSelects/CurrentOwnerSelector";
 import CufeSelector from  "@components/selects/billDetailSelects/CufeSelector";
-import fileToBase64 from "@lib/fileToBase64";
-import ModalConfirmation from "@components/modals/createBillModals/modalConfirmation";
-import ProcessModal from "@components/modals/createBillModals/processModal";
+
+
+// Politica de zona horaria y formato centralizada para toda la aplicación
+const APP_TIMEZONE = "America/Bogota";
+const APP_LOCALE = "es-CO";
+const TZ_OFFSET_SUFFIX = "-05:00";
+
+const normalizeIsoDate = (iso) => {
+  if (!iso) return null;
+// Si la cadena ya tiene un indicador de zona horaria, la dejamos como está. Si no, asumimos que es hora local y le agregamos el sufijo de zona horaria de Colombia.
+  return (iso.includes('Z') || iso.includes('-')) ? iso : `${iso}${TZ_OFFSET_SUFFIX}`;
+};
 
 const FilePreviewModal = ({ open, onClose, file, fileUrl }) => {
   const renderPreviewContent = () => {
@@ -240,7 +243,6 @@ users,
 bill,
 id,
 
- 
 
 }) => {
 
@@ -276,21 +278,22 @@ useEffect(() => {
   }
 }, [router.query.tab]);
 
-  const opcionesFormato = {
-    dateStyle: 'short',
-    timeStyle: 'medium'
-  };
-const createdAt = new Date(bill?.created_at);
-  const updatedAt = bill?.updated_at ? new Date(bill?.updated_at) : null;
-  const zonaHoraria = Intl.DateTimeFormat().resolvedOptions().timeZone;
+const opcionesFormato = {
+  dateStyle: 'long',
+  timeStyle: 'short',
+  timeZone: APP_TIMEZONE 
+};
 
-  const createdAtLocal = createdAt.toLocaleString(undefined, opcionesFormato);
-  const updatedAtLocal = updatedAt ? updatedAt.toLocaleString(undefined, opcionesFormato) : null;
+const createdAt = new Date(normalizeIsoDate(bill?.created_at));
+const updatedAt = bill?.updated_at ? new Date(normalizeIsoDate(bill?.updated_at)) : null;
 
+const createdAtLocal = !isNaN(createdAt) ? createdAt.toLocaleString(APP_LOCALE, opcionesFormato) : 'Fecha inválida';
+const updatedAtLocal = (updatedAt && !isNaN(updatedAt)) ? updatedAt.toLocaleString(APP_LOCALE, opcionesFormato) : null;
 
-    const tooltipText = `
-🕒 Creado el: ${createdAtLocal} (${zonaHoraria})
-🛠️ Última actualización: ${updatedAtLocal ? `${updatedAtLocal} (${zonaHoraria})` : 'No ha sido actualizado'}
+// El texto del tooltip debe ser coherente con el Backend
+const tooltipText = `
+🕒 Creado el: ${createdAtLocal} (Hora Colombia)
+🛠️ Última actualización: ${updatedAtLocal ? `${updatedAtLocal}` : 'No ha sido actualizado'}
 `;
 const debouncedCheckBill = debounce(async (billNumber, callback) => {
     try {
@@ -315,30 +318,30 @@ const debouncedCheckBill = debounce(async (billNumber, callback) => {
 console.log(bill?.events);
 
 
-function formatISODate(iso, { timeZone = "UTC", withSeconds = true } = {}) {
-  if (!iso) return "";
+function formatISODate(iso) {
+  const normalized = normalizeIsoDate(iso);
+  if (!normalized) return "";
 
-  const d = new Date(iso);
+  const d = new Date(normalized);
   if (Number.isNaN(d.getTime())) return String(iso);
 
-  return new Intl.DateTimeFormat("es-CO", {
-    year: "numeric",
-    month: "2-digit",
+  return new Intl.DateTimeFormat(APP_LOCALE, {
     day: "2-digit",
+    month: "long",
+    year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-    ...(withSeconds ? { second: "2-digit" } : {}),
-    hour12: false,
-    timeZone, // "UTC" para que coincida con la Z; o "America/Bogota" si quieres local
-  })
-    .format(d)
-    .replace(",", "");
+    hour12: true,
+    timeZone: APP_TIMEZONE
+  }).format(d);
 }
 function toTs(iso) {
-  const d = new Date(iso);
+  const normalized = normalizeIsoDate(iso);
+  if (!normalized) return null;
+
+  const d = new Date(normalized);
   return Number.isNaN(d.getTime()) ? null : d.getTime();
 }
-
 
 const eventos =
   Array.from(
@@ -450,12 +453,6 @@ const emptyRows = !eventos || eventos.length === 0;
     
   }
 
-
-
-
-   
-
-
   const cargarTasaDescuento = async (emisor) => {
     if (!emisor) return null; // Retorna null si no hay emisor
 
@@ -469,16 +466,15 @@ const emptyRows = !eventos || eventos.length === 0;
   };
 
 
-  // Función para convertir una cadena ISO a fecha local
-  const parseDateToLocal = (dateString) => {
-    if (!dateString) return null; // Manejar casos donde dateString sea null o undefined
+// Usamos nuestra función normalizadora para que la fecha base sea la correcta
+const parseDateToLocal = (dateString) => {
+  const normalized = normalizeIsoDate(dateString);
+  if (!normalized) return null;
 
-    // Crear un objeto Date a partir de la cadena ISO
-    const date = new Date(dateString);
-
-    // Ajustar la fecha a la zona horaria local sin restar el offset
-    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  };
+  const date = new Date(normalized);
+  if (isNaN(date.getTime())) return null;
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+};
 
   const cargarFacturas = async (emisor, pagadorId = null) => {
     if (!emisor) {
