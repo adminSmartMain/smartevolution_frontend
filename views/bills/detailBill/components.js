@@ -318,58 +318,107 @@ const debouncedCheckBill = debounce(async (billNumber, callback) => {
 console.log(bill?.events);
 
 
-function formatISODate(iso) {
-  const normalized = normalizeIsoDate(iso);
-  if (!normalized) return "";
+// 🇨🇴 Config fija
 
-  const d = new Date(normalized);
-  if (Number.isNaN(d.getTime())) return String(iso);
 
-  return new Intl.DateTimeFormat(APP_LOCALE, {
+const BOGOTA_OFFSET_MIN = -5 * 60; // UTC-5
+
+/**
+ * Convierte "YYYY-MM-DDTHH:mm:ss" (sin zona) en un Date válido,
+ * interpretándolo SIEMPRE como hora de Bogotá.
+ *
+ * Ej: "2026-01-23T16:17:53" => Date que representa ese instante,
+ * pero calculado como si 16:17:53 fuese en America/Bogota.
+ */
+function parseBogotaNaiveISO(iso) {
+  if (!iso) return null;
+  const s = String(iso).trim();
+
+  // Acepta "YYYY-MM-DD HH:mm:ss" o "YYYY-MM-DDTHH:mm:ss"
+  const m = s.match(
+    /^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})(?::(\d{2}))?$/
+  );
+  if (!m) return null;
+
+  const [, y, mo, d, h, mi, se] = m;
+  const year = Number(y);
+  const monthIndex = Number(mo) - 1; // 0-11
+  const day = Number(d);
+  const hour = Number(h);
+  const minute = Number(mi);
+  const second = Number(se ?? "0");
+
+  // Si el reloj marca 16:17 en Bogotá (UTC-5),
+  // en UTC es 21:17. O sea: sumamos 5 horas para obtener el UTC.
+  const utcMs =
+    Date.UTC(year, monthIndex, day, hour, minute, second) -
+    BOGOTA_OFFSET_MIN * 60 * 1000;
+
+  const date = new Date(utcMs);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+/** Timestamp (ms) para ordenar */
+function toTs(iso) {
+  const d = parseBogotaNaiveISO(iso);
+  return d ? d.getTime() : null;
+}
+
+/** dd/mm/yyyy hh:mm AM/PM (fijo) en zona Colombia */
+function formatEventDate(iso) {
+  const d = parseBogotaNaiveISO(iso);
+  if (!d) return "";
+
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: APP_TIMEZONE,
     day: "2-digit",
-    month: "long",
+    month: "2-digit",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
     hour12: true,
-    timeZone: APP_TIMEZONE
-  }).format(d);
-}
-function toTs(iso) {
-  const normalized = normalizeIsoDate(iso);
-  if (!normalized) return null;
+  }).formatToParts(d);
 
-  const d = new Date(normalized);
-  return Number.isNaN(d.getTime()) ? null : d.getTime();
+  const get = (type) => parts.find((p) => p.type === type)?.value ?? "";
+  const dd = get("day");
+  const mm = get("month");
+  const yyyy = get("year");
+  const hh = get("hour");
+  const min = get("minute");
+  const ampm = get("dayPeriod");
+
+  return `${dd}/${mm}/${yyyy} ${hh}:${min} ${ampm}`;
 }
 
+// -----------------------
+// Uso en tu mapeo
+// -----------------------
 const eventos =
   Array.from(
     new Map(
       (bill?.events || [])
         .map((item) => {
-          const texto =
-            item.description ||
-            item.dianDescription ||
-            item.supplierDescription ||
-            item.event ||
-            "";
+          // ✅ SOLO DIAN
+          const texto = (item.dianDescription ?? "").trim();
+
+          const fechaTs = toTs(item.date);
 
           return {
             codigo: item.code || "",
-            fechaTs: toTs(item.date), // ✅ para ordenar
-            fecha: formatISODate(item.date, { timeZone: "UTC" }), // ✅ para mostrar
-            evento: (texto || "").trim(),
+            fechaTs, // ✅ para ordenar
+            fecha: formatEventDate(item.date), // ✅ Colombia dd/mm/yyyy hh:mm AM/PM
+            evento: texto, // ✅ puede ser "" a propósito
           };
         })
-        .filter((e) => e.codigo && e.fechaTs && e.evento) // usa fechaTs para validar
+        // ✅ NO filtrar por evento; queremos que los nuevos salgan vacíos
+        .filter((e) => e.codigo && e.fechaTs)
+        // ✅ de-dup: si evento está vacío, igual lo mantenemos único por code+fecha
         .map((e) => [
-          `${e.codigo}|${e.fechaTs}|${e.evento.toLowerCase().replace(/\s+/g, " ").trim()}`,
+          `${e.codigo}|${e.fechaTs}|${(e.evento || "").toLowerCase().replace(/\s+/g, " ").trim()}`,
           e,
         ])
     ).values()
   ).sort((a, b) => a.fechaTs - b.fechaTs) || [];
-
 
 
 const emptyRows = !eventos || eventos.length === 0;
