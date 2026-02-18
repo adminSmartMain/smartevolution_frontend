@@ -1124,6 +1124,18 @@ const handleOpenDetailBill = (id, tab = 0) => {
 
 
   console.log(data)
+
+ useEffect(() => {
+  if (!data) return;
+
+  if (data?.billy_warning) {
+    const count = Array.isArray(data?.warnings) ? data.warnings.length : 0;
+
+    const msg = `Disculpe, el proveedor no responde o ha tardado más de lo esperado. Los eventos de ${count} facturas no pudieron actualizarse.`;
+
+    Toast(msg, "warning");
+  }
+}, [data]);
   useEffect(() => {
     const bill =
       data?.results?.map((bill) => ({
