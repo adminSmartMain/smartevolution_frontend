@@ -334,7 +334,7 @@ const validationSchema = Yup.object({
 const transformData = (data) => {
   const usedBillCodes = {};
   const processedBillIds = {}; // Para rastrear billIds ya procesados
-
+   console.log(data)
   return data.facturas.map((factura) => {
   
     const baseStructure = {
@@ -352,6 +352,7 @@ const transformData = (data) => {
         DateExpiration: new Date(factura.expirationDate).toISOString().substring(0, 10) || new Date().toISOString().substring(0, 10),
         discountTax: data.discountTax,
         emitter: data.emitter.value,
+        emitterDocument: data.emitter.data.document_number,
         emitterBroker: data.emitterBroker,
         GM: factura.gastoMantenimiento || 0,
         billCode:"",
@@ -528,11 +529,12 @@ const verificarSaldosFacturas = async (billIds, facturasTransformadas) => {
     if (!Array.isArray(billIds) || billIds.length === 0) {
       throw new Error("No se proporcionaron IDs de facturas válidos");
     }
-
+    
     // 1. Primero verificamos si hay billIds duplicados
     const billIdsConEstado = billIds.map((billId, index) => ({
       billId,
       emitterId: facturasTransformadas[index]?.dataSent?.emitter, // Obtener emitterId
+      emitterDocument: facturasTransformadas[index]?.dataSent?.emitterDocument, // Obtener emitterDocument
       is_creada: facturasTransformadas[index]?.is_creada || false
     }));
     
@@ -550,13 +552,15 @@ const verificarSaldosFacturas = async (billIds, facturasTransformadas) => {
          const billIdStr = String(billIdInfo.billId).trim();
         const emitterId = billIdInfo.emitterId;
         const is_creada = billIdInfo.is_creada;
+        const emitterDocument = billIdInfo.emitterDocument;
+        console.log(emitterDocument)
         
          
         try {
 
             let url = `${process.env.NEXT_PUBLIC_API_URL}/bill/?bill_operation=${billIdStr}`;
-          if (emitterId) {
-            url += `&emitter=${emitterId}`;
+          if (emitterDocument) {
+            url += `&emitter=${emitterDocument}`;
           }
           const response = await Axios.get(
             url,
