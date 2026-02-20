@@ -330,43 +330,46 @@ const BOGOTA_OFFSET_MIN = -5 * 60; // UTC-5
  * Ej: "2026-01-23T16:17:53" => Date que representa ese instante,
  * pero calculado como si 16:17:53 fuese en America/Bogota.
  */
-function parseBogotaNaiveISO(iso) {
+function normalizeEventISO(iso) {
   if (!iso) return null;
   const s = String(iso).trim();
 
-  // Acepta "YYYY-MM-DD HH:mm:ss" o "YYYY-MM-DDTHH:mm:ss"
-  const m = s.match(
-    /^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})(?::(\d{2}))?$/
-  );
-  if (!m) return null;
+  // solo fecha YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return `${s}T00:00:00${TZ_OFFSET_SUFFIX}`;
 
-  const [, y, mo, d, h, mi, se] = m;
-  const year = Number(y);
-  const monthIndex = Number(mo) - 1; // 0-11
-  const day = Number(d);
-  const hour = Number(h);
-  const minute = Number(mi);
-  const second = Number(se ?? "0");
+  // ya trae zona (Z o +hh:mm o -hh:mm)
+  if (/[zZ]$/.test(s) || /[+-]\d{2}:\d{2}$/.test(s)) return s;
 
-  // Si el reloj marca 16:17 en Bogotá (UTC-5),
-  // en UTC es 21:17. O sea: sumamos 5 horas para obtener el UTC.
-  const utcMs =
-    Date.UTC(year, monthIndex, day, hour, minute, second) -
-    BOGOTA_OFFSET_MIN * 60 * 1000;
+  // trae hora pero sin zona (YYYY-MM-DDTHH:mm:ss)
+  if (/^\d{4}-\d{2}-\d{2}[T\s]\d{2}:\d{2}/.test(s)) {
+    // si viene con espacio lo pasamos a T
+    const fixed = s.replace(" ", "T");
+    return `${fixed}${TZ_OFFSET_SUFFIX}`;
+  }
 
-  const date = new Date(utcMs);
-  return Number.isNaN(date.getTime()) ? null : date;
+  return s;
+}
+
+/**
+ * Convierte ISO (con o sin zona) en Date válido.
+ * Si no trae zona, se interpreta SIEMPRE como hora de Bogotá.
+ */
+function parseBogotaISO(iso) {
+  const n = normalizeEventISO(iso);
+  if (!n) return null;
+  const d = new Date(n);
+  return Number.isNaN(d.getTime()) ? null : d;
 }
 
 /** Timestamp (ms) para ordenar */
 function toTs(iso) {
-  const d = parseBogotaNaiveISO(iso);
+  const d = parseBogotaISO(iso);
   return d ? d.getTime() : null;
 }
 
 /** dd/mm/yyyy hh:mm AM/PM (fijo) en zona Colombia */
 function formatEventDate(iso) {
-  const d = parseBogotaNaiveISO(iso);
+  const d = parseBogotaISO(iso);
   if (!d) return "";
 
   const parts = new Intl.DateTimeFormat("en-US", {
@@ -389,6 +392,7 @@ function formatEventDate(iso) {
 
   return `${dd}/${mm}/${yyyy} ${hh}:${min} ${ampm}`;
 }
+
 
 // -----------------------
 // Uso en tu mapeo
@@ -419,6 +423,8 @@ const eventos =
         ])
     ).values()
   ).sort((a, b) => a.fechaTs - b.fechaTs) || [];
+
+
 
 
 const emptyRows = !eventos || eventos.length === 0;
