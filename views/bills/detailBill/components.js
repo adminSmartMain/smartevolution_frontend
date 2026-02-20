@@ -1,10 +1,11 @@
-import { useEffect, useState, useContext, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import { 
   Box, 
   Button, 
+  Grid,
   Typography,
-  Modal,
+  TextField,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -14,7 +15,6 @@ import {
 import { useRouter } from "next/router";
 import { useFetch } from "@hooks/useFetch";
 import { debounce } from 'lodash';
-import { TextField, Grid } from '@mui/material';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import esLocale from 'date-fns/locale/es';
@@ -42,12 +42,6 @@ import {
 } from '@mui/material';
 
 import {
-
-
-
-
-
-
   TableFooter,
   TablePagination,
 
@@ -62,7 +56,7 @@ import {
 import "react-toastify/dist/ReactToastify.css";
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import FilterAltOffIcon from '@mui/icons-material/FilterAltOff';
-import { Bills, GetBillFraction, GetRiskProfile, BrokerByClient, AccountsFromClient,getTypeBill } from "./queries";
+import { Bills, GetRiskProfile, BrokerByClient, AccountsFromClient,getTypeBill } from "./queries";
 import { parseISO } from "date-fns";
 import InfoIcon from '@mui/icons-material/Info';
 
@@ -81,9 +75,18 @@ import IvaSelector from "@components/selects/billDetailSelects/IvaSelector";
 import OtrasRetSelector from "@components/selects/billDetailSelects/OtrasRetSelector";
 import CurrentOwnerSelector from "@components/selects/billDetailSelects/CurrentOwnerSelector";
 import CufeSelector from  "@components/selects/billDetailSelects/CufeSelector";
-import fileToBase64 from "@lib/fileToBase64";
-import ModalConfirmation from "@components/modals/createBillModals/modalConfirmation";
-import ProcessModal from "@components/modals/createBillModals/processModal";
+
+
+// Politica de zona horaria y formato centralizada para toda la aplicación
+const APP_TIMEZONE = "America/Bogota";
+const APP_LOCALE = "es-CO";
+const TZ_OFFSET_SUFFIX = "-05:00";
+
+const normalizeIsoDate = (iso) => {
+  if (!iso) return null;
+// Si la cadena ya tiene un indicador de zona horaria, la dejamos como está. Si no, asumimos que es hora local y le agregamos el sufijo de zona horaria de Colombia.
+  return (iso.includes('Z') || iso.includes('-')) ? iso : `${iso}${TZ_OFFSET_SUFFIX}`;
+};
 
 const FilePreviewModal = ({ open, onClose, file, fileUrl }) => {
   const renderPreviewContent = () => {
@@ -240,7 +243,6 @@ users,
 bill,
 id,
 
- 
 
 }) => {
 
@@ -276,21 +278,22 @@ useEffect(() => {
   }
 }, [router.query.tab]);
 
-  const opcionesFormato = {
-    dateStyle: 'short',
-    timeStyle: 'medium'
-  };
-const createdAt = new Date(bill?.created_at);
-  const updatedAt = bill?.updated_at ? new Date(bill?.updated_at) : null;
-  const zonaHoraria = Intl.DateTimeFormat().resolvedOptions().timeZone;
+const opcionesFormato = {
+  dateStyle: 'long',
+  timeStyle: 'short',
+  timeZone: APP_TIMEZONE 
+};
 
-  const createdAtLocal = createdAt.toLocaleString(undefined, opcionesFormato);
-  const updatedAtLocal = updatedAt ? updatedAt.toLocaleString(undefined, opcionesFormato) : null;
+const createdAt = new Date(normalizeIsoDate(bill?.created_at));
+const updatedAt = bill?.updated_at ? new Date(normalizeIsoDate(bill?.updated_at)) : null;
 
+const createdAtLocal = !isNaN(createdAt) ? createdAt.toLocaleString(APP_LOCALE, opcionesFormato) : 'Fecha inválida';
+const updatedAtLocal = (updatedAt && !isNaN(updatedAt)) ? updatedAt.toLocaleString(APP_LOCALE, opcionesFormato) : null;
 
-    const tooltipText = `
-🕒 Creado el: ${createdAtLocal} (${zonaHoraria})
-🛠️ Última actualización: ${updatedAtLocal ? `${updatedAtLocal} (${zonaHoraria})` : 'No ha sido actualizado'}
+// El texto del tooltip debe ser coherente con el Backend
+const tooltipText = `
+🕒 Creado el: ${createdAtLocal} (Hora Colombia)
+🛠️ Última actualización: ${updatedAtLocal ? `${updatedAtLocal}` : 'No ha sido actualizado'}
 `;
 const debouncedCheckBill = debounce(async (billNumber, callback) => {
     try {
@@ -312,12 +315,110 @@ const debouncedCheckBill = debounce(async (billNumber, callback) => {
     }
   }, 500); // Espera 500ms después de la última escritura
 
-  console.log(bill?.events)
-const eventos = bill?.events?.map(item => ({
-  codigo: item.code,
-  fecha: item.date,
-  evento: item.event
-})) || [];
+console.log(bill?.events);
+
+
+// 🇨🇴 Config fija
+
+
+const BOGOTA_OFFSET_MIN = -5 * 60; // UTC-5
+
+/**
+ * Convierte "YYYY-MM-DDTHH:mm:ss" (sin zona) en un Date válido,
+ * interpretándolo SIEMPRE como hora de Bogotá.
+ *
+ * Ej: "2026-01-23T16:17:53" => Date que representa ese instante,
+ * pero calculado como si 16:17:53 fuese en America/Bogota.
+ */
+function parseBogotaNaiveISO(iso) {
+  if (!iso) return null;
+  const s = String(iso).trim();
+
+  // Acepta "YYYY-MM-DD HH:mm:ss" o "YYYY-MM-DDTHH:mm:ss"
+  const m = s.match(
+    /^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})(?::(\d{2}))?$/
+  );
+  if (!m) return null;
+
+  const [, y, mo, d, h, mi, se] = m;
+  const year = Number(y);
+  const monthIndex = Number(mo) - 1; // 0-11
+  const day = Number(d);
+  const hour = Number(h);
+  const minute = Number(mi);
+  const second = Number(se ?? "0");
+
+  // Si el reloj marca 16:17 en Bogotá (UTC-5),
+  // en UTC es 21:17. O sea: sumamos 5 horas para obtener el UTC.
+  const utcMs =
+    Date.UTC(year, monthIndex, day, hour, minute, second) -
+    BOGOTA_OFFSET_MIN * 60 * 1000;
+
+  const date = new Date(utcMs);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+/** Timestamp (ms) para ordenar */
+function toTs(iso) {
+  const d = parseBogotaNaiveISO(iso);
+  return d ? d.getTime() : null;
+}
+
+/** dd/mm/yyyy hh:mm AM/PM (fijo) en zona Colombia */
+function formatEventDate(iso) {
+  const d = parseBogotaNaiveISO(iso);
+  if (!d) return "";
+
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: APP_TIMEZONE,
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  }).formatToParts(d);
+
+  const get = (type) => parts.find((p) => p.type === type)?.value ?? "";
+  const dd = get("day");
+  const mm = get("month");
+  const yyyy = get("year");
+  const hh = get("hour");
+  const min = get("minute");
+  const ampm = get("dayPeriod");
+
+  return `${dd}/${mm}/${yyyy} ${hh}:${min} ${ampm}`;
+}
+
+// -----------------------
+// Uso en tu mapeo
+// -----------------------
+const eventos =
+  Array.from(
+    new Map(
+      (bill?.events || [])
+        .map((item) => {
+          // ✅ SOLO DIAN
+          const texto = (item.dianDescription ?? "").trim();
+
+          const fechaTs = toTs(item.date);
+
+          return {
+            codigo: item.code || "",
+            fechaTs, // ✅ para ordenar
+            fecha: formatEventDate(item.date), // ✅ Colombia dd/mm/yyyy hh:mm AM/PM
+            evento: texto, // ✅ puede ser "" a propósito
+          };
+        })
+        // ✅ NO filtrar por evento; queremos que los nuevos salgan vacíos
+        .filter((e) => e.codigo && e.fechaTs)
+        // ✅ de-dup: si evento está vacío, igual lo mantenemos único por code+fecha
+        .map((e) => [
+          `${e.codigo}|${e.fechaTs}|${(e.evento || "").toLowerCase().replace(/\s+/g, " ").trim()}`,
+          e,
+        ])
+    ).values()
+  ).sort((a, b) => a.fechaTs - b.fechaTs) || [];
 
 
 const emptyRows = !eventos || eventos.length === 0;
@@ -401,12 +502,6 @@ const emptyRows = !eventos || eventos.length === 0;
     
   }
 
-
-
-
-   
-
-
   const cargarTasaDescuento = async (emisor) => {
     if (!emisor) return null; // Retorna null si no hay emisor
 
@@ -420,16 +515,15 @@ const emptyRows = !eventos || eventos.length === 0;
   };
 
 
-  // Función para convertir una cadena ISO a fecha local
-  const parseDateToLocal = (dateString) => {
-    if (!dateString) return null; // Manejar casos donde dateString sea null o undefined
+// Usamos nuestra función normalizadora para que la fecha base sea la correcta
+const parseDateToLocal = (dateString) => {
+  const normalized = normalizeIsoDate(dateString);
+  if (!normalized) return null;
 
-    // Crear un objeto Date a partir de la cadena ISO
-    const date = new Date(dateString);
-
-    // Ajustar la fecha a la zona horaria local sin restar el offset
-    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  };
+  const date = new Date(normalized);
+  if (isNaN(date.getTime())) return null;
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+};
 
   const cargarFacturas = async (emisor, pagadorId = null) => {
     if (!emisor) {
@@ -666,11 +760,7 @@ const handleOpenPreview = async () => {
   }
 };
 
-// El resto del componente permanece exactamente igual
-const formatFecha = (fecha) => {
-  const [y, m, d] = fecha.split("-");
-  return `${d}/${m}/${y}`;
-};
+
 
 // Función para verificar el Blob
 const verifyBlob = async (blob) => {
@@ -1443,7 +1533,7 @@ const verifyBlob = async (blob) => {
           <TableHead>
             <TableRow>
               <TableCell><strong>Código</strong></TableCell>
-              <TableCell><strong>Fecha</strong></TableCell>
+              <TableCell><strong>Fecha y Hora</strong></TableCell>
               <TableCell><strong>Evento</strong></TableCell>
             </TableRow>
           </TableHead>
@@ -1467,7 +1557,7 @@ const verifyBlob = async (blob) => {
                 .map((e, index) => (
                   <TableRow key={index}>
                     <TableCell>{e?.codigo}</TableCell>
-                    <TableCell>{formatFecha(e?.fecha)}</TableCell>
+                    <TableCell>{e?.fecha}</TableCell>
                     <TableCell>{e?.evento}</TableCell>
                   </TableRow>
                 ))}
