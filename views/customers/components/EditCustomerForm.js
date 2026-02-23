@@ -270,11 +270,20 @@ const STEP_FIELDS = {
     "type_client",
     "type_id",
     "document_number",
-    // "first_name", "last_name" (natural)
-    // "razon_social" (juridica)
-    "birth_or_constitution_date",
+    "birth_date",              // ✅ en Edit usas birth_date (no birth_or_constitution_date)
+    // si jurídica:
+    "social_reason",
+    "ciiu_id",                 // si tu CIIUSelect guarda aquí (ajusta el key real)
   ],
-  1: ["citizenship", "department", "city", "address", "phone", "email", "broker_id"],
+  1: [
+    "citizenship",             // ✅ si citizenship realmente existe en values
+    "department",
+    "city",
+    "address",
+    "phone_number",            // ✅ en Edit usas phone_number (no phone)
+    "email",
+    "broker_id",
+  ],
   2: ["rol_client"],
 
   // solo jurídica
@@ -285,14 +294,14 @@ const STEP_FIELDS = {
     "legal_representative.last_name",
     "legal_representative.birth_date",
     "legal_representative.address",
-    "legal_representative.phone",
+    "legal_representative.phone_number", // ✅ en Edit usas phone_number
     "legal_representative.email",
     "legal_representative.department",
     "legal_representative.city",
     "legal_representative.position",
     "legal_representative.citizenship",
   ],
-  4: ["contacts"], // aquí normalmente validas por Yup interno del array
+  4: ["contacts"],
 };
 
 
@@ -510,6 +519,61 @@ export const EditCustomerForm = ({
     }
   }, [formik?.errors, formik?.isSubmitting, steps.length]);
 
+
+
+  const normalizeRoleIdsFE = (value) => {
+  if (!value) return [];
+
+  // ya viene como "uuid"
+  if (typeof value === "string") return [value];
+
+  // viene como array
+  if (Array.isArray(value)) {
+    const ids = value
+      .map((x) => {
+        if (!x) return null;
+
+        // array de uuids
+        if (typeof x === "string") return x;
+
+        // array de roles {id, name}
+        if (x.id) return x.id;
+
+        // array de assignments {role: {id}}
+        if (x.role?.id) return x.role.id;
+
+        // array de assignments {role_id}
+        if (x.role_id) return x.role_id;
+
+        return null;
+      })
+      .filter(Boolean);
+
+    // unique
+    return Array.from(new Set(ids));
+  }
+
+  return [];
+};
+
+useEffect(() => {
+  // ✅ solo cuando ya hay valores cargados del backend
+  // (si tienes una bandera tipo loadingCustomer úsala, si no, este guard es suficiente)
+  const current = formik?.values?.rol_client;
+
+  const normalized = normalizeRoleIdsFE(current);
+
+  // si ya está normalizado, no hagas set (evita loops)
+  const same =
+    Array.isArray(current) &&
+    current.length === normalized.length &&
+    current.every((x, i) => x === normalized[i]);
+
+  if (!same) {
+    formik.setFieldValue("rol_client", normalized, false);
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [formik?.values?.rol_client]);
   return (
     <>
 
