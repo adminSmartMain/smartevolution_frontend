@@ -13,6 +13,10 @@ import DateFormat from "@formats/DateFormat";
 import ValueFormat from "@formats/ValueFormat";
 
 import { useFetch } from "@hooks/useFetch";
+import {
+  Home as HomeIcon,
+
+} from "@mui/icons-material";
 
 import BackButton from "@styles/buttons/BackButton";
 import RedButtonModal from "@styles/buttons/noButtonModal";
@@ -24,6 +28,67 @@ import scrollSx from "@styles/scroll";
 import CustomDataGrid from "@styles/tables";
 
 import { DeleteRefund, GetRefund, GetRefundReceiptPDF } from "./queries";
+import Skeleton from '@mui/material/Skeleton';
+import { Breadcrumbs} from "@mui/material";
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
+const TableSkeleton = ({ rows = 15, columns = 9 }) => {
+  return (
+    <Box
+      sx={{
+        border: '1px solid #e0e0e0',
+        borderRadius: '4px',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Header */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: `repeat(${columns}, 1fr)`,
+          backgroundColor: '#f5f5f5',
+          borderBottom: '2px solid #e0e0e0',
+          px: 2,
+          py: 1,
+        }}
+      >
+        {Array.from({ length: columns }).map((_, i) => (
+          <Skeleton
+            key={i}
+            variant="text"
+            height={40}
+            sx={{ mx: 1 }}
+          />
+        ))}
+      </Box>
+
+      {/* Rows */}
+      {Array.from({ length: rows }).map((_, rowIndex) => (
+        <Box
+          key={rowIndex}
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: `repeat(${columns}, 1fr)`,
+            px: 2,
+            py: 1,
+            borderBottom: '1px solid #f0f0f0',
+          }}
+        >
+          {Array.from({ length: columns }).map((_, colIndex) => (
+            <Skeleton
+              key={colIndex}
+              variant="rectangular"
+              height={55}
+              sx={{
+                mx: 1,
+                borderRadius: '4px',
+              }}
+            />
+          ))}
+        </Box>
+      ))}
+    </Box>
+  );
+};
 
 export const RefundListC = () => {
   const [filter, setFilter] = useState("");
@@ -424,13 +489,15 @@ export const RefundListC = () => {
 
   return (
     <>
-      <BackButton path="/administration" />
+
+     
       <Box
         container
         display="flex"
         flexDirection="row"
         justifyContent="space-between"
       >
+        
         <Typography
           letterSpacing={0}
           fontSize="1.7rem"
@@ -438,13 +505,52 @@ export const RefundListC = () => {
           marginBottom="0.7rem"
           color="#5EA3A3"
         >
-          Consulta de Reintegros
+            <Breadcrumbs
+        separator={<NavigateNextIcon fontSize="small" />}
+        aria-label="breadcrumb"
+        sx={{ ml: 1, mb: 0 }}
+      >
+          <Link href="/dashboard" underline="none">
+                      <a>
+                         <HomeIcon
+                                                fontSize="large" 
+                                                sx={{ 
+                                                  color: '#488b8f',
+                                                  opacity: 0.8, // Ajusta la transparencia (0.8 = 80% visible)
+                                                  strokeWidth: 1, // Grosor del contorno
+                                                }} 
+                                              />
+        
+                      </a>
+        
+                    </Link>
+        <Link
+          underline="hover"
+          color="#5EA3A3"
+          href="/administration"
+          sx={{ fontSize: "1.3rem" }}
+        >
+     <Typography component="h1" className="view-title">
+
+Administración
+             
+          </Typography>
+         
+        </Link>
+
+     <Typography
+                   component="h1" className="view-title">
+  Consulta de Reintegros
+        </Typography>
+      </Breadcrumbs>
+
         </Typography>
         <Link href="/administration/refund?register" underline="none">
           <Button
             variant="standard"
             color="primary"
             size="large"
+            className="button-header-preop-title"
             sx={{
               height: "2.6rem",
               backgroundColor: "transparent",
@@ -454,7 +560,7 @@ export const RefundListC = () => {
           >
             <Typography
               letterSpacing={0}
-              fontSize="80%"
+              fontSize="60%"
               fontWeight="bold"
               color="#63595C"
             >
@@ -465,7 +571,7 @@ export const RefundListC = () => {
               fontFamily="icomoon"
               fontSize="1.2rem"
               color="#63595C"
-              marginLeft="0.9rem"
+              marginLeft="0.1rem"
             >
               &#xe927;
             </Typography>
@@ -473,7 +579,7 @@ export const RefundListC = () => {
         </Link>
       </Box>
       <Box container display="flex" flexDirection="column" mt={3}>
-        <InputTitles>Buscar reintegro</InputTitles>
+     
         <Box
           container
           display="flex"
@@ -484,6 +590,7 @@ export const RefundListC = () => {
           <Button
             variant="standard"
             size="medium"
+            className="button-header-preop-title"
             onClick={() => {
               setFilter(filter === "client" ? "" : "client");
             }}
@@ -509,6 +616,7 @@ export const RefundListC = () => {
           <Button
             variant="standard"
             size="medium"
+            className="button-header-preop-title"
             onClick={() => {
               setFilter(filter === "id" ? "" : "id");
             }}
@@ -535,6 +643,7 @@ export const RefundListC = () => {
           <Button
             variant="standard"
             size="medium"
+            className="button-header-preop-title"
             onClick={() => {
               setFilter(filter === "date" ? "" : "date");
             }}
@@ -581,6 +690,10 @@ export const RefundListC = () => {
           />
         </Box>
       </Box>
+
+         {loading ? (
+  <TableSkeleton rows={8} columns={columns.length} />
+) : (
       <Box
         container
         marginTop={4}
@@ -696,6 +809,7 @@ export const RefundListC = () => {
           loading={loading}
         />
       </Box>
+      )}   
       <TitleModal
         open={open}
         handleClose={handleClose}

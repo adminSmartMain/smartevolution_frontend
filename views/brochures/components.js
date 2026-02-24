@@ -52,6 +52,67 @@ const sectionTitleContainerSx = {
   alignItems: "rigth",
 };
 
+import Skeleton from '@mui/material/Skeleton';
+
+const TableSkeleton = ({ rows = 15, columns = 9 }) => {
+  return (
+    <Box
+      sx={{
+        border: '1px solid #e0e0e0',
+        borderRadius: '4px',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Header */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: `repeat(${columns}, 1fr)`,
+          backgroundColor: '#f5f5f5',
+          borderBottom: '2px solid #e0e0e0',
+          px: 2,
+          py: 1,
+        }}
+      >
+        {Array.from({ length: columns }).map((_, i) => (
+          <Skeleton
+            key={i}
+            variant="text"
+            height={40}
+            sx={{ mx: 1 }}
+          />
+        ))}
+      </Box>
+
+      {/* Rows */}
+      {Array.from({ length: rows }).map((_, rowIndex) => (
+        <Box
+          key={rowIndex}
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: `repeat(${columns}, 1fr)`,
+            px: 2,
+            py: 1,
+            borderBottom: '1px solid #f0f0f0',
+          }}
+        >
+          {Array.from({ length: columns }).map((_, colIndex) => (
+            <Skeleton
+              key={colIndex}
+              variant="rectangular"
+              height={55}
+              sx={{
+                mx: 1,
+                borderRadius: '4px',
+              }}
+            />
+          ))}
+        </Box>
+      ))}
+    </Box>
+  );
+};
+
 export const BrochureListComponent = () => {
   const [filter, setFilter] = useState("name");
   const [query, setQuery] = useState("");
@@ -1325,6 +1386,7 @@ export const BrochureListComponent = () => {
           variant="standard"
           color="primary"
           size="large"
+           className="button-header-preop-title"
           sx={{
             height: "2.6rem",
             backgroundColor: "transparent",
@@ -1345,7 +1407,7 @@ export const BrochureListComponent = () => {
         >
           <Typography
             letterSpacing={0}
-            fontSize="80%"
+            fontSize="60%"
             fontWeight="bold"
             color="#63595C"
           >
@@ -1355,9 +1417,9 @@ export const BrochureListComponent = () => {
 
           <Typography
             fontFamily="icomoon"
-            fontSize="1.8rem"
+            fontSize="1.1rem"
             color="#63595C"
-            marginLeft="0.6rem"
+            marginLeft="0.2rem"
           >
             &#xe923;
           </Typography>
@@ -1389,7 +1451,9 @@ export const BrochureListComponent = () => {
           sx={{ mt: 1 }}
         />
       </Box>
-
+        {loading ? (
+  <TableSkeleton rows={8} columns={15} />
+) : ( 
       <Box
         container
         marginTop={4}
@@ -1490,6 +1554,7 @@ export const BrochureListComponent = () => {
           }}
           loading={loading}
         />
+        
         <ToastContainer
           position="top-right"
           autoClose={50000}
@@ -1502,6 +1567,7 @@ export const BrochureListComponent = () => {
           pauseOnHover
         />
       </Box>
+         )}
       <TitleModal
         open={openClientResume}
         handleClose={handleCloseClientResume}
@@ -1554,6 +1620,7 @@ export const BrochureListComponent = () => {
           </Box>
         )}
       </TitleModal>
+      
     </>
   );
 };

@@ -133,6 +133,7 @@ function AdvancedDateRangePicker({ onApply,onClean }) {
         sx={{
           textTransform: "none",
           height:'2.2rem',
+          width: { xs: "span 2", sm: "15rem" },
           borderColor: "var(--primary-color)",
           color: "var(--primary-color)",
           "&:hover": {

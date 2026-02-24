@@ -30,7 +30,7 @@ import Image from 'next/image';
 import "react-toastify/dist/ReactToastify.css";
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import FilterAltOffIcon from '@mui/icons-material/FilterAltOff';
-import {Toast} from '@components/toast'
+
 import { Bills, GetBillFraction, GetRiskProfile, BrokerByClient, AccountsFromClient,getTypeBill } from "./queries";
 import { parseISO } from "date-fns";
 import { differenceInDays, startOfDay, addDays } from "date-fns";
@@ -296,13 +296,13 @@ const formatNumberWithThousandsSeparator = (value) => {
     // Validar tipo de archivo
     const validTypes = ['application/pdf', 'image/jpeg', 'image/png'];
     if (!validTypes.includes(selectedFile.type)) {
-      Toast('Solo se permiten archivos PDF, JPEG o PNG','error');
+      toast.error('Solo se permiten archivos PDF, JPEG o PNG');
       return;
     }
 
     // Validar tamaño (20MB máximo)
     if (selectedFile.size > 20 * 1024 * 1024) {
-      Toast('El archivo no debe exceder los 20MB','error');
+      toast.error('El archivo no debe exceder los 20MB');
       return;
     }
 
@@ -328,7 +328,7 @@ const formatNumberWithThousandsSeparator = (value) => {
     
     reader.onerror = (error) => {
       console.error('Error al leer el archivo:', error);
-      Toast('Error al procesar el archivo','error');
+      toast.error('Error al procesar el archivo');
     };
     
     reader.readAsDataURL(selectedFile);
@@ -443,7 +443,7 @@ const handleSubmit = async (values, actions) => {
   };
 const handleOpenPreview = () => {
     if (!file && !fileUrl) {
-      Toast('No hay archivo para previsualizar','warning');
+      toast.warning('No hay archivo para previsualizar');
       return;
     }
     setOpenPreview(true);

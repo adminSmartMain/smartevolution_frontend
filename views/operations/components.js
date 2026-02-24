@@ -45,6 +45,75 @@ import { Tooltip } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import moment from "moment";
 import { getOperationsVersionTwo,getOperationsVersionTwo2 } from "./queries";
+import { Breadcrumbs} from "@mui/material";
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
+import Skeleton from '@mui/material/Skeleton';
+const TableSkeleton = ({ rows = 15, columns = 9 }) => {
+  return (
+    <Box
+      sx={{
+        border: '1px solid #e0e0e0',
+        borderRadius: '4px',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Header */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: `repeat(${columns}, 1fr)`,
+          backgroundColor: '#f5f5f5',
+          borderBottom: '2px solid #e0e0e0',
+          px: 2,
+          py: 1,
+        }}
+      >
+        {Array.from({ length: columns }).map((_, i) => (
+          <Skeleton
+            key={i}
+            variant="text"
+            height={40}
+            sx={{ mx: 1 }}
+          />
+        ))}
+      </Box>
+
+      {/* Rows */}
+      {Array.from({ length: rows }).map((_, rowIndex) => (
+        <Box
+          key={rowIndex}
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: `repeat(${columns}, 1fr)`,
+            px: 2,
+            py: 1,
+            borderBottom: '1px solid #f0f0f0',
+          }}
+        >
+          {Array.from({ length: columns }).map((_, colIndex) => (
+            <Skeleton
+              key={colIndex}
+              variant="rectangular"
+              height={55}
+              sx={{
+                mx: 1,
+                borderRadius: '4px',
+              }}
+            />
+          ))}
+        </Box>
+      ))}
+    </Box>
+  );
+};
+
+const buttonCompactSx = {
+  height: { xs: 34, sm: 40 },
+  padding: { xs: "6px 10px", sm: "10px 16px" },
+  fontSize: { xs: "0.78rem", sm: "0.9rem" },
+  minWidth: { xs: 120, sm: 140 },
+  whiteSpace: "nowrap",
+};
 
 const sectionTitleContainerSx = {
   display: "flex",
@@ -670,245 +739,291 @@ const handleTextFieldChange = (evt) => {
     document.body.removeChild(link);
   };
 
+
+const btnCompactSx = {
+  height: 36,
+  px: 2,
+  fontSize: "0.85rem",
+  whiteSpace: "nowrap",
+  minWidth: { xs: "100%", sm: "auto" },
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flexShrink: 0, // ✅ clave: evita que el texto se parta
+};
+
   return (
     <>
-     
-      <Box sx={{ ...sectionTitleContainerSx }}>
-        <Box  className="view-header">
-
-            <Link href="/dashboard" underline="none">
-                    <a>
-                    <HomeIcon
-                        fontSize="large" 
-                        sx={{ 
-                          color: '#488b8f',
-                          opacity: 0.8, // Ajusta la transparencia (0.8 = 80% visible)
-                          strokeWidth: 1, // Grosor del contorno
-                        }} 
-                      />
-                  
-                    </a>
-                    
-                    </Link>
-                  <Typography
-                    className="view-title"
-                  >
-                    - Operaciones Aprobadas
-                  </Typography>
-        </Box>
-                
-
-                  <Box sx={{ ...sectionTitleContainerSx }}>
-                        <Link href="/pre-operations" passHref>
-                        <button className="button-header-preop-title">
-                          Pre-Operaciones
-                        </button>
-                      </Link>
-                  </Box>
-      </Box>
-
-      <Box
+<Box
   sx={{
-    display: 'flex',
-    flexWrap: 'wrap',
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
     gap: 2,
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-    mb: 2
+    width: "100%",
+    mb: 2,
+    flexWrap: { xs: "wrap", sm: "nowrap" },
   }}
 >
-<TextField
-  variant="outlined"
-  id="searchBar"
-  size="small"
-  placeholder="Buscar por Emisor o Inversionista..."
-  value={search}
-  onChange={(evt) => handleTextFieldChange(evt, "investor")}
-  onKeyPress={(event) => {
-    if (event.key === "Enter") {
-      const valueToSearch = search || ""; // Si está vacío, manda cadena vacía
-      updateFilters(valueToSearch, "multi"); // realiza la búsqueda, incluso si el valor está vacío
-    }
-  }}
-  sx={{
-    flexGrow: 1,
-    minWidth: '250px',
-    maxWidth: '580px',
-    '& .MuiOutlinedInput-root': {
-      height: 35,
-      fontSize: '14px',
-      paddingRight: 0,
-    },
-    '& .MuiInputBase-input': {
-      padding: '6px 8px',
-    },
-  }}
-  InputProps={{
-    endAdornment: search && (
-      <InputAdornment position="end">
-        <IconButton 
-          onClick={handleClearSearch}
-          size="small"
-          edge="end"
+  {/* ✅ IZQUIERDA */}
+  <Box className="view-header" sx={{ flexGrow: 1, minWidth: 260 }}>
+    <Typography
+      letterSpacing={0}
+      fontSize="1.7rem"
+      fontWeight="regular"
+      marginBottom="0.7rem"
+      color="#5EA3A3"
+    >
+      <Breadcrumbs
+        separator={<NavigateNextIcon fontSize="small" />}
+        aria-label="breadcrumb"
+        sx={{ ml: 1, mt: 0 }}
+      >
+        <Link href="/dashboard" underline="none">
+          <a>
+            <HomeIcon
+              fontSize="large"
+              sx={{
+                color: "#488b8f",
+                opacity: 0.8,
+                strokeWidth: 1,
+              }}
+            />
+          </a>
+        </Link>
+
+        <Link
+          underline="hover"
+          color="#5EA3A3"
+          href="/administration"
+          sx={{ fontSize: "1.3rem" }}
         >
-          <ClearIcon sx={{ color: "#488b8f", fontSize: '18px' }} />
-        </IconButton>
-      </InputAdornment>
-    ),
-  }}
-/>
-
-  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
-
-<button
-        onClick={handleClickStatus}
-        className="button-header-preop-title"
-        style={{ 
-            display: 'flex', 
-    alignItems: 'center', 
-    gap: '4px',
-    position: 'relative',
-          paddingRight: selectedStatus ? '32px' : '8px',
-       
-        }}
-      >
-        {selectedStatus?.label || "Por Estado"}
-        
-        {selectedStatus ? (
-          <IconButton
-            size="small"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleClearStatus();
-            }}
-            sx={{
-              position: 'absolute',
-              right: '4px',
-              color: "#ffff",
-              '&:hover': {
-                backgroundColor: "#ffffff20"
-              },
-              width: 20,
-              height: 20
-            }}
-          >
-            <CloseIcon fontSize="small" />
-          </IconButton>
-        ) : (
-          <ArrowDropDownIcon sx={{ fontSize: "16px", color: "#488B8F" }} />
-        )}
-      </button>
-      
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleCloseStatus}
-        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-  transformOrigin={{ vertical: "top", horizontal: "left" }}
-  
->
-        {statusOptions.map((option) => (
-          <MenuItem
-            key={option.value}
-            onClick={() => handleSelectStatus(option)}
-            selected={selectedStatus?.value === option.value}
-             disableGutters
-      sx={{
-        '&.Mui-selected': {
-          backgroundColor: "#488B8F10",
-          '&:hover': {
-            backgroundColor: "#488B8F15"
-          }
-        },
-        px: 0.5,          // reduce padding horizontal
-        py: 0.25,         // reduce padding vertical
-        minHeight: "auto", // quita alto mínimo de MUI
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        gap: "4px"
-      }}
-          >
-             <span
-        className={option.badgeClass}
-        style={{
-          display: "inline-block",
-          padding: "4px 10px",
-          borderRadius: "6px",
-          fontSize: "0.85rem",
-          fontWeight: 600,
-          minWidth: "100px", // todos iguales de ancho
-          textAlign: "center",
-          lineHeight: 1.2
-        }}
-      >
-              {option.label}
-            </span>
-        
-            {selectedStatus?.value === option.value && (
-              <CheckIcon fontSize="small" sx={{ ml: 1, color: "#488B8F" }} />
-            )}
-          </MenuItem>
-        ))}
-      </Menu>
-
-  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
-    <Link href="/operations/byOp" underline="none">
-      <button className="button-header-preop-title">Ver por Grupos</button>
-    </Link>
-
- 
-
-
-    <button className="button-header-preop" onClick={handleOpenModal}>Valor a Girar</button>
-    <ModalValorAGirar open={openModal} handleClose={handleCloseModal} data={calcs} />
-
-    <AdvancedDateRangePicker
-      
-      className="date-picker"
-      onApply={handleDateRangeApply}
-      onClean={handleClear}
-      
-    />
-
-    
-
-    <IconButton onClick={handleMenuClickCSV} className="context-menu">
-      <MoreVertIcon />
-    </IconButton>
-    <Menu anchorEl={anchorElCSV} open={openMenuCSV} onClose={handleCloseMenuCSV}>
-      <MenuItem onClick={handleExportExcel}>Exportar a CSV</MenuItem>
-    </Menu>
-
+          <Typography component="h1" className="view-title">
+            Operaciones Aprobadas
+          </Typography>
+        </Link>
+      </Breadcrumbs>
+    </Typography>
   </Box>
 
+  {/* ✅ DERECHA */}
+  <Box
+    sx={{
+      width: { xs: "100%", sm: "auto" },
+      display: "flex",
+      justifyContent: { xs: "stretch", sm: "flex-end" },
+    }}
+  >
+    <Link href="/pre-operations" passHref>
+      <button
+        className="button-header-preop-title"
+        style={{
+          width: "100%",
+          boxSizing: "border-box",
+          whiteSpace: "nowrap",
+        }}
+      >
+        Pre-Operaciones
+      </button>
+    </Link>
   </Box>
 </Box>
-       
-      
-  {loading && (
-    <Box
-      sx={{
-        position: 'absolute',
-        top: '60%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        zIndex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: 1,
-        
-       
+
+<Box
+  sx={{
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 2,
+    width: "100%",
+    mb: 2,
+
+    // ✅ desktop igual que siempre
+    flexDirection: { xs: "column", sm: "row" },
+  }}
+>
+  {/* 🔎 BUSCADOR */}
+  <TextField
+    variant="outlined"
+    id="searchBar"
+    size="small"
+    placeholder="Buscar por Emisor o Inversionista..."
+    value={search}
+    onChange={(evt) => handleTextFieldChange(evt, "investor")}
+    onKeyPress={(event) => {
+      if (event.key === "Enter") {
+        updateFilters(search || "", "multi");
+      }
+    }}
+    sx={{
+      width: { xs: "100%", sm: "20rem" }, // ✅ desktop igual
+      flexGrow: 1,
+      maxWidth: "580px",
+      "& .MuiOutlinedInput-root": {
+        height: 35,
+        fontSize: "14px",
+        paddingRight: 0,
+      },
+      "& .MuiInputBase-input": {
+        padding: "6px 8px",
+      },
+    }}
+    InputProps={{
+      endAdornment: search && (
+        <InputAdornment position="end">
+          <IconButton onClick={handleClearSearch} size="small" edge="end">
+            <ClearIcon sx={{ color: "#488b8f", fontSize: "18px" }} />
+          </IconButton>
+        </InputAdornment>
+      ),
+    }}
+  />
+
+  {/* ✅ BOTONES (solo móvil grid, desktop flex normal) */}
+  <Box
+    sx={{
+      width: { xs: "100%", sm: "auto" },
+
+      // ✅ SOLO móvil se vuelve grid (como la foto)
+      display: { xs: "grid", sm: "flex" },
+
+      // ✅ móvil exacto: 2 columnas para 1ra fila
+      gridTemplateColumns: { xs: "1fr 1fr", sm: "none" },
+
+      gap: 1,
+      alignItems: "center",
+      justifyContent: { sm: "flex-end" }, // ✅ desktop igual
+      flexWrap: { sm: "nowrap" },         // ✅ desktop igual
+
+      // ✅ clave para que NO se rompa en móvil
+      minWidth: 0,
+    }}
+  >
+    {/* ✅ Estado */}
+    <button
+      onClick={handleClickStatus}
+      className="button-header-preop-title"
+      style={{
+        width: "100%",
+        boxSizing: "border-box",
+        whiteSpace: "nowrap",
+        height: 36,
+        position: "relative",
+        paddingRight: selectedStatus ? "32px" : "8px",
       }}
     >
-      <CircularProgress sx={{ color: '#488B8F' }} />
-      <Typography variant="body2" color="#488B8F">
-        Cargando operaciones...
-      </Typography>
+      {selectedStatus?.label || "Por Estado"}
+
+      {selectedStatus ? (
+        <IconButton
+          size="small"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleClearStatus();
+          }}
+          sx={{
+            position: "absolute",
+            right: "4px",
+            top: "50%",
+            transform: "translateY(-50%)",
+            color: "#fff",
+            "&:hover": { backgroundColor: "#ffffff20" },
+            width: 20,
+            height: 20,
+          }}
+        >
+          <CloseIcon fontSize="small" />
+        </IconButton>
+      ) : (
+        <ArrowDropDownIcon sx={{ fontSize: "16px", color: "#488B8F" }} />
+      )}
+    </button>
+
+    <Menu
+      anchorEl={anchorEl}
+      open={Boolean(anchorEl)}
+      onClose={handleCloseStatus}
+      anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+      transformOrigin={{ vertical: "top", horizontal: "left" }}
+    >
+      {statusOptions.map((option) => (
+        <MenuItem
+          key={option.value}
+          onClick={() => handleSelectStatus(option)}
+          selected={selectedStatus?.value === option.value}
+        >
+          {option.label}
+        </MenuItem>
+      ))}
+    </Menu>
+
+    {/* ✅ Ver por grupos */}
+    <Link href="/operations/byOp" underline="none">
+      <button
+        className="button-header-preop-title"
+        style={{
+          width: "100%",
+          boxSizing: "border-box",
+          whiteSpace: "nowrap",
+          height: 36,
+        }}
+      >
+        Ver por Grupos
+      </button>
+    </Link>
+
+    {/* ✅ Valor a Girar (FULL WIDTH en móvil) */}
+    <Box sx={{ gridColumn: { xs: "span 2", sm: "auto" }, width: "100%" }}>
+      <button
+        className="button-header-preop-title"
+        onClick={handleOpenModal}
+        style={{
+          width: "100%",
+          boxSizing: "border-box",
+          whiteSpace: "nowrap",
+          height: 36,
+        }}
+      >
+        Valor a Girar
+      </button>
+      <ModalValorAGirar open={openModal} handleClose={handleCloseModal} data={calcs} />
     </Box>
-  )}
+
+    {/* ✅ DatePicker (FULL WIDTH en móvil) */}
+    <Box sx={{ gridColumn: { xs: "span 2", sm: "auto" }, width: "100%" }}>
+      <AdvancedDateRangePicker
+        className="date-picker"
+        onApply={handleDateRangeApply}
+        onClean={handleClear}
+      />
+    </Box>
+
+    {/* ✅ Menú CSV abajo derecha */}
+    <Box
+      sx={{
+        gridColumn: { xs: "span 2", sm: "auto" },
+        display: "flex",
+        justifyContent: { xs: "flex-end", sm: "flex-start" },
+        width: "100%",
+      }}
+    >
+      <IconButton onClick={handleMenuClickCSV} className="context-menu">
+        <MoreVertIcon />
+      </IconButton>
+
+      <Menu anchorEl={anchorElCSV} open={openMenuCSV} onClose={handleCloseMenuCSV}>
+        <MenuItem onClick={handleExportExcel}>Exportar a CSV</MenuItem>
+      </Menu>
+    </Box>
+  </Box>
+</Box>
+
+
+       
+      
+        {loading ? (
+  <TableSkeleton rows={8} columns={columns.length} />
+) : (
       <Box sx={{ ...tableWrapperSx }}>
         <CustomDataGrid
           rows={rows}
@@ -1035,6 +1150,8 @@ const handleTextFieldChange = (evt) => {
           }}
         />
       </Box>
+      )}
     </>
+    
   );
 };

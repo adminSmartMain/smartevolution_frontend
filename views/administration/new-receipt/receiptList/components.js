@@ -28,6 +28,69 @@ import {
   Clear as ClearIcon,
   KeyboardArrowDown as KeyboardArrowDownIcon
 } from '@mui/icons-material';
+
+import Skeleton from '@mui/material/Skeleton';
+import { Breadcrumbs} from "@mui/material";
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
+const TableSkeleton = ({ rows = 15, columns = 9 }) => {
+  return (
+    <Box
+      sx={{
+        border: '1px solid #e0e0e0',
+        borderRadius: '4px',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Header */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: `repeat(${columns}, 1fr)`,
+          backgroundColor: '#f5f5f5',
+          borderBottom: '2px solid #e0e0e0',
+          px: 2,
+          py: 1,
+        }}
+      >
+        {Array.from({ length: columns }).map((_, i) => (
+          <Skeleton
+            key={i}
+            variant="text"
+            height={40}
+            sx={{ mx: 1 }}
+          />
+        ))}
+      </Box>
+
+      {/* Rows */}
+      {Array.from({ length: rows }).map((_, rowIndex) => (
+        <Box
+          key={rowIndex}
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: `repeat(${columns}, 1fr)`,
+            px: 2,
+            py: 1,
+            borderBottom: '1px solid #f0f0f0',
+          }}
+        >
+          {Array.from({ length: columns }).map((_, colIndex) => (
+            <Skeleton
+              key={colIndex}
+              variant="rectangular"
+              height={55}
+              sx={{
+                mx: 1,
+                borderRadius: '4px',
+              }}
+            />
+          ))}
+        </Box>
+      ))}
+    </Box>
+  );
+};
+
 const sectionTitleContainerSx = {
   display: "flex",
   justifyContent: "space-between",
@@ -794,7 +857,21 @@ const receipt =
        <Box sx={{ ...sectionTitleContainerSx }}>
 
 <Box className="view-header">
-  <Link href="/dashboard" underline="none">
+  
+
+               <Typography
+                      letterSpacing={0}
+                      fontSize="1.7rem"
+                      fontWeight="regular"
+                      marginBottom="0.7rem"
+                      color="#5EA3A3"
+                    >
+                        <Breadcrumbs
+                    separator={<NavigateNextIcon fontSize="small" />}
+                    aria-label="breadcrumb"
+                    sx={{ ml: 1, mt: 1 }}
+                  >
+                    <Link href="/dashboard" underline="none">
               <a>
                  <HomeIcon
                                         fontSize="large" 
@@ -808,166 +885,225 @@ const receipt =
               </a>
 
             </Link>
-       <Typography
-         
-          className="view-title"
-        >
-           - Consulta de recaudos
-          </Typography>
+                    <Link
+                      underline="hover"
+                      color="#5EA3A3"
+                      href="/administration"
+                      sx={{ fontSize: "1.3rem" }}
+                    >
+                 <Typography component="h1" className="view-title">
+            
+            Administración
+                         
+                      </Typography>
+                     
+                    </Link>
+            
+                 <Typography
+                               component="h1" className="view-title">
+              Consulta de recaudos
+                    </Typography>
+                  </Breadcrumbs>
+            
+                    </Typography>
+       
 </Box>
        
         <Box sx={{ ...sectionTitleContainerSx }}>
       
               </Box>
       </Box>
-
-            <Box
+<Box
   sx={{
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: 2,
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-    mb: 2
+    width: "100%",
+    mb: 2,
+
+    // ✅ Desktop sigue igual
+    display: { xs: "flex", sm: "flex" },
+    flexDirection: { xs: "column", sm: "row" },
+
+    // ✅ gap coherente
+    gap: { xs: 1.2, sm: 2 },
+
+    // ✅ en desktop alineado centro
+    alignItems: { xs: "stretch", sm: "center" },
+
+    // ✅ en desktop se distribuye igual que antes
+    justifyContent: { sm: "space-between" },
   }}
 >
-<TextField
-  variant="outlined"
-  id="searchBar"
-  size="small"
-  placeholder="Buscar por OpID o factura"
-  value={search}
-  onChange={(evt) => handleTextFieldChange(evt, "investor")}
-  onKeyPress={(event) => {
-    if (event.key === "Enter") {
-      const valueToSearch = search || ""; // Si está vacío, manda cadena vacía
-      updateFilters(valueToSearch, "multi"); // realiza la búsqueda, incluso si el valor está vacío
-    }
-  }}
-  sx={{
-    flexGrow: 1,
-    minWidth: '250px',
-    maxWidth: '580px',
-    '& .MuiOutlinedInput-root': {
-      height: 35,
-      fontSize: '14px',
-      paddingRight: 0,
-    },
-    '& .MuiInputBase-input': {
-      padding: '6px 8px',
-    },
-  }}
-  InputProps={{
-    endAdornment: search && (
-      <InputAdornment position="end">
-        <IconButton 
-          onClick={handleClearSearch}
-          size="small"
-          edge="end"
-        >
-          <ClearIcon sx={{ color: "#488b8f", fontSize: '18px' }} />
-        </IconButton>
-      </InputAdornment>
-    ),
-  }}
-/>
-
-
-{/* Filtro por estado */}
-
-  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
-  
-      <Button
-      className="button-header-preop-title"
+  {/* 🔎 BUSCADOR */}
+  <TextField
     variant="outlined"
-    onClick={handleClickStatus}
-    sx={{
-      justifyContent: 'space-between',
-      minWidth: 200,
-      textTransform: 'none',
-      color: selectedStatus ? 'text.primary' : 'text.secondary',
-      borderColor: selectedStatus ? 'primary.main' : 'grey.400',
-      '&:hover': {
-        borderColor: selectedStatus ? 'primary.dark' : 'grey.600'
+    id="searchBar"
+    size="small"
+    placeholder="Buscar por OpID o factura"
+    value={search}
+    onChange={(evt) => handleTextFieldChange(evt, "investor")}
+    onKeyPress={(event) => {
+      if (event.key === "Enter") {
+        const valueToSearch = search || "";
+        updateFilters(valueToSearch, "multi");
       }
     }}
+    sx={{
+      width: { xs: "100%", sm: "480px" },
+      flexGrow: 1,
+      maxWidth: "580px",
+      "& .MuiOutlinedInput-root": {
+        height: 35,
+        fontSize: "14px",
+        paddingRight: 0,
+      },
+      "& .MuiInputBase-input": {
+        padding: "6px 8px",
+      },
+    }}
+    InputProps={{
+      endAdornment: search && (
+        <InputAdornment position="end">
+          <IconButton onClick={handleClearSearch} size="small" edge="end">
+            <ClearIcon sx={{ color: "#488b8f", fontSize: "18px" }} />
+          </IconButton>
+        </InputAdornment>
+      ),
+    }}
+  />
+
+  {/* ✅ BLOQUE DERECHO */}
+  <Box
+    sx={{
+      display: "grid",
+
+      // ✅ móvil todo en 1 columna
+      gridTemplateColumns: { xs: "1fr", sm: "auto auto auto" },
+
+      // ✅ desktop lo mantiene en fila
+      alignItems: "center",
+      justifyContent: { sm: "flex-end" },
+
+      gap: { xs: 1, sm: 1.2 },
+
+      width: { xs: "100%", sm: "auto" },
+    }}
   >
-    {selectedStatus ? selectedStatus.description : 'Seleccionar estado'}
-    <KeyboardArrowDownIcon sx={{ ml: 1, fontSize: 18 }} />
-  </Button>
-  
-  {selectedStatus && (
-    <IconButton 
-      onClick={handleClearStatus}
-      size="small"
-      sx={{ 
-        color: 'grey.500',
-        '&:hover': {
-          color: 'error.main',
-          backgroundColor: 'error.light'
-        }
-      }}
-    >
-      <ClearIcon fontSize="small" />
-    </IconButton>
-  )}
-  
-  <Menu
-    anchorEl={anchorElStatus}
-    open={openStatus}
-    onClose={handleCloseStatus}
-    anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-    transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-  >
-    {dataReceipt?.data?.map((status) => (
-      <MenuItem
-        key={status.id}
-        onClick={() => handleSelectStatus(status)}
-        selected={selectedStatus?.id === status.id}
+    {/* ✅ ESTADO (full en móvil, auto en desktop) */}
+    <Box sx={{ display: "flex", gap: 1, width: "100%" }}>
+      <Button
+        className="button-header-preop-title"
+        variant="outlined"
+        onClick={handleClickStatus}
         sx={{
-          '&.Mui-selected': {
-            backgroundColor: '#488B8F10',
-            '&:hover': {
-              backgroundColor: '#488B8F15'
-            }
+          width: { xs: "100%", sm: "auto" }, // ✅ full en móvil
+          justifyContent: "space-between",
+          minWidth: { xs: "100%", sm: 200 },
+          height: 36,
+          textTransform: "none",
+          whiteSpace: "nowrap",
+          color: selectedStatus ? "text.primary" : "text.secondary",
+          borderColor: selectedStatus ? "primary.main" : "grey.400",
+          "&:hover": {
+            borderColor: selectedStatus ? "primary.dark" : "grey.600",
           },
-          px: 2,
-          py: 1,
-          minWidth: 200,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
         }}
       >
-        <span>{status.description}</span>
-        {selectedStatus?.id === status.id && (
-          <CheckIcon fontSize="small" sx={{ color: '#488B8F', ml: 1 }} />
-        )}
-      </MenuItem>
-    ))}
-  </Menu>
+        {selectedStatus ? selectedStatus.description : "Seleccionar estado"}
+        <KeyboardArrowDownIcon sx={{ ml: 1, fontSize: 18 }} />
+      </Button>
 
-{/* fin Filtro por estado */}
+      {selectedStatus && (
+        <IconButton
+          onClick={handleClearStatus}
+          size="small"
+          sx={{
+            color: "grey.500",
+            "&:hover": {
+              color: "error.main",
+              backgroundColor: "error.light",
+            },
+          }}
+        >
+          <ClearIcon fontSize="small" />
+        </IconButton>
+      )}
+    </Box>
 
-    <AdvancedDateRangePicker
-      
-      className="date-picker"
-      onApply={handleDateRangeApply}
-      onClean={handleClear}
-      
-    />
-
- 
-
-    <IconButton onClick={handleMenuClickCSV} className="context-menu">
-      <MoreVertIcon />
-    </IconButton>
-    <Menu anchorEl={anchorElCSV} open={openMenuCSV} onClose={handleCloseMenuCSV}>
-      <MenuItem onClick={handleExportExcel}>Exportar a CSV</MenuItem>
+    {/* ✅ Menu estados */}
+    <Menu
+      anchorEl={anchorElStatus}
+      open={openStatus}
+      onClose={handleCloseStatus}
+      anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+      transformOrigin={{ vertical: "top", horizontal: "left" }}
+    >
+      {dataReceipt?.data?.map((status) => (
+        <MenuItem
+          key={status.id}
+          onClick={() => handleSelectStatus(status)}
+          selected={selectedStatus?.id === status.id}
+          sx={{
+            "&.Mui-selected": {
+              backgroundColor: "#488B8F10",
+              "&:hover": {
+                backgroundColor: "#488B8F15",
+              },
+            },
+            px: 2,
+            py: 1,
+            minWidth: 200,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <span>{status.description}</span>
+          {selectedStatus?.id === status.id && (
+            <CheckIcon fontSize="small" sx={{ color: "#488B8F", ml: 1 }} />
+          )}
+        </MenuItem>
+      ))}
     </Menu>
+
+    {/* ✅ DATEPICKER + MENU 3 PUNTOS: misma fila en móvil */}
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: { xs: "1fr auto", sm: "auto auto" },
+        gap: 1,
+        alignItems: "center",
+        width: "100%",
+      }}
+    >
+      <Box sx={{ width: "100%" }}>
+        <AdvancedDateRangePicker
+          className="date-picker"
+          onApply={handleDateRangeApply}
+          onClean={handleClear}
+        />
+      </Box>
+
+      <IconButton
+        onClick={handleMenuClickCSV}
+        className="context-menu"
+        sx={{
+          justifySelf: "end",
+          p: 0.5,
+        }}
+      >
+        <MoreVertIcon />
+      </IconButton>
+
+      <Menu anchorEl={anchorElCSV} open={openMenuCSV} onClose={handleCloseMenuCSV}>
+        <MenuItem onClick={handleExportExcel}>Exportar a CSV</MenuItem>
+      </Menu>
+    </Box>
   </Box>
 </Box>
+
+
+   {loading ? (
+  <TableSkeleton rows={8} columns={columns.length} />
+) : (
 <Box
   container
   marginTop={4}
@@ -1143,6 +1279,7 @@ const receipt =
     loading={loading}
   />
 </Box>
+)}   
     </>
   );
 };
