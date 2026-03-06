@@ -677,14 +677,14 @@ const handleCellEditCommit = (params) => {
             return "FV-TV";
 
         case "29113618-6ab8-4633-aa8e-b3d6f242e8a4":
-            return "ENDOSADO";
+            return "ENDOSADA";
 
       
         case "dcec6f03-5dc1-42ea-a525-afada28686da":
-            return "RECHAZADO";
+            return "RECHAZADA";
 
         case "e079bea4-401e-41f2-8ccc-e4ac42217728":
-            return "PAGADO";
+            return "PAGADA";
         default:
             return "FV";
     }
