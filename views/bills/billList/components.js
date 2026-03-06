@@ -569,6 +569,9 @@ const handleOpenDetailBill = (id, tab = 0) => {
 
         case "fdb5feb4-24e9-41fc-9689-31aff60b76c9":
           return "FV";
+
+        case "e079bea4-401e-41f2-8ccc-e4ac42217728":
+            return "PAGADO";
         default:
             return "FV";
     }

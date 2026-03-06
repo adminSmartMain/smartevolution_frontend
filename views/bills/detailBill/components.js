@@ -425,8 +425,6 @@ const eventos =
   ).sort((a, b) => a.fechaTs - b.fechaTs) || [];
 
 
-
-
 const emptyRows = !eventos || eventos.length === 0;
 
  const handleChangePage = (event, newPage) => {
