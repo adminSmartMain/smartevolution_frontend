@@ -143,7 +143,7 @@ const RegisterButton = (props) => {
 
   const [openWindow, setOpenWindow] = useState(null);
 
-  const handleOpenRegisterOperation = () => {
+  const handleOpenRegisterOperation  = () => {
     if (openWindow && !openWindow.closed) {
       openWindow.focus();
     } else {
@@ -163,7 +163,7 @@ const RegisterButton = (props) => {
   return (
     <button
       className="button-header-preop-title"
-      onClick={handleOpenRegisterOperation}
+      onClick={handleOpenRegisterOperation }
       style={{
         width: fullWidth ? "100%" : "auto",
         ...style,
@@ -171,6 +171,45 @@ const RegisterButton = (props) => {
       {...rest}
     >
       Registrar operación
+    </button>
+  );
+};
+
+
+
+const RegisterMassiveOperationButton = (props) => {
+  const { fullWidth = false, style, ...rest } = props;
+
+  const [openWindow, setOpenWindow] = useState(null);
+
+  const handleOpenRegisterMassiveOperation= () => {
+    if (openWindow && !openWindow.closed) {
+      openWindow.focus();
+    } else {
+      const newWindow = window.open(
+        "/pre-operations/registerMassiveOperation",
+        "_blank",
+        "width=800,height=600"
+      );
+      setOpenWindow(newWindow);
+
+      newWindow.onbeforeunload = () => {
+        setOpenWindow(null);
+      };
+    }
+  };
+
+  return (
+    <button
+      className="button-header-preop-title"
+      onClick={handleOpenRegisterMassiveOperation}
+      style={{
+        width: fullWidth ? "100%" : "auto",
+        ...style,
+      }}
+      {...rest}
+    >
+      Reg. Operación Masiva
     </button>
   );
 };
@@ -1462,7 +1501,7 @@ const updateFilters = (value, field) => {
       width: "100%",
     }}
   >
-    {/* ✅ Estado */}
+    {/* ✅ Estado
     <button
       onClick={handleClickStatus}
       className="button-header-preop-title"
@@ -1550,7 +1589,7 @@ const updateFilters = (value, field) => {
         </MenuItem>
       ))}
     </Menu>
-
+ */}
     {/* ✅ Valor a Girar */}
     <button
       className="button-header-preop-title"
@@ -1573,6 +1612,10 @@ const updateFilters = (value, field) => {
     {/* ✅ Registrar (fila completa en móvil) */}
     <Box sx={{ gridColumn: { xs: "span 2", sm: "auto" } }}>
       <RegisterButton fullWidth />
+    </Box>
+
+    <Box sx={{ gridColumn: { xs: "span 2", sm: "auto" } }}>
+      <RegisterMassiveOperationButton fullWidth />
     </Box>
 
     {/* ✅ Menú CSV */}
