@@ -35,14 +35,10 @@ services:
         max-file: "3"
 
     deploy:
-
       resources:
-
         limits:
-
           cpus: "1.0"
-
-          memory: "1G"
+          memory: "3G"
 
     networks:
 
