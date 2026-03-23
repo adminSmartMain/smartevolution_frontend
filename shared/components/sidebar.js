@@ -542,6 +542,12 @@ const PRIMARY_SECTIONS = [
             openInWindow: true,
             windowFeatures: "width=1200,height=800"
           },
+            { 
+            href: "/pre-operations/registerMassiveOperation", 
+            text: "Registrar Operaciones Masivas", 
+            openInWindow: true,
+            windowFeatures: "width=1200,height=800"
+          },
           { href: "/pre-operations", text: "Operaciones por Aprobar" },
           { href: "/administration/negotiation-summary/summaryList", text: "Resumen de Negociación" },
           { 

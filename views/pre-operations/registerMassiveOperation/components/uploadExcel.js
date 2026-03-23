@@ -22,6 +22,8 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
 import CloseIcon from "@mui/icons-material/Close";
 import { DataGrid } from "@mui/x-data-grid";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
 
 const ACCEPTED_TYPES = [
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -50,6 +52,11 @@ const formatCurrency = (value) => {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   });
+};
+
+const formatPercent = (value) => {
+  if (value === null || value === undefined || value === "") return "0.00%";
+  return `${Number(value).toFixed(2)}%`;
 };
 
 const normalizeUploadResponse = (response) => {
@@ -359,6 +366,9 @@ export const UploadExcelStep = ({
   onProcessedRows,
   state,
   setState,
+  setRegisterSummary,
+  setUploadExcelState,
+  setActiveStep
 }) => {
   const inputRef = useRef(null);
 
@@ -381,6 +391,30 @@ export const UploadExcelStep = ({
       ...patch,
     }));
   };
+
+  const validRows = useMemo(() => {
+    return (rows || []).filter((row) => !row.hasErrors);
+  }, [rows]);
+
+  const totalOperacionCalculada = useMemo(() => {
+    return validRows.reduce((acc, row) => {
+      return acc + Number(row.valorNominal || 0);
+    }, 0);
+  }, [validRows]);
+
+  const tasaPromedioPonderadaCalculada = useMemo(() => {
+    const totalPeso = validRows.reduce((acc, row) => {
+      return acc + Number(row.valorNominal || 0);
+    }, 0);
+
+    if (!totalPeso) return 0;
+
+    const ponderado = validRows.reduce((acc, row) => {
+      return acc + Number(row.valorNominal || 0) * Number(row.tasaInv || 0);
+    }, 0);
+
+    return ponderado / totalPeso;
+  }, [validRows]);
 
   const setInitialIdleState = (nextFile = null) => {
     updateState({
@@ -419,34 +453,76 @@ export const UploadExcelStep = ({
   };
 
   const handleToggleGm = (rowId, checked) => {
-    syncRowsAndNormalized(rowId, (row) => {
-      const originalGm =
-        row.gmOriginalValue ??
-        row.gmValue ??
-        row.calculated?.GM ??
-        0;
+  const updatedRows = rows.map((row) => {
+    if (String(row.id) !== String(rowId)) return row;
 
-      const nextGmValue = checked ? Number(originalGm || 0) : 0;
+    const presentValueInvestor = Number(
+      row.presentValueInvestor ??
+      row.valorInversionista ??
+      row.valor_inversionista ??
+      row.calculated?.presentValueInvestor ??
+      0
+    );
 
-      return {
-        ...row,
+    const calculatedGm = Number((presentValueInvestor * 0.082).toFixed(2));
+
+    return {
+      ...row,
+      applyGm: checked,
+      gmValue: checked ? calculatedGm : 0,
+      gmOriginalValue: calculatedGm,
+      calculated: {
+        ...(row.calculated || {}),
+        GM: checked ? calculatedGm : 0,
         applyGm: checked,
-        gmValue: nextGmValue,
-        gmOriginalValue: originalGm,
-        calculated: {
-          ...(row.calculated || {}),
-          GM: nextGmValue,
-          applyGm: checked,
-        },
-      };
-    });
-  };
+      },
+    };
+  });
 
+  const updatedNormalizedRows = normalizedRows.map((row) => {
+    const normalizedId = row.rowNumber ?? row.id;
+    if (String(normalizedId) !== String(rowId)) return row;
+
+    const presentValueInvestor = Number(
+      row.presentValueInvestor ??
+      row.valorInversionista ??
+      row.valor_inversionista ??
+      row.calculated?.presentValueInvestor ??
+      0
+    );
+
+    const calculatedGm = Number((presentValueInvestor * 0.082).toFixed(2));
+
+    return {
+      ...row,
+      applyGm: checked,
+      gmValue: checked ? calculatedGm : 0,
+      gmOriginalValue: calculatedGm,
+      calculated: {
+        ...(row.calculated || {}),
+        GM: checked ? calculatedGm : 0,
+        applyGm: checked,
+      },
+    };
+  });
+
+  updateState({
+    rows: updatedRows,
+    normalizedRows: updatedNormalizedRows,
+  });
+
+  if (typeof onProcessedRows === "function") {
+    onProcessedRows(updatedNormalizedRows);
+  }
+};
   const handleChangeGmValue = (rowId, rawValue) => {
-    const parsed = Number(rawValue);
-    const safeValue = Number.isNaN(parsed) ? 0 : parsed;
+  const parsed = Number(rawValue);
+  const safeValue = Number.isNaN(parsed) ? 0 : parsed;
 
-    syncRowsAndNormalized(rowId, (row) => ({
+  const updatedRows = rows.map((row) => {
+    if (String(row.id) !== String(rowId)) return row;
+
+    return {
       ...row,
       gmValue: safeValue,
       gmOriginalValue: safeValue,
@@ -456,9 +532,35 @@ export const UploadExcelStep = ({
         GM: safeValue,
         applyGm: safeValue > 0 ? true : row.applyGm,
       },
-    }));
-  };
+    };
+  });
 
+  const updatedNormalizedRows = normalizedRows.map((row) => {
+    const normalizedId = row.rowNumber ?? row.id;
+    if (String(normalizedId) !== String(rowId)) return row;
+
+    return {
+      ...row,
+      gmValue: safeValue,
+      gmOriginalValue: safeValue,
+      applyGm: safeValue > 0 ? true : row.applyGm,
+      calculated: {
+        ...(row.calculated || {}),
+        GM: safeValue,
+        applyGm: safeValue > 0 ? true : row.applyGm,
+      },
+    };
+  });
+
+  updateState({
+    rows: updatedRows,
+    normalizedRows: updatedNormalizedRows,
+  });
+
+  if (typeof onProcessedRows === "function") {
+    onProcessedRows(updatedNormalizedRows);
+  }
+};
   const handleProcessSelectedFile = async (selectedFile) => {
     if (!selectedFile || !uploadExcelFetch) return;
 
@@ -512,6 +614,11 @@ export const UploadExcelStep = ({
           id: row.id ?? row.rowId ?? row.row_id ?? index + 1,
           facturaId: row.facturaId ?? row.factura_id ?? row.billId ?? row.bill_id ?? "",
           inversionista: row.inversionista ?? "",
+          porcentajeDescuento:
+            row.porcentajeDescuento ??
+            row.porcentaje_descuento ??
+            normalizedSource?.porcentaje_descuento ??
+            "",
           tasaDesc: row.tasaDesc ?? row.tasa_desc ?? "",
           tasaInv: row.tasaInv ?? row.tasa_inv ?? "",
           valorFuturo: row.valorFuturo ?? row.valor_futuro ?? "",
@@ -654,14 +761,17 @@ export const UploadExcelStep = ({
           `¡Operación #${summary?.operationId ?? operationId ?? ""} Registrada con Éxito!`,
         registerSummary: {
           operationId: summary?.operationId ?? operationId ?? null,
-          totalOperacion: summary?.totalOperacion ?? summary?.total_amount ?? summary?.total ?? 0,
+          totalOperacion:
+            summary?.totalOperacion ??
+            summary?.total_amount ??
+            totalOperacionCalculada,
           facturasRegistradas:
-            summary?.facturasRegistradas ?? summary?.registered_rows ?? rows.length ?? 0,
+            summary?.facturasRegistradas ?? summary?.registered_rows ?? validRows.length ?? 0,
           tasaPromedioPonderada:
             summary?.tasaPromedioPonderada ??
             summary?.weightedAverageRate ??
             summary?.weighted_average_rate ??
-            0,
+            tasaPromedioPonderadaCalculada,
           raw: summary,
         },
       });
@@ -677,6 +787,80 @@ export const UploadExcelStep = ({
           "Ocurrió un error al registrar la operación. Intente nuevamente.",
       });
     }
+  };
+
+  const handleDownloadValidExcel = async () => {
+    const cleanRows = (rows || []).filter((row) => !row.hasErrors);
+
+    if (!cleanRows.length) return;
+
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("Facturas válidas");
+
+    const headers = [
+      "FACTURA ID",
+      "INVERSIONISTA",
+      "% DESCUENTO",
+      "TASA DESC.",
+      "TASA INV.",
+      "VALOR FUTURO",
+      "VALOR NOMINAL",
+      "VALOR INVERSIONISTA",
+      "GM",
+      "FECHA PROBABLE",
+      "FECHA FIN",
+    ];
+
+    headers.forEach((header, index) => {
+      const cell = sheet.getCell(1, index + 1);
+      cell.value = header;
+      cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "1F78D1" },
+      };
+    });
+
+    cleanRows.forEach((row, index) => {
+      const excelRow = index + 2;
+
+      sheet.getCell(excelRow, 1).value = row.facturaId || "";
+      sheet.getCell(excelRow, 2).value = row.inversionista || "";
+      sheet.getCell(excelRow, 3).value =
+        row.porcentajeDescuento === "" ? "" : Number(row.porcentajeDescuento || 0);
+      sheet.getCell(excelRow, 4).value = Number(row.tasaDesc || 0);
+      sheet.getCell(excelRow, 5).value = Number(row.tasaInv || 0);
+      sheet.getCell(excelRow, 6).value = Number(row.valorFuturo || 0);
+      sheet.getCell(excelRow, 7).value = Number(row.valorNominal || 0);
+      sheet.getCell(excelRow, 8).value = Number(row.valorInversionista || 0);
+      sheet.getCell(excelRow, 9).value = Number(row.gmValue || 0);
+      sheet.getCell(excelRow, 10).value = row.fechaProbable || "";
+      sheet.getCell(excelRow, 11).value = row.fechaFin || "";
+    });
+
+    sheet.columns = [
+      { width: 24 },
+      { width: 32 },
+      { width: 16 },
+      { width: 16 },
+      { width: 16 },
+      { width: 18 },
+      { width: 18 },
+      { width: 20 },
+      { width: 14 },
+      { width: 18 },
+      { width: 18 },
+    ];
+
+    const buffer = await workbook.xlsx.writeBuffer();
+
+    saveAs(
+      new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      }),
+      `Operacion-${operationId || "resultado"}-facturas-validas.xlsx`
+    );
   };
 
   const columns = useMemo(
@@ -704,6 +888,33 @@ export const UploadExcelStep = ({
             error={getFieldErrorMessage(params.row, ["inversionista", "investor_name", "investor_id"])}
           />
         ),
+      },
+      {
+        field: "porcentajeDescuento",
+        headerName: "% Desc.",
+        minWidth: 95,
+        flex: 0.8,
+        align: "center",
+        headerAlign: "center",
+        renderCell: (params) => {
+          const value = params.value;
+
+          const numericValue =
+            value === "" || value === null || value === undefined
+              ? ""
+              : Number(value);
+
+          return (
+            <ErrorCell
+              value={numericValue === "" ? "" : `${numericValue}%`}
+              error={getFieldErrorMessage(params.row, [
+                "porcentaje_descuento",
+                "porcentajeDescuento",
+              ])}
+              align="center"
+            />
+          );
+        },
       },
       {
         field: "tasaDesc",
@@ -905,6 +1116,15 @@ export const UploadExcelStep = ({
   const showRegisterButton =
     (status === "processed_success" || status === "processed_error") && canRegister;
 
+  const finalTotalOperacion =
+    registerSummary?.totalOperacion ?? totalOperacionCalculada;
+
+  const finalFacturasRegistradas =
+    registerSummary?.facturasRegistradas ?? validRows.length;
+
+  const finalTasaPromedio =
+    registerSummary?.tasaPromedioPonderada ?? tasaPromedioPonderadaCalculada;
+
   return (
     <Box sx={{ width: "100%" }}>
       <FileErrorModal
@@ -913,143 +1133,292 @@ export const UploadExcelStep = ({
         message={modalError}
       />
 
-      <Grid container spacing={2}>
-        <Grid item xs={12} md={5}>
-          <UploadCard
-            file={file}
-            onPickFile={handlePickFile}
-            inputRef={inputRef}
-            disabled={status === "processing"}
-          />
-        </Grid>
+      {status !== "registered_success" && (
+        <>
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={5}>
+              <UploadCard
+                file={file}
+                onPickFile={handlePickFile}
+                inputRef={inputRef}
+                disabled={status === "processing"}
+              />
+            </Grid>
 
-        <Grid item xs={12} md={7}>
-          <Box
-            sx={{
-              height: 90,
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              gap: 2,
-            }}
-          >
-            <ProcessingBanner
-              status={status}
-              processedMessage={processedMessage}
-              errorCount={errorCount}
-            />
-
-            {showRegisterButton ? (
-              <Button
-                variant="contained"
-                onClick={handleRegisterOperation}
+            <Grid item xs={12} md={7}>
+              <Box
                 sx={{
-                  minWidth: 180,
-                  height: 38,
-                  bgcolor: "#fff",
-                  color: "#2E9B9B",
-                  border: "1px solid #2E9B9B",
-                  boxShadow: "none",
-                  "&:hover": {
-                    bgcolor: "#F6FFFF",
-                    boxShadow: "none",
-                  },
+                  height: 90,
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  gap: 2,
                 }}
               >
-                Registrar Operación
-              </Button>
-            ) : null}
-          </Box>
-        </Grid>
-      </Grid>
+                <ProcessingBanner
+                  status={status}
+                  processedMessage={processedMessage}
+                  errorCount={errorCount}
+                />
 
-      <Box sx={{ mt: 1.5 }}>
-        <DataGrid
-          autoHeight={false}
-          rows={rows}
-          columns={columns}
-          getRowClassName={buildRowClassName}
-          disableRowSelectionOnClick
-          hideFooter={rows.length <= 10}
-          pageSizeOptions={[10, 20, 50]}
-          loading={status === "processing"}
-          sx={{
-            height: 315,
-            border: 0,
-            "& .MuiDataGrid-columnHeaders": {
-              backgroundColor: "#EAEAEA",
-              borderBottom: "none",
-              minHeight: "30px !important",
-              maxHeight: "30px !important",
-            },
-            "& .MuiDataGrid-columnHeaderTitle": {
-              fontWeight: 700,
-              fontSize: 11,
-              color: "#222",
-            },
-            "& .MuiDataGrid-cell": {
-              fontSize: 11,
-              borderBottom: "none",
-              color: "#222",
-              display: "flex",
-              alignItems: "center",
-            },
-            "& .MuiDataGrid-row": {
-              minHeight: "34px !important",
-              maxHeight: "34px !important",
-            },
-            "& .MuiDataGrid-row.upload-row-error": {
-              backgroundColor: "#fff",
-            },
-            "& .MuiDataGrid-footerContainer": {
-              borderTop: "none",
-            },
-          }}
-          slots={{
-            noRowsOverlay: () =>
-              showEmptyPreview ? (
-                <Box
-                  sx={{
-                    height: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexDirection: "column",
-                    color: "#D2D2D2",
-                  }}
-                >
-                  <InsertDriveFileOutlinedIcon sx={{ fontSize: 120, opacity: 0.6 }} />
-                  <Typography sx={{ mt: 1, fontWeight: 600, color: "#C8C8C8" }}>
-                    Aún no has cargado un archivo
-                  </Typography>
-                  <Typography sx={{ fontSize: 13, color: "#D1D1D1" }}>
-                    Al seleccionar un archivo, los datos se han previsualizado aquí.
-                  </Typography>
-                </Box>
-              ) : null,
-            loadingOverlay: () => (
-              <Box sx={{ p: 2, width: "100%" }}>
-                {Array.from({ length: 14 }).map((_, rowIndex) => (
-                  <Box
-                    key={rowIndex}
+                {showRegisterButton ? (
+                  <Button
+                    variant="contained"
+                    onClick={handleRegisterOperation}
                     sx={{
-                      display: "grid",
-                      gridTemplateColumns:
-                        "1.2fr 1.8fr 0.8fr 0.8fr 1fr 1fr 1fr 1.3fr 0.9fr 0.9fr",
-                      gap: 1,
-                      mb: 1,
+                      minWidth: 180,
+                      height: 38,
+                      bgcolor: "#fff",
+                      color: "#2E9B9B",
+                      border: "1px solid #2E9B9B",
+                      boxShadow: "none",
+                      "&:hover": {
+                        bgcolor: "#F6FFFF",
+                        boxShadow: "none",
+                      },
                     }}
                   >
-                    {Array.from({ length: 10 }).map((__, colIndex) => (
-                      <Skeleton key={colIndex} variant="rounded" height={16} />
+                    Registrar 
+                  </Button>
+                ) : null}
+              </Box>
+            </Grid>
+          </Grid>
+
+          <Box sx={{ mt: 1.5 }}>
+            <DataGrid
+              autoHeight={false}
+              rows={rows}
+              columns={columns}
+              getRowClassName={buildRowClassName}
+              disableRowSelectionOnClick
+              hideFooter={rows.length <= 10}
+              pageSizeOptions={[10, 20, 50]}
+              loading={status === "processing"}
+              sx={{
+                height: 315,
+                border: 0,
+                "& .MuiDataGrid-columnHeaders": {
+                  backgroundColor: "#EAEAEA",
+                  borderBottom: "none",
+                  minHeight: "30px !important",
+                  maxHeight: "30px !important",
+                },
+                "& .MuiDataGrid-columnHeaderTitle": {
+                  fontWeight: 700,
+                  fontSize: 11,
+                  color: "#222",
+                },
+                "& .MuiDataGrid-cell": {
+                  fontSize: 11,
+                  borderBottom: "none",
+                  color: "#222",
+                  display: "flex",
+                  alignItems: "center",
+                },
+                "& .MuiDataGrid-row": {
+                  minHeight: "34px !important",
+                  maxHeight: "34px !important",
+                },
+                "& .MuiDataGrid-row.upload-row-error": {
+                  backgroundColor: "#fff",
+                },
+                "& .MuiDataGrid-footerContainer": {
+                  borderTop: "none",
+                },
+              }}
+              slots={{
+                noRowsOverlay: () =>
+                  showEmptyPreview ? (
+                    <Box
+                      sx={{
+                        height: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexDirection: "column",
+                        color: "#D2D2D2",
+                      }}
+                    >
+                      <InsertDriveFileOutlinedIcon sx={{ fontSize: 120, opacity: 0.6 }} />
+                      <Typography sx={{ mt: 1, fontWeight: 600, color: "#C8C8C8" }}>
+                        Aún no has cargado un archivo
+                      </Typography>
+                      <Typography sx={{ fontSize: 13, color: "#D1D1D1" }}>
+                        Al seleccionar un archivo, los datos se han previsualizado aquí.
+                      </Typography>
+                    </Box>
+                  ) : null,
+                loadingOverlay: () => (
+                  <Box sx={{ p: 2, width: "100%" }}>
+                    {Array.from({ length: 14 }).map((_, rowIndex) => (
+                      <Box
+                        key={rowIndex}
+                        sx={{
+                          display: "grid",
+                          gridTemplateColumns:
+                            "1.2fr 1.8fr 0.8fr 0.8fr 1fr 1fr 1fr 1.3fr 0.9fr 0.9fr",
+                          gap: 1,
+                          mb: 1,
+                        }}
+                      >
+                        {Array.from({ length: 10 }).map((__, colIndex) => (
+                          <Skeleton key={colIndex} variant="rounded" height={16} />
+                        ))}
+                      </Box>
                     ))}
                   </Box>
-                ))}
-              </Box>
-            ),
+                ),
+              }}
+            />
+          </Box>
+        </>
+      )}
+
+      {status === "registered_success" && (
+        <Box
+          sx={{
+            width: "100%",
+            minHeight: 520,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 4,
+            pt: 2,
           }}
-        />
-      </Box>
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box
+              sx={{
+                width: 110,
+                height: 110,
+                borderRadius: "50%",
+                border: "8px solid #8BB38F",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#8BB38F",
+                fontSize: 58,
+                fontWeight: 800,
+              }}
+            >
+              ✓
+            </Box>
+
+            <Typography
+              sx={{
+                color: "#7EAF86",
+                fontWeight: 700,
+                fontSize: 32,
+              }}
+            >
+              ¡Operación #{registerSummary?.operationId ?? operationId} Registrada con Éxito!
+            </Typography>
+          </Box>
+
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
+              gap: 4,
+              width: "100%",
+              maxWidth: 900,
+            }}
+          >
+            <Box
+              sx={{
+                bgcolor: "#fff",
+                borderRadius: 2,
+                boxShadow: 3,
+                py: 4,
+                px: 3,
+                textAlign: "center",
+              }}
+            >
+              <Typography sx={{ fontSize: 28, fontWeight: 800, color: "#158C96", mb: 1 }}>
+                {Number(finalTotalOperacion || 0).toLocaleString("es-CO", {
+                  style: "currency",
+                  currency: "COP",
+                })}
+              </Typography>
+              <Typography sx={{ fontSize: 14, color: "#666" }}>
+                Total de la Operación
+              </Typography>
+            </Box>
+
+            <Box
+              sx={{
+                bgcolor: "#fff",
+                borderRadius: 2,
+                boxShadow: 3,
+                py: 4,
+                px: 3,
+                textAlign: "center",
+              }}
+            >
+              <Typography sx={{ fontSize: 28, fontWeight: 800, color: "#158C96", mb: 1 }}>
+                {finalFacturasRegistradas ?? 0}
+              </Typography>
+              <Typography sx={{ fontSize: 14, color: "#666" }}>
+                Facturas Registradas
+              </Typography>
+            </Box>
+
+            <Box
+              sx={{
+                bgcolor: "#fff",
+                borderRadius: 2,
+                boxShadow: 3,
+                py: 4,
+                px: 3,
+                textAlign: "center",
+              }}
+            >
+              <Typography sx={{ fontSize: 28, fontWeight: 800, color: "#158C96", mb: 1 }}>
+                {formatPercent(finalTasaPromedio)}
+              </Typography>
+              <Typography sx={{ fontSize: 14, color: "#666" }}>
+                Tasa Promedio Ponderada
+              </Typography>
+            </Box>
+          </Box>
+
+          <Box
+            sx={{
+              display: "flex",
+              gap: 3,
+              flexWrap: "wrap",
+              justifyContent: "center",
+            }}
+          >
+            <Button
+              variant="outlined"
+              onClick={handleDownloadValidExcel}
+              sx={{
+                minWidth: 260,
+                color: "#2E9B9B",
+                borderColor: "#2E9B9B",
+              }}
+            >
+              Descargar Excel sin errores
+            </Button>
+            <Button
+  variant="outlined"
+  sx={{
+    minWidth: 220,
+    color: "#2E9B9B",
+    borderColor: "#2E9B9B",
+  }}
+  onClick={() => {
+    window.location.reload();
+  }}
+>
+  Registrar otra operación
+</Button> <Button variant="outlined" sx={{ minWidth: 220, color: "#2E9B9B", borderColor: "#2E9B9B", }} onClick={() => { window.location.href = "/operations"; }} > Ir a Operaciones </Button>
+          </Box>
+        </Box>
+      )}
     </Box>
   );
 };

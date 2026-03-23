@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Box,
   Typography,
@@ -7,11 +7,12 @@ import {
   Autocomplete,
   Button,
 } from "@mui/material";
+import { Toast } from "@components/toast";
 import Skeleton from "@mui/material/Skeleton";
 import { DataGrid } from "@mui/x-data-grid";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
-
+import { GetClientsWithAccounts } from "../queries";
 const InvestorsTableSkeleton = () => {
   return (
     <Box sx={{ px: 1, pt: 0.5 }}>
@@ -63,6 +64,8 @@ export const InvestorsAssignmentTable = ({
   investorAssignments = [],
   investors = [],
   getBillFractionFetch,
+    getBillFractionBulkFetch,
+
   cargarCuentas,
   cargarBrokerFromInvestor,
   setFieldValue,
@@ -78,17 +81,76 @@ export const InvestorsAssignmentTable = ({
 }) => {
   const [loadingRows, setLoadingRows] = useState(false);
   const [search, setSearch] = useState("");
-
   const norm = (v) => (v ?? "").toString().trim().toLowerCase();
-  const getBillId = (bill) => bill?.id ?? bill?.billId ?? bill?.number ?? "";
+  const [validInvestors, setValidInvestors] = useState([]);
+  const [loadingValidInvestors, setLoadingValidInvestors] = useState(false);
 
-  const formatCurrency = (value) =>
-    Number(value || 0).toLocaleString("es-CO", {
-      style: "currency",
-      currency: "COP",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    });
+  useEffect(() => {
+  let cancelled = false;
+
+  const loadValidInvestors = async () => {
+    if (!Array.isArray(investors) || investors.length === 0) {
+      setValidInvestors([]);
+      return;
+    }
+
+    setLoadingValidInvestors(true);
+
+    try {
+      const clientIds = investors
+        .map((inv) => inv?.value ?? inv?.data?.id ?? inv?.id)
+        .filter(Boolean);
+
+      const response = await GetClientsWithAccounts({
+        client_ids: clientIds,
+      });
+
+      const rows = response?.data || [];
+      const validIds = new Set(
+        rows
+          .filter((item) => item?.has_accounts)
+          .map((item) => String(item.client_id))
+      );
+
+      if (cancelled) return;
+
+      const filtered = investors.filter((inv) => {
+        const id = inv?.value ?? inv?.data?.id ?? inv?.id;
+        return validIds.has(String(id));
+      });
+
+      setValidInvestors(filtered);
+    } catch (error) {
+      console.error("Error loading clients with accounts:", error);
+      if (!cancelled) {
+        setValidInvestors([]);
+      }
+    } finally {
+      if (!cancelled) {
+        setLoadingValidInvestors(false);
+      }
+    }
+  };
+
+  loadValidInvestors();
+
+  return () => {
+    cancelled = true;
+  };
+}, [investors]);
+  const getBillId = (bill, index) =>
+    bill?.id ??
+    bill?.billId ??
+    bill?.number ??
+    bill?.invoiceId ??
+    `bill-${index}`;
+    const formatCurrency = (value) =>
+      Number(value || 0).toLocaleString("es-CO", {
+        style: "currency",
+        currency: "COP",
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      });
 
   const formatDateForFile = (dateValue) => {
     const date = dateValue ? new Date(dateValue) : new Date();
@@ -105,89 +167,59 @@ export const InvestorsAssignmentTable = ({
     return d;
   };
 
- useEffect(() => {
+  const lastProcessedSignatureRef = useRef("");
+const billsSignature = useMemo(() => {
+  return JSON.stringify(
+    (billsToNegotiate || []).map((bill, index) => ({
+      id: bill?.id ?? bill?.billId ?? bill?.number ?? `bill-${index}`,
+      fractionsToSplit: Number(bill?.fractionsToSplit ?? 1),
+    }))
+  );
+}, [billsToNegotiate]);
+useEffect(() => {
   let cancelled = false;
 
   const buildRows = async () => {
     if (!Array.isArray(billsToNegotiate) || billsToNegotiate.length === 0) {
+      lastProcessedSignatureRef.current = "";
       setFieldValue("investorAssignments", []);
+      return;
+    }
+
+    if (lastProcessedSignatureRef.current === billsSignature) {
       return;
     }
 
     setLoadingRows(true);
 
     try {
-      const rows = [];
+      const payload = {
+        bills: billsToNegotiate.map((bill, index) => ({
+          id: bill?.id ?? bill?.billId ?? bill?.number ?? `bill-${index}`,
+          billId: bill?.billId ?? bill?.number ?? "",
+          fractionsToSplit: Number(bill?.fractionsToSplit ?? 1),
+        })),
+      };
 
-      for (const bill of billsToNegotiate) {
-        const billUniqueId = getBillId(bill);
-        const splitCount = Number(bill.fractionsToSplit ?? 1);
+      const response = await getBillFractionBulkFetch(payload);
 
-        let startFraction = 1;
+      let rowsFromApi = [];
 
-        try {
-          const response = await getBillFractionFetch(billUniqueId);
-          console.log(response)
-          const nextFractionRaw =
-            response?.data?.nextFraction ??
-            response?.nextFraction;
-
-          const currentFractionRaw =
-            response?.data?.currentFraction ??
-            response?.data?.fraction ??
-            response?.currentFraction ??
-            response?.fraction;
-
-          if (
-            nextFractionRaw !== undefined &&
-            nextFractionRaw !== null &&
-            nextFractionRaw !== ""
-          ) {
-            startFraction = Number(nextFractionRaw);
-          } else if (
-            currentFractionRaw !== undefined &&
-            currentFractionRaw !== null &&
-            currentFractionRaw !== ""
-          ) {
-            startFraction = Number(currentFractionRaw) + 1;
-          } else {
-            startFraction = 1;
-          }
-
-          if (!startFraction || Number.isNaN(startFraction) || startFraction < 1) {
-            startFraction = 1;
-          }
-        } catch (error) {
-          startFraction = 1;
-        }
-
-        for (let i = 0; i < splitCount; i++) {
-          const fraction = startFraction + i;
-
-          rows.push({
-            id: `${billUniqueId}-${fraction}`,
-            billUniqueId,
-            billId: bill.billId ?? bill.number ?? bill.id ?? "",
-            currentBalance: Number(bill.currentBalance ?? bill.balance ?? 0),
-            fraction,
-            investorId: "",
-            investorLabel: "",
-            selectedInvestor: null,
-            investorBrokerId: "",
-            investorBrokerName: "",
-            accountId: "",
-            selectedAccount: null,
-            availableAccounts: [],
-            accountAvailableBalance: 0,
-            accountTotalBalance: 0,
-            rawBill: bill,
-          });
-        }
+      if (Array.isArray(response)) {
+        rowsFromApi = response;
+      } else if (Array.isArray(response?.data)) {
+        rowsFromApi = response.data;
+      } else if (Array.isArray(response?.data?.data)) {
+        rowsFromApi = response.data.data;
+      } else if (Array.isArray(response?.rows)) {
+        rowsFromApi = response.rows;
+      } else if (Array.isArray(response?.data?.rows)) {
+        rowsFromApi = response.data.rows;
       }
 
       if (cancelled) return;
 
-      const merged = rows.map((row) => {
+      const merged = rowsFromApi.map((row) => {
         const existing = (investorAssignments || []).find((it) => it.id === row.id);
 
         return existing
@@ -207,9 +239,17 @@ export const InvestorsAssignmentTable = ({
           : row;
       });
 
+      lastProcessedSignatureRef.current = billsSignature;
       setFieldValue("investorAssignments", merged);
+    } catch (error) {
+      console.error("Error building investor rows:", error);
+      if (!cancelled) {
+        setFieldValue("investorAssignments", []);
+      }
     } finally {
-      if (!cancelled) setLoadingRows(false);
+      if (!cancelled) {
+        setLoadingRows(false);
+      }
     }
   };
 
@@ -218,7 +258,8 @@ export const InvestorsAssignmentTable = ({
   return () => {
     cancelled = true;
   };
-}, [billsToNegotiate]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [billsSignature]);
 
   const filteredRows = useMemo(() => {
     const q = norm(search);
@@ -242,67 +283,97 @@ export const InvestorsAssignmentTable = ({
   };
 
   const handleInvestorChange = async (row, newInvestor) => {
-    if (!newInvestor) {
-      updateRow(row.id, {
-        investorId: "",
-        investorLabel: "",
-        selectedInvestor: null,
-        investorBrokerId: "",
-        investorBrokerName: "",
-        accountId: "",
-        selectedAccount: null,
-        availableAccounts: [],
-        accountAvailableBalance: 0,
-        accountTotalBalance: 0,
-      });
-      return;
-    }
-
-    const investorId = newInvestor?.value ?? newInvestor?.data?.id ?? newInvestor?.id ?? "";
-    const investorLabel =
-      newInvestor?.label ??
-      (newInvestor?.data?.first_name && newInvestor?.data?.last_name
-        ? `${newInvestor.data.first_name} ${newInvestor.data.last_name}`
-        : newInvestor?.data?.social_reason || "");
-
-    let accounts = [];
-    let investorBrokerId = "";
-    let investorBrokerName = "";
-
-    try {
-      const cuentasResponse = await cargarCuentas?.(investorId);
-      accounts = cuentasResponse?.data || [];
-    } catch (error) {
-      accounts = [];
-    }
-
-    try {
-      const brokerResponse = await cargarBrokerFromInvestor?.(investorId);
-      const brokerData = brokerResponse?.data;
-
-      investorBrokerId = brokerData?.id || "";
-      investorBrokerName =
-        brokerData?.first_name && brokerData?.last_name
-          ? `${brokerData.first_name} ${brokerData.last_name}`
-          : brokerData?.social_reason || "";
-    } catch (error) {
-      investorBrokerId = "";
-      investorBrokerName = "";
-    }
-
+  if (!newInvestor) {
     updateRow(row.id, {
-      investorId,
-      investorLabel,
-      selectedInvestor: newInvestor,
-      investorBrokerId,
-      investorBrokerName,
+      investorId: "",
+      investorLabel: "",
+      selectedInvestor: null,
+      investorBrokerId: "",
+      investorBrokerName: "",
       accountId: "",
       selectedAccount: null,
-      availableAccounts: accounts,
+      availableAccounts: [],
       accountAvailableBalance: 0,
       accountTotalBalance: 0,
     });
-  };
+    return;
+  }
+
+  const investorId =
+    newInvestor?.value ?? newInvestor?.data?.id ?? newInvestor?.id ?? "";
+
+  const emitterId =
+    formik?.emitter?.value ??
+    formik?.emitter?.data?.id ??
+    emitter?.value ??
+    emitter?.data?.id ??
+    "";
+
+  if (String(investorId) === String(emitterId)) {
+    Toast(
+      "El emisor no puede ser el mismo inversionista en ninguna fracción",
+      "warning"
+    );
+
+    updateRow(row.id, {
+      investorId: "",
+      investorLabel: "",
+      selectedInvestor: null,
+      investorBrokerId: "",
+      investorBrokerName: "",
+      accountId: "",
+      selectedAccount: null,
+      availableAccounts: [],
+      accountAvailableBalance: 0,
+      accountTotalBalance: 0,
+    });
+    return;
+  }
+
+  const investorLabel =
+    newInvestor?.label ??
+    (newInvestor?.data?.first_name && newInvestor?.data?.last_name
+      ? `${newInvestor.data.first_name} ${newInvestor.data.last_name}`
+      : newInvestor?.data?.social_reason || "");
+
+  let accounts = [];
+  let investorBrokerId = "";
+  let investorBrokerName = "";
+
+  try {
+    const cuentasResponse = await cargarCuentas?.(investorId);
+    accounts = cuentasResponse?.data || [];
+  } catch (error) {
+    accounts = [];
+  }
+
+  try {
+    const brokerResponse = await cargarBrokerFromInvestor?.(investorId);
+    const brokerData = brokerResponse?.data;
+
+    investorBrokerId = brokerData?.id || "";
+    investorBrokerName =
+      brokerData?.first_name && brokerData?.last_name
+        ? `${brokerData.first_name} ${brokerData.last_name}`
+        : brokerData?.social_reason || "";
+  } catch (error) {
+    investorBrokerId = "";
+    investorBrokerName = "";
+  }
+
+  updateRow(row.id, {
+    investorId,
+    investorLabel,
+    selectedInvestor: newInvestor,
+    investorBrokerId,
+    investorBrokerName,
+    accountId: "",
+    selectedAccount: null,
+    availableAccounts: accounts,
+    accountAvailableBalance: 0,
+    accountTotalBalance: 0,
+  });
+};
 
   const handleAccountChange = (row, newAccount) => {
     if (!newAccount) {
@@ -543,37 +614,38 @@ export const InvestorsAssignmentTable = ({
       sortable: false,
       renderCell: (params) => (
         <Autocomplete
-          size="small"
-          fullWidth
-          options={investors || []}
-          value={params.row.selectedInvestor ?? null}
-          getOptionLabel={(option) =>
-            option?.label ??
-            (option?.data?.first_name && option?.data?.last_name
-              ? `${option.data.first_name} ${option.data.last_name}`
-              : option?.data?.social_reason || "")
-          }
-          isOptionEqualToValue={(option, value) =>
-            (option?.value ?? option?.data?.id ?? option?.id) ===
-            (value?.value ?? value?.data?.id ?? value?.id)
-          }
-          onChange={(_, newValue) => handleInvestorChange(params.row, newValue)}
-          renderInput={(paramsInput) => (
-            <TextField
-              {...paramsInput}
-              placeholder="Nombre Inversionista"
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  height: 32,
-                  borderRadius: "4px",
-                  backgroundColor: "#fff",
-                  fontSize: 12,
-                },
-              }}
-            />
-          )}
-          disablePortal
-        />
+  size="small"
+  fullWidth
+  options={validInvestors || []}
+  loading={loadingValidInvestors}
+  value={params.row.selectedInvestor ?? null}
+  getOptionLabel={(option) =>
+    option?.label ??
+    (option?.data?.first_name && option?.data?.last_name
+      ? `${option.data.first_name} ${option.data.last_name}`
+      : option?.data?.social_reason || "")
+  }
+  isOptionEqualToValue={(option, value) =>
+    (option?.value ?? option?.data?.id ?? option?.id) ===
+    (value?.value ?? value?.data?.id ?? value?.id)
+  }
+  onChange={(_, newValue) => handleInvestorChange(params.row, newValue)}
+  renderInput={(paramsInput) => (
+    <TextField
+      {...paramsInput}
+      placeholder="Nombre Inversionista"
+      sx={{
+        "& .MuiOutlinedInput-root": {
+          height: 32,
+          borderRadius: "4px",
+          backgroundColor: "#fff",
+          fontSize: 12,
+        },
+      }}
+    />
+  )}
+  disablePortal
+/>
       ),
     },
     {
@@ -612,17 +684,28 @@ export const InvestorsAssignmentTable = ({
         />
       ),
     },
-    {
-      field: "accountAvailableBalance",
-      headerName: "Saldo",
-      minWidth: 120,
-      sortable: false,
-      renderCell: (params) => (
-        <Typography sx={{ fontSize: 13, color: "#4D4D4D" }}>
-          {formatCurrency(params.row.accountAvailableBalance || 0)}
-        </Typography>
-      ),
-    },
+  {
+  field: "accountAvailableBalance",
+  headerName: "Saldo",
+  minWidth: 120,
+  sortable: false,
+  renderCell: (params) => {
+    const value = Number(params.row.accountAvailableBalance || 0);
+    const isNegative = value < 0;
+
+    return (
+      <Typography
+        sx={{
+          fontSize: 13,
+          color: isNegative ? "#D32F2F" : "#4D4D4D",
+          fontWeight: isNegative ? 700 : 400,
+        }}
+      >
+        {formatCurrency(value)}
+      </Typography>
+    );
+  },
+},
   ];
 
   return (
@@ -684,13 +767,14 @@ export const InvestorsAssignmentTable = ({
                 <InvestorsTableSkeleton />
               </Box>
             ) : (
-              <DataGrid
-                rows={filteredRows}
-                columns={columns}
-                hideFooter
-                disableRowSelectionOnClick
-                rowHeight={40}
-                columnHeaderHeight={34}
+             <DataGrid
+  rows={filteredRows}
+  columns={columns}
+  getRowId={(row) => row.id}
+  hideFooter
+  disableRowSelectionOnClick
+  rowHeight={40}
+  columnHeaderHeight={34}
                 sx={{
                   border: 0,
                   height: "100%",

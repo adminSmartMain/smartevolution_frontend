@@ -8,8 +8,15 @@ import {
   IconButton,
   useTheme,
   useMediaQuery,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
 } from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import CloseIcon from "@mui/icons-material/Close";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import { DataGrid } from "@mui/x-data-grid";
 
 const BillsLeftSkeleton = () => {
@@ -38,6 +45,127 @@ const BillsLeftSkeleton = () => {
   );
 };
 
+const ConfirmClearLotDialog = ({
+  open,
+  onClose,
+  onConfirm,
+  totalBills = 0,
+}) => {
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+      <DialogTitle
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          color: "#2E9B9B",
+          fontSize: 16,
+          fontWeight: 500,
+          borderBottom: "1px solid #7BC7C7",
+          pb: 1.5,
+        }}
+      >
+        Vaciar Lote
+        <IconButton onClick={onClose} size="small" sx={{ color: "#2E9B9B" }}>
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
+
+      <DialogContent sx={{ textAlign: "center", py: 4 }}>
+        <Box sx={{ display: "flex", justifyContent: "center", mb: 2.5 }}>
+          <Box
+            sx={{
+              width: 82,
+              height: 82,
+              borderRadius: "50%",
+              bgcolor: "#FF160D",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <ErrorOutlineIcon sx={{ color: "#fff", fontSize: 52 }} />
+          </Box>
+        </Box>
+
+        <Typography
+          sx={{
+            fontSize: 24,
+            fontWeight: 500,
+            color: "#111",
+            mb: 1.5,
+          }}
+        >
+          ¿Vaciar todo el lote de facturas?
+        </Typography>
+
+        <Typography
+          sx={{
+            fontSize: 14,
+            color: "#222",
+            maxWidth: 560,
+            mx: "auto",
+            lineHeight: 1.5,
+          }}
+        >
+          Estás a punto de remover las {totalBills} facturas seleccionadas. Esta
+          acción no se puede deshacer y deberás seleccionarlas nuevamente.
+        </Typography>
+      </DialogContent>
+
+      <DialogActions
+        sx={{
+          justifyContent: "center",
+          gap: 4,
+          pb: 3.5,
+        }}
+      >
+        <Button
+          variant="contained"
+          onClick={onConfirm}
+          sx={{
+            minWidth: 200,
+            height: 42,
+            bgcolor: "#FF160D",
+            color: "#fff",
+            textTransform: "none",
+            fontSize: 15,
+            borderRadius: 1,
+            boxShadow: "none",
+            "&:hover": {
+              bgcolor: "#E1120A",
+              boxShadow: "none",
+            },
+          }}
+        >
+          Vaciar lote
+        </Button>
+
+        <Button
+          variant="contained"
+          onClick={onClose}
+          sx={{
+            minWidth: 200,
+            height: 42,
+            bgcolor: "#C9C9C9",
+            color: "#fff",
+            textTransform: "none",
+            fontSize: 15,
+            borderRadius: 1,
+            boxShadow: "none",
+            "&:hover": {
+              bgcolor: "#BDBDBD",
+              boxShadow: "none",
+            },
+          }}
+        >
+          Cancelar
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
 export const BillsDualTable = ({
   takedBills = [],
   billsToNegotiate = [],
@@ -54,6 +182,10 @@ export const BillsDualTable = ({
   const norm = (v) => (v ?? "").toString().trim().toLowerCase();
   const isFirstRender = useRef(true);
 
+  const [searchLeft, setSearchLeft] = useState("");
+  const [searchRight, setSearchRight] = useState("");
+  const [openClearLotDialog, setOpenClearLotDialog] = useState(false);
+
   const getBillId = (b) => b.id ?? "";
 
   const formatCurrency = (value) =>
@@ -64,40 +196,36 @@ export const BillsDualTable = ({
       maximumFractionDigits: 0,
     });
 
- const mapBillToRow = (b) => ({
-  id: b.id,
-  billId: b.billId ?? b.number ?? "",
-  emitterName: b.emitterName ?? b.emitter?.name ?? b.emitter ?? "",
-  payerName: b.payerName ?? b.payer?.name ?? b.payer ?? "",
-  currentBalance: Number(b.currentBalance ?? b.balance ?? 0),
-  dateBill: b.dateBill,
-  expirationDate: b.expirationDate,
-  total: Number(b.total ?? 0),
-  fractionsToSplit: Number(b.fractionsToSplit ?? 1),
-  raw: {
-    ...b,
+  const mapBillToRow = (b) => ({
+    id: b.id,
+    billId: b.billId ?? b.number ?? "",
+    emitterName: b.emitterName ?? b.emitter?.name ?? b.emitter ?? "",
+    payerName: b.payerName ?? b.payer?.name ?? b.payer ?? "",
+    currentBalance: Number(b.currentBalance ?? b.balance ?? 0),
+    dateBill: b.dateBill,
+    expirationDate: b.expirationDate,
+    total: Number(b.total ?? 0),
     fractionsToSplit: Number(b.fractionsToSplit ?? 1),
-  },
-});
-
-  
-
-  const [searchLeft, setSearchLeft] = useState("");
-  const [searchRight, setSearchRight] = useState("");
+    raw: {
+      ...b,
+      fractionsToSplit: Number(b.fractionsToSplit ?? 1),
+    },
+  });
 
   const takedBillsRows = useMemo(
     () => (Array.isArray(takedBills) ? takedBills : []).map(mapBillToRow),
     [takedBills]
   );
 
-  console.log(takedBillsRows)
-
   const selectedRows = useMemo(
     () => (Array.isArray(billsToNegotiate) ? billsToNegotiate : []).map(mapBillToRow),
     [billsToNegotiate]
   );
 
-  const leftSelectionModel = useMemo(() => selectedRows.map((row) => row.id), [selectedRows]);
+  const leftSelectionModel = useMemo(
+    () => selectedRows.map((row) => row.id),
+    [selectedRows]
+  );
 
   const filteredAvailable = useMemo(() => {
     const q = norm(searchLeft);
@@ -124,7 +252,10 @@ export const BillsDualTable = ({
   }, [selectedRows, searchRight]);
 
   const selectedTotalBalance = useMemo(() => {
-    return selectedRows.reduce((acc, row) => acc + Number(row.currentBalance ?? 0), 0);
+    return selectedRows.reduce(
+      (acc, row) => acc + Number(row.currentBalance ?? 0),
+      0
+    );
   }, [selectedRows]);
 
   useEffect(() => {
@@ -137,8 +268,7 @@ export const BillsDualTable = ({
     setSearchRight("");
     setFieldValue?.("billsToNegotiate", []);
     setFieldValue?.("investorAssignments", []);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nombrePagador, emitterKey]);
+  }, [nombrePagador, emitterKey, setFieldValue]);
 
   const syncSelectionToCart = (newModel) => {
     const selectedSet = new Set(Array.isArray(newModel) ? newModel : []);
@@ -157,7 +287,9 @@ export const BillsDualTable = ({
 
         return {
           ...row.raw,
-          fractionsToSplit: Number(previous?.fractionsToSplit ?? row.raw?.fractionsToSplit ?? 1),
+          fractionsToSplit: Number(
+            previous?.fractionsToSplit ?? row.raw?.fractionsToSplit ?? 1
+          ),
         };
       });
 
@@ -168,16 +300,18 @@ export const BillsDualTable = ({
     const parsed = parseInt(value, 10);
     const safeValue = Number.isNaN(parsed) ? 1 : Math.max(1, parsed);
 
-    const updated = (Array.isArray(billsToNegotiate) ? billsToNegotiate : []).map((bill) => {
-      const currentId = getBillId(bill);
+    const updated = (Array.isArray(billsToNegotiate) ? billsToNegotiate : []).map(
+      (bill) => {
+        const currentId = getBillId(bill);
 
-      if (currentId !== rowId) return bill;
+        if (currentId !== rowId) return bill;
 
-      return {
-        ...bill,
-        fractionsToSplit: safeValue,
-      };
-    });
+        return {
+          ...bill,
+          fractionsToSplit: safeValue,
+        };
+      }
+    );
 
     setFieldValue("billsToNegotiate", updated);
     setFieldValue?.("investorAssignments", []);
@@ -195,12 +329,22 @@ export const BillsDualTable = ({
     setFieldValue?.("investorAssignments", []);
   };
 
-  const clearLot = () => {
-    setFieldValue("billsToNegotiate", []);
-    setFieldValue?.("investorAssignments", []);
+  const handleOpenClearLotDialog = () => {
+    if (!selectedRows.length) return;
+    setOpenClearLotDialog(true);
   };
 
-    const leftColumns = useMemo(
+  const handleCloseClearLotDialog = () => {
+    setOpenClearLotDialog(false);
+  };
+
+  const handleConfirmClearLot = () => {
+    setFieldValue("billsToNegotiate", []);
+    setFieldValue?.("investorAssignments", []);
+    setOpenClearLotDialog(false);
+  };
+
+  const leftColumns = useMemo(
     () => [
       {
         field: "billId",
@@ -216,7 +360,6 @@ export const BillsDualTable = ({
           </Typography>
         ),
       },
-  
       {
         field: "currentBalance",
         headerName: "Saldo",
@@ -230,6 +373,7 @@ export const BillsDualTable = ({
     ],
     []
   );
+
   const rightColumns = useMemo(() => {
     const billIdWidth = isLgUp ? undefined : isMdUp ? 100 : 80;
     const billIdMinWidth = isLgUp ? 120 : isMdUp ? 100 : 70;
@@ -300,9 +444,10 @@ export const BillsDualTable = ({
                 "& .MuiInputBase-input": {
                   textAlign: "center",
                 },
-                "& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button": {
-                  opacity: 1,
-                },
+                "& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button":
+                  {
+                    opacity: 1,
+                  },
               }}
             />
           </Box>
@@ -335,281 +480,299 @@ export const BillsDualTable = ({
         ),
       },
     ];
-  }, [selectedRows, isLgUp, isMdUp, isSmUp]);
+  }, [isLgUp, isMdUp, isSmUp, selectedRows]);
 
   return (
-    <Grid container spacing={3} sx={{ mt: 3 }}>
-      <Grid item xs={12} md={6}>
-        <Box
-          sx={{
-            bgcolor: "#fff",
-            borderRadius: 2,
-            boxShadow: 0,
-            p: 2,
-            height: 500,
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
-          <TextField
-            placeholder="Buscar por ID / Emisor / Pagador"
-            fullWidth
-            size="small"
-            sx={{ mb: 2 }}
-            value={searchLeft}
-            onChange={(e) => setSearchLeft(e.target.value)}
-          />
+    <>
+      <ConfirmClearLotDialog
+        open={openClearLotDialog}
+        onClose={handleCloseClearLotDialog}
+        onConfirm={handleConfirmClearLot}
+        totalBills={selectedRows.length}
+      />
 
-          {loading ? (
-            <BillsLeftSkeleton />
-          ) : (
-            <Box sx={{ flex: 1, minHeight: 0 }}>
-              <DataGrid
-                rows={filteredAvailable}
-                columns={leftColumns}
-                checkboxSelection
-                disableRowSelectionOnClick
-                selectionModel={leftSelectionModel}
-                onSelectionModelChange={syncSelectionToCart}
-                rowSelectionModel={leftSelectionModel}
-                onRowSelectionModelChange={syncSelectionToCart}
-                pageSizeOptions={[10, 20, 50]}
-                initialState={{
-                  pagination: { paginationModel: { page: 0, pageSize: 10 } },
-                }}
-                rowHeight={32}
-                columnHeaderHeight={34}
-                sx={{
-                  border: 0,
-                  height: "100%",
-                  backgroundColor: "transparent",
-                  "& .MuiDataGrid-main": {
-                    border: 0,
-                  },
-                  "& .MuiDataGrid-columnHeaders": {
-                    backgroundColor: "#D9D9D9",
-                    borderBottom: "none",
-                    minHeight: "34px !important",
-                    maxHeight: "34px !important",
-                  },
-                  "& .MuiDataGrid-columnHeader": {
-                    px: 1,
-                  },
-                  "& .MuiDataGrid-columnHeaderTitle": {
-                    fontWeight: 700,
-                    fontSize: 13,
-                    color: "#111",
-                  },
-                  "& .MuiDataGrid-row": {
-                    backgroundColor: "#F3F3F3",
-                  },
-                  "& .MuiDataGrid-row:nth-of-type(even)": {
-                    backgroundColor: "#EAEAEA",
-                  },
-                  "& .MuiDataGrid-cell": {
-                    borderBottom: "1px solid #E0E0E0",
-                    fontSize: 13,
-                    color: "#222",
-                    px: 1,
-                    display: "flex",
-                    alignItems: "center",
-                  },
-                  "& .MuiDataGrid-cell:focus, & .MuiDataGrid-columnHeader:focus": {
-                    outline: "none",
-                  },
-                  "& .MuiDataGrid-row.Mui-selected": {
-                    backgroundColor: "rgba(54,167,167,0.12)",
-                  },
-                  "& .MuiDataGrid-row.Mui-selected:hover": {
-                    backgroundColor: "rgba(54,167,167,0.18)",
-                  },
-                  "& .MuiCheckbox-root": {
-                    color: "#2C9A9A",
-                    p: 0.5,
-                  },
-                  "& .Mui-checked": {
-                    color: "#2C9A9A !important",
-                  },
-                  "& .MuiDataGrid-columnHeaderCheckbox, & .MuiDataGrid-cellCheckbox": {
-                    justifyContent: "center",
-                    alignItems: "center",
-                  },
-                  "& .MuiDataGrid-footerContainer": {
-                    minHeight: 36,
-                    borderTop: "none",
-                  },
-                  "& .MuiTablePagination-root": {
-                    fontSize: 12,
-                  },
-                  "& .MuiDataGrid-selectedRowCount": {
-                    display: "none",
-                  },
-                }}
-              />
-            </Box>
-          )}
-        </Box>
-      </Grid>
-
-      <Grid item xs={12} md={6}>
-        <Box
-          sx={{
-            bgcolor: "#F7F7F7",
-            borderRadius: 1.5,
-            border: "1px solid #E3E3E3",
-            p: 1.5,
-            height: 500,
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
+      <Grid container spacing={2} sx={{ mt: 0 }}>
+        <Grid item xs={12} md={6}>
           <Box
             sx={{
+              bgcolor: "#fff",
+              borderRadius: 2,
+              boxShadow: 0,
+              p: 0,
+              height: 500,
               display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              mb: 1,
+              flexDirection: "column",
             }}
           >
-            <Typography
-              sx={{
-                fontSize: 13,
-                fontWeight: 600,
-                color: "#222",
-              }}
-            >
-              Facturas por negociar en esta operación
-            </Typography>
+            <TextField
+              placeholder="Buscar por ID / Emisor / Pagador"
+              fullWidth
+              size="small"
+              sx={{ mb: 2 }}
+              value={searchLeft}
+              onChange={(e) => setSearchLeft(e.target.value)}
+            />
 
-            <Typography
-              sx={{
-                cursor: "pointer",
-                color: "#E53935",
-                fontSize: 12,
-                fontWeight: 500,
-              }}
-              onClick={clearLot}
-            >
-              Vaciar lote
-            </Typography>
-          </Box>
-
-          <TextField
-            placeholder="Buscar por ID"
-            fullWidth
-            size="small"
-            sx={{
-              mb: 1.5,
-              "& .MuiInputBase-root": {
-                backgroundColor: "#fff",
-                fontSize: 12,
-              },
-            }}
-            value={searchRight}
-            onChange={(e) => setSearchRight(e.target.value)}
-          />
-
-          {filteredSelected.length === 0 ? (
-            <Box
-              sx={{
-                flex: 1,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#999",
-                textAlign: "center",
-                fontSize: 14,
-              }}
-            >
-              Aún no has seleccionado facturas
-            </Box>
-          ) : (
-            <>
+            {loading ? (
+              <BillsLeftSkeleton />
+            ) : (
               <Box sx={{ flex: 1, minHeight: 0 }}>
                 <DataGrid
-                  rows={filteredSelected}
-                  columns={rightColumns}
-                  hideFooter
+                  rows={filteredAvailable}
+                  columns={leftColumns}
+                  checkboxSelection
                   disableRowSelectionOnClick
-                  rowHeight={34}
+                  selectionModel={leftSelectionModel}
+                  onSelectionModelChange={syncSelectionToCart}
+                  rowSelectionModel={leftSelectionModel}
+                  onRowSelectionModelChange={syncSelectionToCart}
+                  pageSizeOptions={[10, 20, 50]}
+                  initialState={{
+                    pagination: { paginationModel: { page: 0, pageSize: 10 } },
+                  }}
+                  rowHeight={32}
                   columnHeaderHeight={34}
                   sx={{
                     border: 0,
                     height: "100%",
                     backgroundColor: "transparent",
+                    "& .MuiDataGrid-main": {
+                      border: 0,
+                    },
                     "& .MuiDataGrid-columnHeaders": {
-                      backgroundColor: "#E9E9E9",
-                      borderBottom: "1px solid #DADADA",
+                      backgroundColor: "#D9D9D9",
+                      borderBottom: "none",
+                      minHeight: "34px !important",
+                      maxHeight: "34px !important",
                     },
                     "& .MuiDataGrid-columnHeader": {
-                      px: 0.75,
+                      px: 1,
                     },
                     "& .MuiDataGrid-columnHeaderTitle": {
                       fontWeight: 700,
-                      fontSize: 12,
-                      color: "#1F1F1F",
-                      whiteSpace: "nowrap",
-                      overflow: "visible",
+                      fontSize: 13,
+                      color: "#111",
                     },
                     "& .MuiDataGrid-row": {
-                      backgroundColor: "transparent",
+                      backgroundColor: "#F3F3F3",
+                    },
+                    "& .MuiDataGrid-row:nth-of-type(even)": {
+                      backgroundColor: "#EAEAEA",
                     },
                     "& .MuiDataGrid-cell": {
-                      borderBottom: "none",
-                      fontSize: 12,
-                      color: "#2D2D2D",
-                      px: 0.75,
+                      borderBottom: "1px solid #E0E0E0",
+                      fontSize: 13,
+                      color: "#222",
+                      px: 1,
+                      display: "flex",
+                      alignItems: "center",
                     },
                     "& .MuiDataGrid-cell:focus, & .MuiDataGrid-columnHeader:focus": {
                       outline: "none",
                     },
-                    "& .MuiDataGrid-virtualScroller": {
-                      overflowX: "auto",
+                    "& .MuiDataGrid-row.Mui-selected": {
+                      backgroundColor: "rgba(54,167,167,0.12)",
                     },
-                    "& .MuiDataGrid-main": {
-                      minWidth: 0,
+                    "& .MuiDataGrid-row.Mui-selected:hover": {
+                      backgroundColor: "rgba(54,167,167,0.18)",
+                    },
+                    "& .MuiCheckbox-root": {
+                      color: "#2C9A9A",
+                      p: 0.5,
+                    },
+                    "& .Mui-checked": {
+                      color: "#2C9A9A !important",
+                    },
+                    "& .MuiDataGrid-columnHeaderCheckbox, & .MuiDataGrid-cellCheckbox": {
+                      justifyContent: "center",
+                      alignItems: "center",
                     },
                     "& .MuiDataGrid-footerContainer": {
+                      minHeight: 36,
+                      borderTop: "none",
+                    },
+                    "& .MuiTablePagination-root": {
+                      fontSize: 12,
+                    },
+                    "& .MuiDataGrid-selectedRowCount": {
                       display: "none",
                     },
                   }}
                 />
               </Box>
+            )}
+          </Box>
+        </Grid>
 
-              <Box
+        <Grid item xs={12} md={6}>
+          <Box
+            sx={{
+              bgcolor: "#F7F7F7",
+              borderRadius: 1.5,
+              border: "1px solid #E3E3E3",
+              p: 1.5,
+              height: 500,
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 1,
+              }}
+            >
+              <Typography
                 sx={{
-                  mt: 1,
-                  pt: 1,
-                  borderTop: "1px solid #DCDCDC",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: "#222",
                 }}
               >
-                <Typography
-                  sx={{
-                    fontSize: 12,
-                    fontWeight: 700,
-                    color: "#36A7A7",
-                  }}
-                >
-                  Total ({selectedRows.length} facturas)
-                </Typography>
+                Facturas por negociar en esta operación
+              </Typography>
 
-                <Typography
+              <Typography
+                sx={{
+                  cursor: selectedRows.length ? "pointer" : "not-allowed",
+                  color: selectedRows.length ? "#E53935" : "#BDBDBD",
+                  fontSize: 12,
+                  fontWeight: 500,
+                }}
+                onClick={handleOpenClearLotDialog}
+              >
+                Vaciar lote
+              </Typography>
+            </Box>
+
+            <TextField
+              placeholder="Buscar por ID"
+              fullWidth
+              size="small"
+              sx={{
+                mb: 1.5,
+                "& .MuiInputBase-root": {
+                  backgroundColor: "#fff",
+                  fontSize: 12,
+                },
+              }}
+              value={searchRight}
+              onChange={(e) => setSearchRight(e.target.value)}
+            />
+
+            {filteredSelected.length === 0 ? (
+              <Box
+                sx={{
+                  flex: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#999",
+                  textAlign: "center",
+                  fontSize: 14,
+                }}
+              >
+                Aún no has seleccionado facturas
+              </Box>
+            ) : (
+              <>
+                <Box sx={{ flex: 1, minHeight: 0 }}>
+                  <DataGrid
+                    rows={filteredSelected}
+                    columns={rightColumns}
+                    hideFooter
+                    disableRowSelectionOnClick
+                    rowHeight={34}
+                    columnHeaderHeight={34}
+                    sx={{
+                      border: 0,
+                      height: "100%",
+                      backgroundColor: "transparent",
+                      "& .MuiDataGrid-columnHeaders": {
+                        backgroundColor: "#E9E9E9",
+                        borderBottom: "1px solid #DADADA",
+                      },
+                      "& .MuiDataGrid-columnHeader": {
+                        px: 0.75,
+                      },
+                      "& .MuiDataGrid-columnHeaderTitle": {
+                        fontWeight: 700,
+                        fontSize: 12,
+                        color: "#1F1F1F",
+                        whiteSpace: "nowrap",
+                        overflow: "visible",
+                      },
+                      "& .MuiDataGrid-row": {
+                        backgroundColor: "transparent",
+                      },
+                      "& .MuiDataGrid-cell": {
+                        borderBottom: "none",
+                        fontSize: 12,
+                        color: "#2D2D2D",
+                        px: 0.75,
+                      },
+                      "& .MuiDataGrid-cell:focus, & .MuiDataGrid-columnHeader:focus": {
+                        outline: "none",
+                      },
+                      "& .MuiDataGrid-virtualScroller": {
+                        overflowX: "auto",
+                      },
+                      "& .MuiDataGrid-main": {
+                        minWidth: 0,
+                      },
+                      "& .MuiDataGrid-footerContainer": {
+                        display: "none",
+                      },
+                    }}
+                  />
+                </Box>
+
+                <Box
                   sx={{
-                    fontSize: 13,
-                    fontWeight: 800,
-                    color: "#222",
+                    mt: 1,
+                    pt: 1,
+                    borderTop: "1px solid #DCDCDC",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
                   }}
                 >
-                  {formatCurrency(selectedTotalBalance)}
-                </Typography>
-              </Box>
-            </>
-          )}
-        </Box>
+                  <Typography
+                    sx={{
+                      fontSize: 12,
+                      fontWeight: 700,
+                      color: "#36A7A7",
+                    }}
+                  >
+                    Total ({selectedRows.length} facturas)
+                  </Typography>
+
+                  <Typography
+                    sx={{
+                      fontSize: 12,
+                      fontWeight: 700,
+                    }}
+                  >
+                    El mínimo de facturas a seleccionar es 5
+                  </Typography>
+
+                  <Typography
+                    sx={{
+                      fontSize: 13,
+                      fontWeight: 800,
+                      color: "#222",
+                    }}
+                  >
+                    {formatCurrency(selectedTotalBalance)}
+                  </Typography>
+                </Box>
+              </>
+            )}
+          </Box>
+        </Grid>
       </Grid>
-    </Grid>
+    </>
   );
 };

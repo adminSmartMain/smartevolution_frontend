@@ -11,7 +11,7 @@ import { Toast } from "@components/toast";
 
 
 
-export default function EmitterSelector({setClientPagador, orchestDisabled, setIsSelectedPayer,setPendingClear, setIsModalEmitterAd, errors, emitterSaved, payers, setFieldTouched, setFieldValue, setEmitterSaved, touched, values, emisores, brokeDelete, isCreatingBill, fetchBrokerByClient, cargarTasaDescuento, setOpenEmitterBrokerModal, setClientEmitter, setClientBrokerEmitter, cargarFacturas }) {
+export default function EmitterSelector({disabled,setClientPagador, orchestDisabled, setIsSelectedPayer,setPendingClear, setIsModalEmitterAd, errors, emitterSaved, payers, setFieldTouched, setFieldValue, setEmitterSaved, touched, values, emisores, brokeDelete, isCreatingBill, fetchBrokerByClient, cargarTasaDescuento, setOpenEmitterBrokerModal, setClientEmitter, setClientBrokerEmitter, cargarFacturas }) {
 
   return (
     <>
@@ -20,6 +20,7 @@ export default function EmitterSelector({setClientPagador, orchestDisabled, setI
         id="emitter-name" // Para CSS/JS si es necesario
         data-testid="campo-emisor"
         options={emisores}
+        disabled={disabled}
         isOptionEqualToValue={(option, value) =>
           option?.data?.id === value?.data?.id
         }
@@ -222,13 +223,13 @@ export default function EmitterSelector({setClientPagador, orchestDisabled, setI
             // setFieldValue(`investorTax`, (discountRate * 0.58).toFixed(2));
 
             setFieldValue(`discountTax`, discountRate);
-
+            console.log(tasaDescuento)
             // Verificar si tasaDescuento es undefined
             if (!tasaDescuento) {
               // Mostrar el mensaje de error usando Toast
               // Mostrar toast/notificación
-
-
+            
+              console.log('aaaaaaaaa')
               Toast(
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                   

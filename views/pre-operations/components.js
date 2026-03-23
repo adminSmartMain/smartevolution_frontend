@@ -1501,7 +1501,7 @@ const updateFilters = (value, field) => {
       width: "100%",
     }}
   >
-    {/* ✅ Estado
+    {/* ✅ Estado*/}
     <button
       onClick={handleClickStatus}
       className="button-header-preop-title"
@@ -1589,7 +1589,7 @@ const updateFilters = (value, field) => {
         </MenuItem>
       ))}
     </Menu>
- */}
+ 
     {/* ✅ Valor a Girar */}
     <button
       className="button-header-preop-title"

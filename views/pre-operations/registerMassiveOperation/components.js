@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import Image from "next/image";
 import Link from "next/link";
-
+import { ToastContainer, toast } from "react-toastify";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import { Home as HomeIcon } from "@mui/icons-material";
 import EditIcon from "@mui/icons-material/Edit";
@@ -48,6 +48,7 @@ import {
   GetRiskProfile,
   BrokerByClient,
   AccountsFromClient,
+  GetBillFractionBulk,
   uploadExcel,
   registerOperationFromUpload,
 } from "./queries";
@@ -112,7 +113,7 @@ export const RegisterMassiveOperationComponent = ({
   const isJuridica = formik?.values?.type_client === JURIDICA_ID;
 
   const emisores = emitters || [];
-
+const isSuccessView = uploadExcelState?.status === "registered_success";
   const [clientEmitter, setClientEmitter] = useState(null);
   const [clientPagador, setClientPagador] = useState(null);
   const [clientBrokerEmitter, setClientBrokerEmitter] = useState(null);
@@ -167,6 +168,11 @@ export const RegisterMassiveOperationComponent = ({
     init: false,
   });
 
+
+  const { fetch: getBillFractionBulkFetch } = useFetch({
+  service: GetBillFractionBulk,
+  init: false,
+});
   const { fetch: fetchAccountsFromClient } = useFetch({
     service: AccountsFromClient,
     init: false,
@@ -177,6 +183,8 @@ export const RegisterMassiveOperationComponent = ({
     init: false,
   });
 
+
+  
   const { fetch: uploadExcelFetch } = useFetch({
     service: uploadExcel,
     init: false,
@@ -237,7 +245,15 @@ export const RegisterMassiveOperationComponent = ({
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={esLocale}>
-      <Box sx={{ width: "90%", px: { xs: 1.5, sm: 2, md: 3 }, py: { xs: 2, md: 2 } }}>
+      <ToastContainer position="top-right" autoClose={5000} />
+      <Box
+  sx={{
+    width: "90%",
+    px: { xs: 1.5, sm: 2, md: 2.5 },
+    pt: { xs: 1, md: 0.5 },
+    pb: { xs: 1.5, md: 1.5 },
+  }}
+>
         <Box className="view-header">
           <Typography fontSize="1.7rem" marginBottom="0.7rem" color="#5EA3A3">
             <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ ml: 1, mt: 1 }}>
@@ -250,7 +266,7 @@ export const RegisterMassiveOperationComponent = ({
           </Typography>
         </Box>
 
-        <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1 }}>
+        <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 0.5 }}>
           <Typography sx={{ fontSize: 12, color: "#444" }}>
             Creado por: Usuario Smart Evolution
           </Typography>
@@ -265,7 +281,7 @@ export const RegisterMassiveOperationComponent = ({
                 boxShadow: 1,
                 p: 2.5,
                 width: "100%",
-                minHeight: 700,
+                minHeight: "20rem",
                 display: "flex",
                 flexDirection: "column",
               }}
@@ -355,7 +371,7 @@ export const RegisterMassiveOperationComponent = ({
             >
               {({ values, setFieldValue, touched, errors, setFieldTouched, submitForm }) => {
                 const selectedBillsCount = values?.billsToNegotiate?.length || 0;
-
+const isHeaderLocked = activeStep >= 1;
                 const allAssignmentsComplete =
                   Array.isArray(values?.investorAssignments) &&
                   values.investorAssignments.length > 0 &&
@@ -371,26 +387,30 @@ export const RegisterMassiveOperationComponent = ({
                   Array.isArray(uploadExcelState?.normalizedRows) &&
                   uploadExcelState.normalizedRows.length > 0;
 
-const canGoNext =
-  activeStep === 0
-    ? selectedBillsCount >= 5
-    : activeStep === 1
-    ? investorsExcelGenerated
-    : activeStep === 2
-    ? excelLoadedAndValid
-    : true;
+                const canGoNext =
+                    activeStep === 0
+                      ? selectedBillsCount >= 5
+                      : activeStep === 1
+                      ? investorsExcelGenerated
+                      : activeStep === 2
+                      ? excelLoadedAndValid
+                      : true;
+
+                const isSuccessView = uploadExcelState?.status === "registered_success";
 
                 return (
                   <>
+                  {!isSuccessView   && (
                     <Form>
-                      <Grid container spacing={2} wrap="nowrap" alignItems="flex-start">
+                      <Grid container spacing={1.5} wrap="nowrap" alignItems="flex-start" sx={{ mb: 1 }}>
                         <Grid item xs={12} md={1} sx={{ minWidth: 80 }}>
-                          <TextField
+                         <TextField
                             label="OpID *"
                             fullWidth
                             size="small"
                             value={values.opId}
                             name="opId"
+                            disabled={isHeaderLocked}
                             onChange={(e) => setFieldValue("opId", e.target.value)}
                             error={touched.opId && Boolean(errors.opId)}
                             helperText={touched.opId && errors.opId ? errors.opId : " "}
@@ -398,37 +418,41 @@ const canGoNext =
                         </Grid>
 
                         <Grid item xs={12} md={1.8} sx={{ minWidth: 140 }}>
-                          <DatePicker
-                            label="Fecha de Operación *"
-                            value={values.opDate}
-                            onChange={(newValue) => setFieldValue("opDate", newValue)}
-                            renderInput={(params) => (
-                              <TextField {...params} fullWidth size="small" helperText=" " />
-                            )}
-                          />
+                        <DatePicker
+                          label="Fecha de Operación *"
+                          value={values.opDate}
+                          disabled={isHeaderLocked}
+                          onChange={(newValue) => setFieldValue("opDate", newValue)}
+                          renderInput={(params) => (
+                            <TextField {...params} fullWidth size="small" helperText=" " />
+                          )}
+                        />
                         </Grid>
 
                         <Grid item xs={12} md={1.8} sx={{ minWidth: 150 }}>
                           <Autocomplete
-                            options={typeOperation?.data || []}
-                            getOptionLabel={(o) => o.description || ""}
-                            onChange={(e, newVal) => setFieldValue("opType", newVal?.id)}
-                            renderInput={(params) => (
-                              <TextField
-                                {...params}
-                                label="Tipo Operación *"
-                                fullWidth
-                                size="small"
-                                helperText=" "
-                              />
-                            )}
-                          />
+                              options={typeOperation?.data || []}
+                              getOptionLabel={(o) => o.description || ""}
+                              disabled={isHeaderLocked}
+                              value={typeOperation?.data?.find((opt) => opt.id === values.opType) || null}
+                              onChange={(e, newVal) => setFieldValue("opType", newVal?.id)}
+                              renderInput={(params) => (
+                                <TextField
+                                  {...params}
+                                  label="Tipo Operación *"
+                                  fullWidth
+                                  size="small"
+                                  helperText=" "
+                                />
+                              )}
+                            />
                         </Grid>
 
                         <Grid item xs={12} md={3.4} sx={{ minWidth: 260 }}>
                           <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
                             <Box sx={{ flex: 1, minWidth: 0 }}>
                               <EmitterSelector
+                                disabled={isHeaderLocked}
                                 setClientPagador={setClientPagador}
                                 orchestDisabled={orchestDisabled}
                                 setIsSelectedPayer={setIsSelectedPayer}
@@ -482,6 +506,7 @@ const canGoNext =
                           <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
                             <Box sx={{ flex: 1, minWidth: 0 }}>
                               <PayerSelector
+                                disabled={isHeaderLocked}
                                 errors={errors}
                                 showAllPayers={showAllPayers}
                                 payers={payers}
@@ -543,7 +568,7 @@ const canGoNext =
 
        
                     </Form>
-
+)}
                     {activeStep === 0 && (
                       <BillsDualTable
                         takedBills={values?.takedBills || []}
@@ -555,285 +580,122 @@ const canGoNext =
                       />
                     )}
 
-                   {activeStep === 1 && (
-  <InvestorsAssignmentTable
-    billsToNegotiate={values?.billsToNegotiate || []}
-    investorAssignments={values?.investorAssignments || []}
-    investors={investors || []}
-    getBillFractionFetch={getBillFractionFetch}
-    cargarCuentas={fetchAccountsFromClient}
-    cargarBrokerFromInvestor={cargarBrokerFromInvestor}
-    setFieldValue={setFieldValue}
-    opId={values?.opId}
-    opDate={values?.opDate}
-    emitter={values?.emitter}
-    payerId={values?.nombrePagador}
-    payerName={values?.nombrepayer}
-    user={user}
-    formik={values}
-    investorsExcelGenerated={investorsExcelGenerated}
-    setInvestorsExcelGenerated={setInvestorsExcelGenerated}
+                  {activeStep === 1 && (
+  <>
+    <Typography sx={{ fontSize: 12, mb: 1 }}>
+      billsToNegotiate: {values?.billsToNegotiate?.length || 0}
+    </Typography>
+
+    <InvestorsAssignmentTable
+      billsToNegotiate={values?.billsToNegotiate || []}
+      investorAssignments={values?.investorAssignments || []}
+      investors={investors || []}
+      getBillFractionBulkFetch={getBillFractionBulkFetch}
+      cargarCuentas={fetchAccountsFromClient}
+      cargarBrokerFromInvestor={cargarBrokerFromInvestor}
+      setFieldValue={setFieldValue}
+      opId={values?.opId}
+      opDate={values?.opDate}
+      emitter={values?.emitter}
+      payerId={values?.nombrePagador}
+      payerName={values?.nombrepayer}
+      user={user}
+      formik={values}
+      investorsExcelGenerated={investorsExcelGenerated}
+      setInvestorsExcelGenerated={setInvestorsExcelGenerated}
+    />
+  </>
+)}
+                   {(activeStep === 2 || isSuccessView) && (
+  <UploadExcelStep
+    uploadExcelFetch={uploadExcelFetch}
+    setActiveStep={setActiveStep}
+    setUploadExcelState={setUploadExcelState}
+    setRegisterSummary={setRegisterSummary}
+    registerOperation={async (normalizedRows) => {
+      const response = await registerOperationFromUploadFetch({
+        rows: normalizedRows,
+        opTypeId: values?.opType,
+      });
+
+      const data = response?.data ?? response ?? {};
+      const summary = data?.summary ?? data?.data ?? data ?? {};
+
+      setRegisterSummary({
+        operationId: summary?.operationId ?? values?.opId ?? null,
+        totalOperacion:
+          summary?.totalOperacion ?? summary?.total_amount ?? summary?.total ?? 0,
+        facturasRegistradas:
+          summary?.facturasRegistradas ??
+          summary?.registered_rows ??
+          normalizedRows?.length ??
+          0,
+        tasaPromedioPonderada:
+          summary?.tasaPromedioPonderada ??
+          summary?.weightedAverageRate ??
+          summary?.weighted_average_rate ??
+          0,
+        raw: summary,
+      });
+
+      return response;
+    }}
+    onNext={() => setActiveStep(3)}
+    createdByLabel="Usuario Smart Evolution"
+    state={uploadExcelState}
+    setState={setUploadExcelState}
   />
 )}
 
-                    {activeStep === 2 && (
-                      <UploadExcelStep
-                        uploadExcelFetch={uploadExcelFetch}
-                        registerOperation={async (normalizedRows) => {
-                          const response = await registerOperationFromUploadFetch({
-                            rows: normalizedRows,
-                            opTypeId: values?.opType,
-                          });
+                    
+              {!isSuccessView && (
+  <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 3, gap: 2 }}>
+    {activeStep > 0 && (
+      <Button variant="outlined" onClick={() => setActiveStep((prev) => prev - 1)}>
+        Atrás
+      </Button>
+    )}
 
-                          const data = response?.data ?? response ?? {};
-                          const summary = data?.summary ?? data?.data ?? data ?? {};
+    <Button
+      variant="contained"
+      disabled={!canGoNext}
+      sx={{
+        bgcolor: canGoNext ? "#2C9A9A" : "#D0D0D0",
+        color: "#fff",
+        px: 4,
+        "&:hover": {
+          bgcolor: canGoNext ? "#258383" : "#D0D0D0",
+        },
+        "&.Mui-disabled": {
+          bgcolor: "#D0D0D0",
+          color: "#fff",
+        },
+      }}
+      onClick={() => {
+        if (activeStep === 0) {
+          if (selectedBillsCount < 5) return;
+          setInvestorsExcelGenerated(false);
+          setActiveStep(1);
+          return;
+        }
 
-                          setRegisterSummary({
-                            operationId: summary?.operationId ?? values?.opId ?? null,
-                            totalOperacion:
-                              summary?.totalOperacion ?? summary?.total_amount ?? summary?.total ?? 0,
-                            facturasRegistradas:
-                              summary?.facturasRegistradas ??
-                              summary?.registered_rows ??
-                              normalizedRows?.length ??
-                              0,
-                            tasaPromedioPonderada:
-                              summary?.tasaPromedioPonderada ??
-                              summary?.weightedAverageRate ??
-                              summary?.weighted_average_rate ??
-                              0,
-                            raw: summary,
-                          });
+        if (activeStep === 1) {
+          if (!investorsExcelGenerated) return;
+          setActiveStep(2);
+          return;
+        }
 
-                          return response;
-                        }}
-                        onNext={() => setActiveStep(3)}
-                        createdByLabel="Usuario Smart Evolution"
-                        state={uploadExcelState}
-                        setState={setUploadExcelState}
-                      />
-                    )}
-
-                    {activeStep === 3 && (
-                      <Box
-                        sx={{
-                          width: "100%",
-                          minHeight: 520,
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: 4,
-                        }}
-                      >
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                          <Box
-                            sx={{
-                              width: 110,
-                              height: 110,
-                              borderRadius: "50%",
-                              border: "8px solid #8BB38F",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              color: "#8BB38F",
-                              fontSize: 58,
-                              fontWeight: 800,
-                            }}
-                          >
-                            ✓
-                          </Box>
-
-                          <Typography
-                            sx={{
-                              color: "#7EAF86",
-                              fontWeight: 700,
-                              fontSize: 32,
-                            }}
-                          >
-                            ¡Operación #{registerSummary?.operationId ?? values?.opId} Registrada con Éxito!
-                          </Typography>
-                        </Box>
-
-                        <Box
-                          sx={{
-                            display: "grid",
-                            gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
-                            gap: 4,
-                            width: "100%",
-                            maxWidth: 900,
-                          }}
-                        >
-                          <Box
-                            sx={{
-                              bgcolor: "#fff",
-                              borderRadius: 2,
-                              boxShadow: 3,
-                              py: 4,
-                              px: 3,
-                              textAlign: "center",
-                            }}
-                          >
-                            <Typography sx={{ fontSize: 28, fontWeight: 800, color: "#158C96", mb: 1 }}>
-                              {Number(registerSummary?.totalOperacion ?? 0).toLocaleString("es-CO", {
-                                style: "currency",
-                                currency: "COP",
-                              })}
-                            </Typography>
-                            <Typography sx={{ fontSize: 14, color: "#666" }}>
-                              Total de la Operación
-                            </Typography>
-                          </Box>
-
-                          <Box
-                            sx={{
-                              bgcolor: "#fff",
-                              borderRadius: 2,
-                              boxShadow: 3,
-                              py: 4,
-                              px: 3,
-                              textAlign: "center",
-                            }}
-                          >
-                            <Typography sx={{ fontSize: 28, fontWeight: 800, color: "#158C96", mb: 1 }}>
-                              {registerSummary?.facturasRegistradas ?? 0}
-                            </Typography>
-                            <Typography sx={{ fontSize: 14, color: "#666" }}>
-                              Facturas Registradas
-                            </Typography>
-                          </Box>
-
-                          <Box
-                            sx={{
-                              bgcolor: "#fff",
-                              borderRadius: 2,
-                              boxShadow: 3,
-                              py: 4,
-                              px: 3,
-                              textAlign: "center",
-                            }}
-                          >
-                            <Typography sx={{ fontSize: 28, fontWeight: 800, color: "#158C96", mb: 1 }}>
-                              {Number(registerSummary?.tasaPromedioPonderada ?? 0).toFixed(2)}%
-                            </Typography>
-                            <Typography sx={{ fontSize: 14, color: "#666" }}>
-                              Tasa Promedio Ponderada
-                            </Typography>
-                          </Box>
-                        </Box>
-
-                        <Box
-                          sx={{
-                            display: "flex",
-                            gap: 3,
-                            flexWrap: "wrap",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <Button
-                            variant="outlined"
-                            sx={{
-                              minWidth: 220,
-                              color: "#2E9B9B",
-                              borderColor: "#2E9B9B",
-                            }}
-                          >
-                            Descargar comprobante PDF
-                          </Button>
-
-                          <Button
-                            variant="outlined"
-                            sx={{
-                              minWidth: 220,
-                              color: "#2E9B9B",
-                              borderColor: "#2E9B9B",
-                            }}
-                            onClick={() => {
-                              setActiveStep(0);
-                              setRegisterSummary(null);
-                              setUploadExcelState({
-                                file: null,
-                                status: "idle",
-                                rows: [],
-                                normalizedRows: [],
-                                canRegister: false,
-                                operationId: null,
-                                processedMessage: "",
-                                errorCount: 0,
-                                modalError: "",
-                              });
-                            }}
-                          >
-                            Registrar otra operación
-                          </Button>
-
-                          <Button
-                            variant="outlined"
-                            sx={{
-                              minWidth: 220,
-                              color: "#2E9B9B",
-                              borderColor: "#2E9B9B",
-                            }}
-                            onClick={() => {
-                              window.location.href = "/operations";
-                            }}
-                          >
-                            Ir a Operaciones
-                          </Button>
-                        </Box>
-                      </Box>
-                    )}
-
-                    <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 3, gap: 2 }}>
-                      {activeStep > 0 && (
-                        <Button variant="outlined" onClick={() => setActiveStep((prev) => prev - 1)}>
-                          Atrás
-                        </Button>
-                      )}
-
-                      <Button
-                        variant="contained"
-                        disabled={!canGoNext}
-                        sx={{
-                          bgcolor: canGoNext ? "#2C9A9A" : "#D0D0D0",
-                          color: "#fff",
-                          px: 4,
-                          "&:hover": {
-                            bgcolor: canGoNext ? "#258383" : "#D0D0D0",
-                          },
-                          "&.Mui-disabled": {
-                            bgcolor: "#D0D0D0",
-                            color: "#fff",
-                          },
-                        }}
-                     onClick={() => {
-  if (activeStep === 0) {
-    if (selectedBillsCount < 5) return;
-    setInvestorsExcelGenerated(false);
-    setActiveStep(1);
-    return;
-  }
-
-  if (activeStep === 1) {
-    if (!investorsExcelGenerated) return;
-    setActiveStep(2);
-    return;
-  }
-
-  if (activeStep === 2) {
-    if (!excelLoadedAndValid) return;
-    submitForm();
-    return;
-  }
-
-  if (activeStep >= 3) {
-    submitForm();
-  }
-}}
-                      >
-                        {activeStep >= 2 ? "Guardar" : "Siguiente"}
-                      </Button>
-                    </Box>
+        if (activeStep === 2) {
+          if (!excelLoadedAndValid) return;
+          submitForm();
+          return;
+        }
+      }}
+    >
+      {activeStep >= 2 ? "Guardar" : "Siguiente"}
+    </Button>
+  </Box>
+)}
                   </>
                 );
               }}

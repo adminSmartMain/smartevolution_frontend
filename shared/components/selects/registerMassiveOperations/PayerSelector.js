@@ -5,13 +5,14 @@ import { TextField, Autocomplete} from '@mui/material';
 
 
 
-export default function PayerSelector( {errors,dataBills,showAllPayers,payers,values,setFieldValue,setClientPagador,setIsSelectedPayer,touched,orchestDisabled}) {
+export default function PayerSelector( {disabled,errors,dataBills,showAllPayers,payers,values,setFieldValue,setClientPagador,setIsSelectedPayer,touched,orchestDisabled}) {
 
     return (
 
                 <Autocomplete
                         id="payer-name" // Para CSS/JS si es necesario
                         data-testid="campo-pagador"
+                        disabled={disabled}
                         options={showAllPayers ? payers : values?.filteredPayers || []}
                     value={payers.find(p => p.id === values.nombrePagador) || null} // Buscar el objeto que coincide con el nombre
                     isOptionEqualToValue={(option, value) => 

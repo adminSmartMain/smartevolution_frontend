@@ -249,3 +249,28 @@ export const registerOperationFromUpload = async (payload) => {
   });
   return res.data;
 };
+
+export const GetBillFractionBulk = async (payload) => {
+
+    const res = await Axios.post(`${API_URL}/preOperation/billFractionBulk`, payload, {
+    headers: {
+      authorization: "Bearer " + localStorage.getItem("access-token"),
+    },
+  });
+  return res.data;
+};
+ 
+
+export const GetClientsWithAccounts = async (payload) => {
+  const res = await Axios.post(
+    `${API_URL}/preOperation/clientsWithAccounts`,
+    payload,
+    {
+      headers: {
+        authorization: "Bearer " + localStorage.getItem("access-token"),
+      },
+    }
+  );
+
+  return res.data;
+};
