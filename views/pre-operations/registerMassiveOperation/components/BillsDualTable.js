@@ -739,24 +739,33 @@ export const BillsDualTable = ({
                     alignItems: "center",
                   }}
                 >
-                  <Typography
-                    sx={{
-                      fontSize: 12,
-                      fontWeight: 700,
-                      color: "#36A7A7",
-                    }}
-                  >
-                    Total ({selectedRows.length} facturas)
-                  </Typography>
+              <Box
+  sx={{
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-start",
+    gap: 0.25,
+  }}
+>
+  <Typography
+    sx={{
+      fontSize: 12,
+      fontWeight: 700,
+      color: "#36A7A7",
+    }}
+  >
+    Total ({selectedRows.length} facturas)
+  </Typography>
 
-                  <Typography
-                    sx={{
-                      fontSize: 12,
-                      fontWeight: 700,
-                    }}
-                  >
-                    El mínimo de facturas a seleccionar es 5
-                  </Typography>
+  <Typography
+    sx={{
+      fontSize: 12,
+      fontWeight: 700,
+    }}
+  >
+    El mínimo de facturas a seleccionar es 5
+  </Typography>
+</Box>
 
                   <Typography
                     sx={{

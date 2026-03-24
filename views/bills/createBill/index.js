@@ -360,7 +360,7 @@ const onSubmit = async (values, { setSubmitting }) => {
     setSubmitting(false);
     setIsFinished(true)   
  setTimeout(() => {
-      window.close();
+      //window.close();
     }, 1500); // 1.5 segundos para que el usuario vea el mensaje de éxito
     
   } catch (error) {

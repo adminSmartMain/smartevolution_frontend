@@ -1034,29 +1034,36 @@ export const UploadExcelStep = ({
                 }}
               />
 
-              <TextField
-                size="small"
-                type="number"
-                value={params.row.gmValue ?? 0}
-                onChange={(e) => handleChangeGmValue(params.row.id, e.target.value)}
-                disabled={!applyGm}
-                inputProps={{
-                  min: 0,
-                  step: "0.01",
-                  style: {
-                    textAlign: "right",
-                    fontSize: 11,
-                    padding: "6px 8px",
-                  },
-                }}
-                sx={{
-                  width: 95,
-                  "& .MuiOutlinedInput-root": {
-                    height: 30,
-                    backgroundColor: applyGm ? "#fff" : "#F3F3F3",
-                  },
-                }}
-              />
+             <TextField
+  size="small"
+  value={formatCurrency(params.row.gmValue ?? 0)}
+  InputProps={{
+    readOnly: true,
+  }}
+  variant="standard"
+  sx={{
+    width: 95,
+    "& .MuiInputBase-root": {
+      height: 30,
+      backgroundColor: "transparent",
+      fontSize: 11,
+    },
+    "& .MuiInputBase-input": {
+      textAlign: "right",
+      padding: "6px 8px",
+      color: applyGm ? "#222" : "#9E9E9E",
+    },
+    "& .MuiInput-underline:before": {
+      display: "none",
+    },
+    "& .MuiInput-underline:after": {
+      display: "none",
+    },
+    "& .MuiInput-underline:hover:not(.Mui-disabled):before": {
+      display: "none",
+    },
+  }}
+/>
             </Box>
           );
         },

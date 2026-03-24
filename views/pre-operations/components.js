@@ -6,7 +6,8 @@ import {
   Home as HomeIcon,
 
 } from "@mui/icons-material";
-
+import TuneIcon from "@mui/icons-material/Tune";
+import Chip from "@mui/material/Chip";
 import { Box, Button, Fade, FormControl, Grid, IconButton, InputLabel,Menu, MenuItem, InputAdornment , Select, TextField, Typography } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import Modal from "@components/modals/modal";
@@ -244,9 +245,22 @@ export const OperationsComponents = ({
   dataCount,
  loading
 }) => {
- // Nuevo estado para controlar cuando se aplica un filtro
+
   const [filterApplied, setFilterApplied] = useState(false);
-// Hooks
+  const [anchorElFilters, setAnchorElFilters] = useState(null);
+  const openFiltersMenu = Boolean(anchorElFilters);
+  
+  const handleOpenFilters = (event) => {
+  setAnchorElFilters(event.currentTarget);
+  };
+
+  const handleCloseFilters = () => {
+    setAnchorElFilters(null);
+  };
+
+
+
+
   const {
     fetch: fetch,
     loading: loadingNegotiationSummary,
@@ -258,7 +272,7 @@ export const OperationsComponents = ({
   });
  
 
-   // Estado para almacenar qué operaciones tienen resumen
+  
   const [haveNegotiationSummary, setHaveNegotiationSummary] = useState({});
   // Estado para evitar múltiples verificaciones en la misma página
   const [checkedPages, setCheckedPages] = useState(new Set());
@@ -1233,26 +1247,41 @@ const handleTextFieldChange = (evt) => {
   }
 };
 
-  const handleDateRangeApply = (dateRange) => {
-    // Actualiza solo las fechas manteniendo otros filtros
+const handleDateRangeApply = (dateRangeSelected) => {
+  setDateRange({
+    startDate: dateRangeSelected.startDate,
+    endDate: dateRangeSelected.endDate,
+  });
 
-    filtersHandlers.set({
-      ...filtersHandlers.value,
-      startDate: dateRange.startDate,
-      endDate: dateRange.endDate
-    });
- setPage(1)
+  filtersHandlers.set({
+    ...filtersHandlers.value,
+    startDate: dateRangeSelected.startDate,
+    endDate: dateRangeSelected.endDate,
+  });
 
-  };
-  const handleClear = () => {
-    
-    // Limpiar solo fechas en los filtros globales
-    filtersHandlers.set({
-      ...filtersHandlers.value,
-      startDate: "",
-      endDate: ""
-    });
-  };
+  setPage(1);
+};
+
+const handleClear = () => {
+  setDateRange({
+    startDate: null,
+    endDate: null,
+  });
+
+  filtersHandlers.set({
+    ...filtersHandlers.value,
+    startDate: "",
+    endDate: "",
+  });
+};
+const activeFiltersCount =
+  Number(!!selectedStatus) +
+  Number(!!dateRange?.startDate && !!dateRange?.endDate);
+
+  const formatFilterDate = (date) => {
+  if (!date) return "";
+  return moment(date).format("DD/MM/YYYY");
+};
 
 const updateFilters = (value, field) => {
   if (field !== "multi") {
@@ -1482,141 +1511,100 @@ const updateFilters = (value, field) => {
     }}
   />
 
-  {/* 🎛 BOTONES */}
+   {/* 🎛 FILTROS + ACCIONES */}
   <Box
     sx={{
-      display: "grid",
-
-      // ✅ móvil: 2 columnas
-      gridTemplateColumns: { xs: "1fr 1fr", sm: "auto auto auto auto auto" },
-
-      // ✅ separaciones
+      display: "flex",
+      flexWrap: "wrap",
       gap: 1,
-
       alignItems: "center",
-
-      // ✅ en desktop se alinea a la derecha
-      justifyContent: { sm: "flex-end" },
-
+      justifyContent: { xs: "flex-start", sm: "flex-end" },
       width: "100%",
     }}
   >
-    {/* ✅ Estado*/}
-    <button
-      onClick={handleClickStatus}
-      className="button-header-preop-title"
-      style={{
-        width: "100%",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        gap: "4px",
-        position: "relative",
-        paddingRight: selectedStatus ? "32px" : "8px",
+    {/* BOTÓN FILTROS */}
+    <Button
+      onClick={handleOpenFilters}
+      variant="outlined"
+      startIcon={<TuneIcon fontSize="small" />}
+      sx={{
+        height: 35,
+        border: "1px solid #5EA3A3",
+        borderRadius: "6px",
+        color: "#488B8F",
+        px: 2,
+        minWidth: "30px",
+        fontWeight: 500,
+        backgroundColor: "#fff",
+        "&:hover": {
+          backgroundColor: "#488B8F",
+          color: "#fff",
+          borderColor: "#488B8F",
+        },
+        "&:hover svg": {
+          color: "#fff",
+        },
       }}
     >
-      {selectedStatus?.label || "Por Estado"}
-
-      {selectedStatus ? (
-        <IconButton
-          size="small"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleClearStatus();
-          }}
-          sx={{
-            position: "absolute",
-            right: "4px",
-            color: "#ffff",
-            "&:hover": { backgroundColor: "#ffffff20" },
-            width: 20,
-            height: 20,
-          }}
-        >
-          <CloseIcon fontSize="small" />
-        </IconButton>
-      ) : (
-        <ArrowDropDownIcon sx={{ fontSize: "16px", color: "#488B8F" }} />
-      )}
-    </button>
-
-    <Menu
-      anchorEl={anchorElStatus}
-      open={Boolean(anchorElStatus)}
-      onClose={handleCloseStatus}
-      anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-      transformOrigin={{ vertical: "top", horizontal: "left" }}
-    >
-      {statusOptions.map((option) => (
-        <MenuItem
-          key={option.value}
-          onClick={() => handleSelectStatus(option)}
-          selected={selectedStatus?.value === option.value}
-          disableGutters
-          sx={{
-            "&.Mui-selected": {
-              backgroundColor: "#488B8F10",
-              "&:hover": { backgroundColor: "#488B8F15" },
+     {activeFiltersCount > 0 ? ` (${activeFiltersCount})` : ""}
+    </Button>
+{/* PILL FECHA */}
+    {dateRange?.startDate && dateRange?.endDate && (
+      <Chip
+        label={`Fecha: ${formatFilterDate(dateRange.startDate)} - ${formatFilterDate(dateRange.endDate)}`}
+        onDelete={handleClear}
+        sx={{
+          height: 35,
+          borderRadius: "18px",
+          backgroundColor: "#EAF6F6",
+          color: "#488B8F",
+          fontWeight: 500,
+          "& .MuiChip-deleteIcon": {
+            color: "#488B8F",
+            "&:hover": {
+              color: "#2F6F73",
             },
-            px: 0.5,
-            py: 0.25,
-            minHeight: "auto",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: "4px",
-          }}
-        >
-          <span
-            className={option.badgeClass}
-            style={{
-              display: "inline-block",
-              padding: "4px 10px",
-              borderRadius: "6px",
-              fontSize: "0.85rem",
-              fontWeight: 600,
-              minWidth: "100px",
-              textAlign: "center",
-              lineHeight: 1.2,
-            }}
-          >
-            {option.label}
-          </span>
+          },
+        }}
+      />
+    )}
+    {/* PILL ESTADO */}
+    {selectedStatus && (
+      <Chip
+        label={`Estado: ${selectedStatus.label}`}
+        onDelete={handleClearStatus}
+        sx={{
+          height: 35,
+          borderRadius: "18px",
+          backgroundColor: "#EAF6F6",
+          color: "#488B8F",
+          fontWeight: 500,
+          "& .MuiChip-deleteIcon": {
+            color: "#488B8F",
+            "&:hover": {
+              color: "#2F6F73",
+            },
+          },
+        }}
+      />
+    )}
 
-          {selectedStatus?.value === option.value && (
-            <CheckIcon fontSize="small" sx={{ color: "#488B8F" }} />
-          )}
-        </MenuItem>
-      ))}
-    </Menu>
- 
+    
+
     {/* ✅ Valor a Girar */}
     <button
       className="button-header-preop-title"
       onClick={handleOpenModal}
-      style={{ width: "100%" }}
+      style={{ width: "auto" }}
     >
       Valor a Girar
     </button>
     <ModalValorAGirar open={openModal} handleClose={handleCloseModal} data={mockData} />
 
-    {/* ✅ Date Picker (fila completa en móvil) */}
-    <Box sx={{ gridColumn: { xs: "span 2", sm: "auto" } }}>
-      <AdvancedDateRangePicker
-        className="date-picker"
-        onApply={handleDateRangeApply}
-        onClean={handleClear}
-      />
-    </Box>
+    {/* ✅ Registrar */}
+    <RegisterButton />
 
-    {/* ✅ Registrar (fila completa en móvil) */}
-    <Box sx={{ gridColumn: { xs: "span 2", sm: "auto" } }}>
-      <RegisterButton fullWidth />
-    </Box>
-
-    <Box sx={{ gridColumn: { xs: "span 2", sm: "auto" } }}>
-      <RegisterMassiveOperationButton fullWidth />
-    </Box>
+    <RegisterMassiveOperationButton />
 
     {/* ✅ Menú CSV */}
     <Box sx={{ justifySelf: { xs: "end", sm: "auto" } }}>
@@ -1629,7 +1617,118 @@ const updateFilters = (value, field) => {
     </Box>
   </Box>
 </Box>
+<Menu
+  anchorEl={anchorElFilters}
+  open={openFiltersMenu}
+  onClose={handleCloseFilters}
+  anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+  transformOrigin={{ vertical: "top", horizontal: "left" }}
+  PaperProps={{
+    sx: {
+      width: 320,
+      borderRadius: "10px",
+      mt: 1,
+      overflow: "hidden",
+    },
+  }}
+>
+  
+  <Box sx={{ px: 2, py: 1.5 }}>
+    <Typography
+      sx={{
+        fontWeight: 700,
+        fontSize: "1rem",
+        color: "#B7D6D6",
+        mb: 1,
+      }}
+    >
+      Fecha
+    </Typography>
 
+    <AdvancedDateRangePicker
+      className="date-picker"
+      onApply={(range) => {
+        handleDateRangeApply(range);
+      }}
+      onClean={handleClear}
+    />
+  </Box>
+  <Box sx={{ px: 2, py: 1.5 }}>
+    <Typography
+      sx={{
+        fontWeight: 700,
+        fontSize: "1rem",
+        color: "#B7D6D6",
+        mb: 1,
+      }}
+    >
+      Estado
+    </Typography>
+
+    {statusOptions.map((option) => (
+      <MenuItem
+        key={option.value}
+        onClick={() => handleSelectStatus(option)}
+        selected={selectedStatus?.value === option.value}
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          borderRadius: "6px",
+          mb: 0.5,
+        }}
+      >
+        <span className={option.badgeClass}>{option.label}</span>
+
+        {selectedStatus?.value === option.value && (
+          <CheckIcon fontSize="small" sx={{ color: "#488B8F" }} />
+        )}
+      </MenuItem>
+    ))}
+  </Box>
+
+  <Box sx={{ borderTop: "1px solid #eee" }} />
+
+
+  <Box sx={{ borderTop: "1px solid #eee" }} />
+
+  <Box
+    sx={{
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      px: 2,
+      py: 1.2,
+    }}
+  >
+    <Button
+      onClick={() => {
+        handleClearStatus();
+        handleClear();
+      }}
+      sx={{
+        textTransform: "none",
+        color: "#b5b5b5",
+      }}
+    >
+      Limpiar filtros
+    </Button>
+
+    <Button
+      onClick={handleCloseFilters}
+      variant="contained"
+      sx={{
+        textTransform: "none",
+        backgroundColor: "#488B8F",
+        "&:hover": {
+          backgroundColor: "#5EA3A3",
+        },
+      }}
+    >
+      Aplicar
+    </Button>
+  </Box>
+</Menu>
 
 
       {loading ? (

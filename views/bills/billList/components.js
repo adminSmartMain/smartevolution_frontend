@@ -1380,7 +1380,7 @@ const handleOpenDetailBill = (id, tab = 0) => {
       />
     </Box>
 
-    {/* ================= FILTROS + PILLS ================= */}
+   
 {/* ================= FILTROS + PILLS ================= */}
 <Box
   sx={{

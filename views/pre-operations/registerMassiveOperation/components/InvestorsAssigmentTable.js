@@ -7,12 +7,15 @@ import {
   Autocomplete,
   Button,
 } from "@mui/material";
+
+
 import { Toast } from "@components/toast";
 import Skeleton from "@mui/material/Skeleton";
 import { DataGrid } from "@mui/x-data-grid";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { GetClientsWithAccounts } from "../queries";
+
 const InvestorsTableSkeleton = () => {
   return (
     <Box sx={{ px: 1, pt: 0.5 }}>
@@ -59,13 +62,56 @@ const InvestorsTableSkeleton = () => {
   );
 };
 
+const extractRowsFromBulkResponse = (response) => {
+  const candidates = [
+    response?.data?.data,
+    response?.data?.rows,
+    response?.data,
+    response?.rows,
+    response,
+  ];
+
+  const raw = candidates.find((item) => Array.isArray(item)) || [];
+  return raw.flat(Infinity).filter(Boolean);
+};
+
+const buildExistingAssignmentsMap = (assignments = []) => {
+  const map = new Map();
+  assignments.forEach((item) => {
+    map.set(String(item?.id), item);
+  });
+  return map;
+};
+
+const dedupeById = (rows = []) => {
+  const map = new Map();
+
+  rows.forEach((row, index) => {
+    const id = String(
+      row?.id ??
+        row?.billFractionId ??
+        row?.fractionId ??
+        row?.billId ??
+        `row-${index}`
+    );
+
+    if (!map.has(id)) {
+      map.set(id, {
+        ...row,
+        id,
+      });
+    }
+  });
+
+  return Array.from(map.values());
+};
+
 export const InvestorsAssignmentTable = ({
   billsToNegotiate = [],
   investorAssignments = [],
   investors = [],
   getBillFractionFetch,
-    getBillFractionBulkFetch,
-
+  getBillFractionBulkFetch,
   cargarCuentas,
   cargarBrokerFromInvestor,
   setFieldValue,
@@ -81,76 +127,81 @@ export const InvestorsAssignmentTable = ({
 }) => {
   const [loadingRows, setLoadingRows] = useState(false);
   const [search, setSearch] = useState("");
-  const norm = (v) => (v ?? "").toString().trim().toLowerCase();
   const [validInvestors, setValidInvestors] = useState([]);
   const [loadingValidInvestors, setLoadingValidInvestors] = useState(false);
+  const [paginationModel, setPaginationModel] = useState({
+  page: 0,
+  pageSize: 100,
+});
+useEffect(() => {
+  setPaginationModel((prev) => ({
+    ...prev,
+    page: 0,
+  }));
+}, [search, investorAssignments.length]);
+  const norm = (v) => (v ?? "").toString().trim().toLowerCase();
 
   useEffect(() => {
-  let cancelled = false;
+    let cancelled = false;
 
-  const loadValidInvestors = async () => {
-    if (!Array.isArray(investors) || investors.length === 0) {
-      setValidInvestors([]);
-      return;
-    }
-
-    setLoadingValidInvestors(true);
-
-    try {
-      const clientIds = investors
-        .map((inv) => inv?.value ?? inv?.data?.id ?? inv?.id)
-        .filter(Boolean);
-
-      const response = await GetClientsWithAccounts({
-        client_ids: clientIds,
-      });
-
-      const rows = response?.data || [];
-      const validIds = new Set(
-        rows
-          .filter((item) => item?.has_accounts)
-          .map((item) => String(item.client_id))
-      );
-
-      if (cancelled) return;
-
-      const filtered = investors.filter((inv) => {
-        const id = inv?.value ?? inv?.data?.id ?? inv?.id;
-        return validIds.has(String(id));
-      });
-
-      setValidInvestors(filtered);
-    } catch (error) {
-      console.error("Error loading clients with accounts:", error);
-      if (!cancelled) {
+    const loadValidInvestors = async () => {
+      if (!Array.isArray(investors) || investors.length === 0) {
         setValidInvestors([]);
+        return;
       }
-    } finally {
-      if (!cancelled) {
-        setLoadingValidInvestors(false);
+
+      setLoadingValidInvestors(true);
+
+      try {
+        const clientIds = investors
+          .map((inv) => inv?.value ?? inv?.data?.id ?? inv?.id)
+          .filter(Boolean);
+
+        const response = await GetClientsWithAccounts({
+          client_ids: clientIds,
+        });
+
+        const rows = response?.data || [];
+        const validIds = new Set(
+          rows
+            .filter((item) => item?.has_accounts)
+            .map((item) => String(item.client_id))
+        );
+
+        if (cancelled) return;
+
+        const filtered = investors.filter((inv) => {
+          const id = inv?.value ?? inv?.data?.id ?? inv?.id;
+          return validIds.has(String(id));
+        });
+
+        setValidInvestors(filtered);
+      } catch (error) {
+        console.error("Error loading clients with accounts:", error);
+        if (!cancelled) {
+          setValidInvestors([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingValidInvestors(false);
+        }
       }
-    }
-  };
+    };
 
-  loadValidInvestors();
+    loadValidInvestors();
 
-  return () => {
-    cancelled = true;
-  };
-}, [investors]);
-  const getBillId = (bill, index) =>
-    bill?.id ??
-    bill?.billId ??
-    bill?.number ??
-    bill?.invoiceId ??
-    `bill-${index}`;
-    const formatCurrency = (value) =>
-      Number(value || 0).toLocaleString("es-CO", {
-        style: "currency",
-        currency: "COP",
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      });
+    return () => {
+      cancelled = true;
+    };
+  }, [investors]);
+
+  const formatCurrency = (value) =>
+    Number(value || 0).toLocaleString("es-CO", {
+      style: "currency",
+      currency: "COP",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    });
 
   const formatDateForFile = (dateValue) => {
     const date = dateValue ? new Date(dateValue) : new Date();
@@ -168,98 +219,121 @@ export const InvestorsAssignmentTable = ({
   };
 
   const lastProcessedSignatureRef = useRef("");
-const billsSignature = useMemo(() => {
-  return JSON.stringify(
-    (billsToNegotiate || []).map((bill, index) => ({
-      id: bill?.id ?? bill?.billId ?? bill?.number ?? `bill-${index}`,
-      fractionsToSplit: Number(bill?.fractionsToSplit ?? 1),
-    }))
-  );
-}, [billsToNegotiate]);
-useEffect(() => {
-  let cancelled = false;
 
-  const buildRows = async () => {
-    if (!Array.isArray(billsToNegotiate) || billsToNegotiate.length === 0) {
-      lastProcessedSignatureRef.current = "";
-      setFieldValue("investorAssignments", []);
-      return;
-    }
+  const billsSignature = useMemo(() => {
+    return JSON.stringify(
+      (billsToNegotiate || []).map((bill, index) => ({
+        id: bill?.id ?? bill?.billId ?? bill?.number ?? `bill-${index}`,
+        billId: bill?.billId ?? bill?.number ?? "",
+        fractionsToSplit: Number(bill?.fractionsToSplit ?? 1),
+      }))
+    );
+  }, [billsToNegotiate]);
 
-    if (lastProcessedSignatureRef.current === billsSignature) {
-      return;
-    }
+  useEffect(() => {
+    let cancelled = false;
 
-    setLoadingRows(true);
-
-    try {
-      const payload = {
-        bills: billsToNegotiate.map((bill, index) => ({
-          id: bill?.id ?? bill?.billId ?? bill?.number ?? `bill-${index}`,
-          billId: bill?.billId ?? bill?.number ?? "",
-          fractionsToSplit: Number(bill?.fractionsToSplit ?? 1),
-        })),
-      };
-
-      const response = await getBillFractionBulkFetch(payload);
-
-      let rowsFromApi = [];
-
-      if (Array.isArray(response)) {
-        rowsFromApi = response;
-      } else if (Array.isArray(response?.data)) {
-        rowsFromApi = response.data;
-      } else if (Array.isArray(response?.data?.data)) {
-        rowsFromApi = response.data.data;
-      } else if (Array.isArray(response?.rows)) {
-        rowsFromApi = response.rows;
-      } else if (Array.isArray(response?.data?.rows)) {
-        rowsFromApi = response.data.rows;
-      }
-
-      if (cancelled) return;
-
-      const merged = rowsFromApi.map((row) => {
-        const existing = (investorAssignments || []).find((it) => it.id === row.id);
-
-        return existing
-          ? {
-              ...row,
-              investorId: existing.investorId ?? "",
-              investorLabel: existing.investorLabel ?? "",
-              selectedInvestor: existing.selectedInvestor ?? null,
-              investorBrokerId: existing.investorBrokerId ?? "",
-              investorBrokerName: existing.investorBrokerName ?? "",
-              accountId: existing.accountId ?? "",
-              selectedAccount: existing.selectedAccount ?? null,
-              availableAccounts: existing.availableAccounts ?? [],
-              accountAvailableBalance: existing.accountAvailableBalance ?? 0,
-              accountTotalBalance: existing.accountTotalBalance ?? 0,
-            }
-          : row;
-      });
-
-      lastProcessedSignatureRef.current = billsSignature;
-      setFieldValue("investorAssignments", merged);
-    } catch (error) {
-      console.error("Error building investor rows:", error);
-      if (!cancelled) {
+    const buildRows = async () => {
+      if (!Array.isArray(billsToNegotiate) || billsToNegotiate.length === 0) {
+        lastProcessedSignatureRef.current = "";
         setFieldValue("investorAssignments", []);
+        return;
       }
-    } finally {
-      if (!cancelled) {
-        setLoadingRows(false);
+
+      if (lastProcessedSignatureRef.current === billsSignature) {
+        return;
       }
-    }
-  };
 
-  buildRows();
+      setLoadingRows(true);
 
-  return () => {
-    cancelled = true;
-  };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [billsSignature]);
+      try {
+        const payload = {
+          bills: billsToNegotiate.map((bill, index) => ({
+            id: bill?.id ?? bill?.billId ?? bill?.number ?? `bill-${index}`,
+            billId: bill?.billId ?? bill?.number ?? "",
+            fractionsToSplit: Number(bill?.fractionsToSplit ?? 1),
+          })),
+        };
+
+        const response = await getBillFractionBulkFetch(payload);
+
+        const extractedRows = extractRowsFromBulkResponse(response);
+        const rowsFromApi = dedupeById(extractedRows);
+
+        if (cancelled) return;
+
+        const existingAssignmentsMap = buildExistingAssignmentsMap(investorAssignments);
+
+        const merged = rowsFromApi.map((row, index) => {
+          const rowId = String(
+            row?.id ??
+              row?.billFractionId ??
+              row?.fractionId ??
+              row?.billId ??
+              `row-${index}`
+          );
+
+          const existing = existingAssignmentsMap.get(rowId);
+
+          return existing
+            ? {
+                ...row,
+                ...existing,
+                id: rowId,
+                investorId: existing.investorId ?? "",
+                investorLabel: existing.investorLabel ?? "",
+                selectedInvestor: existing.selectedInvestor ?? null,
+                investorBrokerId: existing.investorBrokerId ?? "",
+                investorBrokerName: existing.investorBrokerName ?? "",
+                accountId: existing.accountId ?? "",
+                selectedAccount: existing.selectedAccount ?? null,
+                availableAccounts: existing.availableAccounts ?? [],
+                accountAvailableBalance: existing.accountAvailableBalance ?? 0,
+                accountTotalBalance: existing.accountTotalBalance ?? 0,
+              }
+            : {
+                ...row,
+                id: rowId,
+                investorId: "",
+                investorLabel: "",
+                selectedInvestor: null,
+                investorBrokerId: "",
+                investorBrokerName: "",
+                accountId: "",
+                selectedAccount: null,
+                availableAccounts: [],
+                accountAvailableBalance: 0,
+                accountTotalBalance: 0,
+              };
+        });
+
+        lastProcessedSignatureRef.current = billsSignature;
+
+        console.log("billsToNegotiate:", billsToNegotiate.length);
+        console.log("rowsFromApi:", rowsFromApi.length);
+        console.log("merged:", merged.length);
+
+        setFieldValue("investorAssignments", merged);
+      } catch (error) {
+        console.error("Error building investor rows:", error);
+        if (!cancelled) {
+          setFieldValue("investorAssignments", []);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingRows(false);
+        }
+      }
+    };
+
+    buildRows();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [billsSignature]);
+
+
 
   const filteredRows = useMemo(() => {
     const q = norm(search);
@@ -407,170 +481,289 @@ useEffect(() => {
     );
   }, [investorAssignments]);
 
-  const generateExcel = async () => {
-    const workbook = new ExcelJS.Workbook();
-    const sheet = workbook.addWorksheet("Carga Masiva");
+const generateExcel = async () => {
+  const workbook = new ExcelJS.Workbook();
+  const sheet = workbook.addWorksheet("Carga Masiva");
 
-    sheet.getCell("A1").value = "SMART EVOLUTION S.A.S";
-    sheet.getCell("A2").value = "REGISTRO DE OPERACIONES MASIVAS";
-    sheet.getCell("A3").value = "Creado el";
-    sheet.getCell("B3").value = formatDateForFile(new Date());
-    sheet.getCell("A4").value = "Creado por";
-    sheet.getCell("B4").value = user?.name || "Usuario Smart";
+  sheet.getCell("A1").value = "SMART EVOLUTION S.A.S";
+  sheet.getCell("A2").value = "REGISTRO DE OPERACIONES MASIVAS";
+  sheet.getCell("A3").value = "Creado el";
+  sheet.getCell("B3").value = formatDateForFile(new Date());
+  sheet.getCell("A4").value = "Creado por";
+  sheet.getCell("B4").value = user?.name || "Usuario Smart";
 
-    const blueHeaders = [
-      "NUMERO OPERACION",
-      "FECHA OPERACION",
-      "NOMBRE EMISOR",
-      "ID EMISOR",
-      "CORREDOR EMISOR",
-      "ID CORREDOR EMISOR",
-      "NOMBRE PAGADOR",
-      "ID PAGADOR",
-      "NUMERO FACTURA",
-      "ID FACTURA",
-      "SALDO FACTURA",
-      "BILL FRACTION",
-      "NOMBRE INVERSIONISTA",
-      "ID INVERSIONISTA",
-      "CUENTA INVERSIONISTA",
-      "CORREDOR INVERSIONISTA",
+  const blueHeaders = [
+    "NUMERO OPERACION",
+    "FECHA OPERACION",
+    "NOMBRE EMISOR",
+    "ID EMISOR",
+    "CORREDOR EMISOR",
+    "ID CORREDOR EMISOR",
+    "NOMBRE PAGADOR",
+    "ID PAGADOR",
+    "NUMERO FACTURA",
+    "ID FACTURA",
+    "SALDO FACTURA",
+    "BILL FRACTION",
+    "NOMBRE INVERSIONISTA",
+    "ID INVERSIONISTA",
+    "CUENTA INVERSIONISTA",
+    "CORREDOR INVERSIONISTA",
+  ];
+
+  const purpleHeaders = [
+    "FECHA PROBABLE",
+    "FECHA FIN",
+    "VALOR FUTURO",
+    "% DESCUENTO",
+    "TASA DESCUENTO",
+    "TASA INVERSIONISTA",
+  ];
+
+  const allHeaders = [...blueHeaders, ...purpleHeaders];
+
+  allHeaders.forEach((header, index) => {
+    const cell = sheet.getCell(6, index + 1);
+    cell.value = header;
+    cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+    cell.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: {
+        argb: index < blueHeaders.length ? "1F78D1" : "7B1FA2",
+      },
+    };
+    cell.border = {
+      top: { style: "thin", color: { argb: "FFFFFFFF" } },
+      left: { style: "thin", color: { argb: "FFFFFFFF" } },
+      bottom: { style: "thin", color: { argb: "FFFFFFFF" } },
+      right: { style: "thin", color: { argb: "FFFFFFFF" } },
+    };
+    cell.alignment = { vertical: "middle", horizontal: "center" };
+    cell.protection = { locked: true };
+  });
+
+  investorAssignments.forEach((row, index) => {
+    const excelRow = 7 + index;
+
+    const emitterName = formik?.emitter?.label || emitter?.label || "";
+    const emitterId = formik?.emitter?.value || emitter?.value || "";
+
+    const selectedInvestor = row.selectedInvestor;
+    const investorName =
+      row.investorLabel ||
+      selectedInvestor?.label ||
+      selectedInvestor?.data?.social_reason ||
+      "";
+
+    const investorId =
+      row.investorId ||
+      selectedInvestor?.value ||
+      selectedInvestor?.data?.id ||
+      "";
+
+    const accountNumber =
+      row.selectedAccount?.account_number ??
+      row.selectedAccount?.number ??
+      "";
+
+    const rowValues = [
+      formik?.opId || opId || "",                         // A
+      formatDateForExcelCell(formik?.opDate || opDate),  // B
+      emitterName,                                       // C
+      emitterId,                                         // D
+      formik?.corredorEmisor || "",                      // E
+      formik?.emitterBroker || "",                       // F
+      formik?.nombrepayer || payerName || "",            // G
+      formik?.nombrePagador || payerId || "",            // H
+      row.billId || "",                                  // I
+      row.billUniqueId || "",                            // J
+      Number(row.currentBalance || 0),                   // K
+      Number(row.fraction || 0),                         // L
+      investorName,                                      // M
+      investorId,                                        // N
+      accountNumber,                                     // O
+      row.investorBrokerName || "",                      // P
+      "",                                                // Q FECHA PROBABLE
+      "",                                                // R FECHA FIN
+      "",                                                // S VALOR FUTURO
+      "",                                                // T % DESCUENTO
+      "",                                                // U TASA DESCUENTO
+      "",                                                // V TASA INVERSIONISTA
     ];
 
-    const purpleHeaders = [
-      "FECHA PROBABLE",
-      "FECHA FIN",
-      "VALOR FUTURO",
-      "% DESCUENTO",
-      "TASA DESCUENTO",
-      "TASA INVERSIONISTA",
-    ];
+    rowValues.forEach((value, colIndex) => {
+      const cell = sheet.getCell(excelRow, colIndex + 1);
+      cell.value = value;
 
-    const allHeaders = [...blueHeaders, ...purpleHeaders];
+      // Fecha operación (columna B)
+      if (colIndex === 1 && value instanceof Date) {
+        cell.numFmt = "dd/mm/yyyy";
+      }
 
-    allHeaders.forEach((header, index) => {
-      const cell = sheet.getCell(6, index + 1);
-      cell.value = header;
-      cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
-      cell.fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: {
-          argb: index < blueHeaders.length ? "1F78D1" : "7B1FA2",
-        },
-      };
-      cell.border = {
-        top: { style: "thin", color: { argb: "FFFFFFFF" } },
-        left: { style: "thin", color: { argb: "FFFFFFFF" } },
-        bottom: { style: "thin", color: { argb: "FFFFFFFF" } },
-        right: { style: "thin", color: { argb: "FFFFFFFF" } },
+      // Saldo factura (K)
+      if (colIndex === 10) {
+        cell.numFmt = '"$"#,##0';
+      }
+
+      // Bloquear A:P, desbloquear Q:V
+      cell.protection = {
+        locked: colIndex < 16,
       };
     });
 
-    investorAssignments.forEach((row, index) => {
-      const excelRow = 7 + index;
+    // Formatos para columnas editables
+    sheet.getCell(`Q${excelRow}`).numFmt = "dd/mm/yyyy";
+    sheet.getCell(`R${excelRow}`).numFmt = "dd/mm/yyyy";
+    sheet.getCell(`S${excelRow}`).numFmt = '"$"#,##0.00';
+    sheet.getCell(`T${excelRow}`).numFmt = "0.00";
+    sheet.getCell(`U${excelRow}`).numFmt = "0.00";
+    sheet.getCell(`V${excelRow}`).numFmt = "0.00";
 
-      const emitterName = formik?.emitter?.label || emitter?.label || "";
-      const emitterId = formik?.emitter?.value || emitter?.value || "";
+    // -------------------------
+    // VALIDACIONES
+    // -------------------------
 
-      const selectedInvestor = row.selectedInvestor;
-      const investorName =
-        row.investorLabel ||
-        selectedInvestor?.label ||
-        selectedInvestor?.data?.social_reason ||
-        "";
+    // Q = FECHA PROBABLE >= B (fecha operación)
+    sheet.getCell(`Q${excelRow}`).dataValidation = {
+      type: "date",
+      operator: "greaterThanOrEqual",
+      allowBlank: true,
+      formulae: [`B${excelRow}`],
+      showErrorMessage: true,
+      errorStyle: "stop",
+      errorTitle: "Fecha inválida",
+      error: "La fecha probable no puede ser menor a la fecha de operación.",
+    };
 
-      const investorId =
-        row.investorId ||
-        selectedInvestor?.value ||
-        selectedInvestor?.data?.id ||
-        "";
+    // R = FECHA FIN >= Q (fecha probable)
+    sheet.getCell(`R${excelRow}`).dataValidation = {
+      type: "date",
+      operator: "greaterThanOrEqual",
+      allowBlank: true,
+      formulae: [`Q${excelRow}`],
+      showErrorMessage: true,
+      errorStyle: "stop",
+      errorTitle: "Fecha inválida",
+      error: "La fecha fin no puede ser menor a la fecha probable.",
+    };
 
-      const accountNumber =
-        row.selectedAccount?.account_number ??
-        row.selectedAccount?.number ??
-        "";
+    // S = VALOR FUTURO >= 0
+    sheet.getCell(`S${excelRow}`).dataValidation = {
+      type: "decimal",
+      operator: "greaterThanOrEqual",
+      allowBlank: true,
+      formulae: [0],
+      showErrorMessage: true,
+      errorStyle: "stop",
+      errorTitle: "Valor inválido",
+      error: "El valor futuro debe ser un número positivo o cero.",
+    };
 
-      const rowValues = [
-        formik?.opId || opId || "",
-        formatDateForExcelCell(formik?.opDate || opDate),
-        emitterName,
-        emitterId,
-        formik?.corredorEmisor || "",
-        formik?.emitterBroker || "",
-        formik?.nombrepayer || payerName || "",
-        formik?.nombrePagador || payerId || "",
-        row.billId || "",
-        row.billUniqueId || "",
-        Number(row.currentBalance || 0),
-        Number(row.fraction || 0),
-        investorName,
-        investorId,
-        accountNumber,
-        row.investorBrokerName || "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-      ];
+    // T = % DESCUENTO >= 0
+    sheet.getCell(`T${excelRow}`).dataValidation = {
+      type: "decimal",
+      operator: "greaterThanOrEqual",
+      allowBlank: true,
+      formulae: [0],
+      showErrorMessage: true,
+      errorStyle: "stop",
+      errorTitle: "Valor inválido",
+      error: "El porcentaje de descuento debe ser positivo o cero.",
+    };
 
-      rowValues.forEach((value, colIndex) => {
-        const cell = sheet.getCell(excelRow, colIndex + 1);
-        cell.value = value;
+    // U = TASA DESCUENTO >= 0
+    sheet.getCell(`U${excelRow}`).dataValidation = {
+      type: "decimal",
+      operator: "greaterThanOrEqual",
+      allowBlank: true,
+      formulae: [0],
+      showErrorMessage: true,
+      errorStyle: "stop",
+      errorTitle: "Valor inválido",
+      error: "La tasa de descuento debe ser positiva o cero.",
+    };
 
-        if (colIndex === 1 && value instanceof Date) {
-          cell.numFmt = "dd/mm/yyyy";
-        }
+    // V = TASA INVERSIONISTA >= 0
+    sheet.getCell(`V${excelRow}`).dataValidation = {
+      type: "decimal",
+      operator: "greaterThanOrEqual",
+      allowBlank: true,
+      formulae: [0],
+      showErrorMessage: true,
+      errorStyle: "stop",
+      errorTitle: "Valor inválido",
+      error: "La tasa inversionista debe ser positiva o cero.",
+    };
 
-        if (colIndex === 10) {
-          cell.numFmt = '"$"#,##0';
-        }
-      });
-    });
+    // V <= U
+    sheet.getCell(`V${excelRow}`).dataValidation = {
+      type: "custom",
+      allowBlank: true,
+      formulae: [`AND(V${excelRow}>=0,V${excelRow}<=U${excelRow})`],
+      showErrorMessage: true,
+      errorStyle: "stop",
+      errorTitle: "Tasa inválida",
+      error: "La tasa inversionista no puede ser mayor a la tasa de descuento.",
+    };
+  });
 
-    sheet.columns = [
-      { width: 22 },
-      { width: 18 },
-      { width: 32 },
-      { width: 24 },
-      { width: 28 },
-      { width: 24 },
-      { width: 32 },
-      { width: 22 },
-      { width: 22 },
-      { width: 24 },
-      { width: 18 },
-      { width: 14 },
-      { width: 30 },
-      { width: 24 },
-      { width: 24 },
-      { width: 30 },
-      { width: 18 },
-      { width: 18 },
-      { width: 18 },
-      { width: 16 },
-      { width: 18 },
-      { width: 20 },
-    ];
+  sheet.columns = [
+    { width: 22 },
+    { width: 18 },
+    { width: 32 },
+    { width: 24 },
+    { width: 28 },
+    { width: 24 },
+    { width: 32 },
+    { width: 22 },
+    { width: 22 },
+    { width: 24 },
+    { width: 18 },
+    { width: 14 },
+    { width: 30 },
+    { width: 24 },
+    { width: 24 },
+    { width: 30 },
+    { width: 18 },
+    { width: 18 },
+    { width: 18 },
+    { width: 16 },
+    { width: 18 },
+    { width: 20 },
+  ];
 
-    const fileName = `${formik?.opId || opId || "Operacion"}-CargaMasiva${formatDateForFile(
-      new Date()
-    )}.xlsx`;
+  // Proteger hoja para que respete locked/unlocked
+  await sheet.protect("smart-evolution", {
+    selectLockedCells: true,
+    selectUnlockedCells: true,
+    formatCells: false,
+    formatColumns: false,
+    formatRows: false,
+    insertColumns: false,
+    insertRows: false,
+    deleteColumns: false,
+    deleteRows: false,
+    sort: false,
+    autoFilter: false,
+    pivotTables: false,
+  });
 
-    const buffer = await workbook.xlsx.writeBuffer();
+  const fileName = `${formik?.opId || opId || "Operacion"}-CargaMasiva${formatDateForFile(
+    new Date()
+  )}.xlsx`;
 
-    saveAs(
-      new Blob([buffer], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      }),
-      fileName
-    );
+  const buffer = await workbook.xlsx.writeBuffer();
 
-    setInvestorsExcelGenerated?.(true);
-  };
+  saveAs(
+    new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    }),
+    fileName
+  );
 
+  setInvestorsExcelGenerated?.(true);
+};
   const columns = [
     {
       field: "billId",
@@ -708,6 +901,8 @@ useEffect(() => {
 },
   ];
 
+  console.log(filteredRows)
+
   return (
     <Grid container spacing={0} sx={{ mt: 0.5 }}>
       <Grid item xs={12}>
@@ -767,57 +962,57 @@ useEffect(() => {
                 <InvestorsTableSkeleton />
               </Box>
             ) : (
-             <DataGrid
+            <DataGrid
   rows={filteredRows}
   columns={columns}
   getRowId={(row) => row.id}
-  hideFooter
   disableRowSelectionOnClick
   rowHeight={40}
   columnHeaderHeight={34}
-                sx={{
-                  border: 0,
-                  height: "100%",
-                  backgroundColor: "transparent",
-                  "& .MuiDataGrid-main": {
-                    border: 0,
-                  },
-                  "& .MuiDataGrid-columnHeaders": {
-                    backgroundColor: "#D9D9D9",
-                    borderBottom: "none",
-                    minHeight: "34px !important",
-                    maxHeight: "34px !important",
-                  },
-                  "& .MuiDataGrid-columnHeader": {
-                    px: 1,
-                  },
-                  "& .MuiDataGrid-columnHeaderTitle": {
-                    fontWeight: 700,
-                    fontSize: 12,
-                    color: "#333",
-                  },
-                  "& .MuiDataGrid-row": {
-                    backgroundColor: "#F5F5F5",
-                  },
-                  "& .MuiDataGrid-cell": {
-                    borderBottom: "1px solid #E7E7E7",
-                    fontSize: 12,
-                    color: "#444",
-                    px: 1,
-                    display: "flex",
-                    alignItems: "center",
-                  },
-                  "& .MuiDataGrid-cell:focus, & .MuiDataGrid-columnHeader:focus": {
-                    outline: "none",
-                  },
-                  "& .MuiDataGrid-footerContainer": {
-                    display: "none",
-                  },
-                  "& .MuiDataGrid-virtualScroller": {
-                    overflowX: "auto",
-                  },
-                }}
-              />
+  pagination
+  paginationModel={paginationModel}
+  onPaginationModelChange={setPaginationModel}
+  pageSizeOptions={[25, 50, 100]}
+  sx={{
+    border: 0,
+    height: "100%",
+    backgroundColor: "transparent",
+    "& .MuiDataGrid-main": {
+      border: 0,
+    },
+    "& .MuiDataGrid-columnHeaders": {
+      backgroundColor: "#D9D9D9",
+      borderBottom: "none",
+      minHeight: "34px !important",
+      maxHeight: "34px !important",
+    },
+    "& .MuiDataGrid-columnHeader": {
+      px: 1,
+    },
+    "& .MuiDataGrid-columnHeaderTitle": {
+      fontWeight: 700,
+      fontSize: 12,
+      color: "#333",
+    },
+    "& .MuiDataGrid-row": {
+      backgroundColor: "#F5F5F5",
+    },
+    "& .MuiDataGrid-cell": {
+      borderBottom: "1px solid #E7E7E7",
+      fontSize: 12,
+      color: "#444",
+      px: 1,
+      display: "flex",
+      alignItems: "center",
+    },
+    "& .MuiDataGrid-cell:focus, & .MuiDataGrid-columnHeader:focus": {
+      outline: "none",
+    },
+    "& .MuiDataGrid-virtualScroller": {
+      overflowX: "auto",
+    },
+  }}
+/>
             )}
           </Box>
 
