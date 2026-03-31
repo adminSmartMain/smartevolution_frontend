@@ -114,6 +114,7 @@ export const InvestorsAssignmentTable = ({
   getBillFractionBulkFetch,
   cargarCuentas,
   cargarBrokerFromInvestor,
+   cargarTasaDescuento,
   setFieldValue,
   opId,
   opDate,
@@ -195,6 +196,7 @@ useEffect(() => {
     };
   }, [investors]);
 
+  console.log("Valid investors for assignment:", validInvestors);
   const formatCurrency = (value) =>
     Number(value || 0).toLocaleString("es-CO", {
       style: "currency",
@@ -404,6 +406,30 @@ useEffect(() => {
     return;
   }
 
+  // Validación de perfil de riesgo
+  const tasaDescuento = await cargarTasaDescuento?.(investorId);
+
+  if (!tasaDescuento) {
+    Toast(
+      "Disculpe, el cliente seleccionado no tiene perfil de riesgo configurado. Por favor, agréguelo en el módulo de clientes.",
+      "warning"
+    );
+
+    updateRow(row.id, {
+      investorId: "",
+      investorLabel: "",
+      selectedInvestor: null,
+      investorBrokerId: "",
+      investorBrokerName: "",
+      accountId: "",
+      selectedAccount: null,
+      availableAccounts: [],
+      accountAvailableBalance: 0,
+      accountTotalBalance: 0,
+    });
+    return;
+  }
+
   const investorLabel =
     newInvestor?.label ??
     (newInvestor?.data?.first_name && newInvestor?.data?.last_name
@@ -461,8 +487,10 @@ useEffect(() => {
     }
 
     const totalBalance = Number(newAccount?.balance ?? 0);
-    const availableBalance = totalBalance - Number(row.currentBalance ?? 0);
-
+    const availableBalance = totalBalance ;
+    console.log(row.currentBalance)
+    console.log("Selected account balance:", newAccount?.balance);
+console.log("Selected account:",newAccount);
     updateRow(row.id, {
       accountId: newAccount?.id ?? "",
       selectedAccount: newAccount,
@@ -596,23 +624,20 @@ const generateExcel = async () => {
       const cell = sheet.getCell(excelRow, colIndex + 1);
       cell.value = value;
 
-      // Fecha operación (columna B)
       if (colIndex === 1 && value instanceof Date) {
         cell.numFmt = "dd/mm/yyyy";
       }
 
-      // Saldo factura (K)
       if (colIndex === 10) {
-        cell.numFmt = '"$"#,##0';
+        cell.numFmt = '"$"#,##0.00';
       }
 
-      // Bloquear A:P, desbloquear Q:V
       cell.protection = {
         locked: colIndex < 16,
       };
     });
 
-    // Formatos para columnas editables
+    // Formato editable Q:V
     sheet.getCell(`Q${excelRow}`).numFmt = "dd/mm/yyyy";
     sheet.getCell(`R${excelRow}`).numFmt = "dd/mm/yyyy";
     sheet.getCell(`S${excelRow}`).numFmt = '"$"#,##0.00';
@@ -620,120 +645,169 @@ const generateExcel = async () => {
     sheet.getCell(`U${excelRow}`).numFmt = "0.00";
     sheet.getCell(`V${excelRow}`).numFmt = "0.00";
 
+    // Resaltar celdas editables
+    ["Q", "R", "S", "T", "U", "V"].forEach((col) => {
+      const cell = sheet.getCell(`${col}${excelRow}`);
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFF8E1" },
+      };
+    });
+
     // -------------------------
     // VALIDACIONES
     // -------------------------
 
-    // Q = FECHA PROBABLE >= B (fecha operación)
+    // Q = fecha válida y >= B
     sheet.getCell(`Q${excelRow}`).dataValidation = {
-      type: "date",
-      operator: "greaterThanOrEqual",
+      type: "custom",
       allowBlank: true,
-      formulae: [`B${excelRow}`],
+     formulae: [
+  `=OR(Q${excelRow}="",AND(ISNUMBER(Q${excelRow}),ISNUMBER(B${excelRow}),INT(Q${excelRow})>=INT(B${excelRow})))`,
+],
+      showInputMessage: true,
+      promptTitle: "Fecha probable",
+      prompt:
+        "Ingrese una fecha válida en formato dd/mm/yyyy, mayor o igual a la fecha de operación.",
       showErrorMessage: true,
       errorStyle: "stop",
       errorTitle: "Fecha inválida",
-      error: "La fecha probable no puede ser menor a la fecha de operación.",
+      error:
+        "La fecha probable debe ser una fecha válida y no puede ser menor a la fecha de operación.",
     };
 
-    // R = FECHA FIN >= Q (fecha probable)
+    // R = fecha válida y >= Q
     sheet.getCell(`R${excelRow}`).dataValidation = {
-      type: "date",
-      operator: "greaterThanOrEqual",
+      type: "custom",
       allowBlank: true,
-      formulae: [`Q${excelRow}`],
+      formulae: [
+        `=OR(R${excelRow}="",AND(ISNUMBER(R${excelRow}),ISNUMBER(Q${excelRow}),R${excelRow}>=Q${excelRow}))`,
+      ],
+      showInputMessage: true,
+      promptTitle: "Fecha fin",
+      prompt:
+        "Ingrese una fecha válida en formato dd/mm/yyyy, mayor o igual a la fecha probable.",
       showErrorMessage: true,
       errorStyle: "stop",
       errorTitle: "Fecha inválida",
-      error: "La fecha fin no puede ser menor a la fecha probable.",
+      error:
+        "La fecha fin debe ser una fecha válida y no puede ser menor a la fecha probable.",
     };
 
-    // S = VALOR FUTURO >= 0
+    // S = numérico >= 0
     sheet.getCell(`S${excelRow}`).dataValidation = {
-      type: "decimal",
-      operator: "greaterThanOrEqual",
+      type: "custom",
       allowBlank: true,
-      formulae: [0],
+      formulae: [
+        `=OR(S${excelRow}="",AND(ISNUMBER(S${excelRow}),S${excelRow}>=0))`,
+      ],
+      showInputMessage: true,
+      promptTitle: "Valor futuro",
+      prompt: "Ingrese un número mayor o igual a 0.",
       showErrorMessage: true,
       errorStyle: "stop",
       errorTitle: "Valor inválido",
       error: "El valor futuro debe ser un número positivo o cero.",
     };
 
-    // T = % DESCUENTO >= 0
+    // T = numérico >= 0
     sheet.getCell(`T${excelRow}`).dataValidation = {
-      type: "decimal",
-      operator: "greaterThanOrEqual",
+      type: "custom",
       allowBlank: true,
-      formulae: [0],
+      formulae: [
+        `=OR(T${excelRow}="",AND(ISNUMBER(T${excelRow}),T${excelRow}>=0))`,
+      ],
+      showInputMessage: true,
+      promptTitle: "% Descuento",
+      prompt: "Ingrese un número mayor o igual a 0.",
       showErrorMessage: true,
       errorStyle: "stop",
       errorTitle: "Valor inválido",
       error: "El porcentaje de descuento debe ser positivo o cero.",
     };
 
-    // U = TASA DESCUENTO >= 0
+    // U = numérico >= 0
     sheet.getCell(`U${excelRow}`).dataValidation = {
-      type: "decimal",
-      operator: "greaterThanOrEqual",
+      type: "custom",
       allowBlank: true,
-      formulae: [0],
+      formulae: [
+        `=OR(U${excelRow}="",AND(ISNUMBER(U${excelRow}),U${excelRow}>=0))`,
+      ],
+      showInputMessage: true,
+      promptTitle: "Tasa descuento",
+      prompt: "Ingrese un número mayor o igual a 0.",
       showErrorMessage: true,
       errorStyle: "stop",
       errorTitle: "Valor inválido",
       error: "La tasa de descuento debe ser positiva o cero.",
     };
 
-    // V = TASA INVERSIONISTA >= 0
-    sheet.getCell(`V${excelRow}`).dataValidation = {
-      type: "decimal",
-      operator: "greaterThanOrEqual",
-      allowBlank: true,
-      formulae: [0],
-      showErrorMessage: true,
-      errorStyle: "stop",
-      errorTitle: "Valor inválido",
-      error: "La tasa inversionista debe ser positiva o cero.",
-    };
-
-    // V <= U
+    // V = numérico >= 0 y <= U
     sheet.getCell(`V${excelRow}`).dataValidation = {
       type: "custom",
       allowBlank: true,
-      formulae: [`AND(V${excelRow}>=0,V${excelRow}<=U${excelRow})`],
+      formulae: [
+        `=OR(V${excelRow}="",AND(ISNUMBER(V${excelRow}),V${excelRow}>=0,ISNUMBER(U${excelRow}),V${excelRow}<=U${excelRow}))`,
+      ],
+      showInputMessage: true,
+      promptTitle: "Tasa inversionista",
+      prompt:
+        "Ingrese un número mayor o igual a 0 y menor o igual a la tasa de descuento.",
       showErrorMessage: true,
       errorStyle: "stop",
       errorTitle: "Tasa inválida",
-      error: "La tasa inversionista no puede ser mayor a la tasa de descuento.",
+      error:
+        "La tasa inversionista debe ser positiva o cero y no puede ser mayor a la tasa de descuento.",
     };
   });
 
   sheet.columns = [
-    { width: 22 },
-    { width: 18 },
-    { width: 32 },
-    { width: 24 },
-    { width: 28 },
-    { width: 24 },
-    { width: 32 },
-    { width: 22 },
-    { width: 22 },
-    { width: 24 },
-    { width: 18 },
-    { width: 14 },
-    { width: 30 },
-    { width: 24 },
-    { width: 24 },
-    { width: 30 },
-    { width: 18 },
-    { width: 18 },
-    { width: 18 },
-    { width: 16 },
-    { width: 18 },
-    { width: 20 },
+    { width: 22 }, // A
+    { width: 18 }, // B
+    { width: 32 }, // C
+    { width: 24 }, // D
+    { width: 28 }, // E
+    { width: 24 }, // F
+    { width: 32 }, // G
+    { width: 22 }, // H
+    { width: 22 }, // I
+    { width: 24 }, // J
+    { width: 18 }, // K
+    { width: 14 }, // L
+    { width: 30 }, // M
+    { width: 24 }, // N
+    { width: 24 }, // O
+    { width: 30 }, // P
+    { width: 20 }, // Q
+    { width: 20 }, // R
+    { width: 20 }, // S
+    { width: 16 }, // T
+    { width: 18 }, // U
+    { width: 20 }, // V
   ];
 
-  // Proteger hoja para que respete locked/unlocked
+  // Autofiltro en encabezados
+  sheet.autoFilter = {
+    from: {
+      row: 6,
+      column: 1,
+    },
+    to: {
+      row: 6,
+      column: allHeaders.length,
+    },
+  };
+
+  // Congelar encabezados
+  sheet.views = [
+    {
+      state: "frozen",
+      ySplit: 6,
+    },
+  ];
+
+  // Proteger hoja permitiendo filtro y ordenamiento
   await sheet.protect("smart-evolution", {
     selectLockedCells: true,
     selectUnlockedCells: true,
@@ -744,8 +818,8 @@ const generateExcel = async () => {
     insertRows: false,
     deleteColumns: false,
     deleteRows: false,
-    sort: false,
-    autoFilter: false,
+    sort: true,
+    autoFilter: true,
     pivotTables: false,
   });
 
@@ -778,20 +852,32 @@ const generateExcel = async () => {
       ),
     },
     {
-      field: "currentBalance",
-      headerName: "Saldo",
-      minWidth: 150,
-      sortable: false,
-      renderCell: (params) => (
-        <Typography sx={{ fontSize: 13, color: "#4D4D4D" }}>
-          {formatCurrency(params.row.currentBalance)}
-        </Typography>
-      ),
-    },
+  field: "currentBalance",
+  headerName: "Saldo",
+  width: 180,
+  minWidth: 180,
+  sortable: false,
+  headerAlign: "left",
+  align:"left",
+  renderCell: (params) => (
+    <Typography
+      sx={{
+        width: "100%",
+        fontSize: 13,
+        color: "#4D4D4D",
+        textAlign: "left",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {formatCurrency(params.row.currentBalance)}
+    </Typography>
+  ),
+},
     {
       field: "fraction",
       headerName: "Fracción",
-      width: 100,
+      flex: 1,
+       minWidth: 65,
       sortable: false,
       renderCell: (params) => (
         <Typography sx={{ fontSize: 13, color: "#4D4D4D" }}>
@@ -803,7 +889,7 @@ const generateExcel = async () => {
       field: "investorSelector",
       headerName: "Inversionista",
       flex: 1,
-      minWidth: 300,
+      minWidth: 250,
       sortable: false,
       renderCell: (params) => (
         <Autocomplete
@@ -880,8 +966,12 @@ const generateExcel = async () => {
   {
   field: "accountAvailableBalance",
   headerName: "Saldo",
-  minWidth: 120,
+  width: 230,
+  minWidth: 230,
+  maxWidth: 230,
   sortable: false,
+  headerAlign: "left",
+  align: "left",
   renderCell: (params) => {
     const value = Number(params.row.accountAvailableBalance || 0);
     const isNegative = value < 0;
@@ -889,9 +979,13 @@ const generateExcel = async () => {
     return (
       <Typography
         sx={{
+          width: "100%",
           fontSize: 13,
           color: isNegative ? "#D32F2F" : "#4D4D4D",
           fontWeight: isNegative ? 700 : 400,
+          textAlign: "left",
+          whiteSpace: "nowrap",
+          overflow: "visible",
         }}
       >
         {formatCurrency(value)}
@@ -973,12 +1067,22 @@ const generateExcel = async () => {
   paginationModel={paginationModel}
   onPaginationModelChange={setPaginationModel}
   pageSizeOptions={[25, 50, 100]}
+  localeText={{
+    footerRowsPerPage: "Filas por página:",
+    footerTotalRows: "Total de filas:",
+    MuiTablePagination: {
+      labelRowsPerPage: "Filas por página:",
+      labelDisplayedRows: ({ from, to, count }) =>
+        `${from}-${to} de ${count !== -1 ? count : `más de ${to}`}`,
+    },
+  }}
   sx={{
     border: 0,
     height: "100%",
     backgroundColor: "transparent",
     "& .MuiDataGrid-main": {
       border: 0,
+      minWidth: 0,
     },
     "& .MuiDataGrid-columnHeaders": {
       backgroundColor: "#D9D9D9",
@@ -993,6 +1097,7 @@ const generateExcel = async () => {
       fontWeight: 700,
       fontSize: 12,
       color: "#333",
+      whiteSpace: "nowrap",
     },
     "& .MuiDataGrid-row": {
       backgroundColor: "#F5F5F5",
@@ -1004,6 +1109,7 @@ const generateExcel = async () => {
       px: 1,
       display: "flex",
       alignItems: "center",
+      overflow: "visible",
     },
     "& .MuiDataGrid-cell:focus, & .MuiDataGrid-columnHeader:focus": {
       outline: "none",

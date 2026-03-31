@@ -320,24 +320,21 @@ const ProcessingBanner = ({ status, processedMessage, errorCount }) => {
     );
   }
 
-  if (status === "processed_error") {
-    return (
-      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-        <ErrorOutlineIcon sx={{ fontSize: 74, color: "#FF1C14" }} />
-        <Box>
-          <Typography sx={{ color: "#7EAF86", fontWeight: 700, fontSize: 16 }}>
-            Excel procesado.
-          </Typography>
-          <Typography sx={{ color: "#FF1C14", fontWeight: 700, fontSize: 14 }}>
-            Se han detectado {errorCount} errores en el archivo.
-          </Typography>
-          <Typography sx={{ color: "#FF1C14", fontSize: 14 }}>
-            Por favor, corrige el archivo o elimina las filas afectadas.
-          </Typography>
-        </Box>
+  if (status === "register_error") {
+  return (
+    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+      <ErrorOutlineIcon sx={{ fontSize: 74, color: "#FF1C14" }} />
+      <Box>
+        <Typography sx={{ color: "#FF1C14", fontWeight: 700, fontSize: 16 }}>
+          Error al registrar la operación.
+        </Typography>
+        <Typography sx={{ color: "#FF1C14", fontSize: 14 }}>
+          {processedMessage || "No fue posible completar el registro."}
+        </Typography>
       </Box>
-    );
-  }
+    </Box>
+  );
+}
 
   if (status === "registered_success") {
     return (
@@ -609,7 +606,7 @@ export const UploadExcelStep = ({
           row.gmValue ??
           row.calculated?.GM ??
           0;
-
+        console.log("Row:", row);
         return {
           id: row.id ?? row.rowId ?? row.row_id ?? index + 1,
           facturaId: row.facturaId ?? row.factura_id ?? row.billId ?? row.bill_id ?? "",
@@ -626,6 +623,10 @@ export const UploadExcelStep = ({
           valorInversionista: row.valorInversionista ?? row.valor_inversionista ?? "",
           fechaProbable: row.fechaProbable ?? row.fecha_probable ?? "",
           fechaFin: row.fechaFin ?? row.fecha_fin ?? "",
+          present_value_sf:row.present_value_sf ?? row.presentValueSf ?? row.valor_presente_sf ?? "",
+            investor_profit:row.investor_profit ?? row.investorProfit ?? row.utilidad_inversion ?? "",
+            opDays:row.opDays ?? row.operation_days ?? row.op_days ?? "",
+            commission_sf: row.commission_sf ?? row.commissionSf ?? row.comision_sf ?? "",
           applyGm: Boolean(backendApplyGm),
           gmValue: Number(backendGm || 0),
           gmOriginalValue: Number(backendGm || 0),
@@ -741,53 +742,76 @@ export const UploadExcelStep = ({
   };
 
   const handleRegisterOperation = async () => {
-    if (!registerOperation || !normalizedRows?.length || !canRegister) return;
+  if (!registerOperation || !normalizedRows?.length || !canRegister) return;
+
+  updateState({
+    status: "processing",
+    processedMessage: "Registrando operación...",
+    modalError: "",
+  });
+
+  try {
+    const response = await registerOperation(normalizedRows);
+    const data = response?.data ?? response ?? {};
+    const summary = data?.summary ?? data?.data ?? data ?? {};
+
+    const failed =
+      data?.error === true ||
+      data?.success === false ||
+      summary?.error === true ||
+      !response;
+
+    if (failed) {
+      throw new Error(
+        data?.message ||
+          summary?.message ||
+          "No fue posible registrar la operación."
+      );
+    }
 
     updateState({
-      status: "processing",
-      processedMessage: "Registrando operación...",
-      modalError: "",
+      status: "registered_success",
+      processedMessage:
+        summary?.message ||
+        data?.message ||
+        `¡Operación #${summary?.operationId ?? operationId ?? ""} Registrada con Éxito!`,
+      registerSummary: {
+        operationId: summary?.operationId ?? operationId ?? null,
+        totalOperacion:
+          summary?.totalOperacion ??
+          summary?.total_amount ??
+          totalOperacionCalculada,
+        facturasRegistradas:
+          summary?.facturasRegistradas ??
+          summary?.registered_rows ??
+          validRows.length ??
+          0,
+        tasaPromedioPonderada:
+          summary?.tasaPromedioPonderada ??
+          summary?.weightedAverageRate ??
+          summary?.weighted_average_rate ??
+          tasaPromedioPonderadaCalculada,
+        raw: summary,
+      },
     });
 
-    try {
-      const response = await registerOperation(normalizedRows);
-      const data = response?.data ?? response ?? {};
-      const summary = data?.summary ?? data?.data ?? data ?? {};
-
-      updateState({
-        status: "registered_success",
-        processedMessage:
-          summary?.message ||
-          `¡Operación #${summary?.operationId ?? operationId ?? ""} Registrada con Éxito!`,
-        registerSummary: {
-          operationId: summary?.operationId ?? operationId ?? null,
-          totalOperacion:
-            summary?.totalOperacion ??
-            summary?.total_amount ??
-            totalOperacionCalculada,
-          facturasRegistradas:
-            summary?.facturasRegistradas ?? summary?.registered_rows ?? validRows.length ?? 0,
-          tasaPromedioPonderada:
-            summary?.tasaPromedioPonderada ??
-            summary?.weightedAverageRate ??
-            summary?.weighted_average_rate ??
-            tasaPromedioPonderadaCalculada,
-          raw: summary,
-        },
-      });
-
-      if (typeof onNext === "function") {
-        onNext();
-      }
-    } catch (error) {
-      updateState({
-        status: canRegister ? "processed_success" : "processed_error",
-        modalError:
-          error?.response?.data?.message ||
-          "Ocurrió un error al registrar la operación. Intente nuevamente.",
-      });
+    if (typeof onNext === "function") {
+      onNext();
     }
-  };
+  } catch (error) {
+    const errorMessage =
+      error?.response?.data?.message ||
+      error?.message ||
+      "Ocurrió un error al registrar la operación. Intente nuevamente.";
+
+    updateState({
+      status: "register_error",
+      processedMessage: errorMessage,
+      modalError: errorMessage,
+      registerSummary: null,
+    });
+  }
+};
 
   const handleDownloadValidExcel = async () => {
     const cleanRows = (rows || []).filter((row) => !row.hasErrors);
@@ -980,20 +1004,83 @@ export const UploadExcelStep = ({
       },
       {
         field: "valorInversionista",
-        headerName: "Valor Inversionista",
+        headerName: "Valor Presente Inversión",
         minWidth: 160,
         flex: 1.2,
         align: "right",
         headerAlign: "right",
         renderCell: (params) => (
           <ErrorCell
-            value={params.value}
+            value={Math.round(params.value,0)}
             error={getFieldErrorMessage(params.row, ["valor_inversionista", "valorInversionista"])}
             align="right"
             formatter={formatCurrency}
           />
         ),
       },
+       {
+  field: "opDays",
+  headerName: "Días de operación",
+  minWidth: 140,
+  flex: 0.9,
+  align: "right",
+  headerAlign: "right",
+  renderCell: (params) => (
+    <ErrorCell
+      value={params.value ?? 0}
+      error={getFieldErrorMessage(params.row, ["op_days", "opDays", "operation_days"])}
+      align="right"
+    />
+  ),
+},
+{
+  field: "investor_profit",
+  headerName: "Utilidad Inversión",
+  minWidth: 160,
+  flex: 1.2,
+  align: "right",
+  headerAlign: "right",
+  renderCell: (params) => (
+    <ErrorCell
+      value={params.value ?? 0}
+      error={getFieldErrorMessage(params.row, ["investor_profit", "investorProfit"])}
+      align="right"
+      formatter={formatCurrency}
+    />
+  ),
+},
+{
+  field: "present_value_sf",
+  headerName: "Valor Presente Mesa",
+  minWidth: 170,
+  flex: 1.2,
+  align: "right",
+  headerAlign: "right",
+  renderCell: (params) => (
+    <ErrorCell
+      value={params.value ?? 0}
+      error={getFieldErrorMessage(params.row, ["present_value_sf", "presentValueSF"])}
+      align="right"
+      formatter={formatCurrency}
+    />
+  ),
+},
+{
+  field: "commission_sf",
+  headerName: "Comisión Mesa",
+  minWidth: 150,
+  flex: 1.1,
+  align: "right",
+  headerAlign: "right",
+  renderCell: (params) => (
+    <ErrorCell
+      value={params.value ?? 0}
+      error={getFieldErrorMessage(params.row, ["commission_sf", "commissionSF"])}
+      align="right"
+      formatter={formatCurrency}
+    />
+  ),
+},
       {
         field: "gm",
         headerName: "GM",
@@ -1201,6 +1288,15 @@ export const UploadExcelStep = ({
               disableRowSelectionOnClick
               hideFooter={rows.length <= 10}
               pageSizeOptions={[10, 20, 50]}
+              localeText={{
+    footerRowsPerPage: "Filas por página:",
+    footerTotalRows: "Total de filas:",
+    MuiTablePagination: {
+      labelRowsPerPage: "Filas por página:",
+      labelDisplayedRows: ({ from, to, count }) =>
+        `${from}-${to} de ${count !== -1 ? count : `más de ${to}`}`,
+    },
+  }}
               loading={status === "processing"}
               sx={{
                 height: 315,
@@ -1426,6 +1522,7 @@ export const UploadExcelStep = ({
           </Box>
         </Box>
       )}
+      
     </Box>
   );
 };

@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import Image from "next/image";
 import Link from "next/link";
-import { ToastContainer, toast } from "react-toastify";
+import { ToastContainer } from "react-toastify";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import { Home as HomeIcon } from "@mui/icons-material";
 import EditIcon from "@mui/icons-material/Edit";
@@ -113,7 +113,6 @@ export const RegisterMassiveOperationComponent = ({
   const isJuridica = formik?.values?.type_client === JURIDICA_ID;
 
   const emisores = emitters || [];
-const isSuccessView = uploadExcelState?.status === "registered_success";
   const [clientEmitter, setClientEmitter] = useState(null);
   const [clientPagador, setClientPagador] = useState(null);
   const [clientBrokerEmitter, setClientBrokerEmitter] = useState(null);
@@ -121,7 +120,9 @@ const isSuccessView = uploadExcelState?.status === "registered_success";
   const [openEmitterBrokerModal, setOpenEmitterBrokerModal] = useState(false);
   const [pendingClear, setPendingClear] = useState(false);
   const [showAllPayers, setShowAllPayers] = useState(false);
-  const [orchestDisabled, setOrchestDisabled] = useState([{ indice: 0, status: false }]);
+  const [orchestDisabled, setOrchestDisabled] = useState([
+    { indice: 0, status: false },
+  ]);
   const [isSelectedPayer, setIsSelectedPayer] = useState(false);
   const [isModalEmitterAd, setIsModalEmitterAd] = useState(false);
   const [brokeDelete, setBrokeDelete] = useState(false);
@@ -168,11 +169,11 @@ const isSuccessView = uploadExcelState?.status === "registered_success";
     init: false,
   });
 
-
   const { fetch: getBillFractionBulkFetch } = useFetch({
-  service: GetBillFractionBulk,
-  init: false,
-});
+    service: GetBillFractionBulk,
+    init: false,
+  });
+
   const { fetch: fetchAccountsFromClient } = useFetch({
     service: AccountsFromClient,
     init: false,
@@ -183,8 +184,6 @@ const isSuccessView = uploadExcelState?.status === "registered_success";
     init: false,
   });
 
-
-  
   const { fetch: uploadExcelFetch } = useFetch({
     service: uploadExcel,
     init: false,
@@ -246,17 +245,21 @@ const isSuccessView = uploadExcelState?.status === "registered_success";
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={esLocale}>
       <ToastContainer position="top-right" autoClose={5000} />
+
       <Box
-  sx={{
-    width: "90%",
-    px: { xs: 1.5, sm: 2, md: 2.5 },
-    pt: { xs: 1, md: 0.5 },
-    pb: { xs: 1.5, md: 1.5 },
-  }}
->
+        sx={{
+          width: "90%",
+          px: { xs: 1.5, sm: 2, md: 2.5 },
+          pt: { xs: 1, md: 0.5 },
+          pb: { xs: 1.5, md: 1.5 },
+        }}
+      >
         <Box className="view-header">
           <Typography fontSize="1.7rem" marginBottom="0.7rem" color="#5EA3A3">
-            <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ ml: 1, mt: 1 }}>
+            <Breadcrumbs
+              separator={<NavigateNextIcon fontSize="small" />}
+              sx={{ ml: 1, mt: 1 }}
+            >
               <Link href="/dashboard">
                 <HomeIcon sx={{ color: "#488b8f" }} />
               </Link>
@@ -268,174 +271,218 @@ const isSuccessView = uploadExcelState?.status === "registered_success";
 
         <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 0.5 }}>
           <Typography sx={{ fontSize: 12, color: "#444" }}>
-            Creado por: Usuario Smart Evolution
+            Creado por: {user?.name ?? "Desconocido"}
           </Typography>
         </Box>
 
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={3} sx={{ display: "flex" }}>
-            <Box
-              sx={{
-                bgcolor: "#F8F8F8",
-                borderRadius: 2,
-                boxShadow: 1,
-                p: 2.5,
-                width: "100%",
-                minHeight: "20rem",
-                display: "flex",
-                flexDirection: "column",
-              }}
-            >
-              <Box sx={{ mb: 3 }}>
-                <Image
-                  src={smartLogo}
-                  alt="logo"
-                  style={{
-                    maxWidth: 180,
-                    width: "100%",
-                    height: "auto",
-                    objectFit: "contain",
-                  }}
-                />
-              </Box>
+        <Formik
+          initialValues={{
+            ...initialValues,
+            billsToNegotiate: initialValues?.billsToNegotiate || [],
+            investorAssignments: initialValues?.investorAssignments || [],
+          }}
+          validationSchema={validationSchema}
+          onSubmit={handleConfirm}
+          enableReinitialize
+        >
+          {({ values, setFieldValue, touched, errors, setFieldTouched, submitForm }) => {
+            const selectedBillsCount = values?.billsToNegotiate?.length || 0;
+            const isHeaderLocked = activeStep >= 1;
+            const isSuccessView =
+              uploadExcelState?.status === "registered_success";
 
-              <Stepper
-                activeStep={activeStep}
-                orientation="vertical"
-                connector={<SmartConnector />}
-                sx={{
-                  flex: 1,
-                  "& .MuiStep-root": {
-                    minHeight: 120,
-                  },
-                  "& .MuiStepLabel-root": {
-                    alignItems: "flex-start",
-                  },
-                  "& .MuiStepLabel-labelContainer": {
-                    mt: "1px",
-                  },
-                }}
-              >
-                {steps.map((s, index) => {
-                  const status = getStepStatus(index, activeStep);
-                  const isCurrent = index === activeStep;
-                  const isDone = index < activeStep;
+            const allAssignmentsComplete =
+              Array.isArray(values?.investorAssignments) &&
+              values.investorAssignments.length > 0 &&
+              values.investorAssignments.every(
+                (row) =>
+                  row?.investorId && row?.accountId && row?.investorBrokerId
+              );
 
-                  return (
-                    <Step key={`${s.title}-${index}`}>
-                      <StepLabel StepIconComponent={SmartStepIcon}>
-                        <Box sx={{ display: "flex", flexDirection: "column", lineHeight: 1.15 }}>
-                          <Typography sx={{ fontSize: 12, color: "#7D7D7D", mb: 0.3 }}>
-                            Paso {index + 1}
-                          </Typography>
+            const excelLoadedAndValid =
+              Boolean(uploadExcelState?.file) &&
+              uploadExcelState?.status === "processed_success" &&
+              uploadExcelState?.canRegister === true &&
+              Number(uploadExcelState?.errorCount || 0) === 0 &&
+              Array.isArray(uploadExcelState?.normalizedRows) &&
+              uploadExcelState.normalizedRows.length > 0;
 
-                          <Typography
-                            sx={{
-                              fontSize: 13,
-                              fontWeight: 700,
-                              color: isCurrent ? "#111" : isDone ? "#666" : "#8D8D8D",
-                              mb: 0.3,
-                            }}
-                          >
-                            {s.title}
-                          </Typography>
+            const canGoNext =
+              activeStep === 0
+                ? selectedBillsCount >= 5
+                : activeStep === 1
+                ? investorsExcelGenerated
+                : activeStep === 2
+                ? excelLoadedAndValid
+                : true;
 
-                          <Typography
-                            sx={{
-                              fontSize: 11,
-                              fontWeight: 600,
-                              color: isCurrent ? "#1A73C9" : isDone ? "#4E8D5D" : "#B4B4B4",
-                            }}
-                          >
-                            {status}
-                          </Typography>
-                        </Box>
-                      </StepLabel>
-                    </Step>
-                  );
-                })}
-              </Stepper>
-            </Box>
-          </Grid>
-
-          <Grid item xs={12} md={9}>
-            <Formik
-              initialValues={{
-                ...initialValues,
-                billsToNegotiate: initialValues?.billsToNegotiate || [],
-                investorAssignments: initialValues?.investorAssignments || [],
-              }}
-              validationSchema={validationSchema}
-              onSubmit={handleConfirm}
-              enableReinitialize
-            >
-              {({ values, setFieldValue, touched, errors, setFieldTouched, submitForm }) => {
-                const selectedBillsCount = values?.billsToNegotiate?.length || 0;
-const isHeaderLocked = activeStep >= 1;
-                const allAssignmentsComplete =
-                  Array.isArray(values?.investorAssignments) &&
-                  values.investorAssignments.length > 0 &&
-                  values.investorAssignments.every(
-                    (row) => row?.investorId && row?.accountId && row?.investorBrokerId
-                  );
-
-                const excelLoadedAndValid =
-                  Boolean(uploadExcelState?.file) &&
-                  uploadExcelState?.status === "processed_success" &&
-                  uploadExcelState?.canRegister === true &&
-                  Number(uploadExcelState?.errorCount || 0) === 0 &&
-                  Array.isArray(uploadExcelState?.normalizedRows) &&
-                  uploadExcelState.normalizedRows.length > 0;
-
-                const canGoNext =
-                    activeStep === 0
-                      ? selectedBillsCount >= 5
-                      : activeStep === 1
-                      ? investorsExcelGenerated
-                      : activeStep === 2
-                      ? excelLoadedAndValid
-                      : true;
-
-                const isSuccessView = uploadExcelState?.status === "registered_success";
-
-                return (
-                  <>
-                  {!isSuccessView   && (
-                    <Form>
-                      <Grid container spacing={1.5} wrap="nowrap" alignItems="flex-start" sx={{ mb: 1 }}>
-                        <Grid item xs={12} md={1} sx={{ minWidth: 80 }}>
-                         <TextField
-                            label="OpID *"
-                            fullWidth
-                            size="small"
-                            value={values.opId}
-                            name="opId"
-                            disabled={isHeaderLocked}
-                            onChange={(e) => setFieldValue("opId", e.target.value)}
-                            error={touched.opId && Boolean(errors.opId)}
-                            helperText={touched.opId && errors.opId ? errors.opId : " "}
-                          />
-                        </Grid>
-
-                        <Grid item xs={12} md={1.8} sx={{ minWidth: 140 }}>
-                        <DatePicker
-                          label="Fecha de Operación *"
-                          value={values.opDate}
-                          disabled={isHeaderLocked}
-                          onChange={(newValue) => setFieldValue("opDate", newValue)}
-                          renderInput={(params) => (
-                            <TextField {...params} fullWidth size="small" helperText=" " />
-                          )}
+            return (
+              <>
+                <Grid container spacing={3} alignItems="flex-start">
+                  <Grid item xs={12} md={3} sx={{ display: "flex" }}>
+                    <Box
+                      sx={{
+                        bgcolor: "#F8F8F8",
+                        borderRadius: 2,
+                        boxShadow: 1,
+                        p: 2.5,
+                        width: "100%",
+                        minHeight: 15,
+                        display: "flex",
+                        flexDirection: "column",
+                      }}
+                    >
+                      <Box sx={{ mb: 3 }}>
+                        <Image
+                          src={smartLogo}
+                          alt="logo"
+                          style={{
+                            maxWidth: 180,
+                            width: "100%",
+                            height: "auto",
+                            objectFit: "contain",
+                          }}
                         />
-                        </Grid>
+                      </Box>
 
-                        <Grid item xs={12} md={1.8} sx={{ minWidth: 150 }}>
-                          <Autocomplete
+                      <Stepper
+                        activeStep={activeStep}
+                        orientation="vertical"
+                        connector={<SmartConnector />}
+                        sx={{
+                          "& .MuiStep-root": {
+                            minHeight: 120,
+                          },
+                          "& .MuiStepLabel-root": {
+                            alignItems: "flex-start",
+                          },
+                          "& .MuiStepLabel-labelContainer": {
+                            mt: "1px",
+                          },
+                        }}
+                      >
+                        {steps.map((s, index) => {
+                          const status = getStepStatus(index, activeStep);
+                          const isCurrent = index === activeStep;
+                          const isDone = index < activeStep;
+
+                          return (
+                            <Step key={`${s.title}-${index}`}>
+                              <StepLabel StepIconComponent={SmartStepIcon}>
+                                <Box
+                                  sx={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    lineHeight: 1.15,
+                                  }}
+                                >
+                                  <Typography
+                                    sx={{
+                                      fontSize: 12,
+                                      color: "#7D7D7D",
+                                      mb: 0.3,
+                                    }}
+                                  >
+                                    Paso {index + 1}
+                                  </Typography>
+
+                                  <Typography
+                                    sx={{
+                                      fontSize: 13,
+                                      fontWeight: 700,
+                                      color: isCurrent
+                                        ? "#111"
+                                        : isDone
+                                        ? "#666"
+                                        : "#8D8D8D",
+                                      mb: 0.3,
+                                    }}
+                                  >
+                                    {s.title}
+                                  </Typography>
+
+                                  <Typography
+                                    sx={{
+                                      fontSize: 11,
+                                      fontWeight: 600,
+                                      color: isCurrent
+                                        ? "#1A73C9"
+                                        : isDone
+                                        ? "#4E8D5D"
+                                        : "#B4B4B4",
+                                    }}
+                                  >
+                                    {status}
+                                  </Typography>
+                                </Box>
+                              </StepLabel>
+                            </Step>
+                          );
+                        })}
+                      </Stepper>
+                    </Box>
+                  </Grid>
+
+                  <Grid item xs={12} md={9}>
+                    {!isSuccessView && (
+                      <Form>
+                        <Grid
+                          container
+                          spacing={1.5}
+                          wrap="nowrap"
+                          alignItems="flex-start"
+                          sx={{ mb: 1 }}
+                        >
+                          <Grid item xs={12} md={1} sx={{ minWidth: 80 }}>
+                            <TextField
+                              label="OpID *"
+                              fullWidth
+                              size="small"
+                              value={values.opId}
+                              name="opId"
+                              disabled={isHeaderLocked}
+                              onChange={(e) =>
+                                setFieldValue("opId", e.target.value)
+                              }
+                              error={touched.opId && Boolean(errors.opId)}
+                              helperText={
+                                touched.opId && errors.opId ? errors.opId : " "
+                              }
+                            />
+                          </Grid>
+
+                          <Grid item xs={12} md={1.8} sx={{ minWidth: 140 }}>
+                            <DatePicker
+                              label="Fecha de Operación *"
+                              value={values.opDate}
+                              disabled={isHeaderLocked}
+                              onChange={(newValue) =>
+                                setFieldValue("opDate", newValue)
+                              }
+                              renderInput={(params) => (
+                                <TextField
+                                  {...params}
+                                  fullWidth
+                                  size="small"
+                                  helperText=" "
+                                />
+                              )}
+                            />
+                          </Grid>
+
+                          <Grid item xs={12} md={1.8} sx={{ minWidth: 150 }}>
+                            <Autocomplete
                               options={typeOperation?.data || []}
                               getOptionLabel={(o) => o.description || ""}
                               disabled={isHeaderLocked}
-                              value={typeOperation?.data?.find((opt) => opt.id === values.opType) || null}
-                              onChange={(e, newVal) => setFieldValue("opType", newVal?.id)}
+                              value={
+                                typeOperation?.data?.find(
+                                  (opt) => opt.id === values.opType
+                                ) || null
+                              }
+                              onChange={(e, newVal) =>
+                                setFieldValue("opType", newVal?.id)
+                              }
                               renderInput={(params) => (
                                 <TextField
                                   {...params}
@@ -446,263 +493,311 @@ const isHeaderLocked = activeStep >= 1;
                                 />
                               )}
                             />
-                        </Grid>
+                          </Grid>
 
-                        <Grid item xs={12} md={3.4} sx={{ minWidth: 260 }}>
-                          <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
-                            <Box sx={{ flex: 1, minWidth: 0 }}>
-                              <EmitterSelector
-                                disabled={isHeaderLocked}
-                                setClientPagador={setClientPagador}
-                                orchestDisabled={orchestDisabled}
-                                setIsSelectedPayer={setIsSelectedPayer}
-                                setPendingClear={setPendingClear}
-                                setFieldValue={setFieldValue}
-                                setFieldTouched={setFieldTouched}
-                                setEmitterSaved={setEmitterSaved}
-                                emitterSaved={emitterSaved}
-                                touched={touched}
-                                values={values}
-                                payers={payers}
-                                emisores={emisores}
-                                brokeDelete={brokeDelete}
-                                isCreatingBill={isCreatingBill}
-                                fetchBrokerByClient={fetchBrokerByClient}
-                                cargarTasaDescuento={cargarTasaDescuento}
-                                setOpenEmitterBrokerModal={setOpenEmitterBrokerModal}
-                                setClientEmitter={setClientEmitter}
-                                setClientBrokerEmitter={setClientBrokerEmitter}
-                                cargarFacturas={cargarFacturas}
-                                errors={errors}
-                                setIsModalEmitterAd={setIsModalEmitterAd}
-                              />
-                            </Box>
-
-                            {clientEmitter && (
-                              <IconButton
-                                size="small"
-                                onClick={() =>
-                                  window.open(
-                                    `${window.location.origin}/customers?modify=${clientEmitter.data.id}`,
-                                    "_blank"
-                                  )
-                                }
-                                sx={{
-                                  mt: "6px",
-                                  color: "#488F88",
-                                  "&:hover": {
-                                    color: "#3a726c",
-                                    backgroundColor: "rgba(72, 143, 136, 0.1)",
-                                  },
-                                }}
-                              >
-                                <EditIcon fontSize="small" />
-                              </IconButton>
-                            )}
-                          </Box>
-                        </Grid>
-
-                        <Grid item xs={12} md={3.5} sx={{ minWidth: 280 }}>
-                          <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
-                            <Box sx={{ flex: 1, minWidth: 0 }}>
-                              <PayerSelector
-                                disabled={isHeaderLocked}
-                                errors={errors}
-                                showAllPayers={showAllPayers}
-                                payers={payers}
-                                values={values}
-                                setFieldValue={setFieldValue}
-                                setClientPagador={setClientPagador}
-                                setIsSelectedPayer={setIsSelectedPayer}
-                                touched={touched}
-                                orchestDisabled={orchestDisabled}
-                                dataBills={dataBills}
-                              />
-                            </Box>
-
-                            <Tooltip
-                              title={
-                                showAllPayers
-                                  ? "Mostrar solo pagadores filtrados"
-                                  : "Mostrar todos los pagadores"
-                              }
+                          <Grid item xs={12} md={3.4} sx={{ minWidth: 260 }}>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "flex-start",
+                                gap: 1,
+                              }}
                             >
-                              <IconButton
-                                size="small"
-                                onClick={() => setShowAllPayers(!showAllPayers)}
-                                color={showAllPayers ? "primary" : "default"}
-                                sx={{ mt: "6px" }}
-                              >
-                                {showAllPayers ? (
-                                  <FilterAltOffIcon fontSize="small" />
-                                ) : (
-                                  <FilterAltIcon fontSize="small" />
-                                )}
-                              </IconButton>
-                            </Tooltip>
+                              <Box sx={{ flex: 1, minWidth: 0 }}>
+                                <EmitterSelector
+                                  disabled={isHeaderLocked}
+                                  setClientPagador={setClientPagador}
+                                  orchestDisabled={orchestDisabled}
+                                  setIsSelectedPayer={setIsSelectedPayer}
+                                  setPendingClear={setPendingClear}
+                                  setFieldValue={setFieldValue}
+                                  setFieldTouched={setFieldTouched}
+                                  setEmitterSaved={setEmitterSaved}
+                                  emitterSaved={emitterSaved}
+                                  touched={touched}
+                                  values={values}
+                                  payers={payers}
+                                  emisores={emisores}
+                                  brokeDelete={brokeDelete}
+                                  isCreatingBill={isCreatingBill}
+                                  fetchBrokerByClient={fetchBrokerByClient}
+                                  cargarTasaDescuento={cargarTasaDescuento}
+                                  setOpenEmitterBrokerModal={
+                                    setOpenEmitterBrokerModal
+                                  }
+                                  setClientEmitter={setClientEmitter}
+                                  setClientBrokerEmitter={setClientBrokerEmitter}
+                                  cargarFacturas={cargarFacturas}
+                                  errors={errors}
+                                  setIsModalEmitterAd={setIsModalEmitterAd}
+                                />
+                              </Box>
 
-                            {clientPagador && (
-                              <IconButton
-                                size="small"
-                                onClick={() =>
-                                  window.open(
-                                    `${window.location.origin}/customers?modify=${clientPagador}`,
-                                    "_blank"
-                                  )
+                              {clientEmitter && (
+                                <IconButton
+                                  size="small"
+                                  onClick={() =>
+                                    window.open(
+                                      `${window.location.origin}/customers?modify=${clientEmitter.data.id}`,
+                                      "_blank"
+                                    )
+                                  }
+                                  sx={{
+                                    mt: "6px",
+                                    color: "#488F88",
+                                    "&:hover": {
+                                      color: "#3a726c",
+                                      backgroundColor:
+                                        "rgba(72, 143, 136, 0.1)",
+                                    },
+                                  }}
+                                >
+                                  <EditIcon fontSize="small" />
+                                </IconButton>
+                              )}
+                            </Box>
+                          </Grid>
+
+                          <Grid item xs={12} md={3.5} sx={{ minWidth: 280 }}>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "flex-start",
+                                gap: 1,
+                              }}
+                            >
+                              <Box sx={{ flex: 1, minWidth: 0 }}>
+                                <PayerSelector
+                                  disabled={isHeaderLocked}
+                                  errors={errors}
+                                  showAllPayers={showAllPayers}
+                                  payers={payers}
+                                  values={values}
+                                  setFieldValue={setFieldValue}
+                                  setClientPagador={setClientPagador}
+                                  setIsSelectedPayer={setIsSelectedPayer}
+                                  touched={touched}
+                                  orchestDisabled={orchestDisabled}
+                                  dataBills={dataBills}
+                                />
+                              </Box>
+                          {/*  
+                              <Tooltip
+                                title={
+                                  showAllPayers
+                                    ? "Mostrar solo pagadores filtrados"
+                                    : "Mostrar todos los pagadores"
                                 }
-                                sx={{
-                                  mt: "6px",
-                                  color: "#488F88",
-                                  "&:hover": {
-                                    color: "#3a726c",
-                                    backgroundColor: "rgba(72, 143, 136, 0.1)",
-                                  },
-                                }}
                               >
-                                <EditIcon fontSize="small" />
-                              </IconButton>
-                            )}
-                          </Box>
-                        </Grid>
-                      </Grid>
+                                <IconButton
+                                  size="small"
+                                  onClick={() =>
+                                    setShowAllPayers(!showAllPayers)
+                                  }
+                                  color={showAllPayers ? "primary" : "default"}
+                                  sx={{ mt: "6px" }}
+                                >
+                                  {showAllPayers ? (
+                                    <FilterAltOffIcon fontSize="small" />
+                                  ) : (
+                                    <FilterAltIcon fontSize="small" />
+                                  )}
+                                </IconButton>
+                              </Tooltip>
 
-       
-                    </Form>
-)}
+                              {clientPagador && (
+                                <IconButton
+                                  size="small"
+                                  onClick={() =>
+                                    window.open(
+                                      `${window.location.origin}/customers?modify=${clientPagador}`,
+                                      "_blank"
+                                    )
+                                  }
+                                  sx={{
+                                    mt: "6px",
+                                    color: "#488F88",
+                                    "&:hover": {
+                                      color: "#3a726c",
+                                      backgroundColor:
+                                        "rgba(72, 143, 136, 0.1)",
+                                    },
+                                  }}
+                                >
+                                  <EditIcon fontSize="small" />
+                                  
+                                </IconButton>
+                                
+                              )}
+                                */}
+                            </Box>
+                          </Grid>
+                        </Grid>
+                      </Form>
+                    )}
+
                     {activeStep === 0 && (
                       <BillsDualTable
                         takedBills={values?.takedBills || []}
                         billsToNegotiate={values?.billsToNegotiate || []}
                         loading={isLoadingBills}
                         nombrePagador={values?.nombrePagador}
-                        emitterKey={values?.emitter?.value || values?.emitterId || ""}
+                        emitterKey={
+                          values?.emitter?.value || values?.emitterId || ""
+                        }
                         setFieldValue={setFieldValue}
                       />
                     )}
 
-                  {activeStep === 1 && (
-  <>
-    <Typography sx={{ fontSize: 12, mb: 1 }}>
-      billsToNegotiate: {values?.billsToNegotiate?.length || 0}
-    </Typography>
+                    {activeStep === 1 && (
+                      <>
+                        <Typography sx={{ fontSize: 12, mb: 1 }}>
+                          billsToNegotiate:{" "}
+                          {values?.billsToNegotiate?.length || 0}
+                        </Typography>
 
-    <InvestorsAssignmentTable
-      billsToNegotiate={values?.billsToNegotiate || []}
-      investorAssignments={values?.investorAssignments || []}
-      investors={investors || []}
-      getBillFractionBulkFetch={getBillFractionBulkFetch}
-      cargarCuentas={fetchAccountsFromClient}
-      cargarBrokerFromInvestor={cargarBrokerFromInvestor}
-      setFieldValue={setFieldValue}
-      opId={values?.opId}
-      opDate={values?.opDate}
-      emitter={values?.emitter}
-      payerId={values?.nombrePagador}
-      payerName={values?.nombrepayer}
-      user={user}
-      formik={values}
-      investorsExcelGenerated={investorsExcelGenerated}
-      setInvestorsExcelGenerated={setInvestorsExcelGenerated}
-    />
-  </>
-)}
-                   {(activeStep === 2 || isSuccessView) && (
-  <UploadExcelStep
-    uploadExcelFetch={uploadExcelFetch}
-    setActiveStep={setActiveStep}
-    setUploadExcelState={setUploadExcelState}
-    setRegisterSummary={setRegisterSummary}
-    registerOperation={async (normalizedRows) => {
-      const response = await registerOperationFromUploadFetch({
-        rows: normalizedRows,
-        opTypeId: values?.opType,
-      });
+                        <InvestorsAssignmentTable
+                          billsToNegotiate={values?.billsToNegotiate || []}
+                          investorAssignments={
+                            values?.investorAssignments || []
+                          }
+                          investors={investors || []}
+                          cargarTasaDescuento={cargarTasaDescuento}
+                          getBillFractionBulkFetch={getBillFractionBulkFetch}
+                          cargarCuentas={fetchAccountsFromClient}
+                          cargarBrokerFromInvestor={cargarBrokerFromInvestor}
+                          setFieldValue={setFieldValue}
+                          opId={values?.opId}
+                          opDate={values?.opDate}
+                          emitter={values?.emitter}
+                          payerId={values?.nombrePagador}
+                          payerName={values?.nombrepayer}
+                          user={user}
+                          formik={values}
+                          investorsExcelGenerated={investorsExcelGenerated}
+                          setInvestorsExcelGenerated={
+                            setInvestorsExcelGenerated
+                          }
+                        />
+                      </>
+                    )}
 
-      const data = response?.data ?? response ?? {};
-      const summary = data?.summary ?? data?.data ?? data ?? {};
+                    {(activeStep === 2 || isSuccessView) && (
+                      <UploadExcelStep
+                        uploadExcelFetch={uploadExcelFetch}
+                        setActiveStep={setActiveStep}
+                        setUploadExcelState={setUploadExcelState}
+                        setRegisterSummary={setRegisterSummary}
+                        registerOperation={async (normalizedRows) => {
+                          const response =
+                            await registerOperationFromUploadFetch({
+                              rows: normalizedRows,
+                              opTypeId: values?.opType,
+                            });
 
-      setRegisterSummary({
-        operationId: summary?.operationId ?? values?.opId ?? null,
-        totalOperacion:
-          summary?.totalOperacion ?? summary?.total_amount ?? summary?.total ?? 0,
-        facturasRegistradas:
-          summary?.facturasRegistradas ??
-          summary?.registered_rows ??
-          normalizedRows?.length ??
-          0,
-        tasaPromedioPonderada:
-          summary?.tasaPromedioPonderada ??
-          summary?.weightedAverageRate ??
-          summary?.weighted_average_rate ??
-          0,
-        raw: summary,
-      });
+                          const data = response?.data ?? response ?? {};
+                          const summary =
+                            data?.summary ?? data?.data ?? data ?? {};
 
-      return response;
-    }}
-    onNext={() => setActiveStep(3)}
-    createdByLabel="Usuario Smart Evolution"
-    state={uploadExcelState}
-    setState={setUploadExcelState}
-  />
-)}
+                          setRegisterSummary({
+                            operationId:
+                              summary?.operationId ?? values?.opId ?? null,
+                            totalOperacion:
+                              summary?.totalOperacion ??
+                              summary?.total_amount ??
+                              summary?.total ??
+                              0,
+                            facturasRegistradas:
+                              summary?.facturasRegistradas ??
+                              summary?.registered_rows ??
+                              normalizedRows?.length ??
+                              0,
+                            tasaPromedioPonderada:
+                              summary?.tasaPromedioPonderada ??
+                              summary?.weightedAverageRate ??
+                              summary?.weighted_average_rate ??
+                              0,
+                            raw: summary,
+                          });
 
-                    
-              {!isSuccessView && (
-  <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 3, gap: 2 }}>
-    {activeStep > 0 && (
-      <Button variant="outlined" onClick={() => setActiveStep((prev) => prev - 1)}>
-        Atrás
-      </Button>
-    )}
+                          return response;
+                        }}
+                        onNext={() => setActiveStep(3)}
+                        createdByLabel="Usuario Smart Evolution"
+                        state={uploadExcelState}
+                        setState={setUploadExcelState}
+                      />
+                    )}
+                  </Grid>
+                </Grid>
 
-    <Button
-      variant="contained"
-      disabled={!canGoNext}
-      sx={{
-        bgcolor: canGoNext ? "#2C9A9A" : "#D0D0D0",
-        color: "#fff",
-        px: 4,
-        "&:hover": {
-          bgcolor: canGoNext ? "#258383" : "#D0D0D0",
-        },
-        "&.Mui-disabled": {
-          bgcolor: "#D0D0D0",
-          color: "#fff",
-        },
-      }}
-      onClick={() => {
-        if (activeStep === 0) {
-          if (selectedBillsCount < 5) return;
-          setInvestorsExcelGenerated(false);
-          setActiveStep(1);
-          return;
-        }
+                {!isSuccessView && (
+                  <Grid container spacing={3} sx={{ mt: 0 }}>
+                    <Grid item xs={12} md={3} />
+                    <Grid item xs={12} md={9}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "flex-end",
+                          mt: 2,
+                          gap: 2,
+                        }}
+                      >
+                        {activeStep > 0 && (
+                          <Button
+                            variant="outlined"
+                            onClick={() => setActiveStep((prev) => prev - 1)}
+                          >
+                            Atrás
+                          </Button>
+                        )}
 
-        if (activeStep === 1) {
-          if (!investorsExcelGenerated) return;
-          setActiveStep(2);
-          return;
-        }
+                        <Button
+                          variant="contained"
+                          disabled={!canGoNext}
+                          sx={{
+                            bgcolor: canGoNext ? "#2C9A9A" : "#D0D0D0",
+                            color: "#fff",
+                            px: 4,
+                            "&:hover": {
+                              bgcolor: canGoNext ? "#258383" : "#D0D0D0",
+                            },
+                            "&.Mui-disabled": {
+                              bgcolor: "#D0D0D0",
+                              color: "#fff",
+                            },
+                          }}
+                          onClick={() => {
+                            if (activeStep === 0) {
+                              if (selectedBillsCount < 5) return;
+                              setInvestorsExcelGenerated(false);
+                              setActiveStep(1);
+                              return;
+                            }
 
-        if (activeStep === 2) {
-          if (!excelLoadedAndValid) return;
-          submitForm();
-          return;
-        }
-      }}
-    >
-      {activeStep >= 2 ? "Guardar" : "Siguiente"}
-    </Button>
-  </Box>
-)}
-                  </>
-                );
-              }}
-           
-            </Formik>
-          </Grid>
-        </Grid>
+                            if (activeStep === 1) {
+                              if (!investorsExcelGenerated) return;
+                              setActiveStep(2);
+                              return;
+                            }
+
+                            if (activeStep === 2) {
+                              if (!excelLoadedAndValid) return;
+                              submitForm();
+                              return;
+                            }
+                          }}
+                        >
+                          {activeStep >= 2 ? "Guardar" : "Siguiente"}
+                        </Button>
+                      </Box>
+                    </Grid>
+                  </Grid>
+                )}
+              </>
+            );
+          }}
+        </Formik>
       </Box>
     </LocalizationProvider>
   );

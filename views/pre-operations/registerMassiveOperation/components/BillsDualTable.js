@@ -35,10 +35,14 @@ const BillsLeftSkeleton = () => {
           }}
         >
           <Skeleton variant="rectangular" width={24} height={24} />
-          <Skeleton variant="text" height={28} />
-          <Skeleton variant="text" height={28} />
-          <Skeleton variant="text" height={28} />
-          <Skeleton variant="text" height={28} />
+          <Skeleton variant="text" height={24} />
+          <Skeleton variant="text" height={24} />
+          <Skeleton variant="text" height={24} />
+          <Skeleton variant="text" height={24} />
+          <Skeleton variant="text" height={24} />
+          <Skeleton variant="text" height={24} />
+          <Skeleton variant="text" height={24} />
+          
         </Box>
       ))}
     </Box>
@@ -345,34 +349,34 @@ export const BillsDualTable = ({
   };
 
   const leftColumns = useMemo(
-    () => [
-      {
-        field: "billId",
-        headerName: "ID",
-        flex: 1.05,
-        minWidth: 140,
-        sortable: false,
-        headerAlign: "left",
-        align: "left",
-        renderCell: (params) => (
-          <Typography sx={{ fontSize: 13, fontWeight: 700, color: "#1F1F1F" }}>
-            {params.value}
-          </Typography>
-        ),
-      },
-      {
-        field: "currentBalance",
-        headerName: "Saldo",
-        flex: 0.8,
-        minWidth: 120,
-        sortable: false,
-        headerAlign: "right",
-        align: "right",
-        valueFormatter: ({ value }) => formatCurrency(value),
-      },
-    ],
-    []
-  );
+  () => [
+    {
+      field: "billId",
+      headerName: "ID",
+      flex: 1.05,
+      minWidth: 140,
+      sortable: true,
+      headerAlign: "left",
+      align: "left",
+      renderCell: (params) => (
+        <Typography sx={{ fontSize: 13, fontWeight: 700, color: "#1F1F1F" }}>
+          {params.value}
+        </Typography>
+      ),
+    },
+    {
+      field: "currentBalance",
+      headerName: "Saldo",
+      flex: 0.8,
+      minWidth: 120,
+      sortable: false,
+      headerAlign: "right",
+      align: "right",
+      valueFormatter: ({ value }) => formatCurrency(value),
+    },
+  ],
+  []
+);
 
   const rightColumns = useMemo(() => {
     const billIdWidth = isLgUp ? undefined : isMdUp ? 100 : 80;
@@ -499,7 +503,7 @@ export const BillsDualTable = ({
               borderRadius: 2,
               boxShadow: 0,
               p: 0,
-              height: 500,
+              height: 585,
               display: "flex",
               flexDirection: "column",
             }}
@@ -526,10 +530,23 @@ export const BillsDualTable = ({
                   onSelectionModelChange={syncSelectionToCart}
                   rowSelectionModel={leftSelectionModel}
                   onRowSelectionModelChange={syncSelectionToCart}
+                  keepNonExistentRowsSelected
                   pageSizeOptions={[10, 20, 50]}
+                  localeText={{
+    footerRowsPerPage: "Filas por página:",
+    footerTotalRows: "Total de filas:",
+    MuiTablePagination: {
+      labelRowsPerPage: "Filas por página:",
+      labelDisplayedRows: ({ from, to, count }) =>
+        `${from}-${to} de ${count !== -1 ? count : `más de ${to}`}`,
+    },
+  }}
                   initialState={{
-                    pagination: { paginationModel: { page: 0, pageSize: 10 } },
-                  }}
+  pagination: { paginationModel: { page: 0, pageSize: 10 } },
+  sorting: {
+    sortModel: [{ field: "billId", sort: "desc" }],
+  },
+}}
                   rowHeight={32}
                   columnHeaderHeight={34}
                   sx={{
@@ -606,16 +623,15 @@ export const BillsDualTable = ({
 
         <Grid item xs={12} md={6}>
           <Box
-            sx={{
-              bgcolor: "#F7F7F7",
-              borderRadius: 1.5,
-              border: "1px solid #E3E3E3",
-              p: 1.5,
-              height: 500,
-              display: "flex",
-              flexDirection: "column",
-            }}
-          >
+  sx={{
+    bgcolor: "#EBEBEB",
+    borderRadius: 2,
+    p: 2,
+    display: "flex",
+    flexDirection: "column",
+    height: "91%", // 👈 clave
+  }}
+>
             <Box
               sx={{
                 display: "flex",
