@@ -10,6 +10,7 @@ import {
   IconButton,
   Breadcrumbs,
 } from "@mui/material";
+import { toast } from "react-toastify";
 import Image from "next/image";
 import Link from "next/link";
 import { ToastContainer } from "react-toastify";
@@ -689,39 +690,54 @@ export const RegisterMassiveOperationComponent = ({
                         setUploadExcelState={setUploadExcelState}
                         setRegisterSummary={setRegisterSummary}
                         registerOperation={async (normalizedRows) => {
-                          const response =
-                            await registerOperationFromUploadFetch({
-                              rows: normalizedRows,
-                              opTypeId: values?.opType,
-                            });
+  const response = await registerOperationFromUploadFetch({
+    rows: normalizedRows,
+    opTypeId: values?.opType,
+  });
 
-                          const data = response?.data ?? response ?? {};
-                          const summary =
-                            data?.summary ?? data?.data ?? data ?? {};
+  const data = response?.data ?? response ?? {};
+  const opIdInfo = data?.opIdInfo;
 
-                          setRegisterSummary({
-                            operationId:
-                              summary?.operationId ?? values?.opId ?? null,
-                            totalOperacion:
-                              summary?.totalOperacion ??
-                              summary?.total_amount ??
-                              summary?.total ??
-                              0,
-                            facturasRegistradas:
-                              summary?.facturasRegistradas ??
-                              summary?.registered_rows ??
-                              normalizedRows?.length ??
-                              0,
-                            tasaPromedioPonderada:
-                              summary?.tasaPromedioPonderada ??
-                              summary?.weightedAverageRate ??
-                              summary?.weighted_average_rate ??
-                              0,
-                            raw: summary,
-                          });
+  if (opIdInfo?.changed) {
+    toast.warning(
+      `El opId fue ajustado automáticamente de ${opIdInfo.requested} a ${opIdInfo.final}`
+    );
 
-                          return response;
-                        }}
+    // Opcional: actualizar el valor visible en el formulario
+    setFieldValue("opId", opIdInfo.final);
+  } else if (opIdInfo?.final) {
+    // Opcional: sincronizar por si acaso
+    setFieldValue("opId", opIdInfo.final);
+  }
+
+  const summary = data?.summary ?? data?.data ?? data ?? {};
+
+  setRegisterSummary({
+    operationId:
+      opIdInfo?.final ??
+      summary?.operationId ??
+      values?.opId ??
+      null,
+    totalOperacion:
+      summary?.totalOperacion ??
+      summary?.total_amount ??
+      summary?.total ??
+      0,
+    facturasRegistradas:
+      summary?.facturasRegistradas ??
+      summary?.registered_rows ??
+      normalizedRows?.length ??
+      0,
+    tasaPromedioPonderada:
+      summary?.tasaPromedioPonderada ??
+      summary?.weightedAverageRate ??
+      summary?.weighted_average_rate ??
+      0,
+    raw: summary,
+  });
+
+  return response;
+}}
                         onNext={() => setActiveStep(3)}
                         createdByLabel="Usuario Smart Evolution"
                         state={uploadExcelState}
