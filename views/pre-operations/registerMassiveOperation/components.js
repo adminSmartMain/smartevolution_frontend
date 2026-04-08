@@ -52,6 +52,7 @@ import {
   GetBillFractionBulk,
   uploadExcel,
   registerOperationFromUpload,
+  downloadMassiveOperationReceiptPdf,
 } from "./queries";
 import { useFetch } from "@hooks/useFetch";
 
@@ -154,7 +155,10 @@ export const RegisterMassiveOperationComponent = ({
   });
 
   const isLoadingBills = billsLoading ?? billsIsLoading ?? false;
-
+const { fetch: downloadMassiveOperationReceiptPdfFetch } = useFetch({
+  service: downloadMassiveOperationReceiptPdf,
+  init: false,
+});
   const { fetch: fetchBrokerByClient } = useFetch({
     service: BrokerByClient,
     init: false,
@@ -244,17 +248,26 @@ export const RegisterMassiveOperationComponent = ({
   }, [steps.length, activeStep]);
 
   return (
-    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={esLocale}>
-      <ToastContainer position="top-right" autoClose={5000} />
+   <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={esLocale}>
+  <ToastContainer position="top-right" autoClose={5000} />
 
-      <Box
-        sx={{
-          width: "90%",
-          px: { xs: 1.5, sm: 2, md: 2.5 },
-          pt: { xs: 1, md: 0.5 },
-          pb: { xs: 1.5, md: 1.5 },
-        }}
-      >
+<Box
+  sx={{
+    width: "100%",
+    maxWidth: "1680px",
+    minWidth: "1280px",
+    mx: "auto",
+    px: 2.5,
+    pt: 1.5,
+    pb: 2,
+    minHeight: "100vh",
+    overflowY: "auto",
+    overflowX: "hidden",
+    display: "flex",
+    flexDirection: "column",
+    boxSizing: "border-box",
+  }}
+>
         <Box className="view-header">
           <Typography fontSize="1.7rem" marginBottom="0.7rem" color="#5EA3A3">
             <Breadcrumbs
@@ -319,20 +332,40 @@ export const RegisterMassiveOperationComponent = ({
 
             return (
               <>
-                <Grid container spacing={3} alignItems="flex-start">
-                  <Grid item xs={12} md={3} sx={{ display: "flex" }}>
+<Grid
+  container
+  spacing={2}
+  alignItems="stretch"
+  sx={{
+    flex: 1,
+    minHeight: 0,
+    overflow: "visible",
+  }}
+>
+    <Grid
+      item
+      sx={{
+        width: 300,
+        flexShrink: 0,
+        display: "flex",
+        minHeight: 0,
+      }}
+    >
                     <Box
-                      sx={{
-                        bgcolor: "#F8F8F8",
-                        borderRadius: 2,
-                        boxShadow: 1,
-                        p: 2.5,
-                        width: "100%",
-                        minHeight: 15,
-                        display: "flex",
-                        flexDirection: "column",
-                      }}
-                    >
+  sx={{
+    bgcolor: "#F8F8F8",
+    borderRadius: 2,
+    boxShadow: 1,
+    p: 2.5,
+    width: "100%",
+    height: "100%",
+    minHeight: 0,
+    display: "flex",
+    flexDirection: "column",
+    overflow: "hidden",
+    boxSizing: "border-box",
+  }}
+>
                       <Box sx={{ mb: 3 }}>
                         <Image
                           src={smartLogo}
@@ -352,8 +385,8 @@ export const RegisterMassiveOperationComponent = ({
                         connector={<SmartConnector />}
                         sx={{
                           "& .MuiStep-root": {
-                            minHeight: 120,
-                          },
+  minHeight: 92,
+},
                           "& .MuiStepLabel-root": {
                             alignItems: "flex-start",
                           },
@@ -424,7 +457,26 @@ export const RegisterMassiveOperationComponent = ({
                     </Box>
                   </Grid>
 
-                  <Grid item xs={12} md={9}>
+                <Grid
+  item
+  xs
+  sx={{
+    minWidth: 0,
+    minHeight: 0,
+    display: "flex",
+    flexDirection: "column",
+    overflow: "visible",
+  }}
+>
+  <Box
+  sx={{
+    display: "flex",
+    flexDirection: "column",
+    minHeight: 0,
+    height: "auto",
+    overflow: "visible",
+  }}
+>
                     {!isSuccessView && (
                       <Form>
                         <Grid
@@ -582,58 +634,11 @@ export const RegisterMassiveOperationComponent = ({
                                   dataBills={dataBills}
                                 />
                               </Box>
-                          {/*  
-                              <Tooltip
-                                title={
-                                  showAllPayers
-                                    ? "Mostrar solo pagadores filtrados"
-                                    : "Mostrar todos los pagadores"
-                                }
-                              >
-                                <IconButton
-                                  size="small"
-                                  onClick={() =>
-                                    setShowAllPayers(!showAllPayers)
-                                  }
-                                  color={showAllPayers ? "primary" : "default"}
-                                  sx={{ mt: "6px" }}
-                                >
-                                  {showAllPayers ? (
-                                    <FilterAltOffIcon fontSize="small" />
-                                  ) : (
-                                    <FilterAltIcon fontSize="small" />
-                                  )}
-                                </IconButton>
-                              </Tooltip>
-
-                              {clientPagador && (
-                                <IconButton
-                                  size="small"
-                                  onClick={() =>
-                                    window.open(
-                                      `${window.location.origin}/customers?modify=${clientPagador}`,
-                                      "_blank"
-                                    )
-                                  }
-                                  sx={{
-                                    mt: "6px",
-                                    color: "#488F88",
-                                    "&:hover": {
-                                      color: "#3a726c",
-                                      backgroundColor:
-                                        "rgba(72, 143, 136, 0.1)",
-                                    },
-                                  }}
-                                >
-                                  <EditIcon fontSize="small" />
-                                  
-                                </IconButton>
-                                
-                              )}
-                                */}
+                          
                             </Box>
                           </Grid>
                         </Grid>
+               
                       </Form>
                     )}
 
@@ -652,10 +657,7 @@ export const RegisterMassiveOperationComponent = ({
 
                     {activeStep === 1 && (
                       <>
-                        <Typography sx={{ fontSize: 12, mb: 1 }}>
-                          billsToNegotiate:{" "}
-                          {values?.billsToNegotiate?.length || 0}
-                        </Typography>
+                    
 
                         <InvestorsAssignmentTable
                           billsToNegotiate={values?.billsToNegotiate || []}
@@ -688,6 +690,7 @@ export const RegisterMassiveOperationComponent = ({
                         uploadExcelFetch={uploadExcelFetch}
                         setActiveStep={setActiveStep}
                         setUploadExcelState={setUploadExcelState}
+                          downloadReceiptPdfFetch={downloadMassiveOperationReceiptPdfFetch}
                         setRegisterSummary={setRegisterSummary}
                         registerOperation={async (normalizedRows) => {
   const response = await registerOperationFromUploadFetch({
@@ -744,13 +747,21 @@ export const RegisterMassiveOperationComponent = ({
                         setState={setUploadExcelState}
                       />
                     )}
+                    </Box>
                   </Grid>
                 </Grid>
 
                 {!isSuccessView && (
-                  <Grid container spacing={3} sx={{ mt: 0 }}>
-                    <Grid item xs={12} md={3} />
-                    <Grid item xs={12} md={9}>
+  <Grid
+    container
+    spacing={2}
+    sx={{
+      mt: 1,
+      flexShrink: 0,
+    }}
+  >
+                    <Grid item sx={{ width: 300, flexShrink: 0 }} />
+<Grid item xs sx={{ minWidth: 0 }}>
                       <Box
                         sx={{
                           display: "flex",
@@ -806,8 +817,11 @@ export const RegisterMassiveOperationComponent = ({
                         >
                           {activeStep >= 2 ? "Guardar" : "Siguiente"}
                         </Button>
+                        
                       </Box>
+                      
                     </Grid>
+                    
                   </Grid>
                 )}
               </>

@@ -256,7 +256,7 @@ const UploadCard = ({ file, onPickFile, inputRef, disabled = false }) => {
         {!file ? (
           <Box>
             <Typography sx={{ fontSize: 14, fontWeight: 600, color: "#B2B2B2", lineHeight: 1.2 }}>
-              Arrastra o busca el archivo de Excel generado
+              Carga el archivo de Excel generado
             </Typography>
             <Typography sx={{ fontSize: 12, color: "#C0C0C0", mt: 0.5 }}>
               Solo se aceptan archivos .xlsx o .xls
@@ -362,6 +362,7 @@ export const UploadExcelStep = ({
   createdByLabel = "Usuario Smart Evolution",
   onProcessedRows,
   state,
+  downloadReceiptPdfFetch,
   setState,
   setRegisterSummary,
   setUploadExcelState,
@@ -512,6 +513,34 @@ export const UploadExcelStep = ({
     onProcessedRows(updatedNormalizedRows);
   }
 };
+
+
+const handleDownloadReceiptPdf = async () => {
+  const finalOpId = registerSummary?.operationId ?? operationId;
+
+  if (!finalOpId || !downloadReceiptPdfFetch) return;
+
+  try {
+    const pdfBlob = await downloadReceiptPdfFetch(finalOpId);
+
+    const blob =
+      pdfBlob instanceof Blob
+        ? pdfBlob
+        : new Blob([pdfBlob], { type: "application/pdf" });
+
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `Comprobante_OP_${finalOpId}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error("Error descargando comprobante PDF:", error);
+  }
+};
+
   const handleChangeGmValue = (rowId, rawValue) => {
   const parsed = Number(rawValue);
   const safeValue = Number.isNaN(parsed) ? 0 : parsed;
@@ -741,7 +770,7 @@ export const UploadExcelStep = ({
     });
   };
 
-  const handleRegisterOperation = async () => {
+ const handleRegisterOperation = async () => {
   if (!registerOperation || !normalizedRows?.length || !canRegister) return;
 
   updateState({
@@ -754,6 +783,14 @@ export const UploadExcelStep = ({
     const response = await registerOperation(normalizedRows);
     const data = response?.data ?? response ?? {};
     const summary = data?.summary ?? data?.data ?? data ?? {};
+    const opIdInfo = data?.opIdInfo ?? summary?.opIdInfo ?? null;
+
+    const finalOperationId =
+      opIdInfo?.final ??
+      summary?.operationId ??
+      data?.operationId ??
+      operationId ??
+      null;
 
     const failed =
       data?.error === true ||
@@ -772,11 +809,12 @@ export const UploadExcelStep = ({
     updateState({
       status: "registered_success",
       processedMessage:
-        summary?.message ||
         data?.message ||
-        `¡Operación #${summary?.operationId ?? operationId ?? ""} Registrada con Éxito!`,
+        summary?.message ||
+        `¡Operación #${finalOperationId ?? ""} Registrada con Éxito!`,
+      operationId: finalOperationId,
       registerSummary: {
-        operationId: summary?.operationId ?? operationId ?? null,
+        operationId: finalOperationId,
         totalOperacion:
           summary?.totalOperacion ??
           summary?.total_amount ??
@@ -792,6 +830,7 @@ export const UploadExcelStep = ({
           summary?.weighted_average_rate ??
           tasaPromedioPonderadaCalculada,
         raw: summary,
+        opIdInfo,
       },
     });
 
@@ -887,324 +926,346 @@ export const UploadExcelStep = ({
     );
   };
 
+
+  const formatDateDDMMYYYY = (value) => {
+  if (!value) return "";
+
+  const raw = String(value);
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    const [year, month, day] = raw.split("-");
+    return `${day}-${month}-${year}`;
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+
+  return `${day}-${month}-${year}`;
+};
+
   const columns = useMemo(
-    () => [
-      {
-        field: "facturaId",
-        headerName: "Factura ID",
-        minWidth: 150,
-        flex: 1.2,
-        renderCell: (params) => (
-          <ErrorCell
-            value={params.value}
-            error={getFieldErrorMessage(params.row, ["factura_id", "bill_id", "facturaId"])}
-          />
-        ),
-      },
-      {
-        field: "inversionista",
-        headerName: "Inversionista",
-        minWidth: 220,
-        flex: 1.7,
-        renderCell: (params) => (
-          <ErrorCell
-            value={params.value}
-            error={getFieldErrorMessage(params.row, ["inversionista", "investor_name", "investor_id"])}
-          />
-        ),
-      },
-      {
-        field: "porcentajeDescuento",
-        headerName: "% Desc.",
-        minWidth: 95,
-        flex: 0.8,
-        align: "center",
-        headerAlign: "center",
-        renderCell: (params) => {
-          const value = params.value;
+  () => [
+    {
+      field: "facturaId",
+      headerName: "Factura ID",
+      minWidth: 120,
+      flex: 0.9,
+      renderCell: (params) => (
+        <ErrorCell
+          value={params.value}
+          error={getFieldErrorMessage(params.row, ["factura_id", "bill_id", "facturaId"])}
+        />
+      ),
+    },
+    {
+      field: "inversionista",
+      headerName: "Inversionista",
+      minWidth: 170,
+      flex: 1.2,
+      renderCell: (params) => (
+        <ErrorCell
+          value={params.value}
+          error={getFieldErrorMessage(params.row, ["inversionista", "investor_name", "investor_id"])}
+        />
+      ),
+    },
+    {
+      field: "porcentajeDescuento",
+      headerName: "% Desc.",
+      minWidth: 78,
+      flex: 0.55,
+      align: "center",
+      headerAlign: "center",
+      renderCell: (params) => {
+        const value = params.value;
 
-          const numericValue =
-            value === "" || value === null || value === undefined
-              ? ""
-              : Number(value);
+        const numericValue =
+          value === "" || value === null || value === undefined
+            ? ""
+            : Number(value);
 
-          return (
-            <ErrorCell
-              value={numericValue === "" ? "" : `${numericValue}%`}
-              error={getFieldErrorMessage(params.row, [
-                "porcentaje_descuento",
-                "porcentajeDescuento",
-              ])}
-              align="center"
-            />
-          );
-        },
-      },
-      {
-        field: "tasaDesc",
-        headerName: "Tasa Desc.",
-        minWidth: 90,
-        flex: 0.8,
-        align: "center",
-        headerAlign: "center",
-        renderCell: (params) => (
+        return (
           <ErrorCell
-            value={params.value}
-            error={getFieldErrorMessage(params.row, ["tasa_descuento", "tasaDesc"])}
+            value={numericValue === "" ? "" : `${numericValue}%`}
+            error={getFieldErrorMessage(params.row, [
+              "porcentaje_descuento",
+              "porcentajeDescuento",
+            ])}
             align="center"
           />
-        ),
+        );
       },
-      {
-        field: "tasaInv",
-        headerName: "Tasa Inv.",
-        minWidth: 90,
-        flex: 0.8,
-        align: "center",
-        headerAlign: "center",
-        renderCell: (params) => (
-          <ErrorCell
-            value={params.value}
-            error={getFieldErrorMessage(params.row, ["tasa_inversionista", "tasaInv"])}
-            align="center"
-          />
-        ),
-      },
-      {
-        field: "valorFuturo",
-        headerName: "Valor Futuro",
-        minWidth: 140,
-        flex: 1.1,
-        align: "right",
-        headerAlign: "right",
-        renderCell: (params) => (
-          <ErrorCell
-            value={params.value}
-            error={getFieldErrorMessage(params.row, ["valor_futuro", "valorFuturo"])}
-            align="right"
-            formatter={formatCurrency}
-          />
-        ),
-      },
-      {
-        field: "valorNominal",
-        headerName: "Valor Nominal",
-        minWidth: 140,
-        flex: 1.1,
-        align: "right",
-        headerAlign: "right",
-        renderCell: (params) => (
-          <ErrorCell
-            value={params.value}
-            error={getFieldErrorMessage(params.row, ["valor_nominal", "valorNominal"])}
-            align="right"
-            formatter={formatCurrency}
-          />
-        ),
-      },
-      {
-        field: "valorInversionista",
-        headerName: "Valor Presente Inversión",
-        minWidth: 160,
-        flex: 1.2,
-        align: "right",
-        headerAlign: "right",
-        renderCell: (params) => (
-          <ErrorCell
-            value={Math.round(params.value,0)}
-            error={getFieldErrorMessage(params.row, ["valor_inversionista", "valorInversionista"])}
-            align="right"
-            formatter={formatCurrency}
-          />
-        ),
-      },
-       {
-  field: "opDays",
-  headerName: "Días de operación",
-  minWidth: 140,
-  flex: 0.9,
-  align: "right",
-  headerAlign: "right",
-  renderCell: (params) => (
-    <ErrorCell
-      value={params.value ?? 0}
-      error={getFieldErrorMessage(params.row, ["op_days", "opDays", "operation_days"])}
-      align="right"
-    />
-  ),
-},
-{
-  field: "investor_profit",
-  headerName: "Utilidad Inversión",
-  minWidth: 160,
-  flex: 1.2,
-  align: "right",
-  headerAlign: "right",
-  renderCell: (params) => (
-    <ErrorCell
-      value={params.value ?? 0}
-      error={getFieldErrorMessage(params.row, ["investor_profit", "investorProfit"])}
-      align="right"
-      formatter={formatCurrency}
-    />
-  ),
-},
-{
-  field: "present_value_sf",
-  headerName: "Valor Presente Mesa",
-  minWidth: 170,
-  flex: 1.2,
-  align: "right",
-  headerAlign: "right",
-  renderCell: (params) => (
-    <ErrorCell
-      value={params.value ?? 0}
-      error={getFieldErrorMessage(params.row, ["present_value_sf", "presentValueSF"])}
-      align="right"
-      formatter={formatCurrency}
-    />
-  ),
-},
-{
-  field: "commission_sf",
-  headerName: "Comisión Mesa",
-  minWidth: 150,
-  flex: 1.1,
-  align: "right",
-  headerAlign: "right",
-  renderCell: (params) => (
-    <ErrorCell
-      value={params.value ?? 0}
-      error={getFieldErrorMessage(params.row, ["commission_sf", "commissionSF"])}
-      align="right"
-      formatter={formatCurrency}
-    />
-  ),
-},
-      {
-        field: "gm",
-        headerName: "GM",
-        minWidth: 190,
-        flex: 1.35,
-        sortable: false,
-        filterable: false,
-        align: "center",
-        headerAlign: "center",
-        renderCell: (params) => {
-          const applyGm = Boolean(params.row.applyGm);
-          const hasGmError = getFieldErrorMessage(params.row, ["GM", "gmValue", "applyGm"]);
+    },
+    {
+      field: "tasaDesc",
+      headerName: "Tasa Desc.",
+      minWidth: 78,
+      flex: 0.55,
+      align: "center",
+      headerAlign: "center",
+      renderCell: (params) => (
+        <ErrorCell
+          value={params.value}
+          error={getFieldErrorMessage(params.row, ["tasa_descuento", "tasaDesc"])}
+          align="center"
+        />
+      ),
+    },
+    {
+      field: "tasaInv",
+      headerName: "Tasa Inv.",
+      minWidth: 78,
+      flex: 0.55,
+      align: "center",
+      headerAlign: "center",
+      renderCell: (params) => (
+        <ErrorCell
+          value={params.value}
+          error={getFieldErrorMessage(params.row, ["tasa_inversionista", "tasaInv"])}
+          align="center"
+        />
+      ),
+    },
+    {
+      field: "valorFuturo",
+      headerName: "Valor Futuro",
+      minWidth: 115,
+      flex: 0.9,
+      align: "right",
+      headerAlign: "right",
+      renderCell: (params) => (
+        <ErrorCell
+          value={params.value}
+          error={getFieldErrorMessage(params.row, ["valor_futuro", "valorFuturo"])}
+          align="right"
+          formatter={formatCurrency}
+        />
+      ),
+    },
+    {
+      field: "valorNominal",
+      headerName: "Valor Nominal",
+      minWidth: 115,
+      flex: 0.9,
+      align: "right",
+      headerAlign: "right",
+      renderCell: (params) => (
+        <ErrorCell
+          value={params.value}
+          error={getFieldErrorMessage(params.row, ["valor_nominal", "valorNominal"])}
+          align="right"
+          formatter={formatCurrency}
+        />
+      ),
+    },
+    {
+      field: "valorInversionista",
+      headerName: "Valor Presente Inv.",
+      minWidth: 125,
+      flex: 0.95,
+      align: "right",
+      headerAlign: "right",
+      renderCell: (params) => (
+        <ErrorCell
+          value={Math.round(params.value, 0)}
+          error={getFieldErrorMessage(params.row, ["valor_inversionista", "valorInversionista"])}
+          align="right"
+          formatter={formatCurrency}
+        />
+      ),
+    },
+    {
+      field: "opDays",
+      headerName: "Días",
+      minWidth: 72,
+      flex: 0.45,
+      align: "right",
+      headerAlign: "right",
+      renderCell: (params) => (
+        <ErrorCell
+          value={params.value ?? 0}
+          error={getFieldErrorMessage(params.row, ["op_days", "opDays", "operation_days"])}
+          align="right"
+        />
+      ),
+    },
+    {
+      field: "investor_profit",
+      headerName: "Utilidad",
+      minWidth: 105,
+      flex: 0.8,
+      align: "right",
+      headerAlign: "right",
+      renderCell: (params) => (
+        <ErrorCell
+          value={params.value ?? 0}
+          error={getFieldErrorMessage(params.row, ["investor_profit", "investorProfit"])}
+          align="right"
+          formatter={formatCurrency}
+        />
+      ),
+    },
+    {
+      field: "present_value_sf",
+      headerName: "V. Presente Mesa",
+      minWidth: 120,
+      flex: 0.9,
+      align: "right",
+      headerAlign: "right",
+      renderCell: (params) => (
+        <ErrorCell
+          value={params.value ?? 0}
+          error={getFieldErrorMessage(params.row, ["present_value_sf", "presentValueSF"])}
+          align="right"
+          formatter={formatCurrency}
+        />
+      ),
+    },
+    {
+      field: "commission_sf",
+      headerName: "Comisión Mesa",
+      minWidth: 110,
+      flex: 0.8,
+      align: "right",
+      headerAlign: "right",
+      renderCell: (params) => (
+        <ErrorCell
+          value={params.value ?? 0}
+          error={getFieldErrorMessage(params.row, ["commission_sf", "commissionSF"])}
+          align="right"
+          formatter={formatCurrency}
+        />
+      ),
+    },
+    {
+      field: "gm",
+      headerName: "GM",
+      minWidth: 135,
+      flex: 0.9,
+      sortable: false,
+      filterable: false,
+      align: "center",
+      headerAlign: "center",
+      renderCell: (params) => {
+        const applyGm = Boolean(params.row.applyGm);
+        const hasGmError = getFieldErrorMessage(params.row, ["GM", "gmValue", "applyGm"]);
 
-          return (
-            <Box
-              sx={{
-                width: "100%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 0.5,
-                bgcolor: hasGmError ? "#FDECEC" : "transparent",
-                borderRadius: 0.5,
-                px: 0.5,
-              }}
-            >
-              <Switch
-                size="small"
-                checked={applyGm}
-                onChange={(e) => handleToggleGm(params.row.id, e.target.checked)}
-                sx={{
-                  "& .MuiSwitch-switchBase.Mui-checked": {
-                    color: "#2E9B9B",
-                  },
-                  "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
-                    backgroundColor: "#2E9B9B",
-                  },
-                }}
-              />
-
-             <TextField
-  size="small"
-  value={formatCurrency(params.row.gmValue ?? 0)}
-  InputProps={{
-    readOnly: true,
-  }}
-  variant="standard"
-  sx={{
-    width: 95,
-    "& .MuiInputBase-root": {
-      height: 30,
-      backgroundColor: "transparent",
-      fontSize: 11,
-    },
-    "& .MuiInputBase-input": {
-      textAlign: "right",
-      padding: "6px 8px",
-      color: applyGm ? "#222" : "#9E9E9E",
-    },
-    "& .MuiInput-underline:before": {
-      display: "none",
-    },
-    "& .MuiInput-underline:after": {
-      display: "none",
-    },
-    "& .MuiInput-underline:hover:not(.Mui-disabled):before": {
-      display: "none",
-    },
-  }}
-/>
-            </Box>
-          );
-        },
-      },
-      {
-        field: "fechaProbable",
-        headerName: "Fecha Probable",
-        minWidth: 120,
-        flex: 0.95,
-        align: "center",
-        headerAlign: "center",
-        renderCell: (params) => (
-          <ErrorCell
-            value={params.value}
-            error={getFieldErrorMessage(params.row, ["fecha_probable", "fechaProbable"])}
-            align="center"
-          />
-        ),
-      },
-      {
-        field: "fechaFin",
-        headerName: "Fecha Fin",
-        minWidth: 110,
-        flex: 0.9,
-        align: "center",
-        headerAlign: "center",
-        renderCell: (params) => (
-          <ErrorCell
-            value={params.value}
-            error={getFieldErrorMessage(params.row, ["fecha_fin", "fechaFin"])}
-            align="center"
-          />
-        ),
-      },
-      {
-        field: "actions",
-        headerName: "",
-        width: 48,
-        sortable: false,
-        filterable: false,
-        disableColumnMenu: true,
-        renderCell: (params) => (
-          <IconButton
-            size="small"
-            onClick={() => handleDeleteRow(params.row.id)}
-            sx={{ color: "#E74B4B" }}
+        return (
+          <Box
+            sx={{
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 0.25,
+              bgcolor: hasGmError ? "#FDECEC" : "transparent",
+              borderRadius: 0.5,
+              px: 0.25,
+            }}
           >
-            <DeleteOutlineIcon fontSize="small" />
-          </IconButton>
-        ),
+            <Switch
+              size="small"
+              checked={applyGm}
+              onChange={(e) => handleToggleGm(params.row.id, e.target.checked)}
+              sx={{
+                mr: 0.25,
+                "& .MuiSwitch-switchBase.Mui-checked": {
+                  color: "#2E9B9B",
+                },
+                "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+                  backgroundColor: "#2E9B9B",
+                },
+              }}
+            />
+
+            <TextField
+              size="small"
+              value={formatCurrency(params.row.gmValue ?? 0)}
+              InputProps={{ readOnly: true }}
+              variant="standard"
+              sx={{
+                width: 72,
+                "& .MuiInputBase-root": {
+                  height: 28,
+                  backgroundColor: "transparent",
+                  fontSize: 10,
+                },
+                "& .MuiInputBase-input": {
+                  textAlign: "right",
+                  padding: "4px 6px",
+                  color: applyGm ? "#222" : "#9E9E9E",
+                },
+                "& .MuiInput-underline:before": {
+                  display: "none",
+                },
+                "& .MuiInput-underline:after": {
+                  display: "none",
+                },
+                "& .MuiInput-underline:hover:not(.Mui-disabled):before": {
+                  display: "none",
+                },
+              }}
+            />
+          </Box>
+        );
       },
-    ],
-    [rows, normalizedRows, operationId]
-  );
+    },
+    {
+      field: "fechaProbable",
+      headerName: "F. Probable",
+      minWidth: 92,
+      flex: 0.7,
+      align: "center",
+      headerAlign: "center",
+      renderCell: (params) => (
+        <ErrorCell
+          value={formatDateDDMMYYYY(params.value)}
+          error={getFieldErrorMessage(params.row, ["fecha_probable", "fechaProbable"])}
+          align="center"
+        />
+      ),
+    },
+    {
+      field: "fechaFin",
+      headerName: "F. Fin",
+      minWidth: 85,
+      flex: 0.65,
+      align: "center",
+      headerAlign: "center",
+      renderCell: (params) => (
+        <ErrorCell
+          value={formatDateDDMMYYYY(params.value)}
+          error={getFieldErrorMessage(params.row, ["fecha_fin", "fechaFin"])}
+          align="center"
+        />
+      ),
+    },
+    {
+      field: "actions",
+      headerName: "",
+      width: 40,
+      minWidth: 40,
+      maxWidth: 40,
+      sortable: false,
+      filterable: false,
+      disableColumnMenu: true,
+      renderCell: (params) => (
+        <IconButton
+          size="small"
+          onClick={() => handleDeleteRow(params.row.id)}
+          sx={{ color: "#E74B4B", p: 0.25 }}
+        >
+          <DeleteOutlineIcon fontSize="small" />
+        </IconButton>
+      ),
+    },
+  ],
+  [rows, normalizedRows, operationId]
+);
 
   const showEmptyPreview = status === "idle" && rows.length === 0;
   const showRegisterButton =
@@ -1219,8 +1280,17 @@ export const UploadExcelStep = ({
   const finalTasaPromedio =
     registerSummary?.tasaPromedioPonderada ?? tasaPromedioPonderadaCalculada;
 
-  return (
-    <Box sx={{ width: "100%" }}>
+return (
+  <Box
+    sx={{
+      width: "100%",
+      height: "100%",
+      minHeight: 0,
+      display: "flex",
+      flexDirection: "column",
+      overflow: "hidden",
+    }}
+  >
       <FileErrorModal
         open={Boolean(modalError)}
         onClose={() => updateState({ modalError: "" })}
@@ -1229,8 +1299,13 @@ export const UploadExcelStep = ({
 
       {status !== "registered_success" && (
         <>
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={5}>
+          <Grid
+  container
+  spacing={2}
+  alignItems="center"
+  sx={{ flexShrink: 0 }}
+>
+  <Grid item xs={12} md={4.5}>
               <UploadCard
                 file={file}
                 onPickFile={handlePickFile}
@@ -1239,15 +1314,16 @@ export const UploadExcelStep = ({
               />
             </Grid>
 
-            <Grid item xs={12} md={7}>
+            <Grid item xs={12} md={7.5}>
               <Box
-                sx={{
-                  height: 90,
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: 2,
-                }}
+              sx={{
+  minHeight: 90,
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  gap: 2,
+  overflow: "hidden",
+}}
               >
                 <ProcessingBanner
                   status={status}
@@ -1279,7 +1355,14 @@ export const UploadExcelStep = ({
             </Grid>
           </Grid>
 
-          <Box sx={{ mt: 1.5 }}>
+          <Box
+  sx={{
+    mt: 1.5,
+    flex: 1,
+    minHeight: 0,
+    overflow: "hidden",
+  }}
+>
             <DataGrid
               autoHeight={false}
               rows={rows}
@@ -1299,37 +1382,55 @@ export const UploadExcelStep = ({
   }}
               loading={status === "processing"}
               sx={{
-                height: 315,
-                border: 0,
-                "& .MuiDataGrid-columnHeaders": {
-                  backgroundColor: "#EAEAEA",
-                  borderBottom: "none",
-                  minHeight: "30px !important",
-                  maxHeight: "30px !important",
-                },
-                "& .MuiDataGrid-columnHeaderTitle": {
-                  fontWeight: 700,
-                  fontSize: 11,
-                  color: "#222",
-                },
-                "& .MuiDataGrid-cell": {
-                  fontSize: 11,
-                  borderBottom: "none",
-                  color: "#222",
-                  display: "flex",
-                  alignItems: "center",
-                },
-                "& .MuiDataGrid-row": {
-                  minHeight: "34px !important",
-                  maxHeight: "34px !important",
-                },
-                "& .MuiDataGrid-row.upload-row-error": {
-                  backgroundColor: "#fff",
-                },
-                "& .MuiDataGrid-footerContainer": {
-                  borderTop: "none",
-                },
-              }}
+  height: "100%",
+  minHeight: 460,
+  border: 0,
+  backgroundColor: "transparent",
+  "& .MuiDataGrid-main": {
+    minHeight: 0,
+    minWidth: 0,
+  },
+  "& .MuiDataGrid-virtualScroller": {
+    overflowY: "auto",
+    overflowX: "auto",
+  },
+  "& .MuiDataGrid-columnHeaders": {
+    backgroundColor: "#EAEAEA",
+    borderBottom: "none",
+    minHeight: "30px !important",
+    maxHeight: "30px !important",
+  },
+  "& .MuiDataGrid-columnHeader": {
+    px: 0.5,
+  },
+  "& .MuiDataGrid-columnHeaderTitle": {
+    fontWeight: 700,
+    fontSize: 10.5,
+    color: "#222",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+  },
+  "& .MuiDataGrid-cell": {
+    fontSize: 10.5,
+    borderBottom: "none",
+    color: "#222",
+    display: "flex",
+    alignItems: "center",
+    px: 0.5,
+    overflow: "hidden",
+  },
+  "& .MuiDataGrid-row": {
+    minHeight: "34px !important",
+    maxHeight: "34px !important",
+  },
+  "& .MuiDataGrid-row.upload-row-error": {
+    backgroundColor: "#fff",
+  },
+  "& .MuiDataGrid-footerContainer": {
+    borderTop: "none",
+  },
+}}
               slots={{
                 noRowsOverlay: () =>
                   showEmptyPreview ? (
@@ -1359,8 +1460,8 @@ export const UploadExcelStep = ({
                         key={rowIndex}
                         sx={{
                           display: "grid",
-                          gridTemplateColumns:
-                            "1.2fr 1.8fr 0.8fr 0.8fr 1fr 1fr 1fr 1.3fr 0.9fr 0.9fr",
+                         gridTemplateColumns:
+  "1fr 1.4fr 0.6fr 0.6fr 0.8fr 0.8fr 0.9fr 0.7fr 0.8fr 0.8fr",
                           gap: 1,
                           mb: 1,
                         }}
@@ -1495,6 +1596,17 @@ export const UploadExcelStep = ({
               justifyContent: "center",
             }}
           >
+            <Button
+  variant="outlined"
+  onClick={handleDownloadReceiptPdf}
+  sx={{
+    minWidth: 260,
+    color: "#2E9B9B",
+    borderColor: "#2E9B9B",
+  }}
+>
+  Descargar comprobante PDF
+</Button>
             <Button
               variant="outlined"
               onClick={handleDownloadValidExcel}

@@ -495,19 +495,29 @@ export const BillsDualTable = ({
         totalBills={selectedRows.length}
       />
 
-      <Grid container spacing={2} sx={{ mt: 0 }}>
-        <Grid item xs={12} md={6}>
-          <Box
-            sx={{
-              bgcolor: "#fff",
-              borderRadius: 2,
-              boxShadow: 0,
-              p: 0,
-              height: 585,
-              display: "flex",
-              flexDirection: "column",
-            }}
-          >
+  <Grid
+  container
+  spacing={2}
+  sx={{
+    mt: 0,
+    minHeight: 0,
+    overflow: "visible",
+  }}
+>
+        <Grid item xs={12} md={6} sx={{ minHeight: 0, display: "flex" }}>
+        <Box
+  sx={{
+    bgcolor: "#fff",
+    borderRadius: 2,
+    boxShadow: 0,
+    p: 0,
+    width: "100%",
+    minHeight: 560,
+    display: "flex",
+    flexDirection: "column",
+    overflow: "hidden",
+  }}
+>
             <TextField
               placeholder="Buscar por ID / Emisor / Pagador"
               fullWidth
@@ -520,7 +530,13 @@ export const BillsDualTable = ({
             {loading ? (
               <BillsLeftSkeleton />
             ) : (
-              <Box sx={{ flex: 1, minHeight: 0 }}>
+             <Box
+    sx={{
+      flex: 1,
+      minHeight: 0,
+      overflow: "hidden",
+    }}
+  >
                 <DataGrid
                   rows={filteredAvailable}
                   columns={leftColumns}
@@ -553,9 +569,15 @@ export const BillsDualTable = ({
                     border: 0,
                     height: "100%",
                     backgroundColor: "transparent",
-                    "& .MuiDataGrid-main": {
-                      border: 0,
-                    },
+                   "& .MuiDataGrid-main": {
+  border: 0,
+  minHeight: 0,
+},
+"& .MuiDataGrid-virtualScroller": {
+  overflowY: "auto",
+  overflowX: "hidden",
+},
+                    
                     "& .MuiDataGrid-columnHeaders": {
                       backgroundColor: "#D9D9D9",
                       borderBottom: "none",
@@ -621,15 +643,18 @@ export const BillsDualTable = ({
           </Box>
         </Grid>
 
-        <Grid item xs={12} md={6}>
-          <Box
+    <Grid item xs={12} md={6} sx={{ minHeight: 0, display: "flex" }}>
+ <Box
   sx={{
     bgcolor: "#EBEBEB",
     borderRadius: 2,
     p: 2,
     display: "flex",
     flexDirection: "column",
-    height: "91%", // 👈 clave
+    width: "100%",
+    minHeight: 560,
+    overflow: "hidden",
+    boxSizing: "border-box",
   }}
 >
             <Box
@@ -694,7 +719,13 @@ export const BillsDualTable = ({
               </Box>
             ) : (
               <>
-                <Box sx={{ flex: 1, minHeight: 0 }}>
+               <Box
+  sx={{
+    flex: 1,
+    minHeight: 0,
+    overflow: "hidden",
+  }}
+>
                   <DataGrid
                     rows={filteredSelected}
                     columns={rightColumns}
@@ -706,6 +737,10 @@ export const BillsDualTable = ({
                       border: 0,
                       height: "100%",
                       backgroundColor: "transparent",
+                      "& .MuiDataGrid-virtualScroller": {
+  overflowY: "auto",
+  overflowX: "hidden",
+},
                       "& .MuiDataGrid-columnHeaders": {
                         backgroundColor: "#E9E9E9",
                         borderBottom: "1px solid #DADADA",
@@ -732,12 +767,14 @@ export const BillsDualTable = ({
                       "& .MuiDataGrid-cell:focus, & .MuiDataGrid-columnHeader:focus": {
                         outline: "none",
                       },
-                      "& .MuiDataGrid-virtualScroller": {
-                        overflowX: "auto",
-                      },
+                     "& .MuiDataGrid-virtualScroller": {
+  overflowY: "auto",
+  overflowX: "hidden",
+},
                       "& .MuiDataGrid-main": {
-                        minWidth: 0,
-                      },
+  border: 0,
+  minHeight: 0,
+},
                       "& .MuiDataGrid-footerContainer": {
                         display: "none",
                       },

@@ -274,3 +274,17 @@ export const GetClientsWithAccounts = async (payload) => {
 
   return res.data;
 };
+
+export const downloadMassiveOperationReceiptPdf = async (opId) => {
+  const res = await Axios.get(
+    `${API_URL}/preOperation/massive-receipt/${opId}`,
+    {
+      headers: {
+        authorization: "Bearer " + localStorage.getItem("access-token"),
+      },
+      responseType: "blob",
+    }
+  );
+
+  return res.data;
+};
