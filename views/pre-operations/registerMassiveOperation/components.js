@@ -10,6 +10,7 @@ import {
   IconButton,
   Breadcrumbs,
 } from "@mui/material";
+import DownloadIcon from "@mui/icons-material/Download";
 import { toast } from "react-toastify";
 import Image from "next/image";
 import Link from "next/link";
@@ -130,8 +131,9 @@ export const RegisterMassiveOperationComponent = ({
   const [brokeDelete, setBrokeDelete] = useState(false);
   const [isCreatingBill, setIsCreatingBill] = useState(false);
   const [emitterSaved, setEmitterSaved] = useState(false);
-  const [registerSummary, setRegisterSummary] = useState(null);
-
+  const [canGenerateInvestorsExcel, setCanGenerateInvestorsExcel] = useState(false);
+const [generateInvestorsExcelFn, setGenerateInvestorsExcelFn] = useState(null);
+const [registerSummary, setRegisterSummary] = useState(null);
   const [uploadExcelState, setUploadExcelState] = useState({
     file: null,
     status: "idle",
@@ -247,6 +249,50 @@ const { fetch: downloadMassiveOperationReceiptPdfFetch } = useFetch({
     if (activeStep > lastIndex) setActiveStep(lastIndex);
   }, [steps.length, activeStep]);
 
+
+ 
+
+  const HeaderReadOnlyField = ({ label, value, minWidth = 140 }) => {
+
+
+  return (
+    <Box
+      sx={{
+        minWidth,
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        pt: 0.25,
+      }}
+    >
+      <Typography
+        sx={{
+          fontSize: 12,
+          color: "#111",
+          lineHeight: 1.1,
+          mb: 0.6,
+        }}
+      >
+        {label}
+      </Typography>
+
+      <Typography
+        sx={{
+          fontSize: 16,
+          fontWeight: 400,
+          color: "#111",
+          lineHeight: 1.2,
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+        }}
+      >
+        {value || "-"}
+      </Typography>
+    </Box>
+  );
+};
   return (
    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={esLocale}>
   <ToastContainer position="top-right" autoClose={5000} />
@@ -258,7 +304,7 @@ const { fetch: downloadMassiveOperationReceiptPdfFetch } = useFetch({
     minWidth: "1280px",
     mx: "auto",
     px: 2.5,
-    pt: 1.5,
+    pt: 2.5,
     pb: 2,
     minHeight: "100vh",
     overflowY: "auto",
@@ -268,12 +314,12 @@ const { fetch: downloadMassiveOperationReceiptPdfFetch } = useFetch({
     boxSizing: "border-box",
   }}
 >
-        <Box className="view-header">
-          <Typography fontSize="1.7rem" marginBottom="0.7rem" color="#5EA3A3">
-            <Breadcrumbs
-              separator={<NavigateNextIcon fontSize="small" />}
-              sx={{ ml: 1, mt: 1 }}
-            >
+        <Box className="view-header" sx={{ flexShrink: 0 }}>
+  <Typography fontSize="1.7rem" marginBottom="0.7rem" color="#5EA3A3">
+    <Breadcrumbs
+      separator={<NavigateNextIcon fontSize="small" />}
+      sx={{ ml: 1, mt: 0 }}
+    >
               <Link href="/dashboard">
                 <HomeIcon sx={{ color: "#488b8f" }} />
               </Link>
@@ -457,7 +503,7 @@ const { fetch: downloadMassiveOperationReceiptPdfFetch } = useFetch({
                     </Box>
                   </Grid>
 
-                <Grid
+          <Grid
   item
   xs
   sx={{
@@ -465,184 +511,251 @@ const { fetch: downloadMassiveOperationReceiptPdfFetch } = useFetch({
     minHeight: 0,
     display: "flex",
     flexDirection: "column",
-    overflow: "visible",
+    overflow: "hidden",
   }}
->
-  <Box
+><Box
   sx={{
     display: "flex",
     flexDirection: "column",
     minHeight: 0,
-    height: "auto",
-    overflow: "visible",
+    flex: 1,
+    overflow: "hidden",
   }}
 >
-                    {!isSuccessView && (
-                      <Form>
-                        <Grid
-                          container
-                          spacing={1.5}
-                          wrap="nowrap"
-                          alignItems="flex-start"
-                          sx={{ mb: 1 }}
-                        >
-                          <Grid item xs={12} md={1} sx={{ minWidth: 80 }}>
-                            <TextField
-                              label="OpID *"
-                              fullWidth
-                              size="small"
-                              value={values.opId}
-                              name="opId"
-                              disabled={isHeaderLocked}
-                              onChange={(e) =>
-                                setFieldValue("opId", e.target.value)
-                              }
-                              error={touched.opId && Boolean(errors.opId)}
-                              helperText={
-                                touched.opId && errors.opId ? errors.opId : " "
-                              }
-                            />
-                          </Grid>
+                   {!isSuccessView && (
+  <Form>
+    <Box
+      sx={{
+        flexShrink: 0,
+        pt: 1,
+        px: 0.75,
+        overflow: "visible",
+      }}
+    >
+     <Grid
+  container
+  columnSpacing={1.5}
+  rowSpacing={0}
+  wrap="nowrap"
+  alignItems="flex-start"
+  sx={{
+    m: 0,
+    width: "100%",
+  }}
+>
+  <Grid item xs={12} md={1} sx={{ minWidth: 80 }}>
+    {isHeaderLocked ? (
+      <HeaderReadOnlyField
+        label="Numero Operación"
+        value={values.opId}
+        minWidth={80}
+      />
+    ) : (
+      <TextField
+        label="OpID *"
+        fullWidth
+        size="small"
+        value={values.opId}
+        name="opId"
+        disabled={isHeaderLocked}
+        onChange={(e) => setFieldValue("opId", e.target.value)}
+        error={touched.opId && Boolean(errors.opId)}
+        helperText={touched.opId && errors.opId ? errors.opId : " "}
+      />
+    )}
+  </Grid>
 
-                          <Grid item xs={12} md={1.8} sx={{ minWidth: 140 }}>
-                            <DatePicker
-                              label="Fecha de Operación *"
-                              value={values.opDate}
-                              disabled={isHeaderLocked}
-                              onChange={(newValue) =>
-                                setFieldValue("opDate", newValue)
-                              }
-                              renderInput={(params) => (
-                                <TextField
-                                  {...params}
-                                  fullWidth
-                                  size="small"
-                                  helperText=" "
-                                />
-                              )}
-                            />
-                          </Grid>
+  <Grid item xs={12} md={1.8} sx={{ minWidth: 140 }}>
+    {isHeaderLocked ? (
+      <HeaderReadOnlyField
+        label="Fecha de Operación"
+        value={
+          values.opDate
+            ? new Date(values.opDate).toLocaleDateString("es-CO")
+            : ""
+        }
+        minWidth={140}
+      />
+    ) : (
+      <DatePicker
+        label="Fecha de Operación *"
+        value={values.opDate}
+        disabled={isHeaderLocked}
+        onChange={(newValue) => setFieldValue("opDate", newValue)}
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            fullWidth
+            size="small"
+            helperText=" "
+          />
+        )}
+      />
+    )}
+  </Grid>
 
-                          <Grid item xs={12} md={1.8} sx={{ minWidth: 150 }}>
-                            <Autocomplete
-                              options={typeOperation?.data || []}
-                              getOptionLabel={(o) => o.description || ""}
-                              disabled={isHeaderLocked}
-                              value={
-                                typeOperation?.data?.find(
-                                  (opt) => opt.id === values.opType
-                                ) || null
-                              }
-                              onChange={(e, newVal) =>
-                                setFieldValue("opType", newVal?.id)
-                              }
-                              renderInput={(params) => (
-                                <TextField
-                                  {...params}
-                                  label="Tipo Operación *"
-                                  fullWidth
-                                  size="small"
-                                  helperText=" "
-                                />
-                              )}
-                            />
-                          </Grid>
+  <Grid item xs={12} md={1.8} sx={{ minWidth: 150 }}>
+    {isHeaderLocked ? (
+      <HeaderReadOnlyField
+        label="Tipo de Operación"
+        value={
+          typeOperation?.data?.find((opt) => opt.id === values.opType)
+            ?.description || ""
+        }
+        minWidth={150}
+      />
+    ) : (
+      <Autocomplete
+        options={typeOperation?.data || []}
+        getOptionLabel={(o) => o.description || ""}
+        disabled={isHeaderLocked}
+        value={
+          typeOperation?.data?.find((opt) => opt.id === values.opType) || null
+        }
+        onChange={(e, newVal) => setFieldValue("opType", newVal?.id)}
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            label="Tipo Operación *"
+            fullWidth
+            size="small"
+            helperText=" "
+          />
+        )}
+      />
+    )}
+  </Grid>
 
-                          <Grid item xs={12} md={3.4} sx={{ minWidth: 260 }}>
-                            <Box
-                              sx={{
-                                display: "flex",
-                                alignItems: "flex-start",
-                                gap: 1,
-                              }}
-                            >
-                              <Box sx={{ flex: 1, minWidth: 0 }}>
-                                <EmitterSelector
-                                  disabled={isHeaderLocked}
-                                  setClientPagador={setClientPagador}
-                                  orchestDisabled={orchestDisabled}
-                                  setIsSelectedPayer={setIsSelectedPayer}
-                                  setPendingClear={setPendingClear}
-                                  setFieldValue={setFieldValue}
-                                  setFieldTouched={setFieldTouched}
-                                  setEmitterSaved={setEmitterSaved}
-                                  emitterSaved={emitterSaved}
-                                  touched={touched}
-                                  values={values}
-                                  payers={payers}
-                                  emisores={emisores}
-                                  brokeDelete={brokeDelete}
-                                  isCreatingBill={isCreatingBill}
-                                  fetchBrokerByClient={fetchBrokerByClient}
-                                  cargarTasaDescuento={cargarTasaDescuento}
-                                  setOpenEmitterBrokerModal={
-                                    setOpenEmitterBrokerModal
-                                  }
-                                  setClientEmitter={setClientEmitter}
-                                  setClientBrokerEmitter={setClientBrokerEmitter}
-                                  cargarFacturas={cargarFacturas}
-                                  errors={errors}
-                                  setIsModalEmitterAd={setIsModalEmitterAd}
-                                />
-                              </Box>
+  <Grid item xs={12} md={3.4} sx={{ minWidth: 260 }}>
+    {isHeaderLocked ? (
+      <HeaderReadOnlyField
+        label="Nombre Emisor"
+        value={
+  values?.emitterLabel ||
+  values?.emitter?.label ||
+  values?.emitter?.data?.social_reason ||
+  (values?.emitter?.data?.first_name
+    ? `${values?.emitter?.data?.first_name || ""} ${values?.emitter?.data?.last_name || ""}`.trim()
+    : "") ||
+  "-"
+}
+        minWidth={260}
+      />
+    ) : (
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "flex-start",
+          gap: 1,
+        }}
+      >
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <EmitterSelector
+            disabled={isHeaderLocked}
+            setClientPagador={setClientPagador}
+            orchestDisabled={orchestDisabled}
+            setIsSelectedPayer={setIsSelectedPayer}
+            setPendingClear={setPendingClear}
+            setFieldValue={setFieldValue}
+            setFieldTouched={setFieldTouched}
+            setEmitterSaved={setEmitterSaved}
+            emitterSaved={emitterSaved}
+            touched={touched}
+            values={values}
+            payers={payers}
+            emisores={emisores}
+            brokeDelete={brokeDelete}
+            isCreatingBill={isCreatingBill}
+            fetchBrokerByClient={fetchBrokerByClient}
+            cargarTasaDescuento={cargarTasaDescuento}
+            setOpenEmitterBrokerModal={setOpenEmitterBrokerModal}
+            setClientEmitter={setClientEmitter}
+            setClientBrokerEmitter={setClientBrokerEmitter}
+            cargarFacturas={cargarFacturas}
+            errors={errors}
+            setIsModalEmitterAd={setIsModalEmitterAd}
+          />
+        </Box>
 
-                              {clientEmitter && (
-                                <IconButton
-                                  size="small"
-                                  onClick={() =>
-                                    window.open(
-                                      `${window.location.origin}/customers?modify=${clientEmitter.data.id}`,
-                                      "_blank"
-                                    )
-                                  }
-                                  sx={{
-                                    mt: "6px",
-                                    color: "#488F88",
-                                    "&:hover": {
-                                      color: "#3a726c",
-                                      backgroundColor:
-                                        "rgba(72, 143, 136, 0.1)",
-                                    },
-                                  }}
-                                >
-                                  <EditIcon fontSize="small" />
-                                </IconButton>
-                              )}
-                            </Box>
-                          </Grid>
+        {clientEmitter && (
+          <IconButton
+            size="small"
+            onClick={() =>
+              window.open(
+                `${window.location.origin}/customers?modify=${clientEmitter.data.id}`,
+                "_blank"
+              )
+            }
+            sx={{
+              mt: "6px",
+              color: "#488F88",
+              "&:hover": {
+                color: "#3a726c",
+                backgroundColor: "rgba(72, 143, 136, 0.1)",
+              },
+            }}
+          >
+            <EditIcon fontSize="small" />
+          </IconButton>
+        )}
+      </Box>
+    )}
+  </Grid>
 
-                          <Grid item xs={12} md={3.5} sx={{ minWidth: 280 }}>
-                            <Box
-                              sx={{
-                                display: "flex",
-                                alignItems: "flex-start",
-                                gap: 1,
-                              }}
-                            >
-                              <Box sx={{ flex: 1, minWidth: 0 }}>
-                                <PayerSelector
-                                  disabled={isHeaderLocked}
-                                  errors={errors}
-                                  showAllPayers={showAllPayers}
-                                  payers={payers}
-                                  values={values}
-                                  setFieldValue={setFieldValue}
-                                  setClientPagador={setClientPagador}
-                                  setIsSelectedPayer={setIsSelectedPayer}
-                                  touched={touched}
-                                  orchestDisabled={orchestDisabled}
-                                  dataBills={dataBills}
-                                />
-                              </Box>
-                          
-                            </Box>
-                          </Grid>
-                        </Grid>
-               
-                      </Form>
-                    )}
+  <Grid item xs={12} md={3.5} sx={{ minWidth: 280 }}>
+    {isHeaderLocked ? (
+      <HeaderReadOnlyField
+        label="Nombre Pagador"
+        value={
+          values?.nombrepayer ||
+          values?.payer?.label ||
+          ""
+        }
+        minWidth={280}
+      />
+    ) : (
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "flex-start",
+          gap: 1,
+        }}
+      >
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <PayerSelector
+            disabled={isHeaderLocked}
+            errors={errors}
+            showAllPayers={showAllPayers}
+            payers={payers}
+            values={values}
+            setFieldValue={setFieldValue}
+            setClientPagador={setClientPagador}
+            setIsSelectedPayer={setIsSelectedPayer}
+            touched={touched}
+            orchestDisabled={orchestDisabled}
+            dataBills={dataBills}
+          />
+        </Box>
+      </Box>
+    )}
+  </Grid>
+</Grid>
+      </Box>
 
-                    {activeStep === 0 && (
+     
+    </Form>
+)}
+
+
+<Box
+  sx={{
+    flex: 1,
+    minHeight: 0,
+    overflow: "hidden",
+    display: "flex",
+    flexDirection: "column",
+  }}
+>    {activeStep === 0 && (
                       <BillsDualTable
                         takedBills={values?.takedBills || []}
                         billsToNegotiate={values?.billsToNegotiate || []}
@@ -659,29 +772,27 @@ const { fetch: downloadMassiveOperationReceiptPdfFetch } = useFetch({
                       <>
                     
 
-                        <InvestorsAssignmentTable
-                          billsToNegotiate={values?.billsToNegotiate || []}
-                          investorAssignments={
-                            values?.investorAssignments || []
-                          }
-                          investors={investors || []}
-                          cargarTasaDescuento={cargarTasaDescuento}
-                          getBillFractionBulkFetch={getBillFractionBulkFetch}
-                          cargarCuentas={fetchAccountsFromClient}
-                          cargarBrokerFromInvestor={cargarBrokerFromInvestor}
-                          setFieldValue={setFieldValue}
-                          opId={values?.opId}
-                          opDate={values?.opDate}
-                          emitter={values?.emitter}
-                          payerId={values?.nombrePagador}
-                          payerName={values?.nombrepayer}
-                          user={user}
-                          formik={values}
-                          investorsExcelGenerated={investorsExcelGenerated}
-                          setInvestorsExcelGenerated={
-                            setInvestorsExcelGenerated
-                          }
-                        />
+                   <InvestorsAssignmentTable
+  billsToNegotiate={values?.billsToNegotiate || []}
+  investorAssignments={values?.investorAssignments || []}
+  investors={investors || []}
+  cargarTasaDescuento={cargarTasaDescuento}
+  getBillFractionBulkFetch={getBillFractionBulkFetch}
+  cargarCuentas={fetchAccountsFromClient}
+  cargarBrokerFromInvestor={cargarBrokerFromInvestor}
+  setFieldValue={setFieldValue}
+  opId={values?.opId}
+  opDate={values?.opDate}
+  emitter={values?.emitter}
+  payerId={values?.nombrePagador}
+  payerName={values?.nombrepayer}
+  user={user}
+  formik={values}
+  investorsExcelGenerated={investorsExcelGenerated}
+  setInvestorsExcelGenerated={setInvestorsExcelGenerated}
+  onExcelReadyChange={setCanGenerateInvestorsExcel}
+  exposeGenerateExcel={(fn) => setGenerateInvestorsExcelFn(() => fn)}
+/>
                       </>
                     )}
 
@@ -746,7 +857,8 @@ const { fetch: downloadMassiveOperationReceiptPdfFetch } = useFetch({
                         state={uploadExcelState}
                         setState={setUploadExcelState}
                       />
-                    )}
+                    )}</Box>
+                   
                     </Box>
                   </Grid>
                 </Grid>
@@ -762,22 +874,74 @@ const { fetch: downloadMassiveOperationReceiptPdfFetch } = useFetch({
   >
                     <Grid item sx={{ width: 300, flexShrink: 0 }} />
 <Grid item xs sx={{ minWidth: 0 }}>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          justifyContent: "flex-end",
-                          mt: 2,
-                          gap: 2,
-                        }}
-                      >
-                        {activeStep > 0 && (
-                          <Button
-                            variant="outlined"
-                            onClick={() => setActiveStep((prev) => prev - 1)}
-                          >
-                            Atrás
-                          </Button>
+                     <Box
+  sx={{
+    display: "flex",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    mt: 2,
+    gap: 2,
+  }}
+>
+
+   {activeStep > 0 && (
+                        <Button
+  variant="text"
+  onClick={() => setActiveStep((prev) => prev - 1)}
+  sx={{
+    minWidth: "auto",
+    padding: 0,
+    fontSize: 14,
+    fontWeight: 500,
+    textTransform: "none",
+    color: "#2E9B9B",
+    backgroundColor: "transparent",
+    "&:hover": {
+      backgroundColor: "transparent",
+      textDecoration: "underline",
+    },
+  }}
+>
+  Atrás
+</Button>
                         )}
+  {activeStep === 1 && (
+<Button
+  variant="outlined"
+  onClick={() => generateInvestorsExcelFn?.()}
+  disabled={!canGenerateInvestorsExcel}
+  startIcon={<DownloadIcon />}
+  sx={{
+    minWidth: 175,
+    height: 36,
+    borderRadius: "6px",
+    px: 2,
+    backgroundColor: "#fff",
+    borderColor: "#4C989B",
+    color: "#2E9B9B",
+    fontSize: 13,
+    fontWeight: 500,
+    textTransform: "none",
+    boxShadow: "none",
+    "& .MuiButton-startIcon svg": {
+      fontSize: 18,
+    },
+    "&:hover": {
+      backgroundColor: "#F8FFFF",
+      borderColor: "#43898B",
+      boxShadow: "none",
+    },
+    "&.Mui-disabled": {
+      backgroundColor: "#fff",
+      borderColor: "#C9D6D6",
+      color: "#AEBBBB",
+    },
+  }}
+>
+  Generar Excel
+</Button>
+)}
+                       
 
                         <Button
                           variant="contained"
@@ -796,11 +960,13 @@ const { fetch: downloadMassiveOperationReceiptPdfFetch } = useFetch({
                           }}
                           onClick={() => {
                             if (activeStep === 0) {
-                              if (selectedBillsCount < 5) return;
-                              setInvestorsExcelGenerated(false);
-                              setActiveStep(1);
-                              return;
-                            }
+  if (selectedBillsCount < 5) return;
+  setInvestorsExcelGenerated(false);
+  setCanGenerateInvestorsExcel(false);
+  setGenerateInvestorsExcelFn(null);
+  setActiveStep(1);
+  return;
+}
 
                             if (activeStep === 1) {
                               if (!investorsExcelGenerated) return;

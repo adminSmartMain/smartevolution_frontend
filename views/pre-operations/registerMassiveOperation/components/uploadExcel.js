@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -13,7 +13,10 @@ import {
   Tooltip,
   Switch,
   TextField,
+  LinearProgress,
 } from "@mui/material";
+
+
 import Skeleton from "@mui/material/Skeleton";
 import InsertDriveFileOutlinedIcon from "@mui/icons-material/InsertDriveFileOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
@@ -369,7 +372,19 @@ export const UploadExcelStep = ({
   setActiveStep
 }) => {
   const inputRef = useRef(null);
+const [downloadingPdf, setDownloadingPdf] = useState(false);
+const [downloadingExcel, setDownloadingExcel] = useState(false);
+const [downloadProgress, setDownloadProgress] = useState(0);
+const downloadTimerRef = useRef(null);
 
+const [downloadMessageIndex, setDownloadMessageIndex] = useState(0);
+const downloadMessageTimerRef = useRef(null);
+
+const downloadMessages = [
+  "Por favor no cierre esta ventana.",
+  "Esto puede tardar unos minutos.",
+  "Estamos generando su informe.",
+];
   const {
     file = null,
     status = "idle",
@@ -389,6 +404,85 @@ export const UploadExcelStep = ({
       ...patch,
     }));
   };
+
+  const startDownloadMessages = () => {
+  setDownloadMessageIndex(0);
+
+  if (downloadMessageTimerRef.current) {
+    clearInterval(downloadMessageTimerRef.current);
+  }
+
+  downloadMessageTimerRef.current = setInterval(() => {
+    setDownloadMessageIndex((prev) => {
+      if (prev >= downloadMessages.length - 1) return 0;
+      return prev + 1;
+    });
+  }, 2200);
+};
+
+const stopDownloadMessages = () => {
+  if (downloadMessageTimerRef.current) {
+    clearInterval(downloadMessageTimerRef.current);
+    downloadMessageTimerRef.current = null;
+  }
+  setDownloadMessageIndex(0);
+};
+
+const startFakeProgress = () => {
+  setDownloadProgress(0);
+  startDownloadMessages();
+
+  if (downloadTimerRef.current) {
+    clearInterval(downloadTimerRef.current);
+  }
+
+  downloadTimerRef.current = setInterval(() => {
+    setDownloadProgress((prev) => {
+      if (prev >= 90) return prev;
+      return prev + 10;
+    });
+  }, 180);
+};
+
+const finishFakeProgress = () => {
+  if (downloadTimerRef.current) {
+    clearInterval(downloadTimerRef.current);
+    downloadTimerRef.current = null;
+  }
+
+  setDownloadProgress(100);
+
+  setTimeout(() => {
+    stopDownloadMessages();
+    setDownloadingPdf(false);
+    setDownloadingExcel(false);
+    setDownloadProgress(0);
+  }, 400);
+};
+
+const resetFakeProgress = () => {
+  if (downloadTimerRef.current) {
+    clearInterval(downloadTimerRef.current);
+    downloadTimerRef.current = null;
+  }
+
+  stopDownloadMessages();
+  setDownloadingPdf(false);
+  setDownloadingExcel(false);
+  setDownloadProgress(0);
+};
+
+useEffect(() => {
+  return () => {
+    if (downloadTimerRef.current) {
+      clearInterval(downloadTimerRef.current);
+    }
+    if (downloadMessageTimerRef.current) {
+      clearInterval(downloadMessageTimerRef.current);
+    }
+  };
+}, []);
+
 
   const validRows = useMemo(() => {
     return (rows || []).filter((row) => !row.hasErrors);
@@ -521,6 +615,10 @@ const handleDownloadReceiptPdf = async () => {
   if (!finalOpId || !downloadReceiptPdfFetch) return;
 
   try {
+    setDownloadingPdf(true);
+    setDownloadingExcel(false);
+    startFakeProgress();
+
     const pdfBlob = await downloadReceiptPdfFetch(finalOpId);
 
     const blob =
@@ -536,8 +634,11 @@ const handleDownloadReceiptPdf = async () => {
     link.click();
     link.remove();
     window.URL.revokeObjectURL(url);
+
+    finishFakeProgress();
   } catch (error) {
     console.error("Error descargando comprobante PDF:", error);
+    resetFakeProgress();
   }
 };
 
@@ -851,11 +952,15 @@ const handleDownloadReceiptPdf = async () => {
     });
   }
 };
+const handleDownloadValidExcel = async () => {
+  const cleanRows = (rows || []).filter((row) => !row.hasErrors);
 
-  const handleDownloadValidExcel = async () => {
-    const cleanRows = (rows || []).filter((row) => !row.hasErrors);
+  if (!cleanRows.length) return;
 
-    if (!cleanRows.length) return;
+  try {
+    setDownloadingExcel(true);
+    setDownloadingPdf(false);
+    startFakeProgress();
 
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet("Facturas válidas");
@@ -924,7 +1029,13 @@ const handleDownloadReceiptPdf = async () => {
       }),
       `Operacion-${operationId || "resultado"}-facturas-validas.xlsx`
     );
-  };
+
+    finishFakeProgress();
+  } catch (error) {
+    console.error("Error descargando Excel sin errores:", error);
+    resetFakeProgress();
+  }
+};
 
 
   const formatDateDDMMYYYY = (value) => {
@@ -1297,6 +1408,57 @@ return (
         message={modalError}
       />
 
+      <Dialog
+  open={downloadingPdf || downloadingExcel}
+  maxWidth="sm"
+  fullWidth
+>
+  <DialogContent sx={{ py: 4, px: 3 }}>
+    <Typography
+      sx={{
+        textAlign: "center",
+        fontSize: 18,
+        fontWeight: 600,
+        color: "#69AEB0",
+        mb: 2,
+      }}
+    >
+      {downloadingPdf ? "Generando PDF" : "Generando Excel"}
+    </Typography>
+
+    <LinearProgress
+      variant="determinate"
+      value={downloadProgress}
+      sx={{
+        height: 22,
+        borderRadius: 1,
+        bgcolor: "#EAEAEA",
+        "& .MuiLinearProgress-bar": {
+          bgcolor: "#69AEB0",
+        },
+      }}
+    />
+
+    <Typography
+  key={downloadMessageIndex}
+  sx={{
+    textAlign: "center",
+    fontSize: 14,
+    color: "#666",
+    mt: 1.5,
+    minHeight: 24,
+    animation: "fadeMsg 0.35s ease",
+    "@keyframes fadeMsg": {
+      from: { opacity: 0.3, transform: "translateY(4px)" },
+      to: { opacity: 1, transform: "translateY(0)" },
+    },
+  }}
+>
+  {downloadMessages[downloadMessageIndex]}
+</Typography>
+  </DialogContent>
+</Dialog>
+
       {status !== "registered_success" && (
         <>
           <Grid
@@ -1607,17 +1769,7 @@ return (
 >
   Descargar comprobante PDF
 </Button>
-            <Button
-              variant="outlined"
-              onClick={handleDownloadValidExcel}
-              sx={{
-                minWidth: 260,
-                color: "#2E9B9B",
-                borderColor: "#2E9B9B",
-              }}
-            >
-              Descargar Excel sin errores
-            </Button>
+            
             <Button
   variant="outlined"
   sx={{
@@ -1630,7 +1782,7 @@ return (
   }}
 >
   Registrar otra operación
-</Button> <Button variant="outlined" sx={{ minWidth: 220, color: "#2E9B9B", borderColor: "#2E9B9B", }} onClick={() => { window.location.href = "/operations"; }} > Ir a Operaciones </Button>
+</Button> 
           </Box>
         </Box>
       )}

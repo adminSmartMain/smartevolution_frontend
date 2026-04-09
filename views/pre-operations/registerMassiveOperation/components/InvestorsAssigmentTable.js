@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -124,6 +124,8 @@ export const InvestorsAssignmentTable = ({
   formik,
   investorsExcelGenerated = false,
   setInvestorsExcelGenerated,
+  onExcelReadyChange,
+  exposeGenerateExcel,
 }) => {
   const [loadingRows, setLoadingRows] = useState(false);
   const [search, setSearch] = useState("");
@@ -134,11 +136,17 @@ export const InvestorsAssignmentTable = ({
     pageSize: 100,
   });
 const [selectionModel, setSelectionModel] = useState([]);
-const [rowSelectionModel, setRowSelectionModel] = useState([]);
+
   const [bulkInvestor, setBulkInvestor] = useState(null);
   const [bulkAccounts, setBulkAccounts] = useState([]);
   const [bulkAccount, setBulkAccount] = useState(null);
   const [bulkLoadingAccounts, setBulkLoadingAccounts] = useState(false);
+
+    const latestAssignmentsRef = useRef(investorAssignments);
+
+  useEffect(() => {
+    latestAssignmentsRef.current = investorAssignments;
+  }, [investorAssignments]);
 
   useEffect(() => {
     setPaginationModel((prev) => ({
@@ -150,9 +158,11 @@ const [rowSelectionModel, setRowSelectionModel] = useState([]);
 
   const norm = (v) => (v ?? "").toString().trim().toLowerCase();
 
-  const selectedRowIds = useMemo(() => {
-    return Array.isArray(selectionModel) ? selectionModel.map(String) : [];
-  }, [selectionModel]);
+ const selectedRowIds = useMemo(() => {
+  return Array.isArray(selectionModel)
+    ? selectionModel.map(String)
+    : [];
+}, [selectionModel]);
 
   useEffect(() => {
     let cancelled = false;
@@ -343,7 +353,7 @@ const [rowSelectionModel, setRowSelectionModel] = useState([]);
     };
   }, [billsSignature]);
 
-  const filteredRows = useMemo(() => {
+ const filteredRows = useMemo(() => {
     const q = norm(search);
     if (!q) return investorAssignments || [];
 
@@ -550,97 +560,94 @@ const [rowSelectionModel, setRowSelectionModel] = useState([]);
     }
   };
 
-const handleApplyToSelected = async () => {
-  console.log("rowSelectionModel", rowSelectionModel);
-  console.log("selectedRowIds", selectedRowIds);
+  const handleApplyToSelected = async () => {
+    if (!bulkInvestor) {
+      Toast("Debe seleccionar un inversionista.", "warning");
+      return;
+    }
 
-  if (!bulkInvestor) {
-    Toast("Debe seleccionar un inversionista.", "warning");
-    return;
-  }
+    if (selectedRowIds.length === 0) {
+      Toast("Debe seleccionar al menos una factura.", "warning");
+      return;
+    }
 
-  if (selectedRowIds.length === 0) {
-    Toast("Debe seleccionar al menos una factura.", "warning");
-    return;
-  }
+    const investorId =
+      bulkInvestor?.value ?? bulkInvestor?.data?.id ?? bulkInvestor?.id ?? "";
 
-  const investorId =
-    bulkInvestor?.value ?? bulkInvestor?.data?.id ?? bulkInvestor?.id ?? "";
+    const emitterId =
+      formik?.emitter?.value ??
+      formik?.emitter?.data?.id ??
+      emitter?.value ??
+      emitter?.data?.id ??
+      "";
 
-  const emitterId =
-    formik?.emitter?.value ??
-    formik?.emitter?.data?.id ??
-    emitter?.value ??
-    emitter?.data?.id ??
-    "";
+    if (String(investorId) === String(emitterId)) {
+      Toast(
+        "El emisor no puede ser el mismo inversionista en ninguna fracción",
+        "warning"
+      );
+      return;
+    }
 
-  if (String(investorId) === String(emitterId)) {
+    const tasaDescuento = await cargarTasaDescuento?.(investorId);
+    if (!tasaDescuento) {
+      Toast(
+        "Disculpe, el cliente seleccionado no tiene perfil de riesgo configurado. Por favor, agréguelo en el módulo de clientes.",
+        "warning"
+      );
+      return;
+    }
+
+    const investorLabel =
+      bulkInvestor?.label ??
+      (bulkInvestor?.data?.first_name && bulkInvestor?.data?.last_name
+        ? `${bulkInvestor.data.first_name} ${bulkInvestor.data.last_name}`
+        : bulkInvestor?.data?.social_reason || "");
+
+    let investorBrokerId = "";
+    let investorBrokerName = "";
+
+    try {
+      const brokerResponse = await cargarBrokerFromInvestor?.(investorId);
+      const brokerData = brokerResponse?.data;
+      investorBrokerId = brokerData?.id || "";
+      investorBrokerName =
+        brokerData?.first_name && brokerData?.last_name
+          ? `${brokerData.first_name} ${brokerData.last_name}`
+          : brokerData?.social_reason || "";
+    } catch (error) {
+      investorBrokerId = "";
+      investorBrokerName = "";
+    }
+
+    const updated = (investorAssignments || []).map((row) => {
+      const rowId = String(row.id);
+      if (!selectedRowIds.includes(rowId)) return row;
+
+      return {
+        ...row,
+        investorId,
+        investorLabel,
+        selectedInvestor: bulkInvestor,
+        investorBrokerId,
+        investorBrokerName,
+        accountId: bulkAccount?.id ?? "",
+        selectedAccount: bulkAccount ?? null,
+        availableAccounts: bulkAccounts,
+        accountAvailableBalance: Number(bulkAccount?.balance ?? 0),
+        accountTotalBalance: Number(bulkAccount?.balance ?? 0),
+      };
+    });
+
+    setFieldValue("investorAssignments", updated);
+    setInvestorsExcelGenerated?.(false);
+
     Toast(
-      "El emisor no puede ser el mismo inversionista en ninguna fracción",
-      "warning"
+      `Se aplicó el inversionista a ${selectedRowIds.length} factura(s).`,
+      "success"
     );
-    return;
-  }
+  };
 
-  const tasaDescuento = await cargarTasaDescuento?.(investorId);
-  if (!tasaDescuento) {
-    Toast(
-      "Disculpe, el cliente seleccionado no tiene perfil de riesgo configurado. Por favor, agréguelo en el módulo de clientes.",
-      "warning"
-    );
-    return;
-  }
-
-  const investorLabel =
-    bulkInvestor?.label ??
-    (bulkInvestor?.data?.first_name && bulkInvestor?.data?.last_name
-      ? `${bulkInvestor.data.first_name} ${bulkInvestor.data.last_name}`
-      : bulkInvestor?.data?.social_reason || "");
-
-  let investorBrokerId = "";
-  let investorBrokerName = "";
-
-  try {
-    const brokerResponse = await cargarBrokerFromInvestor?.(investorId);
-    const brokerData = brokerResponse?.data;
-    investorBrokerId = brokerData?.id || "";
-    investorBrokerName =
-      brokerData?.first_name && brokerData?.last_name
-        ? `${brokerData.first_name} ${brokerData.last_name}`
-        : brokerData?.social_reason || "";
-  } catch (error) {
-    investorBrokerId = "";
-    investorBrokerName = "";
-  }
-
-  const updated = (investorAssignments || []).map((row) => {
-    const rowId = String(row.id);
-    if (!selectedRowIds.includes(rowId)) return row;
-
-    return {
-      ...row,
-      investorId,
-      investorLabel,
-      selectedInvestor: bulkInvestor,
-      investorBrokerId,
-      investorBrokerName,
-      accountId: bulkAccount?.id ?? "",
-      selectedAccount: bulkAccount ?? null,
-      availableAccounts: bulkAccounts,
-      accountAvailableBalance: Number(bulkAccount?.balance ?? 0),
-      accountTotalBalance: Number(bulkAccount?.balance ?? 0),
-    };
-  });
-
-  setFieldValue("investorAssignments", updated);
-  setInvestorsExcelGenerated?.(false);
-  setRowSelectionModel([]);
-
-  Toast(
-    `Se aplicó el inversionista a ${selectedRowIds.length} factura(s).`,
-    "success"
-  );
-};
   const allAssignmentsComplete = useMemo(() => {
     return (
       Array.isArray(investorAssignments) &&
@@ -651,7 +658,22 @@ const handleApplyToSelected = async () => {
     );
   }, [investorAssignments]);
 
-  const generateExcel = async () => {
+  useEffect(() => {
+    if (typeof onExcelReadyChange === "function") {
+      onExcelReadyChange(
+        allAssignmentsComplete &&
+          Array.isArray(investorAssignments) &&
+          investorAssignments.length > 0
+      );
+    }
+  }, [allAssignmentsComplete, investorAssignments, onExcelReadyChange]);
+
+  const generateExcel = useCallback(async () => {
+    if (!Array.isArray(investorAssignments) || investorAssignments.length === 0) {
+      Toast("No hay registros para generar el Excel.", "warning");
+      return;
+    }
+
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet("Carga Masiva");
 
@@ -716,8 +738,19 @@ const handleApplyToSelected = async () => {
     investorAssignments.forEach((row, index) => {
       const excelRow = 7 + index;
 
-      const emitterName = formik?.emitter?.label || emitter?.label || "";
-      const emitterId = formik?.emitter?.value || emitter?.value || "";
+      const emitterName =
+        formik?.emitter?.label ||
+        formik?.emitter?.data?.social_reason ||
+        emitter?.label ||
+        emitter?.data?.social_reason ||
+        "";
+
+      const emitterId =
+        formik?.emitter?.value ||
+        formik?.emitter?.data?.id ||
+        emitter?.value ||
+        emitter?.data?.id ||
+        "";
 
       const selectedInvestor = row.selectedInvestor;
       const investorName =
@@ -918,14 +951,8 @@ const handleApplyToSelected = async () => {
     ];
 
     sheet.autoFilter = {
-      from: {
-        row: 6,
-        column: 1,
-      },
-      to: {
-        row: 6,
-        column: allHeaders.length,
-      },
+      from: { row: 6, column: 1 },
+      to: { row: 6, column: allHeaders.length },
     };
 
     sheet.views = [
@@ -964,9 +991,25 @@ const handleApplyToSelected = async () => {
     );
 
     setInvestorsExcelGenerated?.(true);
-  };
+  }, [
+    investorAssignments,
+    formik,
+    opId,
+    opDate,
+    emitter,
+    payerName,
+    payerId,
+    user,
+    setInvestorsExcelGenerated,
+  ]);
 
-   const columns = [
+  useEffect(() => {
+    if (typeof exposeGenerateExcel === "function") {
+      exposeGenerateExcel(generateExcel);
+    }
+  }, [exposeGenerateExcel, generateExcel]);
+
+  const columns = [
     {
       field: "billId",
       headerName: "ID Factura",
@@ -1016,8 +1059,9 @@ const handleApplyToSelected = async () => {
     {
       field: "investorSelector",
       headerName: "Inversionista",
-      flex: 1,
-      minWidth: 250,
+      width: 290,
+      minWidth: 290,
+      maxWidth: 290,
       sortable: false,
       renderCell: (params) => (
         <Autocomplete
@@ -1058,8 +1102,9 @@ const handleApplyToSelected = async () => {
     {
       field: "accountSelector",
       headerName: "Cuenta",
-      flex: 1,
-      minWidth: 190,
+      width: 220,
+      minWidth: 220,
+      maxWidth: 220,
       sortable: false,
       renderCell: (params) => (
         <Autocomplete
@@ -1127,32 +1172,34 @@ const handleApplyToSelected = async () => {
   ];
 
   return (
- <Grid
-  container
-  spacing={0}
-  sx={{
-    mt: 0.5,
-    minHeight: 0,
-    overflow: "visible",
-  }}
->
+    <Grid
+      container
+      spacing={0}
+      sx={{
+        mt: 0.5,
+        height: "100%",
+        minHeight: 0,
+        overflow: "hidden",
+      }}
+    >
       <Grid item xs={12} sx={{ minHeight: 0, display: "flex" }}>
-   <Box
-  sx={{
-    bgcolor: "#F5F5F5",
-    borderRadius: 2,
-    border: "1px solid #D9D9D9",
-    px: 1.5,
-    py: 1.25,
-    width: "100%",
-    minHeight: 640,
-    display: "flex",
-    flexDirection: "column",
-    overflow: "hidden",
-    boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-    boxSizing: "border-box",
-  }}
->
+        <Box
+          sx={{
+            bgcolor: "#F5F5F5",
+            borderRadius: 2,
+            border: "1px solid #D9D9D9",
+            px: 1.5,
+            py: 1.25,
+            width: "100%",
+            height: "100%",
+            minHeight: 0,
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+            boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+            boxSizing: "border-box",
+          }}
+        >
           <Typography
             sx={{
               mb: 1.25,
@@ -1185,26 +1232,39 @@ const handleApplyToSelected = async () => {
 
           <Box
             sx={{
-              mb: 1.5,
-              p: 1.5,
-              borderRadius: 1.5,
-              backgroundColor: "#FFF5F5",
-              border: "1px solid #F2B8B5",
+              mb: 1.25,
+              px: 1.25,
+              py: 1,
+              borderRadius: 1,
+              backgroundColor: "#fff",
+              border: "1px solid #F1F1F1",
             }}
           >
-            <Typography
+            <Box
               sx={{
-                fontSize: 14,
-                fontWeight: 600,
-                color: "#B42318",
-                mb: 1.25,
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
+                width: "100%",
+                minWidth: 0,
               }}
             >
-              Aplicar inversionista a facturas seleccionadas
-            </Typography>
+              <Typography
+                sx={{
+                  flexShrink: 0,
+                  width: 170,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: "#2E9B9B",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Aplicación masiva
+              </Typography>
 
-            <Grid container spacing={1.5} alignItems="center">
-              <Grid item xs={12} md={5}>
+              <Box sx={{ flex: 1, minWidth: 0 }} />
+
+              <Box sx={{ width: 290, flexShrink: 0 }}>
                 <Autocomplete
                   fullWidth
                   size="small"
@@ -1225,14 +1285,22 @@ const handleApplyToSelected = async () => {
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      placeholder="Nombre del inversionista *"
+                      placeholder="Nombre Inversionista"
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          height: 32,
+                          borderRadius: "4px",
+                          backgroundColor: "#fff",
+                          fontSize: 12,
+                        },
+                      }}
                     />
                   )}
                   disablePortal
                 />
-              </Grid>
+              </Box>
 
-              <Grid item xs={12} md={4}>
+              <Box sx={{ width: 220, flexShrink: 0 }}>
                 <Autocomplete
                   fullWidth
                   size="small"
@@ -1247,55 +1315,67 @@ const handleApplyToSelected = async () => {
                   }
                   onChange={(_, newValue) => setBulkAccount(newValue)}
                   renderInput={(params) => (
-                    <TextField {...params} placeholder="Cuenta (opcional)" />
+                    <TextField
+                      {...params}
+                      placeholder="Seleccione cuenta"
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          height: 32,
+                          borderRadius: "4px",
+                          backgroundColor: "#fff",
+                          fontSize: 12,
+                        },
+                      }}
+                    />
                   )}
                   disablePortal
                   disabled={!bulkInvestor}
                 />
-              </Grid>
+              </Box>
 
-              <Grid item xs={12} md={3}>
+              <Box
+                sx={{
+                  width: 160,
+                  flexShrink: 0,
+                  display: "flex",
+                  justifyContent: "flex-end",
+                }}
+              >
                 <Button
-                  fullWidth
-                  variant="contained"
+                  variant="outlined"
                   onClick={handleApplyToSelected}
                   sx={{
-                    height: 40,
-                    borderRadius: "6px",
-                    bgcolor: "#D92D20",
-                    color: "#fff",
+                    width: "100%",
+                    height: 32,
+                    minWidth: 0,
+                    borderRadius: "4px",
+                    borderColor: "#67C3C3",
+                    color: "#2E9B9B",
+                    backgroundColor: "#fff",
                     textTransform: "none",
-                    fontWeight: 600,
+                    fontWeight: 500,
+                    fontSize: 12,
+                    boxShadow: "none",
                     "&:hover": {
-                      bgcolor: "#B42318",
+                      borderColor: "#2E9B9B",
+                      backgroundColor: "#F7FFFF",
+                      boxShadow: "none",
                     },
                   }}
                 >
-                  Aplicar a seleccionadas
+                  Aplicar
                 </Button>
-              </Grid>
-            </Grid>
-
-            {!bulkInvestor && (
-              <Typography sx={{ mt: 1, fontSize: 12, color: "#B42318" }}>
-                *Debe seleccionar un inversionista.
-              </Typography>
-            )}
-
-            {selectedRowIds.length > 0 && (
-              <Typography sx={{ mt: 1, fontSize: 12, color: "#B42318" }}>
-                {selectedRowIds.length} factura(s) seleccionada(s)
-              </Typography>
-            )}
+              </Box>
+            </Box>
           </Box>
 
           <Box
-  sx={{
-    flex: 1,
-    minHeight: 0,
-    overflow: "hidden",
-  }}
->
+            sx={{
+              flex: 1,
+              minHeight: 0,
+              overflow: "hidden",
+            }}
+          >
             {loadingRows ? (
               <Box
                 sx={{
@@ -1309,16 +1389,16 @@ const handleApplyToSelected = async () => {
               </Box>
             ) : (
               <DataGrid
-                rows={filteredRows}
-                columns={columns}
-                getRowId={(row) => String(row.id)}
-                checkboxSelection
-                selectionModel={selectionModel}
-                onSelectionModelChange={(newSelection) => {
-                  console.log("newSelection", newSelection);
-                  setSelectionModel(newSelection);
-                }}
-                disableSelectionOnClick
+  rows={filteredRows}
+  columns={columns}
+  getRowId={(row) => String(row.id)}
+  checkboxSelection
+  keepNonExistentRowsSelected
+  selectionModel={selectionModel}
+  onSelectionModelChange={(newSelection) => {
+    setSelectionModel(newSelection);
+  }}
+  disableSelectionOnClick
                 rowHeight={40}
                 columnHeaderHeight={34}
                 pagination
@@ -1340,15 +1420,15 @@ const handleApplyToSelected = async () => {
                   border: 0,
                   height: "100%",
                   backgroundColor: "transparent",
- "& .MuiDataGrid-main": {
-  border: 0,
-  minWidth: 0,
-  minHeight: 0,
-},
-"& .MuiDataGrid-virtualScroller": {
-  overflowY: "auto",
-  overflowX: "hidden",
-},
+                  "& .MuiDataGrid-main": {
+                    border: 0,
+                    minWidth: 0,
+                    minHeight: 0,
+                  },
+                  "& .MuiDataGrid-virtualScroller": {
+                    overflowY: "auto",
+                    overflowX: "hidden",
+                  },
                   "& .MuiDataGrid-columnHeaders": {
                     backgroundColor: "#D9D9D9",
                     borderBottom: "none",
@@ -1380,38 +1460,9 @@ const handleApplyToSelected = async () => {
                     {
                       outline: "none",
                     },
-                 
                 }}
               />
             )}
-          </Box>
-
-          <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
-            <Button
-              variant="contained"
-              onClick={generateExcel}
-              disabled={!allAssignmentsComplete}
-              sx={{
-                minWidth: 170,
-                height: 38,
-                borderRadius: "6px",
-                bgcolor: allAssignmentsComplete ? "#4C989B" : "#D8D8D8",
-                color: "#fff",
-                fontSize: 14,
-                fontWeight: 500,
-                textTransform: "none",
-                boxShadow: "0 2px 6px rgba(0,0,0,0.12)",
-                "&:hover": {
-                  bgcolor: allAssignmentsComplete ? "#43898B" : "#D8D8D8",
-                },
-                "&.Mui-disabled": {
-                  bgcolor: "#D8D8D8",
-                  color: "#fff",
-                },
-              }}
-            >
-              Generar Excel
-            </Button>
           </Box>
         </Box>
       </Grid>

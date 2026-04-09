@@ -495,24 +495,26 @@ export const BillsDualTable = ({
         totalBills={selectedRows.length}
       />
 
-  <Grid
+<Grid
   container
   spacing={2}
   sx={{
     mt: 0,
+    height: "100%",
     minHeight: 0,
-    overflow: "visible",
+    overflow: "hidden",
   }}
 >
         <Grid item xs={12} md={6} sx={{ minHeight: 0, display: "flex" }}>
-        <Box
+       <Box
   sx={{
     bgcolor: "#fff",
     borderRadius: 2,
     boxShadow: 0,
     p: 0,
     width: "100%",
-    minHeight: 560,
+    height: "100%",
+    minHeight: 0,
     display: "flex",
     flexDirection: "column",
     overflow: "hidden",
@@ -644,7 +646,7 @@ export const BillsDualTable = ({
         </Grid>
 
     <Grid item xs={12} md={6} sx={{ minHeight: 0, display: "flex" }}>
- <Box
+<Box
   sx={{
     bgcolor: "#EBEBEB",
     borderRadius: 2,
@@ -652,7 +654,8 @@ export const BillsDualTable = ({
     display: "flex",
     flexDirection: "column",
     width: "100%",
-    minHeight: 560,
+    height: "100%",
+    minHeight: 0,
     overflow: "hidden",
     boxSizing: "border-box",
   }}
