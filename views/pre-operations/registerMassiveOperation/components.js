@@ -943,47 +943,42 @@ const { fetch: downloadMassiveOperationReceiptPdfFetch } = useFetch({
 )}
                        
 
-                        <Button
-                          variant="contained"
-                          disabled={!canGoNext}
-                          sx={{
-                            bgcolor: canGoNext ? "#2C9A9A" : "#D0D0D0",
-                            color: "#fff",
-                            px: 4,
-                            "&:hover": {
-                              bgcolor: canGoNext ? "#258383" : "#D0D0D0",
-                            },
-                            "&.Mui-disabled": {
-                              bgcolor: "#D0D0D0",
-                              color: "#fff",
-                            },
-                          }}
-                          onClick={() => {
-                            if (activeStep === 0) {
-  if (selectedBillsCount < 5) return;
-  setInvestorsExcelGenerated(false);
-  setCanGenerateInvestorsExcel(false);
-  setGenerateInvestorsExcelFn(null);
-  setActiveStep(1);
-  return;
-}
+                        {activeStep < 2 && (
+  <Button
+    variant="contained"
+    disabled={!canGoNext}
+    sx={{
+      bgcolor: canGoNext ? "#2C9A9A" : "#D0D0D0",
+      color: "#fff",
+      px: 4,
+      "&:hover": {
+        bgcolor: canGoNext ? "#258383" : "#D0D0D0",
+      },
+      "&.Mui-disabled": {
+        bgcolor: "#D0D0D0",
+        color: "#fff",
+      },
+    }}
+    onClick={() => {
+      if (activeStep === 0) {
+        if (selectedBillsCount < 5) return;
+        setInvestorsExcelGenerated(false);
+        setCanGenerateInvestorsExcel(false);
+        setGenerateInvestorsExcelFn(null);
+        setActiveStep(1);
+        return;
+      }
 
-                            if (activeStep === 1) {
-                              if (!investorsExcelGenerated) return;
-                              setActiveStep(2);
-                              return;
-                            }
-
-                            if (activeStep === 2) {
-                              if (!excelLoadedAndValid) return;
-                              submitForm();
-                              return;
-                            }
-                          }}
-                        >
-                          {activeStep >= 2 ? "Guardar" : "Siguiente"}
-                        </Button>
-                        
+      if (activeStep === 1) {
+        if (!investorsExcelGenerated) return;
+        setActiveStep(2);
+        return;
+      }
+    }}
+  >
+    Siguiente
+  </Button>
+)}
                       </Box>
                       
                     </Grid>

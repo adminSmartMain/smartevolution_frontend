@@ -57,6 +57,45 @@ const formatCurrency = (value) => {
   });
 };
 
+
+const SummaryCard = ({ value, label }) => (
+  <Box
+    sx={{
+      bgcolor: "#fff",
+      borderRadius: "18px",
+      boxShadow: "0 6px 14px rgba(0,0,0,0.18)",
+      border: "1px solid #E8E8E8",
+      py: 4,
+      px: 3,
+      textAlign: "center",
+      minHeight: 140,
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "center",
+    }}
+  >
+    <Typography
+      sx={{
+        fontSize: { xs: 24, md: 28 },
+        fontWeight: 800,
+        color: "#3FA7AE",
+        mb: 1.2,
+      }}
+    >
+      {value}
+    </Typography>
+    <Typography
+      sx={{
+        fontSize: 14,
+        color: "#7A7A7A",
+        fontWeight: 600,
+      }}
+    >
+      {label}
+    </Typography>
+  </Box>
+);
+
 const formatPercent = (value) => {
   if (value === null || value === undefined || value === "") return "0.00%";
   return `${Number(value).toFixed(2)}%`;
@@ -487,6 +526,28 @@ useEffect(() => {
   const validRows = useMemo(() => {
     return (rows || []).filter((row) => !row.hasErrors);
   }, [rows]);
+
+
+  const diasPromedioCalculado = useMemo(() => {
+  if (!validRows.length) return 0;
+
+  const totalDias = validRows.reduce((acc, row) => {
+    return acc + Number(row.opDays || 0);
+  }, 0);
+
+  return totalDias / validRows.length;
+}, [validRows]);
+
+const tasaInversionistaPromedioCalculada = useMemo(() => {
+  if (!validRows.length) return 0;
+
+  const totalTasaInv = validRows.reduce((acc, row) => {
+    return acc + Number(row.tasaInv || 0);
+  }, 0);
+
+  return totalTasaInv / validRows.length;
+}, [validRows]);
+
 
   const totalOperacionCalculada = useMemo(() => {
     return validRows.reduce((acc, row) => {
@@ -1391,6 +1452,18 @@ const handleDownloadValidExcel = async () => {
   const finalTasaPromedio =
     registerSummary?.tasaPromedioPonderada ?? tasaPromedioPonderadaCalculada;
 
+    const finalDiasPromedio =
+  registerSummary?.diasPromedio ??
+  registerSummary?.averageDays ??
+  registerSummary?.avgDays ??
+  diasPromedioCalculado;
+
+const finalTasaInversionistaPromedio =
+  registerSummary?.tasaInversionistaPromedio ??
+  registerSummary?.averageInvestorRate ??
+  registerSummary?.avgInvestorRate ??
+  tasaInversionistaPromedioCalculada;
+
 return (
   <Box
     sx={{
@@ -1684,106 +1757,104 @@ return (
           </Box>
 
           <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
-              gap: 4,
-              width: "100%",
-              maxWidth: 900,
-            }}
-          >
-            <Box
-              sx={{
-                bgcolor: "#fff",
-                borderRadius: 2,
-                boxShadow: 3,
-                py: 4,
-                px: 3,
-                textAlign: "center",
-              }}
-            >
-              <Typography sx={{ fontSize: 28, fontWeight: 800, color: "#158C96", mb: 1 }}>
-                {Number(finalTotalOperacion || 0).toLocaleString("es-CO", {
-                  style: "currency",
-                  currency: "COP",
-                })}
-              </Typography>
-              <Typography sx={{ fontSize: 14, color: "#666" }}>
-                Total de la Operación
-              </Typography>
-            </Box>
-
-            <Box
-              sx={{
-                bgcolor: "#fff",
-                borderRadius: 2,
-                boxShadow: 3,
-                py: 4,
-                px: 3,
-                textAlign: "center",
-              }}
-            >
-              <Typography sx={{ fontSize: 28, fontWeight: 800, color: "#158C96", mb: 1 }}>
-                {finalFacturasRegistradas ?? 0}
-              </Typography>
-              <Typography sx={{ fontSize: 14, color: "#666" }}>
-                Facturas Registradas
-              </Typography>
-            </Box>
-
-            <Box
-              sx={{
-                bgcolor: "#fff",
-                borderRadius: 2,
-                boxShadow: 3,
-                py: 4,
-                px: 3,
-                textAlign: "center",
-              }}
-            >
-              <Typography sx={{ fontSize: 28, fontWeight: 800, color: "#158C96", mb: 1 }}>
-                {formatPercent(finalTasaPromedio)}
-              </Typography>
-              <Typography sx={{ fontSize: 14, color: "#666" }}>
-                Tasa Promedio Ponderada
-              </Typography>
-            </Box>
-          </Box>
-
-          <Box
-            sx={{
-              display: "flex",
-              gap: 3,
-              flexWrap: "wrap",
-              justifyContent: "center",
-            }}
-          >
-            <Button
-  variant="outlined"
-  onClick={handleDownloadReceiptPdf}
   sx={{
-    minWidth: 260,
-    color: "#2E9B9B",
-    borderColor: "#2E9B9B",
+    display: "grid",
+    gridTemplateColumns: {
+      xs: "1fr",
+      sm: "repeat(2, 1fr)",
+      lg: "repeat(5, 1fr)",
+    },
+    gap: 3,
+    width: "100%",
+    maxWidth: 1280,
+    alignItems: "stretch",
   }}
 >
-  Descargar comprobante PDF
-</Button>
-            
-            <Button
-  variant="outlined"
+  <SummaryCard
+    value={Number(finalTotalOperacion || 0).toLocaleString("es-CO", {
+      style: "currency",
+      currency: "COP",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}
+    label="Total de la Operación"
+  />
+
+  <SummaryCard
+    value={finalFacturasRegistradas ?? 0}
+    label="Facturas Registradas"
+  />
+
+  <SummaryCard
+    value={formatPercent(finalTasaPromedio)}
+    label="Tasa Promedio"
+  />
+
+  <SummaryCard
+    value={Number(finalDiasPromedio || 0).toFixed(
+      Number(finalDiasPromedio || 0) % 1 === 0 ? 0 : 1
+    )}
+    label="Días Promedio"
+  />
+
+  <SummaryCard
+    value={Number(finalTasaInversionistaPromedio || 0).toFixed(0)}
+    label="Tasa Inversionista promedio"
+  />
+</Box>
+        <Box
   sx={{
-    minWidth: 220,
-    color: "#2E9B9B",
-    borderColor: "#2E9B9B",
-  }}
-  onClick={() => {
-    window.location.reload();
+    display: "flex",
+    gap: 2,
+    justifyContent: "flex-end", // ✅ derecha real
+    alignItems: "center",
+    width: "100%",
+    mt: 2,
   }}
 >
-  Registrar otra operación
-</Button> 
-          </Box>
+  {/* Botón secundario */}
+  <Button
+    variant="outlined"
+    onClick={() => window.location.reload()}
+    sx={{
+      minWidth: 240,
+      height: 42,
+      borderRadius: "8px",
+      color: "#6FAFB2",
+      borderColor: "#6FAFB2",
+      textTransform: "none",
+      fontWeight: 600,
+      "&:hover": {
+        borderColor: "#2E9B9B",
+        color: "#2E9B9B",
+        backgroundColor: "#F4FBFB",
+      },
+    }}
+  >
+    Registrar otra operación
+  </Button>
+
+  {/* Botón principal */}
+  <Button
+    variant="contained"
+    onClick={handleDownloadReceiptPdf}
+    sx={{
+      minWidth: 280,
+      height: 42,
+      borderRadius: "8px",
+      backgroundColor: "#1C9AA0", // ✅ verde fuerte
+      textTransform: "none",
+      fontWeight: 600,
+      boxShadow: "none",
+      "&:hover": {
+        backgroundColor: "#16848A",
+        boxShadow: "none",
+      },
+    }}
+  >
+    Descargar comprobante PDF
+  </Button>
+</Box>
         </Box>
       )}
       

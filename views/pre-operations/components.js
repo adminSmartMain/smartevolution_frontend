@@ -4,8 +4,10 @@ import Link from "next/link";
 import { SearchOutlined } from "@mui/icons-material";
 import {
   Home as HomeIcon,
-
+  
 } from "@mui/icons-material";
+
+import  ArticleIcon from "@mui/icons-material/Article"
 import TuneIcon from "@mui/icons-material/Tune";
 import Chip from "@mui/material/Chip";
 import { Box, Button, Fade, FormControl, Grid, IconButton, InputLabel,Menu, MenuItem, InputAdornment , Select, TextField, Typography } from "@mui/material";
@@ -139,81 +141,6 @@ const SortIcon = () => (
   </Typography>
 );
 
-const RegisterButton = (props) => {
-  const { fullWidth = false, style, ...rest } = props;
-
-  const [openWindow, setOpenWindow] = useState(null);
-
-  const handleOpenRegisterOperation  = () => {
-    if (openWindow && !openWindow.closed) {
-      openWindow.focus();
-    } else {
-      const newWindow = window.open(
-        "/pre-operations/manage",
-        "_blank",
-        "width=800,height=600"
-      );
-      setOpenWindow(newWindow);
-
-      newWindow.onbeforeunload = () => {
-        setOpenWindow(null);
-      };
-    }
-  };
-
-  return (
-    <button
-      className="button-header-preop-title"
-      onClick={handleOpenRegisterOperation }
-      style={{
-        width: fullWidth ? "100%" : "auto",
-        ...style,
-      }}
-      {...rest}
-    >
-      Registrar operación
-    </button>
-  );
-};
-
-
-
-const RegisterMassiveOperationButton = (props) => {
-  const { fullWidth = false, style, ...rest } = props;
-
-  const [openWindow, setOpenWindow] = useState(null);
-
-  const handleOpenRegisterMassiveOperation= () => {
-    if (openWindow && !openWindow.closed) {
-      openWindow.focus();
-    } else {
-      const newWindow = window.open(
-        "/pre-operations/registerMassiveOperation",
-        "_blank",
-        "width=800,height=600"
-      );
-      setOpenWindow(newWindow);
-
-      newWindow.onbeforeunload = () => {
-        setOpenWindow(null);
-      };
-    }
-  };
-
-  return (
-    <button
-      className="button-header-preop-title"
-      onClick={handleOpenRegisterMassiveOperation}
-      style={{
-        width: fullWidth ? "100%" : "auto",
-        ...style,
-      }}
-      {...rest}
-    >
-      Reg. Operación Masiva
-    </button>
-  );
-};
 
 
 const SellOrderButton = (props) => {
@@ -249,7 +176,17 @@ export const OperationsComponents = ({
   const [filterApplied, setFilterApplied] = useState(false);
   const [anchorElFilters, setAnchorElFilters] = useState(null);
   const openFiltersMenu = Boolean(anchorElFilters);
-  
+  const [anchorElRegister, setAnchorElRegister] = useState(null);
+
+  const openRegisterMenu = Boolean(anchorElRegister);
+
+  const handleOpenRegisterMenu = (event) => {
+    setAnchorElRegister(event.currentTarget);
+  };
+
+  const handleCloseRegisterMenu = () => {
+    setAnchorElRegister(null);
+  };
   const handleOpenFilters = (event) => {
   setAnchorElFilters(event.currentTarget);
   };
@@ -257,6 +194,55 @@ export const OperationsComponents = ({
   const handleCloseFilters = () => {
     setAnchorElFilters(null);
   };
+const handleOpenRegisterOperation = () => {
+  handleCloseRegisterMenu();
+
+  if (openWindow && !openWindow.closed) {
+    openWindow.location.href = "/pre-operations/manage";
+    openWindow.focus();
+    return;
+  }
+
+  const newWindow = window.open(
+    "/pre-operations/manage",
+    "_blank",
+    "width=800,height=600"
+  );
+
+  if (newWindow) {
+    setOpenWindow(newWindow);
+    newWindow.onbeforeunload = () => {
+      setOpenWindow(null);
+    };
+  } else {
+    Toast("El navegador bloqueó la ventana emergente", "error");
+  }
+};
+
+const handleOpenRegisterMassiveOperation = () => {
+  handleCloseRegisterMenu();
+
+  if (openWindow && !openWindow.closed) {
+    openWindow.location.href = "/pre-operations/registerMassiveOperation";
+    openWindow.focus();
+    return;
+  }
+
+  const newWindow = window.open(
+    "/pre-operations/registerMassiveOperation",
+    "_blank",
+    "width=800,height=600"
+  );
+
+  if (newWindow) {
+    setOpenWindow(newWindow);
+    newWindow.onbeforeunload = () => {
+      setOpenWindow(null);
+    };
+  } else {
+    Toast("El navegador bloqueó la ventana emergente", "error");
+  }
+};
 
 
 
@@ -1382,14 +1368,13 @@ const updateFilters = (value, field) => {
  <Box
   sx={{
     display: "grid",
-    gridTemplateColumns: { xs: "1fr", sm: "1fr auto" },
+    gridTemplateColumns: { xs: "1fr", md: "1fr auto" },
     alignItems: "center",
-    gap: { xs: 1, sm: 2 },
+    gap: 2,
     width: "100%",
     mb: 2,
   }}
 >
-  {/* ✅ IZQUIERDA: TÍTULO */}
   <Box className="view-header">
     <Typography
       letterSpacing={0}
@@ -1430,35 +1415,49 @@ const updateFilters = (value, field) => {
     </Typography>
   </Box>
 
-  {/* ✅ DERECHA: BOTONES */}
   <Box
     sx={{
-      display: { xs: "grid", sm: "flex" },
-      gridTemplateColumns: { xs: "1fr 1fr", sm: "none" },
-      gap: { xs: 1, sm: 2 },
+      display: "flex",
+      gap: 3,
       alignItems: "center",
-      width: { xs: "100%", sm: "auto" },
-      justifyContent: { sm: "flex-end" },
+      justifyContent: { xs: "flex-start", md: "flex-end" },
+      flexWrap: "wrap",
+      pr: { md: 1 },
     }}
   >
-    {/* ✅ Botón Operaciones */}
-    <Link href="/operations" passHref>
-      <Box
-        component="button"
-        className="button-header-preop-title"
+    <Link href="/operations" underline="none">
+      <Typography
         sx={{
-          width: "100%", // ✅ en móvil ocupa la columna
-          whiteSpace: "nowrap",
+          color: "#5EA3A3",
+          fontSize: "1rem",
+          fontWeight: 500,
+          cursor: "pointer",
+          "&:hover": {
+            color: "#488B8F",
+            textDecoration: "underline",
+          },
         }}
       >
         Operaciones
-      </Box>
+      </Typography>
     </Link>
 
-    {/* ✅ SellOrderButton envuelto */}
-    <Box sx={{ width: "100%" }}>
-      <SellOrderButton />
-    </Box>
+    <Link href="/buy-orders/notifications" underline="none">
+      <Typography
+        sx={{
+          color: "#5EA3A3",
+          fontSize: "1rem",
+          fontWeight: 500,
+          cursor: "pointer",
+          "&:hover": {
+            color: "#488B8F",
+            textDecoration: "underline",
+          },
+        }}
+      >
+        Notificaciones de Compra
+      </Typography>
+    </Link>
   </Box>
 </Box>
 
@@ -1467,19 +1466,18 @@ const updateFilters = (value, field) => {
     <Box
   sx={{
     display: "grid",
-    gridTemplateColumns: { xs: "1fr", sm: "1fr auto" },
+    gridTemplateColumns: { xs: "1fr", lg: "minmax(320px, 1fr) auto" },
     gap: 2,
     alignItems: "center",
     width: "100%",
     mb: 2,
   }}
 >
-  {/* 🔎 BUSCADOR */}
   <TextField
     variant="outlined"
     id="searchBar"
     size="small"
-    placeholder="Buscar por ID, Factura, Emisor o Inversionista."
+    placeholder="Buscar por NIT o nombre de cliente"
     value={search}
     onChange={(evt) => handleTextFieldChange(evt, "investor")}
     onKeyPress={(event) => {
@@ -1490,14 +1488,16 @@ const updateFilters = (value, field) => {
     }}
     sx={{
       width: "100%",
-      maxWidth: { sm: "580px" }, // ✅ desktop mantiene max
       "& .MuiOutlinedInput-root": {
-        height: 35,
+        height: 42,
         fontSize: "14px",
-        paddingRight: 0,
+        borderRadius: "8px",
       },
       "& .MuiInputBase-input": {
-        padding: "6px 8px",
+        padding: "8px 10px",
+      },
+      "& .MuiOutlinedInput-notchedOutline": {
+        borderColor: "#5EA3A3",
       },
     }}
     InputProps={{
@@ -1511,31 +1511,28 @@ const updateFilters = (value, field) => {
     }}
   />
 
-   {/* 🎛 FILTROS + ACCIONES */}
   <Box
     sx={{
       display: "flex",
       flexWrap: "wrap",
       gap: 1,
       alignItems: "center",
-      justifyContent: { xs: "flex-start", sm: "flex-end" },
+      justifyContent: { xs: "flex-start", lg: "flex-end" },
       width: "100%",
     }}
   >
-    {/* BOTÓN FILTROS */}
     <Button
       onClick={handleOpenFilters}
       variant="outlined"
       startIcon={<TuneIcon fontSize="small" />}
       sx={{
-        height: 35,
+        height: 42,
+        minWidth: "42px",
         border: "1px solid #5EA3A3",
-        borderRadius: "6px",
+        borderRadius: "8px",
         color: "#488B8F",
-        px: 2,
-        minWidth: "30px",
-        fontWeight: 500,
         backgroundColor: "#fff",
+        px: 1.5,
         "&:hover": {
           backgroundColor: "#488B8F",
           color: "#fff",
@@ -1546,15 +1543,15 @@ const updateFilters = (value, field) => {
         },
       }}
     >
-     {activeFiltersCount > 0 ? ` (${activeFiltersCount})` : ""}
+      {activeFiltersCount > 0 ? `(${activeFiltersCount})` : ""}
     </Button>
-{/* PILL FECHA */}
+
     {dateRange?.startDate && dateRange?.endDate && (
       <Chip
         label={`Fecha: ${formatFilterDate(dateRange.startDate)} - ${formatFilterDate(dateRange.endDate)}`}
         onDelete={handleClear}
         sx={{
-          height: 35,
+          height: 38,
           borderRadius: "18px",
           backgroundColor: "#EAF6F6",
           color: "#488B8F",
@@ -1568,13 +1565,13 @@ const updateFilters = (value, field) => {
         }}
       />
     )}
-    {/* PILL ESTADO */}
+
     {selectedStatus && (
       <Chip
         label={`Estado: ${selectedStatus.label}`}
         onDelete={handleClearStatus}
         sx={{
-          height: 35,
+          height: 38,
           borderRadius: "18px",
           backgroundColor: "#EAF6F6",
           color: "#488B8F",
@@ -1589,29 +1586,116 @@ const updateFilters = (value, field) => {
       />
     )}
 
-    
-
-    {/* ✅ Valor a Girar */}
-    <button
-      className="button-header-preop-title"
+    <Button
       onClick={handleOpenModal}
-      style={{ width: "auto" }}
+      variant="outlined"
+      startIcon={<ArticleIcon fontSize="small" />}
+      sx={{
+        height: 42,
+        border: "1px solid #5EA3A3",
+        borderRadius: "8px",
+        color: "#488B8F",
+        px: 2,
+        backgroundColor: "#fff",
+        textTransform: "none",
+        fontWeight: 500,
+        "&:hover": {
+          backgroundColor: "#488B8F",
+          color: "#fff",
+          borderColor: "#488B8F",
+        },
+      }}
     >
       Valor a Girar
-    </button>
-    <ModalValorAGirar open={openModal} handleClose={handleCloseModal} data={mockData} />
+    </Button>
 
-    {/* ✅ Registrar */}
-    <RegisterButton />
+    <ModalValorAGirar
+      open={openModal}
+      handleClose={handleCloseModal}
+      data={mockData}
+    />
 
-    <RegisterMassiveOperationButton />
+    <Button
+      onClick={handleOpenRegisterMenu}
+      variant="contained"
+      endIcon={<ArrowDropDownIcon />}
+      sx={{
+        height: 42,
+        borderRadius: "8px",
+        backgroundColor: "#1C9AA0",
+        color: "#fff",
+        px: 2.5,
+        textTransform: "none",
+        fontWeight: 600,
+        boxShadow: "none",
+        "&:hover": {
+          backgroundColor: "#16848A",
+          boxShadow: "none",
+        },
+      }}
+    >
+      Registrar Operación
+    </Button>
 
-    {/* ✅ Menú CSV */}
+    <Menu
+  anchorEl={anchorElRegister}
+  open={openRegisterMenu}
+  onClose={handleCloseRegisterMenu}
+  anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+  transformOrigin={{ vertical: "top", horizontal: "left" }}
+  PaperProps={{
+    sx: {
+      mt: 1,
+      borderRadius: "10px",
+      minWidth: 230,
+      overflow: "hidden",
+    },
+  }}
+>
+  <MenuItem
+    onClick={handleOpenRegisterOperation}
+    sx={{
+      py: 1.5,
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "flex-start",
+    }}
+  >
+    <Typography sx={{ color: "#2D98A0", fontWeight: 500 }}>
+      Registrar Operación
+    </Typography>
+    <Typography sx={{ fontSize: "0.85rem", color: "#666" }}>
+      Registra facturas individualmente
+    </Typography>
+  </MenuItem>
+
+  <MenuItem
+    onClick={handleOpenRegisterMassiveOperation}
+    sx={{
+      py: 1.5,
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "flex-start",
+    }}
+  >
+    <Typography sx={{ color: "#2D98A0", fontWeight: 500 }}>
+      Registro Masivo
+    </Typography>
+    <Typography sx={{ fontSize: "0.85rem", color: "#666" }}>
+      Carga de lotes con Excel
+    </Typography>
+  </MenuItem>
+</Menu>
+
     <Box sx={{ justifySelf: { xs: "end", sm: "auto" } }}>
       <IconButton onClick={handleMenuClickCSV} className="context-menu">
         <MoreVertIcon />
       </IconButton>
-      <Menu anchorEl={anchorElCSV} open={openMenuCSV} onClose={handleCloseMenuCSV}>
+      <Menu
+        anchorEl={anchorElCSV}
+        open={openMenuCSV}
+        onClose={handleCloseMenuCSV}
+      >
         <MenuItem onClick={handleExportExcel}>Exportar a CSV</MenuItem>
       </Menu>
     </Box>
