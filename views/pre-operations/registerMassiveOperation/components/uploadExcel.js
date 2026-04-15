@@ -538,6 +538,18 @@ useEffect(() => {
   return totalDias / validRows.length;
 }, [validRows]);
 
+
+const tasaDescuentoPromedioCalculada = useMemo(() => {
+  if (!validRows.length) return 0;
+
+  const totalTasaDesc = validRows.reduce((acc, row) => {
+    return acc + Number(row.tasaDesc || 0);
+  }, 0);
+
+  return totalTasaDesc / validRows.length;
+}, [validRows]);
+
+
 const tasaInversionistaPromedioCalculada = useMemo(() => {
   if (!validRows.length) return 0;
 
@@ -1449,8 +1461,11 @@ const handleDownloadValidExcel = async () => {
   const finalFacturasRegistradas =
     registerSummary?.facturasRegistradas ?? validRows.length;
 
-  const finalTasaPromedio =
-    registerSummary?.tasaPromedioPonderada ?? tasaPromedioPonderadaCalculada;
+const finalTasaDescuentoPromedio =
+  registerSummary?.tasaDescuentoPromedio ??
+  registerSummary?.averageDiscountRate ??
+  registerSummary?.avgDiscountRate ??
+  tasaDescuentoPromedioCalculada;
 
     const finalDiasPromedio =
   registerSummary?.diasPromedio ??
@@ -1770,35 +1785,35 @@ return (
     alignItems: "stretch",
   }}
 >
+
+  <SummaryCard
+    value={Number(finalFacturasRegistradas ?? 0).toFixed(0)}
+    label="Facturas Registradas"
+  />
   <SummaryCard
     value={Number(finalTotalOperacion || 0).toLocaleString("es-CO", {
       style: "currency",
       currency: "COP",
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
     })}
     label="Total de la Operación"
   />
 
-  <SummaryCard
-    value={finalFacturasRegistradas ?? 0}
-    label="Facturas Registradas"
-  />
-
-  <SummaryCard
-    value={formatPercent(finalTasaPromedio)}
-    label="Tasa Promedio"
-  />
-
-  <SummaryCard
-    value={Number(finalDiasPromedio || 0).toFixed(
-      Number(finalDiasPromedio || 0) % 1 === 0 ? 0 : 1
-    )}
+  
+<SummaryCard
+    value={Number(finalDiasPromedio || 0).toFixed(0)}
     label="Días Promedio"
   />
+  <SummaryCard
+    value={formatPercent(finalTasaDescuentoPromedio)}
+    label="Tasa Descuento promedio"
+  />
+
+  
 
   <SummaryCard
-    value={Number(finalTasaInversionistaPromedio || 0).toFixed(0)}
+    value={formatPercent(finalTasaInversionistaPromedio)}
     label="Tasa Inversionista promedio"
   />
 </Box>

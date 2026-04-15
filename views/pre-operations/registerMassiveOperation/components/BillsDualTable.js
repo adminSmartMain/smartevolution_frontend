@@ -17,6 +17,7 @@ import {
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import CloseIcon from "@mui/icons-material/Close";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 import { DataGrid } from "@mui/x-data-grid";
 
 const BillsLeftSkeleton = () => {
@@ -42,9 +43,86 @@ const BillsLeftSkeleton = () => {
           <Skeleton variant="text" height={24} />
           <Skeleton variant="text" height={24} />
           <Skeleton variant="text" height={24} />
-          
         </Box>
       ))}
+    </Box>
+  );
+};
+
+const EmptyBillsState = ({
+  title,
+  subtitle,
+  bg = "#F5F5F5",
+  iconBoxBg = "#E8E8E8",
+}) => {
+  return (
+    <Box
+      sx={{
+        position: "absolute",
+        top: 34,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: bg,
+        zIndex: 2,
+        pointerEvents: "none",
+      }}
+    >
+      <Box
+        sx={{
+          textAlign: "center",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          px: 3,
+          mt: -5,
+        }}
+      >
+        <Box
+          sx={{
+            width: 210,
+            height: 210,
+            borderRadius: 4,
+            bgcolor: iconBoxBg,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            mb: 2.5,
+          }}
+        >
+          <DescriptionOutlinedIcon
+            sx={{
+              fontSize: 130,
+              color: "#F5F5F5",
+            }}
+          />
+        </Box>
+
+        <Typography
+          sx={{
+            fontSize: 18,
+            fontWeight: 700,
+            color: "#D0D0D0",
+            mb: 0.5,
+          }}
+        >
+          {title}
+        </Typography>
+
+        <Typography
+          sx={{
+            fontSize: 13,
+            color: "#D0D0D0",
+            lineHeight: 1.45,
+            maxWidth: 520,
+          }}
+        >
+          {subtitle}
+        </Typography>
+      </Box>
     </Box>
   );
 };
@@ -222,7 +300,8 @@ export const BillsDualTable = ({
   );
 
   const selectedRows = useMemo(
-    () => (Array.isArray(billsToNegotiate) ? billsToNegotiate : []).map(mapBillToRow),
+    () =>
+      (Array.isArray(billsToNegotiate) ? billsToNegotiate : []).map(mapBillToRow),
     [billsToNegotiate]
   );
 
@@ -349,34 +428,34 @@ export const BillsDualTable = ({
   };
 
   const leftColumns = useMemo(
-  () => [
-    {
-      field: "billId",
-      headerName: "ID",
-      flex: 1.05,
-      minWidth: 140,
-      sortable: true,
-      headerAlign: "left",
-      align: "left",
-      renderCell: (params) => (
-        <Typography sx={{ fontSize: 13, fontWeight: 700, color: "#1F1F1F" }}>
-          {params.value}
-        </Typography>
-      ),
-    },
-    {
-      field: "currentBalance",
-      headerName: "Saldo",
-      flex: 0.8,
-      minWidth: 120,
-      sortable: false,
-      headerAlign: "right",
-      align: "right",
-      valueFormatter: ({ value }) => formatCurrency(value),
-    },
-  ],
-  []
-);
+    () => [
+      {
+        field: "billId",
+        headerName: "ID",
+        flex: 1.05,
+        minWidth: 140,
+        sortable: true,
+        headerAlign: "left",
+        align: "left",
+        renderCell: (params) => (
+          <Typography sx={{ fontSize: 13, fontWeight: 700, color: "#1F1F1F" }}>
+            {params.value}
+          </Typography>
+        ),
+      },
+      {
+        field: "currentBalance",
+        headerName: "Saldo",
+        flex: 0.8,
+        minWidth: 120,
+        sortable: false,
+        headerAlign: "right",
+        align: "right",
+        valueFormatter: ({ value }) => formatCurrency(value),
+      },
+    ],
+    []
+  );
 
   const rightColumns = useMemo(() => {
     const billIdWidth = isLgUp ? undefined : isMdUp ? 100 : 80;
@@ -495,31 +574,31 @@ export const BillsDualTable = ({
         totalBills={selectedRows.length}
       />
 
-<Grid
-  container
-  spacing={2}
-  sx={{
-    mt: 0,
-    height: "100%",
-    minHeight: 0,
-    overflow: "hidden",
-  }}
->
+      <Grid
+        container
+        spacing={2}
+        sx={{
+          mt: 0,
+          height: "100%",
+          minHeight: 0,
+          overflow: "hidden",
+        }}
+      >
         <Grid item xs={12} md={6} sx={{ minHeight: 0, display: "flex" }}>
-       <Box
-  sx={{
-    bgcolor: "#fff",
-    borderRadius: 2,
-    boxShadow: 0,
-    p: 0,
-    width: "100%",
-    height: "100%",
-    minHeight: 0,
-    display: "flex",
-    flexDirection: "column",
-    overflow: "hidden",
-  }}
->
+          <Box
+            sx={{
+              bgcolor: "#fff",
+              borderRadius: 2,
+              boxShadow: 0,
+              p: 0,
+              width: "100%",
+              height: "100%",
+              minHeight: 0,
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
+            }}
+          >
             <TextField
               placeholder="Buscar por ID / Emisor / Pagador"
               fullWidth
@@ -532,13 +611,14 @@ export const BillsDualTable = ({
             {loading ? (
               <BillsLeftSkeleton />
             ) : (
-             <Box
-    sx={{
-      flex: 1,
-      minHeight: 0,
-      overflow: "hidden",
-    }}
-  >
+              <Box
+                sx={{
+                  flex: 1,
+                  minHeight: 420,
+                  overflow: "hidden",
+                  position: "relative",
+                }}
+              >
                 <DataGrid
                   rows={filteredAvailable}
                   columns={leftColumns}
@@ -551,115 +631,130 @@ export const BillsDualTable = ({
                   keepNonExistentRowsSelected
                   pageSizeOptions={[10, 20, 50]}
                   localeText={{
-    footerRowsPerPage: "Filas por página:",
-    footerTotalRows: "Total de filas:",
-    MuiTablePagination: {
-      labelRowsPerPage: "Filas por página:",
-      labelDisplayedRows: ({ from, to, count }) =>
-        `${from}-${to} de ${count !== -1 ? count : `más de ${to}`}`,
-    },
-  }}
+                    footerRowsPerPage: "Filas por página:",
+                    footerTotalRows: "Total de filas:",
+                    MuiTablePagination: {
+                      labelRowsPerPage: "Filas por página:",
+                      labelDisplayedRows: ({ from, to, count }) =>
+                        `${from}-${to} de ${count !== -1 ? count : `más de ${to}`}`,
+                    },
+                  }}
                   initialState={{
-  pagination: { paginationModel: { page: 0, pageSize: 10 } },
-  sorting: {
-    sortModel: [{ field: "billId", sort: "desc" }],
-  },
-}}
+                    pagination: { paginationModel: { page: 0, pageSize: 10 } },
+                    sorting: {
+                      sortModel: [{ field: "billId", sort: "desc" }],
+                    },
+                  }}
                   rowHeight={32}
                   columnHeaderHeight={34}
                   sx={{
-                    border: 0,
-                    height: "100%",
-                    backgroundColor: "transparent",
-                   "& .MuiDataGrid-main": {
   border: 0,
-  minHeight: 0,
-},
-"& .MuiDataGrid-virtualScroller": {
-  overflowY: "auto",
-  overflowX: "hidden",
-},
-                    
-                    "& .MuiDataGrid-columnHeaders": {
-                      backgroundColor: "#D9D9D9",
-                      borderBottom: "none",
-                      minHeight: "34px !important",
-                      maxHeight: "34px !important",
-                    },
-                    "& .MuiDataGrid-columnHeader": {
-                      px: 1,
-                    },
-                    "& .MuiDataGrid-columnHeaderTitle": {
-                      fontWeight: 700,
-                      fontSize: 13,
-                      color: "#111",
-                    },
-                    "& .MuiDataGrid-row": {
-                      backgroundColor: "#F3F3F3",
-                    },
-                    "& .MuiDataGrid-row:nth-of-type(even)": {
-                      backgroundColor: "#EAEAEA",
-                    },
-                    "& .MuiDataGrid-cell": {
-                      borderBottom: "1px solid #E0E0E0",
-                      fontSize: 13,
-                      color: "#222",
-                      px: 1,
-                      display: "flex",
-                      alignItems: "center",
-                    },
-                    "& .MuiDataGrid-cell:focus, & .MuiDataGrid-columnHeader:focus": {
-                      outline: "none",
-                    },
-                    "& .MuiDataGrid-row.Mui-selected": {
-                      backgroundColor: "rgba(54,167,167,0.12)",
-                    },
-                    "& .MuiDataGrid-row.Mui-selected:hover": {
-                      backgroundColor: "rgba(54,167,167,0.18)",
-                    },
-                    "& .MuiCheckbox-root": {
-                      color: "#2C9A9A",
-                      p: 0.5,
-                    },
-                    "& .Mui-checked": {
-                      color: "#2C9A9A !important",
-                    },
-                    "& .MuiDataGrid-columnHeaderCheckbox, & .MuiDataGrid-cellCheckbox": {
-                      justifyContent: "center",
-                      alignItems: "center",
-                    },
-                    "& .MuiDataGrid-footerContainer": {
-                      minHeight: 36,
-                      borderTop: "none",
-                    },
-                    "& .MuiTablePagination-root": {
-                      fontSize: 12,
-                    },
-                    "& .MuiDataGrid-selectedRowCount": {
-                      display: "none",
-                    },
-                  }}
+  height: "100%",
+  backgroundColor: "transparent",
+  "& .MuiDataGrid-main": {
+    border: 0,
+    minHeight: 0,
+  },
+  "& .MuiDataGrid-columnHeaders": {
+    backgroundColor: "#D9D9D9",
+    borderBottom: "none",
+    minHeight: "34px !important",
+    maxHeight: "34px !important",
+  },
+  "& .MuiDataGrid-columnHeader": {
+    px: 1,
+  },
+  "& .MuiDataGrid-columnHeaderTitle": {
+    fontWeight: 700,
+    fontSize: 13,
+    color: "#111",
+  },
+  "& .MuiDataGrid-row": {
+    backgroundColor: "#F3F3F3",
+  },
+  "& .MuiDataGrid-row:nth-of-type(even)": {
+    backgroundColor: "#EAEAEA",
+  },
+  "& .MuiDataGrid-cell": {
+    borderBottom: "1px solid #E0E0E0",
+    fontSize: 13,
+    color: "#222",
+    px: 1,
+    display: "flex",
+    alignItems: "center",
+  },
+  "& .MuiDataGrid-cell:focus, & .MuiDataGrid-columnHeader:focus": {
+    outline: "none",
+  },
+  "& .MuiDataGrid-row.Mui-selected": {
+    backgroundColor: "rgba(54,167,167,0.12)",
+  },
+  "& .MuiDataGrid-row.Mui-selected:hover": {
+    backgroundColor: "rgba(54,167,167,0.18)",
+  },
+  "& .MuiCheckbox-root": {
+    color: "#2C9A9A",
+    p: 0.5,
+  },
+  "& .Mui-checked": {
+    color: "#2C9A9A !important",
+  },
+  "& .MuiDataGrid-columnHeaderCheckbox, & .MuiDataGrid-cellCheckbox": {
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  "& .MuiDataGrid-footerContainer": {
+    minHeight: 36,
+    borderTop: "none",
+  },
+  "& .MuiTablePagination-root": {
+    fontSize: 12,
+  },
+  "& .MuiDataGrid-selectedRowCount": {
+    display: "none",
+  },
+  "& .MuiDataGrid-virtualScroller": {
+    overflowY: filteredAvailable.length ? "auto" : "hidden",
+    overflowX: "hidden",
+  },
+
+  "& .MuiDataGrid-overlay": {
+    display: "none",
+  },
+  "& .MuiDataGrid-overlayWrapper": {
+    display: "none",
+  },
+}}
                 />
+
+                {filteredAvailable.length === 0 && (
+                  <EmptyBillsState
+                    bg="#F5F5F5"
+                    iconBoxBg="#E7E7E7"
+                    title="Aún no has seleccionado emisores y pagadores"
+                    subtitle="Selecciona el emisor y el pagador para recopilar las facturas asociadas"
+                  />
+                )}
               </Box>
             )}
           </Box>
         </Grid>
 
-    <Grid item xs={12} md={6} sx={{ minHeight: 0, display: "flex" }}>
-<Box
-  sx={{
-    bgcolor: "#EBEBEB",
-    borderRadius: 2,
-    p: 2,
-    display: "flex",
-    flexDirection: "column",
-    width: "100%",
-    height: "100%",
-    minHeight: 0,
-    overflow: "hidden",
-    boxSizing: "border-box",
-  }}
->
+        <Grid item xs={12} md={6} sx={{ minHeight: 0, display: "flex" }}>
+          <Box
+            sx={{
+              bgcolor: "#EBEBEB",
+              borderRadius: 2,
+              p: 2,
+              display: "flex",
+              flexDirection: "column",
+              width: "100%",
+              height: "100%",
+              minHeight: 0,
+              overflow: "hidden",
+              boxSizing: "border-box",
+            }}
+          >
             <Box
               sx={{
                 display: "flex",
@@ -706,134 +801,131 @@ export const BillsDualTable = ({
               onChange={(e) => setSearchRight(e.target.value)}
             />
 
-            {filteredSelected.length === 0 ? (
+            <Box
+              sx={{
+                flex: 1,
+                minHeight: 420,
+                overflow: "hidden",
+                position: "relative",
+              }}
+            >
+              <DataGrid
+                rows={filteredSelected}
+                columns={rightColumns}
+                hideFooter
+                disableRowSelectionOnClick
+                rowHeight={34}
+                columnHeaderHeight={34}
+                sx={{
+  border: 0,
+  height: "100%",
+  backgroundColor: "transparent",
+  "& .MuiDataGrid-main": {
+    border: 0,
+    minHeight: 0,
+  },
+  "& .MuiDataGrid-columnHeaders": {
+    backgroundColor: "#E9E9E9",
+    borderBottom: "1px solid #DADADA",
+  },
+  "& .MuiDataGrid-columnHeader": {
+    px: 0.75,
+  },
+  "& .MuiDataGrid-columnHeaderTitle": {
+    fontWeight: 700,
+    fontSize: 12,
+    color: "#1F1F1F",
+    whiteSpace: "nowrap",
+    overflow: "visible",
+  },
+  "& .MuiDataGrid-row": {
+    backgroundColor: "transparent",
+  },
+  "& .MuiDataGrid-cell": {
+    borderBottom: "none",
+    fontSize: 12,
+    color: "#2D2D2D",
+    px: 0.75,
+  },
+  "& .MuiDataGrid-cell:focus, & .MuiDataGrid-columnHeader:focus": {
+    outline: "none",
+  },
+  "& .MuiDataGrid-footerContainer": {
+    display: "none",
+  },
+  "& .MuiDataGrid-virtualScroller": {
+    overflowY: filteredSelected.length ? "auto" : "hidden",
+    overflowX: "hidden",
+  },
+
+  "& .MuiDataGrid-overlay": {
+    display: "none",
+  },
+  "& .MuiDataGrid-overlayWrapper": {
+    display: "none",
+  },
+}}
+              />
+
+              {filteredSelected.length === 0 && (
+                <EmptyBillsState
+                  bg="#EBEBEB"
+                  iconBoxBg="#E4E4E4"
+                  title="Aún no has seleccionado facturas"
+                  subtitle="Selecciona facturas de la tabla de la izquierda para comenzar a armar tu lote"
+                />
+              )}
+            </Box>
+
+            {selectedRows.length > 0 && (
               <Box
                 sx={{
-                  flex: 1,
+                  mt: 1,
+                  pt: 1,
+                  borderTop: "1px solid #DCDCDC",
                   display: "flex",
+                  justifyContent: "space-between",
                   alignItems: "center",
-                  justifyContent: "center",
-                  color: "#999",
-                  textAlign: "center",
-                  fontSize: 14,
                 }}
               >
-                Aún no has seleccionado facturas
-              </Box>
-            ) : (
-              <>
-               <Box
-  sx={{
-    flex: 1,
-    minHeight: 0,
-    overflow: "hidden",
-  }}
->
-                  <DataGrid
-                    rows={filteredSelected}
-                    columns={rightColumns}
-                    hideFooter
-                    disableRowSelectionOnClick
-                    rowHeight={34}
-                    columnHeaderHeight={34}
-                    sx={{
-                      border: 0,
-                      height: "100%",
-                      backgroundColor: "transparent",
-                      "& .MuiDataGrid-virtualScroller": {
-  overflowY: "auto",
-  overflowX: "hidden",
-},
-                      "& .MuiDataGrid-columnHeaders": {
-                        backgroundColor: "#E9E9E9",
-                        borderBottom: "1px solid #DADADA",
-                      },
-                      "& .MuiDataGrid-columnHeader": {
-                        px: 0.75,
-                      },
-                      "& .MuiDataGrid-columnHeaderTitle": {
-                        fontWeight: 700,
-                        fontSize: 12,
-                        color: "#1F1F1F",
-                        whiteSpace: "nowrap",
-                        overflow: "visible",
-                      },
-                      "& .MuiDataGrid-row": {
-                        backgroundColor: "transparent",
-                      },
-                      "& .MuiDataGrid-cell": {
-                        borderBottom: "none",
-                        fontSize: 12,
-                        color: "#2D2D2D",
-                        px: 0.75,
-                      },
-                      "& .MuiDataGrid-cell:focus, & .MuiDataGrid-columnHeader:focus": {
-                        outline: "none",
-                      },
-                     "& .MuiDataGrid-virtualScroller": {
-  overflowY: "auto",
-  overflowX: "hidden",
-},
-                      "& .MuiDataGrid-main": {
-  border: 0,
-  minHeight: 0,
-},
-                      "& .MuiDataGrid-footerContainer": {
-                        display: "none",
-                      },
-                    }}
-                  />
-                </Box>
-
                 <Box
                   sx={{
-                    mt: 1,
-                    pt: 1,
-                    borderTop: "1px solid #DCDCDC",
                     display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
+                    flexDirection: "column",
+                    alignItems: "flex-start",
+                    gap: 0.25,
                   }}
                 >
-              <Box
-  sx={{
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "flex-start",
-    gap: 0.25,
-  }}
->
-  <Typography
-    sx={{
-      fontSize: 12,
-      fontWeight: 700,
-      color: "#36A7A7",
-    }}
-  >
-    Total ({selectedRows.length} facturas)
-  </Typography>
-
-  <Typography
-    sx={{
-      fontSize: 12,
-      fontWeight: 700,
-    }}
-  >
-    El mínimo de facturas a seleccionar es 5
-  </Typography>
-</Box>
+                  <Typography
+                    sx={{
+                      fontSize: 12,
+                      fontWeight: 700,
+                      color: "#36A7A7",
+                    }}
+                  >
+                    Total ({selectedRows.length} facturas)
+                  </Typography>
 
                   <Typography
                     sx={{
-                      fontSize: 13,
-                      fontWeight: 800,
-                      color: "#222",
+                      fontSize: 12,
+                      fontWeight: 700,
                     }}
                   >
-                    {formatCurrency(selectedTotalBalance)}
+                    El mínimo de facturas a seleccionar es 5
                   </Typography>
                 </Box>
-              </>
+
+                <Typography
+                  sx={{
+                    fontSize: 13,
+                    fontWeight: 800,
+                    color: "#222",
+                  }}
+                >
+                    {formatCurrency(selectedTotalBalance)}
+                </Typography>
+              </Box>
             )}
           </Box>
         </Grid>

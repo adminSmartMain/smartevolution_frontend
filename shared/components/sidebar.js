@@ -19,28 +19,88 @@ import React, { useCallback, useState, useEffect, useRef } from "react";
 
 // ================== HOOK PERSONALIZADO PARA VENTANAS ==================
 const useWindowManager = () => {
-  const [openWindow, setOpenWindow] = useState(null);
+  const windowsRef = useRef({});
 
-  const handleOpenWindow = (url, windowFeatures = "width=1000,height=700,left=100,top=100") => {
-    if (openWindow && !openWindow.closed) {
-      openWindow.focus();
-      return openWindow;
-    } else {
-      const newWindow = window.open(url, "_blank", windowFeatures);
-      setOpenWindow(newWindow);
-      
-      if (newWindow) {
-        newWindow.onbeforeunload = () => {
-          setOpenWindow(null);
-        };
-      }
-      
-      return newWindow;
+  const handleOpenWindow = (
+    key,
+    url,
+    windowFeatures = "width=1000,height=700,left=100,top=100"
+  ) => {
+    if (typeof window === "undefined") return null;
+
+    const existingWindow = windowsRef.current[key];
+
+    if (existingWindow && !existingWindow.closed) {
+      existingWindow.focus();
+      return existingWindow;
     }
+
+    const newWindow = window.open(url, key, windowFeatures);
+
+    if (newWindow) {
+      windowsRef.current[key] = newWindow;
+
+      const cleanup = () => {
+        if (windowsRef.current[key] === newWindow) {
+          delete windowsRef.current[key];
+        }
+      };
+
+      newWindow.onbeforeunload = cleanup;
+    }
+
+    return newWindow;
   };
 
-  return { handleOpenWindow, openWindow };
+  return { handleOpenWindow };
 };
+
+const windowManager = (() => {
+  let instance = null;
+
+  return {
+    getInstance() {
+      if (!instance) {
+        const windows = {};
+
+        instance = {
+          handleOpenWindow: (
+            key,
+            url,
+            windowFeatures = "width=1000,height=700,left=100,top=100"
+          ) => {
+            if (typeof window === "undefined") return null;
+
+            const existingWindow = windows[key];
+
+            if (existingWindow && !existingWindow.closed) {
+              existingWindow.focus();
+              return existingWindow;
+            }
+
+            const newWindow = window.open(url, key, windowFeatures);
+
+            if (newWindow) {
+              windows[key] = newWindow;
+
+              const cleanup = () => {
+                if (windows[key] === newWindow) {
+                  delete windows[key];
+                }
+              };
+
+              newWindow.onbeforeunload = cleanup;
+            }
+
+            return newWindow;
+          },
+        };
+      }
+
+      return instance;
+    },
+  };
+})();
 
 // ================== ESTILOS ==================
 const containerSx = {
@@ -169,24 +229,26 @@ const subMenuItemSx = {
 
 // ================== COMPONENTES ==================
 
-// 🔥 COMPONENTE SUBITEM MEJORADO CON FUNCIONALIDAD DE VENTANAS
 const SubMenuItem = ({ subItem, onItemClick, isExpanded }) => {
-  const { handleOpenWindow } = useWindowManager();
   const router = useRouter();
 
   const handleClick = (e) => {
     if (subItem.openInWindow) {
       e.preventDefault();
       e.stopPropagation();
-      
-      handleOpenWindow(subItem.href, subItem.windowFeatures);
-      
-      if (onItemClick) {
-        onItemClick();
-      }
-    } else {
+
+      const manager = windowManager.getInstance();
+      manager.handleOpenWindow(
+        subItem.windowKey || subItem.href,
+        subItem.href,
+        subItem.windowFeatures
+      );
+
       onItemClick?.();
+      return;
     }
+
+    onItemClick?.();
   };
 
   const isActive = router.pathname === subItem.href;
@@ -194,17 +256,17 @@ const SubMenuItem = ({ subItem, onItemClick, isExpanded }) => {
   if (!isExpanded) {
     return (
       <Link href={subItem.href} passHref legacyBehavior>
-        <Box 
-          component="a" 
-          sx={{ 
-            ...subMenuItemSx, 
+        <Box
+          component="a"
+          sx={{
+            ...subMenuItemSx,
             width: 180,
             ...(isActive && {
               backgroundColor: "#E8F3F3",
-            })
+            }),
           }}
           onClick={handleClick}
-          target={subItem.openInWindow ? "_blank" : "_self"}
+          target={subItem.openInWindow ? "_self" : "_self"}
         >
           {subItem.text}
         </Box>
@@ -223,7 +285,7 @@ const SubMenuItem = ({ subItem, onItemClick, isExpanded }) => {
           }),
         }}
         onClick={handleClick}
-        target={subItem.openInWindow ? "_blank" : "_self"}
+        target={subItem.openInWindow ? "_self" : "_self"}
       >
         {subItem.text}
       </Box>
@@ -231,7 +293,6 @@ const SubMenuItem = ({ subItem, onItemClick, isExpanded }) => {
   );
 };
 
-// 🔥 COMPONENTE HOVER SUBMENU MEJORADO CON DELAY
 const HoverSubMenu = ({ subItems, anchor, visible, onClose, onItemClick }) => {
   const timeoutRef = useRef(null);
   const menuRef = useRef(null);
@@ -245,7 +306,7 @@ const HoverSubMenu = ({ subItems, anchor, visible, onClose, onItemClick }) => {
   const handleMouseLeave = () => {
     timeoutRef.current = setTimeout(() => {
       onClose();
-    }, 300); // 300ms de delay antes de cerrar
+    }, 300);
   };
 
   useEffect(() => {
@@ -281,7 +342,7 @@ const HoverSubMenu = ({ subItems, anchor, visible, onClose, onItemClick }) => {
     >
       {subItems.map((item) => (
         <SubMenuItem
-          key={item.href}
+          key={`${item.windowKey || item.href}-${item.text}`}
           subItem={item}
           onItemClick={onItemClick}
           isExpanded={false}
@@ -302,20 +363,18 @@ const NavItemWithSubmenu = ({
   onItemClick,
 }) => {
   const { Icon, subItems } = path;
-  const isSubmenuOpen = openSubmenus[path.href];
-  const router = useRouter();
 
+  const isSubmenuOpen = openSubmenus[path.href];
   const [hoverVisible, setHoverVisible] = useState(false);
   const [anchor, setAnchor] = useState({ top: 0, left: 0 });
   const timeoutRef = useRef(null);
 
   const handleMouseEnter = (e) => {
     if (!isExpanded && subItems?.length > 0) {
-      // Limpiar cualquier timeout pendiente
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
-      
+
       const rect = e.currentTarget.getBoundingClientRect();
       setAnchor({
         top: rect.top,
@@ -327,10 +386,9 @@ const NavItemWithSubmenu = ({
 
   const handleMouseLeave = () => {
     if (!isExpanded) {
-      // Agregar un pequeño delay antes de ocultar
       timeoutRef.current = setTimeout(() => {
         setHoverVisible(false);
-      }, 150); // 150ms de delay
+      }, 150);
     }
   };
 
@@ -342,7 +400,6 @@ const NavItemWithSubmenu = ({
     if (!isExpanded) onItemClick?.();
   };
 
-  // Limpiar timeout al desmontar
   useEffect(() => {
     return () => {
       if (timeoutRef.current) {
@@ -385,7 +442,6 @@ const NavItemWithSubmenu = ({
           </Box>
         </Link>
 
-        {/* Submenú colapsado (hover) */}
         {!isExpanded && subItems?.length > 0 && (
           <HoverSubMenu
             subItems={subItems}
@@ -401,7 +457,6 @@ const NavItemWithSubmenu = ({
           />
         )}
 
-        {/* Submenú expandido */}
         {subItems?.length > 0 && isExpanded && (
           <Collapse
             in={isSubmenuOpen}
@@ -409,10 +464,17 @@ const NavItemWithSubmenu = ({
             unmountOnExit
             sx={{ width: "100%" }}
           >
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, padding: "8px 0" }}>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 0.5,
+                padding: "8px 0",
+              }}
+            >
               {subItems.map((subItem) => (
                 <SubMenuItem
-                  key={subItem.href}
+                  key={`${subItem.windowKey || subItem.href}-${subItem.text}`}
                   subItem={subItem}
                   onItemClick={onItemClick}
                   isExpanded={isExpanded}
@@ -425,8 +487,6 @@ const NavItemWithSubmenu = ({
     </>
   );
 };
-
-// ================== OTROS COMPONENTES ==================
 
 const NavItem = ({ path, isExpanded, isActive, onItemClick }) => {
   const { Icon } = path;
@@ -482,119 +542,139 @@ const PRIMARY_SECTIONS = [
   {
     title: "Cuentas de clientes",
     paths: [
-      { 
-        href: "/brochures", 
-        text: "Prospectos", 
+      {
+        href: "/brochures",
+        text: "Prospectos",
         Icon: AttributionIcon,
         subItems: [
           { href: "/brochures", text: "Jurídicos" },
-          { href: "/brochures", text: "Naturales" }
-        ]
+          { href: "/brochures", text: "Naturales" },
+        ],
       },
-      { 
-        href: "/customers/customerList", 
-        text: "Clientes", 
+      {
+        href: "/customers/customerList",
+        text: "Clientes",
         Icon: AccountCircleIcon,
         subItems: [
-          { 
-            href: "/customers?register", 
-            text: "Agregar Cliente", 
+          {
+            href: "/customers?register",
+            text: "Agregar Cliente",
             openInWindow: true,
-            windowFeatures: "width=900,height=800"
+            windowKey: "registerCustomer",
+            windowFeatures: "width=900,height=800",
           },
           { href: "/customers/customerList", text: "Consulta" },
-          { href: "/customers/accountList", text: "Gestión de cuentas" }
-        ]
+          { href: "/customers/accountList", text: "Gestión de cuentas" },
+        ],
       },
-    ]
+    ],
   },
   {
     title: "Operaciones",
     paths: [
-      { 
-        href: "/bills/billList", 
-        text: "Facturas", 
+      {
+        href: "/bills/billList",
+        text: "Facturas",
         Icon: ReceiptLongIcon,
         subItems: [
           { href: "/bills/billList", text: "Consulta de Facturas" },
-          { 
-            href: "/bills?=register", 
-            text: "Extraer Factura", 
+          {
+            href: "/bills?=register",
+            text: "Extraer Factura",
             openInWindow: false,
-            windowFeatures: "width=800,height=600"
+            windowFeatures: "width=800,height=600",
           },
-          { 
-            href: "/bills/createBill", 
-            text: "Registrar Factura", 
+          {
+            href: "/bills/createBill",
+            text: "Registrar Factura",
             openInWindow: true,
-            windowFeatures: "width=1000,height=700"
-          }
-        ]
+            windowKey: "registerBill",
+            windowFeatures: "width=1000,height=700",
+          },
+        ],
       },
-      { 
-        href: "/pre-operations", 
-        text: "Operaciones", 
+      {
+        href: "/pre-operations",
+        text: "Operaciones",
         Icon: AssignmentTurnedInIcon,
         subItems: [
-          { 
-            href: "/pre-operations/manage", 
-            text: "Registrar Operación", 
+          {
+            href: "/pre-operations/manage",
+            text: "Registrar Operación",
             openInWindow: true,
-            windowFeatures: "width=1200,height=800"
+            windowKey: "registerOperation",
+            windowFeatures: "width=1200,height=800",
           },
-            { 
-            href: "/pre-operations/registerMassiveOperation", 
-            text: "Registrar Operaciones Masivas", 
+          {
+            href: "/pre-operations/registerMassiveOperation",
+            text: "Registrar Operaciones Masivas",
             openInWindow: true,
-            windowFeatures: "width=1200,height=800"
+            windowKey: "registerMassiveOperation",
+            windowFeatures: "width=1200,height=800",
           },
           { href: "/pre-operations", text: "Operaciones por Aprobar" },
-          { href: "/administration/negotiation-summary/summaryList", text: "Resumen de Negociación" },
-          { 
-            href: "/operations/electronicSignature", 
-            text: "Notificaciones de Compra", 
+          {
+            href: "/administration/negotiation-summary/summaryList",
+            text: "Resumen de Negociación",
+          },
+          {
+            href: "/operations/electronicSignature",
+            text: "Notificaciones de Compra",
             openInWindow: false,
-            
           },
           { href: "/operations", text: "Operaciones Aprobadas" },
-          { href: "/administration/new-receipt/receiptList", text: "Consulta de Recaudos" }
-        ]
+          {
+            href: "/administration/new-receipt/receiptList",
+            text: "Consulta de Recaudos",
+          },
+        ],
       },
-    ]
-  }
+    ],
+  },
 ];
 
-const DASHBOARD_PATH = { href: "/dashboard", text: "Estadisticas", Icon: HomeIcon };
+const DASHBOARD_PATH = {
+  href: "/dashboard",
+  text: "Estadisticas",
+  Icon: HomeIcon,
+};
 
 const SECONDARY_SECTIONS = [
   {
     title: "Otros",
     paths: [
-      { 
-        href: "/brokers/brokerList", 
-        text: "Corredores", 
+      {
+        href: "/brokers/brokerList",
+        text: "Corredores",
         Icon: SupportAgentIcon,
         subItems: [
-          { 
-            href: "/brokers?register", 
-            text: "Registrar Corredor", 
+          {
+            href: "/brokers?register",
+            text: "Registrar Corredor",
             openInWindow: true,
-            windowFeatures: "width=850,height=650"
+            windowKey: "registerBroker",
+            windowFeatures: "width=850,height=650",
           },
-        ]
+        ],
       },
-      { 
-        href: "/administration", 
-        text: "Administración", 
+      {
+        href: "/administration",
+        text: "Administración",
         Icon: AdminPanelSettingsIcon,
         subItems: [
-          { href: "/administration/deposit-emitter/depositList", text: "Giro Emisor" },
-          { href: "/administration/deposit-investor/depositList", text: "Giro Inversionista" },
+          {
+            href: "/administration/deposit-emitter/depositList",
+            text: "Giro Emisor",
+          },
+          {
+            href: "/administration/deposit-investor/depositList",
+            text: "Giro Inversionista",
+          },
           { href: "/administration/refund/refundList", text: "Reintegros" },
-        ]
+        ],
       },
-    ]
-  }
+    ],
+  },
 ];
 
 // ================== COMPONENTE SIDEBAR PRINCIPAL ==================
@@ -611,7 +691,7 @@ export default function Sidebar({ isExpanded, onClick, isMobile = false }) {
   );
 
   const handleItemClick = useCallback(() => {
-    isMobile && onClick?.();
+    if (isMobile) onClick?.();
   }, [isMobile, onClick]);
 
   useEffect(() => {
@@ -628,6 +708,7 @@ export default function Sidebar({ isExpanded, onClick, isMobile = false }) {
 
   const renderNavItem = (path) => {
     const isActive = isPathActive(path.href);
+
     if (path.subItems?.length > 0) {
       return (
         <NavItemWithSubmenu
@@ -641,6 +722,7 @@ export default function Sidebar({ isExpanded, onClick, isMobile = false }) {
         />
       );
     }
+
     return (
       <NavItem
         key={path.href}
@@ -656,6 +738,7 @@ export default function Sidebar({ isExpanded, onClick, isMobile = false }) {
     <Box sx={{ ...containerSx, width: isExpanded ? 280 : 80 }}>
       <Box sx={primaryPathsContainerSx}>
         {renderNavItem(DASHBOARD_PATH)}
+
         {PRIMARY_SECTIONS.map((section) => (
           <Box key={section.title} sx={{ width: "100%" }}>
             <SectionTitle title={section.title} isExpanded={isExpanded} />
@@ -663,6 +746,7 @@ export default function Sidebar({ isExpanded, onClick, isMobile = false }) {
           </Box>
         ))}
       </Box>
+
       <Box sx={secondaryPathsContainerSx}>
         {SECONDARY_SECTIONS.map((section) => (
           <Box key={section.title} sx={{ width: "100%" }}>

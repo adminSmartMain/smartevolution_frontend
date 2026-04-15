@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState,useRef } from "react";
 import { ToastContainer } from "react-toastify";
 import Link from "next/link";
 import { SearchOutlined } from "@mui/icons-material";
@@ -193,57 +193,68 @@ export const OperationsComponents = ({
 
   const handleCloseFilters = () => {
     setAnchorElFilters(null);
+
+
+    
   };
+
+
+const openedWindowsRef = useRef({});
+
+const openOrFocusWindow = (
+  key,
+  url,
+  features = "width=1200,height=800"
+) => {
+  const existingWindow = openedWindowsRef.current[key];
+
+  if (existingWindow && !existingWindow.closed) {
+    existingWindow.focus();
+    return existingWindow;
+  }
+
+  const newWindow = window.open(url, key, features);
+
+  if (newWindow) {
+    openedWindowsRef.current[key] = newWindow;
+
+    newWindow.onbeforeunload = () => {
+      if (openedWindowsRef.current[key] === newWindow) {
+        delete openedWindowsRef.current[key];
+      }
+    };
+  }
+
+  return newWindow;
+};
+
+
 const handleOpenRegisterOperation = () => {
   handleCloseRegisterMenu();
 
-  if (openWindow && !openWindow.closed) {
-    openWindow.location.href = "/pre-operations/manage";
-    openWindow.focus();
-    return;
-  }
-
-  const newWindow = window.open(
+  const newWindow = openOrFocusWindow(
+    "registerOperation",
     "/pre-operations/manage",
-    "_blank",
-    "width=800,height=600"
+    "width=1200,height=800"
   );
 
-  if (newWindow) {
-    setOpenWindow(newWindow);
-    newWindow.onbeforeunload = () => {
-      setOpenWindow(null);
-    };
-  } else {
+  if (!newWindow) {
     Toast("El navegador bloqueó la ventana emergente", "error");
   }
 };
-
 const handleOpenRegisterMassiveOperation = () => {
   handleCloseRegisterMenu();
 
-  if (openWindow && !openWindow.closed) {
-    openWindow.location.href = "/pre-operations/registerMassiveOperation";
-    openWindow.focus();
-    return;
-  }
-
-  const newWindow = window.open(
+  const newWindow = openOrFocusWindow(
+    "registerMassiveOperation",
     "/pre-operations/registerMassiveOperation",
-    "_blank",
-    "width=800,height=600"
+    "width=1200,height=800"
   );
 
-  if (newWindow) {
-    setOpenWindow(newWindow);
-    newWindow.onbeforeunload = () => {
-      setOpenWindow(null);
-    };
-  } else {
+  if (!newWindow) {
     Toast("El navegador bloqueó la ventana emergente", "error");
   }
 };
-
 
 
 
