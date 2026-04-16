@@ -1,55 +1,27 @@
 version: '3'
 
 services:
-
   frontend:
-
     build:
-
       context: .
-
     ports:
-
       - "3000:3000"
-
-    volumes:
-
-      - .:/app
-
-      - ./logs:/app/logs
-
+    # COMENTA temporalmente los volúmenes para asegurar que el build 
+    # ocurra dentro de la imagen y no se mezcle con archivos locales
+    # volumes:
+    #   - .:/app
+    #   - ./logs:/app/logs
     env_file:
-
       - docker.env
-
     container_name: frontend_smart_evolution
-
-    logging:
-
-      driver: "json-file"
-
-      options:
-
-        max-size: "10m"
-
-        max-file: "3"
-
+    environment:
+      - NODE_OPTIONS=--max-old-space-size=2048 # Limita a Node a 2GB de los 3GB disponibles
     deploy:
-
       resources:
-
         limits:
-
           cpus: "1.0"
-
-          memory: "1G"
-
+          memory: "3G"
+        reservations:
+          memory: "1G" # Reserva mínima para asegurar que arranque
     networks:
-
       - smartevolutionbackend_smartevolution_network
-
-networks:
-
-  smartevolutionbackend_smartevolution_network:
-
-    external: true
