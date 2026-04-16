@@ -28,7 +28,9 @@ const pathsWithoutDefaultLayout = [
     "/bills/editBill",
       "/bills/detailBill",
       "/administration/new-receipt",
-      "/administration/new-receipt/receipt-visualization"
+      "/administration/new-receipt/receipt-visualization",
+      "/customers",
+      "/pre-operations/registerMassiveOperation"
 ];
 
 function MyApp({ Component, pageProps }) {
@@ -41,7 +43,7 @@ function MyApp({ Component, pageProps }) {
       <ThemeProvider theme={theme}>
         <AuthProvider>
           <SidebarProvider>
-<>
+<>      
 <SecurityDialog />
             <Head>
               <title>Smart Evolution</title>

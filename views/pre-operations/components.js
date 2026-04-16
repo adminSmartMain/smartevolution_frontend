@@ -1,12 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState,useRef } from "react";
 import { ToastContainer } from "react-toastify";
 import Link from "next/link";
 import { SearchOutlined } from "@mui/icons-material";
 import {
   Home as HomeIcon,
-
+  
 } from "@mui/icons-material";
 
+import  ArticleIcon from "@mui/icons-material/Article"
+import TuneIcon from "@mui/icons-material/Tune";
+import Chip from "@mui/material/Chip";
 import { Box, Button, Fade, FormControl, Grid, IconButton, InputLabel,Menu, MenuItem, InputAdornment , Select, TextField, Typography } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import Modal from "@components/modals/modal";
@@ -138,42 +141,6 @@ const SortIcon = () => (
   </Typography>
 );
 
-const RegisterButton = (props) => {
-  const { fullWidth = false, style, ...rest } = props;
-
-  const [openWindow, setOpenWindow] = useState(null);
-
-  const handleOpenRegisterOperation = () => {
-    if (openWindow && !openWindow.closed) {
-      openWindow.focus();
-    } else {
-      const newWindow = window.open(
-        "/pre-operations/manage",
-        "_blank",
-        "width=800,height=600"
-      );
-      setOpenWindow(newWindow);
-
-      newWindow.onbeforeunload = () => {
-        setOpenWindow(null);
-      };
-    }
-  };
-
-  return (
-    <button
-      className="button-header-preop-title"
-      onClick={handleOpenRegisterOperation}
-      style={{
-        width: fullWidth ? "100%" : "auto",
-        ...style,
-      }}
-      {...rest}
-    >
-      Registrar operación
-    </button>
-  );
-};
 
 
 const SellOrderButton = (props) => {
@@ -205,9 +172,92 @@ export const OperationsComponents = ({
   dataCount,
  loading
 }) => {
- // Nuevo estado para controlar cuando se aplica un filtro
+
   const [filterApplied, setFilterApplied] = useState(false);
-// Hooks
+  const [anchorElFilters, setAnchorElFilters] = useState(null);
+  const openFiltersMenu = Boolean(anchorElFilters);
+  const [anchorElRegister, setAnchorElRegister] = useState(null);
+
+  const openRegisterMenu = Boolean(anchorElRegister);
+
+  const handleOpenRegisterMenu = (event) => {
+    setAnchorElRegister(event.currentTarget);
+  };
+
+  const handleCloseRegisterMenu = () => {
+    setAnchorElRegister(null);
+  };
+  const handleOpenFilters = (event) => {
+  setAnchorElFilters(event.currentTarget);
+  };
+
+  const handleCloseFilters = () => {
+    setAnchorElFilters(null);
+
+
+    
+  };
+
+
+const openedWindowsRef = useRef({});
+
+const openOrFocusWindow = (
+  key,
+  url,
+  features = "width=1200,height=800"
+) => {
+  const existingWindow = openedWindowsRef.current[key];
+
+  if (existingWindow && !existingWindow.closed) {
+    existingWindow.focus();
+    return existingWindow;
+  }
+
+  const newWindow = window.open(url, key, features);
+
+  if (newWindow) {
+    openedWindowsRef.current[key] = newWindow;
+
+    newWindow.onbeforeunload = () => {
+      if (openedWindowsRef.current[key] === newWindow) {
+        delete openedWindowsRef.current[key];
+      }
+    };
+  }
+
+  return newWindow;
+};
+
+
+const handleOpenRegisterOperation = () => {
+  handleCloseRegisterMenu();
+
+  const newWindow = openOrFocusWindow(
+    "registerOperation",
+    "/pre-operations/manage",
+    "width=1200,height=800"
+  );
+
+  if (!newWindow) {
+    Toast("El navegador bloqueó la ventana emergente", "error");
+  }
+};
+const handleOpenRegisterMassiveOperation = () => {
+  handleCloseRegisterMenu();
+
+  const newWindow = openOrFocusWindow(
+    "registerMassiveOperation",
+    "/pre-operations/registerMassiveOperation",
+    "width=1200,height=800"
+  );
+
+  if (!newWindow) {
+    Toast("El navegador bloqueó la ventana emergente", "error");
+  }
+};
+
+
+
   const {
     fetch: fetch,
     loading: loadingNegotiationSummary,
@@ -219,7 +269,7 @@ export const OperationsComponents = ({
   });
  
 
-   // Estado para almacenar qué operaciones tienen resumen
+  
   const [haveNegotiationSummary, setHaveNegotiationSummary] = useState({});
   // Estado para evitar múltiples verificaciones en la misma página
   const [checkedPages, setCheckedPages] = useState(new Set());
@@ -1194,26 +1244,41 @@ const handleTextFieldChange = (evt) => {
   }
 };
 
-  const handleDateRangeApply = (dateRange) => {
-    // Actualiza solo las fechas manteniendo otros filtros
+const handleDateRangeApply = (dateRangeSelected) => {
+  setDateRange({
+    startDate: dateRangeSelected.startDate,
+    endDate: dateRangeSelected.endDate,
+  });
 
-    filtersHandlers.set({
-      ...filtersHandlers.value,
-      startDate: dateRange.startDate,
-      endDate: dateRange.endDate
-    });
- setPage(1)
+  filtersHandlers.set({
+    ...filtersHandlers.value,
+    startDate: dateRangeSelected.startDate,
+    endDate: dateRangeSelected.endDate,
+  });
 
-  };
-  const handleClear = () => {
-    
-    // Limpiar solo fechas en los filtros globales
-    filtersHandlers.set({
-      ...filtersHandlers.value,
-      startDate: "",
-      endDate: ""
-    });
-  };
+  setPage(1);
+};
+
+const handleClear = () => {
+  setDateRange({
+    startDate: null,
+    endDate: null,
+  });
+
+  filtersHandlers.set({
+    ...filtersHandlers.value,
+    startDate: "",
+    endDate: "",
+  });
+};
+const activeFiltersCount =
+  Number(!!selectedStatus) +
+  Number(!!dateRange?.startDate && !!dateRange?.endDate);
+
+  const formatFilterDate = (date) => {
+  if (!date) return "";
+  return moment(date).format("DD/MM/YYYY");
+};
 
 const updateFilters = (value, field) => {
   if (field !== "multi") {
@@ -1314,14 +1379,13 @@ const updateFilters = (value, field) => {
  <Box
   sx={{
     display: "grid",
-    gridTemplateColumns: { xs: "1fr", sm: "1fr auto" },
+    gridTemplateColumns: { xs: "1fr", md: "1fr auto" },
     alignItems: "center",
-    gap: { xs: 1, sm: 2 },
+    gap: 2,
     width: "100%",
     mb: 2,
   }}
 >
-  {/* ✅ IZQUIERDA: TÍTULO */}
   <Box className="view-header">
     <Typography
       letterSpacing={0}
@@ -1362,35 +1426,49 @@ const updateFilters = (value, field) => {
     </Typography>
   </Box>
 
-  {/* ✅ DERECHA: BOTONES */}
   <Box
     sx={{
-      display: { xs: "grid", sm: "flex" },
-      gridTemplateColumns: { xs: "1fr 1fr", sm: "none" },
-      gap: { xs: 1, sm: 2 },
+      display: "flex",
+      gap: 3,
       alignItems: "center",
-      width: { xs: "100%", sm: "auto" },
-      justifyContent: { sm: "flex-end" },
+      justifyContent: { xs: "flex-start", md: "flex-end" },
+      flexWrap: "wrap",
+      pr: { md: 1 },
     }}
   >
-    {/* ✅ Botón Operaciones */}
-    <Link href="/operations" passHref>
-      <Box
-        component="button"
-        className="button-header-preop-title"
+    <Link href="/operations" underline="none">
+      <Typography
         sx={{
-          width: "100%", // ✅ en móvil ocupa la columna
-          whiteSpace: "nowrap",
+          color: "#5EA3A3",
+          fontSize: "1rem",
+          fontWeight: 500,
+          cursor: "pointer",
+          "&:hover": {
+            color: "#488B8F",
+            textDecoration: "underline",
+          },
         }}
       >
         Operaciones
-      </Box>
+      </Typography>
     </Link>
 
-    {/* ✅ SellOrderButton envuelto */}
-    <Box sx={{ width: "100%" }}>
-      <SellOrderButton />
-    </Box>
+    <Link href="/buy-orders/notifications" underline="none">
+      <Typography
+        sx={{
+          color: "#5EA3A3",
+          fontSize: "1rem",
+          fontWeight: 500,
+          cursor: "pointer",
+          "&:hover": {
+            color: "#488B8F",
+            textDecoration: "underline",
+          },
+        }}
+      >
+        Notificaciones de Compra
+      </Typography>
+    </Link>
   </Box>
 </Box>
 
@@ -1399,19 +1477,18 @@ const updateFilters = (value, field) => {
     <Box
   sx={{
     display: "grid",
-    gridTemplateColumns: { xs: "1fr", sm: "1fr auto" },
+    gridTemplateColumns: { xs: "1fr", lg: "minmax(320px, 1fr) auto" },
     gap: 2,
     alignItems: "center",
     width: "100%",
     mb: 2,
   }}
 >
-  {/* 🔎 BUSCADOR */}
   <TextField
     variant="outlined"
     id="searchBar"
     size="small"
-    placeholder="Buscar por ID, Factura, Emisor o Inversionista."
+    placeholder="Buscar por NIT o nombre de cliente"
     value={search}
     onChange={(evt) => handleTextFieldChange(evt, "investor")}
     onKeyPress={(event) => {
@@ -1422,14 +1499,16 @@ const updateFilters = (value, field) => {
     }}
     sx={{
       width: "100%",
-      maxWidth: { sm: "580px" }, // ✅ desktop mantiene max
       "& .MuiOutlinedInput-root": {
-        height: 35,
+        height: 42,
         fontSize: "14px",
-        paddingRight: 0,
+        borderRadius: "8px",
       },
       "& .MuiInputBase-input": {
-        padding: "6px 8px",
+        padding: "8px 10px",
+      },
+      "& .MuiOutlinedInput-notchedOutline": {
+        borderColor: "#5EA3A3",
       },
     }}
     InputProps={{
@@ -1443,150 +1522,308 @@ const updateFilters = (value, field) => {
     }}
   />
 
-  {/* 🎛 BOTONES */}
   <Box
     sx={{
-      display: "grid",
-
-      // ✅ móvil: 2 columnas
-      gridTemplateColumns: { xs: "1fr 1fr", sm: "auto auto auto auto auto" },
-
-      // ✅ separaciones
+      display: "flex",
+      flexWrap: "wrap",
       gap: 1,
-
       alignItems: "center",
-
-      // ✅ en desktop se alinea a la derecha
-      justifyContent: { sm: "flex-end" },
-
+      justifyContent: { xs: "flex-start", lg: "flex-end" },
       width: "100%",
     }}
   >
-    {/* ✅ Estado */}
-    <button
-      onClick={handleClickStatus}
-      className="button-header-preop-title"
-      style={{
-        width: "100%",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        gap: "4px",
-        position: "relative",
-        paddingRight: selectedStatus ? "32px" : "8px",
+    <Button
+      onClick={handleOpenFilters}
+      variant="outlined"
+      startIcon={<TuneIcon fontSize="small" />}
+      sx={{
+        height: 42,
+        minWidth: "42px",
+        border: "1px solid #5EA3A3",
+        borderRadius: "8px",
+        color: "#488B8F",
+        backgroundColor: "#fff",
+        px: 1.5,
+        "&:hover": {
+          backgroundColor: "#488B8F",
+          color: "#fff",
+          borderColor: "#488B8F",
+        },
+        "&:hover svg": {
+          color: "#fff",
+        },
       }}
     >
-      {selectedStatus?.label || "Por Estado"}
+      {activeFiltersCount > 0 ? `(${activeFiltersCount})` : ""}
+    </Button>
 
-      {selectedStatus ? (
-        <IconButton
-          size="small"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleClearStatus();
-          }}
-          sx={{
-            position: "absolute",
-            right: "4px",
-            color: "#ffff",
-            "&:hover": { backgroundColor: "#ffffff20" },
-            width: 20,
-            height: 20,
-          }}
-        >
-          <CloseIcon fontSize="small" />
-        </IconButton>
-      ) : (
-        <ArrowDropDownIcon sx={{ fontSize: "16px", color: "#488B8F" }} />
-      )}
-    </button>
-
-    <Menu
-      anchorEl={anchorElStatus}
-      open={Boolean(anchorElStatus)}
-      onClose={handleCloseStatus}
-      anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-      transformOrigin={{ vertical: "top", horizontal: "left" }}
-    >
-      {statusOptions.map((option) => (
-        <MenuItem
-          key={option.value}
-          onClick={() => handleSelectStatus(option)}
-          selected={selectedStatus?.value === option.value}
-          disableGutters
-          sx={{
-            "&.Mui-selected": {
-              backgroundColor: "#488B8F10",
-              "&:hover": { backgroundColor: "#488B8F15" },
+    {dateRange?.startDate && dateRange?.endDate && (
+      <Chip
+        label={`Fecha: ${formatFilterDate(dateRange.startDate)} - ${formatFilterDate(dateRange.endDate)}`}
+        onDelete={handleClear}
+        sx={{
+          height: 38,
+          borderRadius: "18px",
+          backgroundColor: "#EAF6F6",
+          color: "#488B8F",
+          fontWeight: 500,
+          "& .MuiChip-deleteIcon": {
+            color: "#488B8F",
+            "&:hover": {
+              color: "#2F6F73",
             },
-            px: 0.5,
-            py: 0.25,
-            minHeight: "auto",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: "4px",
-          }}
-        >
-          <span
-            className={option.badgeClass}
-            style={{
-              display: "inline-block",
-              padding: "4px 10px",
-              borderRadius: "6px",
-              fontSize: "0.85rem",
-              fontWeight: 600,
-              minWidth: "100px",
-              textAlign: "center",
-              lineHeight: 1.2,
-            }}
-          >
-            {option.label}
-          </span>
+          },
+        }}
+      />
+    )}
 
-          {selectedStatus?.value === option.value && (
-            <CheckIcon fontSize="small" sx={{ color: "#488B8F" }} />
-          )}
-        </MenuItem>
-      ))}
-    </Menu>
+    {selectedStatus && (
+      <Chip
+        label={`Estado: ${selectedStatus.label}`}
+        onDelete={handleClearStatus}
+        sx={{
+          height: 38,
+          borderRadius: "18px",
+          backgroundColor: "#EAF6F6",
+          color: "#488B8F",
+          fontWeight: 500,
+          "& .MuiChip-deleteIcon": {
+            color: "#488B8F",
+            "&:hover": {
+              color: "#2F6F73",
+            },
+          },
+        }}
+      />
+    )}
 
-    {/* ✅ Valor a Girar */}
-    <button
-      className="button-header-preop-title"
+    <Button
       onClick={handleOpenModal}
-      style={{ width: "100%" }}
+      variant="outlined"
+      startIcon={<ArticleIcon fontSize="small" />}
+      sx={{
+        height: 42,
+        border: "1px solid #5EA3A3",
+        borderRadius: "8px",
+        color: "#488B8F",
+        px: 2,
+        backgroundColor: "#fff",
+        textTransform: "none",
+        fontWeight: 500,
+        "&:hover": {
+          backgroundColor: "#488B8F",
+          color: "#fff",
+          borderColor: "#488B8F",
+        },
+      }}
     >
       Valor a Girar
-    </button>
-    <ModalValorAGirar open={openModal} handleClose={handleCloseModal} data={mockData} />
+    </Button>
 
-    {/* ✅ Date Picker (fila completa en móvil) */}
-    <Box sx={{ gridColumn: { xs: "span 2", sm: "auto" } }}>
-      <AdvancedDateRangePicker
-        className="date-picker"
-        onApply={handleDateRangeApply}
-        onClean={handleClear}
-      />
-    </Box>
+    <ModalValorAGirar
+      open={openModal}
+      handleClose={handleCloseModal}
+      data={mockData}
+    />
 
-    {/* ✅ Registrar (fila completa en móvil) */}
-    <Box sx={{ gridColumn: { xs: "span 2", sm: "auto" } }}>
-      <RegisterButton fullWidth />
-    </Box>
+    <Button
+      onClick={handleOpenRegisterMenu}
+      variant="contained"
+      endIcon={<ArrowDropDownIcon />}
+      sx={{
+        height: 42,
+        borderRadius: "8px",
+        backgroundColor: "#1C9AA0",
+        color: "#fff",
+        px: 2.5,
+        textTransform: "none",
+        fontWeight: 600,
+        boxShadow: "none",
+        "&:hover": {
+          backgroundColor: "#16848A",
+          boxShadow: "none",
+        },
+      }}
+    >
+      Registrar Operación
+    </Button>
 
-    {/* ✅ Menú CSV */}
+    <Menu
+  anchorEl={anchorElRegister}
+  open={openRegisterMenu}
+  onClose={handleCloseRegisterMenu}
+  anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+  transformOrigin={{ vertical: "top", horizontal: "left" }}
+  PaperProps={{
+    sx: {
+      mt: 1,
+      borderRadius: "10px",
+      minWidth: 230,
+      overflow: "hidden",
+    },
+  }}
+>
+  <MenuItem
+    onClick={handleOpenRegisterOperation}
+    sx={{
+      py: 1.5,
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "flex-start",
+    }}
+  >
+    <Typography sx={{ color: "#2D98A0", fontWeight: 500 }}>
+      Registrar Operación
+    </Typography>
+    <Typography sx={{ fontSize: "0.85rem", color: "#666" }}>
+      Registra facturas individualmente
+    </Typography>
+  </MenuItem>
+
+  <MenuItem
+    onClick={handleOpenRegisterMassiveOperation}
+    sx={{
+      py: 1.5,
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "flex-start",
+    }}
+  >
+    <Typography sx={{ color: "#2D98A0", fontWeight: 500 }}>
+      Registro Masivo
+    </Typography>
+    <Typography sx={{ fontSize: "0.85rem", color: "#666" }}>
+      Carga de lotes con Excel
+    </Typography>
+  </MenuItem>
+</Menu>
+
     <Box sx={{ justifySelf: { xs: "end", sm: "auto" } }}>
       <IconButton onClick={handleMenuClickCSV} className="context-menu">
         <MoreVertIcon />
       </IconButton>
-      <Menu anchorEl={anchorElCSV} open={openMenuCSV} onClose={handleCloseMenuCSV}>
+      <Menu
+        anchorEl={anchorElCSV}
+        open={openMenuCSV}
+        onClose={handleCloseMenuCSV}
+      >
         <MenuItem onClick={handleExportExcel}>Exportar a CSV</MenuItem>
       </Menu>
     </Box>
   </Box>
 </Box>
+<Menu
+  anchorEl={anchorElFilters}
+  open={openFiltersMenu}
+  onClose={handleCloseFilters}
+  anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+  transformOrigin={{ vertical: "top", horizontal: "left" }}
+  PaperProps={{
+    sx: {
+      width: 320,
+      borderRadius: "10px",
+      mt: 1,
+      overflow: "hidden",
+    },
+  }}
+>
+  
+  <Box sx={{ px: 2, py: 1.5 }}>
+    <Typography
+      sx={{
+        fontWeight: 700,
+        fontSize: "1rem",
+        color: "#B7D6D6",
+        mb: 1,
+      }}
+    >
+      Fecha
+    </Typography>
 
+    <AdvancedDateRangePicker
+      className="date-picker"
+      onApply={(range) => {
+        handleDateRangeApply(range);
+      }}
+      onClean={handleClear}
+    />
+  </Box>
+  <Box sx={{ px: 2, py: 1.5 }}>
+    <Typography
+      sx={{
+        fontWeight: 700,
+        fontSize: "1rem",
+        color: "#B7D6D6",
+        mb: 1,
+      }}
+    >
+      Estado
+    </Typography>
+
+    {statusOptions.map((option) => (
+      <MenuItem
+        key={option.value}
+        onClick={() => handleSelectStatus(option)}
+        selected={selectedStatus?.value === option.value}
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          borderRadius: "6px",
+          mb: 0.5,
+        }}
+      >
+        <span className={option.badgeClass}>{option.label}</span>
+
+        {selectedStatus?.value === option.value && (
+          <CheckIcon fontSize="small" sx={{ color: "#488B8F" }} />
+        )}
+      </MenuItem>
+    ))}
+  </Box>
+
+  <Box sx={{ borderTop: "1px solid #eee" }} />
+
+
+  <Box sx={{ borderTop: "1px solid #eee" }} />
+
+  <Box
+    sx={{
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      px: 2,
+      py: 1.2,
+    }}
+  >
+    <Button
+      onClick={() => {
+        handleClearStatus();
+        handleClear();
+      }}
+      sx={{
+        textTransform: "none",
+        color: "#b5b5b5",
+      }}
+    >
+      Limpiar filtros
+    </Button>
+
+    <Button
+      onClick={handleCloseFilters}
+      variant="contained"
+      sx={{
+        textTransform: "none",
+        backgroundColor: "#488B8F",
+        "&:hover": {
+          backgroundColor: "#5EA3A3",
+        },
+      }}
+    >
+      Aplicar
+    </Button>
+  </Box>
+</Menu>
 
 
       {loading ? (
