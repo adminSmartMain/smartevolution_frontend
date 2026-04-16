@@ -293,6 +293,10 @@ const { fetch: downloadMassiveOperationReceiptPdfFetch } = useFetch({
     </Box>
   );
 };
+
+
+
+
   return (
    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={esLocale}>
   <ToastContainer position="top-right" autoClose={5000} />
@@ -346,6 +350,41 @@ const { fetch: downloadMassiveOperationReceiptPdfFetch } = useFetch({
           enableReinitialize
         >
           {({ values, setFieldValue, touched, errors, setFieldTouched, submitForm }) => {
+
+            
+    const uploadContext = {
+  opDate: values?.opDate
+    ? new Date(values.opDate).toISOString().slice(0, 10)
+    : null,
+  emitterId:
+    values?.emitter?.value ||
+    values?.emitter?.data?.id ||
+    values?.emitterId ||
+    "",
+  emitterBrokerId:
+    
+    values?.emitterBroker ||
+    values?.emitterBrokerId ||
+    clientBrokerEmitter?.id ||
+    "",
+  payerId:
+    clientPagador?.id ||
+    values?.payerId ||
+    values?.nombrePagador ||
+    "",
+  rows: (values?.investorAssignments || []).map((row) => ({
+    billId: row?.billUniqueId || row?.billId || "",
+    billFraction: Number(row?.fraction ?? 0),
+    investorId: row?.investorId || "",
+    investorAccount:
+      row?.selectedAccount?.account_number ||
+      row?.selectedAccount?.accountNumber ||
+      row?.selectedAccount?.number ||
+      "",
+  })),
+};
+
+
             const selectedBillsCount = values?.billsToNegotiate?.length || 0;
             const isHeaderLocked = activeStep >= 1;
             const isSuccessView =
@@ -856,7 +895,8 @@ const { fetch: downloadMassiveOperationReceiptPdfFetch } = useFetch({
                         createdByLabel="Usuario Smart Evolution"
                         state={uploadExcelState}
                         setState={setUploadExcelState}
-                      />
+                      uploadContext={uploadContext}
+/>
                     )}</Box>
                    
                     </Box>

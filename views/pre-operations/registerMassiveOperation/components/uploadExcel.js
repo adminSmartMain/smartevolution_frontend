@@ -362,21 +362,42 @@ const ProcessingBanner = ({ status, processedMessage, errorCount }) => {
     );
   }
 
-  if (status === "register_error") {
-  return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-      <ErrorOutlineIcon sx={{ fontSize: 74, color: "#FF1C14" }} />
-      <Box>
-        <Typography sx={{ color: "#FF1C14", fontWeight: 700, fontSize: 16 }}>
-          Error al registrar la operación.
-        </Typography>
-        <Typography sx={{ color: "#FF1C14", fontSize: 14 }}>
-          {processedMessage || "No fue posible completar el registro."}
-        </Typography>
+  if (status === "processed_error") {
+    return (
+      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+        <ErrorOutlineIcon sx={{ fontSize: 74, color: "#FF1C14" }} />
+        <Box>
+          <Typography sx={{ color: "#FF1C14", fontWeight: 700, fontSize: 16 }}>
+            El archivo tiene inconsistencias
+          </Typography>
+          <Typography sx={{ color: "#FF1C14", fontSize: 14 }}>
+            {processedMessage || "El Excel no corresponde a la operación actual."}
+          </Typography>
+          {errorCount > 0 && (
+            <Typography sx={{ color: "#FF1C14", fontSize: 13, mt: 0.5 }}>
+              Se encontraron {errorCount} fila(s) con error.
+            </Typography>
+          )}
+        </Box>
       </Box>
-    </Box>
-  );
-}
+    );
+  }
+
+  if (status === "register_error") {
+    return (
+      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+        <ErrorOutlineIcon sx={{ fontSize: 74, color: "#FF1C14" }} />
+        <Box>
+          <Typography sx={{ color: "#FF1C14", fontWeight: 700, fontSize: 16 }}>
+            Error al registrar la operación.
+          </Typography>
+          <Typography sx={{ color: "#FF1C14", fontSize: 14 }}>
+            {processedMessage || "No fue posible completar el registro."}
+          </Typography>
+        </Box>
+      </Box>
+    );
+  }
 
   if (status === "registered_success") {
     return (
@@ -408,7 +429,8 @@ export const UploadExcelStep = ({
   setState,
   setRegisterSummary,
   setUploadExcelState,
-  setActiveStep
+  setActiveStep,
+  uploadContext,
 }) => {
   const inputRef = useRef(null);
 const [downloadingPdf, setDownloadingPdf] = useState(false);
@@ -761,127 +783,132 @@ const handleDownloadReceiptPdf = async () => {
     onProcessedRows(updatedNormalizedRows);
   }
 };
-  const handleProcessSelectedFile = async (selectedFile) => {
-    if (!selectedFile || !uploadExcelFetch) return;
+ const handleProcessSelectedFile = async (selectedFile) => {
+  if (!selectedFile || !uploadExcelFetch) return;
+
+  updateState({
+    file: selectedFile,
+    status: "processing",
+    rows: [],
+    normalizedRows: [],
+    canRegister: false,
+    operationId: null,
+    processedMessage: "",
+    errorCount: 0,
+    modalError: "",
+    registerSummary: null,
+  });
+
+  try {
+    const formData = new FormData();
+    formData.append("uploadExcel", selectedFile);
+
+    if (uploadContext) {
+      formData.append("context", JSON.stringify(uploadContext));
+    }
+
+    const response = await uploadExcelFetch(formData);
+    const normalized = normalizeUploadResponse(response);
+
+    const previewRows = (normalized.rows || []).map((row, index) => {
+      const fieldErrors = row.fieldErrors ?? row.field_errors ?? {};
+      const errors = Array.isArray(row.errors) ? row.errors : [];
+      const hasErrors =
+        Boolean(row.hasErrors) ||
+        Boolean(row.has_errors) ||
+        Object.keys(fieldErrors).length > 0 ||
+        errors.length > 0;
+
+      const normalizedSource = (normalized.normalizedRows || []).find(
+        (n) => String(n.rowNumber ?? n.id) === String(row.id ?? row.rowId ?? row.row_id ?? index + 1)
+      );
+
+      const backendApplyGm =
+        normalizedSource?.applyGm ??
+        row.applyGm ??
+        row.calculated?.applyGm ??
+        false;
+
+      const backendGm =
+        normalizedSource?.gmValue ??
+        normalizedSource?.calculated?.GM ??
+        row.gmValue ??
+        row.calculated?.GM ??
+        0;
+
+      return {
+        id: row.id ?? row.rowId ?? row.row_id ?? index + 1,
+        facturaId: row.facturaId ?? row.factura_id ?? row.billId ?? row.bill_id ?? "",
+        inversionista: row.inversionista ?? "",
+        porcentajeDescuento:
+          row.porcentajeDescuento ??
+          row.porcentaje_descuento ??
+          normalizedSource?.porcentaje_descuento ??
+          "",
+        tasaDesc: row.tasaDesc ?? row.tasa_desc ?? "",
+        tasaInv: row.tasaInv ?? row.tasa_inv ?? "",
+        valorFuturo: row.valorFuturo ?? row.valor_futuro ?? "",
+        valorNominal: row.valorNominal ?? row.valor_nominal ?? "",
+        valorInversionista: row.valorInversionista ?? row.valor_inversionista ?? "",
+        fechaProbable: row.fechaProbable ?? row.fecha_probable ?? "",
+        fechaFin: row.fechaFin ?? row.fecha_fin ?? "",
+        present_value_sf: row.present_value_sf ?? row.presentValueSf ?? row.valor_presente_sf ?? "",
+        investor_profit: row.investor_profit ?? row.investorProfit ?? row.utilidad_inversion ?? "",
+        opDays: row.opDays ?? row.operation_days ?? row.op_days ?? "",
+        commission_sf: row.commission_sf ?? row.commissionSf ?? row.comision_sf ?? "",
+        applyGm: Boolean(backendApplyGm),
+        gmValue: Number(backendGm || 0),
+        gmOriginalValue: Number(backendGm || 0),
+        fieldErrors,
+        errors,
+        hasErrors,
+      };
+    });
 
     updateState({
       file: selectedFile,
-      status: "processing",
+      rows: previewRows,
+      normalizedRows: normalized.normalizedRows || [],
+      canRegister: normalized.canRegister,
+      operationId: normalized.operationId,
+      errorCount: normalized.errorCount,
+      registerSummary: null,
+    });
+
+    if (typeof onProcessedRows === "function") {
+      onProcessedRows(normalized.normalizedRows || []);
+    }
+
+    if (normalized.canRegister) {
+      updateState({
+        status: "processed_success",
+        processedMessage:
+          `Se han registrado ${normalized.processedRows || previewRows.length} facturas a la operación ${normalized.operationId ?? ""}`.trim(),
+      });
+    } else {
+      updateState({
+        status: "processed_error",
+        processedMessage:
+          normalized.message ||
+          "El archivo no coincide con la operación actual o contiene errores.",
+      });
+    }
+  } catch (error) {
+    updateState({
+      status: "idle",
       rows: [],
       normalizedRows: [],
       canRegister: false,
       operationId: null,
       processedMessage: "",
       errorCount: 0,
-      modalError: "",
+      modalError:
+        error?.response?.data?.message ||
+        "Ocurrió un error al procesar el archivo. Intente nuevamente.",
       registerSummary: null,
     });
-
-    try {
-      const formData = new FormData();
-      formData.append("uploadExcel", selectedFile);
-
-      const response = await uploadExcelFetch(formData);
-      const normalized = normalizeUploadResponse(response);
-
-      const previewRows = (normalized.rows || []).map((row, index) => {
-        const fieldErrors = row.fieldErrors ?? row.field_errors ?? {};
-        const errors = Array.isArray(row.errors) ? row.errors : [];
-        const hasErrors =
-          Boolean(row.hasErrors) ||
-          Boolean(row.has_errors) ||
-          Object.keys(fieldErrors).length > 0 ||
-          errors.length > 0;
-
-        const normalizedSource = (normalized.normalizedRows || []).find(
-          (n) => String(n.rowNumber ?? n.id) === String(row.id ?? row.rowId ?? row.row_id ?? index + 1)
-        );
-
-        const backendApplyGm =
-          normalizedSource?.applyGm ??
-          row.applyGm ??
-          row.calculated?.applyGm ??
-          false;
-
-        const backendGm =
-          normalizedSource?.gmValue ??
-          normalizedSource?.calculated?.GM ??
-          row.gmValue ??
-          row.calculated?.GM ??
-          0;
-        console.log("Row:", row);
-        return {
-          id: row.id ?? row.rowId ?? row.row_id ?? index + 1,
-          facturaId: row.facturaId ?? row.factura_id ?? row.billId ?? row.bill_id ?? "",
-          inversionista: row.inversionista ?? "",
-          porcentajeDescuento:
-            row.porcentajeDescuento ??
-            row.porcentaje_descuento ??
-            normalizedSource?.porcentaje_descuento ??
-            "",
-          tasaDesc: row.tasaDesc ?? row.tasa_desc ?? "",
-          tasaInv: row.tasaInv ?? row.tasa_inv ?? "",
-          valorFuturo: row.valorFuturo ?? row.valor_futuro ?? "",
-          valorNominal: row.valorNominal ?? row.valor_nominal ?? "",
-          valorInversionista: row.valorInversionista ?? row.valor_inversionista ?? "",
-          fechaProbable: row.fechaProbable ?? row.fecha_probable ?? "",
-          fechaFin: row.fechaFin ?? row.fecha_fin ?? "",
-          present_value_sf:row.present_value_sf ?? row.presentValueSf ?? row.valor_presente_sf ?? "",
-            investor_profit:row.investor_profit ?? row.investorProfit ?? row.utilidad_inversion ?? "",
-            opDays:row.opDays ?? row.operation_days ?? row.op_days ?? "",
-            commission_sf: row.commission_sf ?? row.commissionSf ?? row.comision_sf ?? "",
-          applyGm: Boolean(backendApplyGm),
-          gmValue: Number(backendGm || 0),
-          gmOriginalValue: Number(backendGm || 0),
-          fieldErrors,
-          errors,
-          hasErrors,
-        };
-      });
-
-      updateState({
-        file: selectedFile,
-        rows: previewRows,
-        normalizedRows: normalized.normalizedRows || [],
-        canRegister: normalized.canRegister,
-        operationId: normalized.operationId,
-        errorCount: normalized.errorCount,
-        registerSummary: null,
-      });
-
-      if (typeof onProcessedRows === "function") {
-        onProcessedRows(normalized.normalizedRows || []);
-      }
-
-      if (normalized.canRegister) {
-        updateState({
-          status: "processed_success",
-          processedMessage:
-            `Se han registrado ${normalized.processedRows || previewRows.length} facturas a la operación ${normalized.operationId ?? ""}`.trim(),
-        });
-      } else {
-        updateState({
-          status: "processed_error",
-          processedMessage: normalized.message || "",
-        });
-      }
-    } catch (error) {
-      updateState({
-        status: "idle",
-        rows: [],
-        normalizedRows: [],
-        canRegister: false,
-        operationId: null,
-        processedMessage: "",
-        errorCount: 0,
-        modalError:
-          error?.response?.data?.message ||
-          "Ocurrió un error al procesar el archivo. Intente nuevamente.",
-        registerSummary: null,
-      });
-    }
-  };
-
+  }
+};
   const handlePickFile = async (event) => {
     const picked = event.target.files?.[0];
 

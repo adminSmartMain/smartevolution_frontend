@@ -1427,7 +1427,7 @@ const [selectionModel, setSelectionModel] = useState([]);
                   },
                   "& .MuiDataGrid-virtualScroller": {
                     overflowY: "auto",
-                    overflowX: "hidden",
+                    overflowX: "auto",
                   },
                   "& .MuiDataGrid-columnHeaders": {
                     backgroundColor: "#D9D9D9",
