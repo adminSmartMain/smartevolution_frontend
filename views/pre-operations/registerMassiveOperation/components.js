@@ -352,10 +352,14 @@ const { fetch: downloadMassiveOperationReceiptPdfFetch } = useFetch({
           {({ values, setFieldValue, touched, errors, setFieldTouched, submitForm }) => {
 
             
+    const safeDateToIso = (value) => {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString().slice(0, 10);
+};
+            
     const uploadContext = {
-  opDate: values?.opDate
-    ? new Date(values.opDate).toISOString().slice(0, 10)
-    : null,
+   opDate: safeDateToIso(values?.opDate),
   emitterId:
     values?.emitter?.value ||
     values?.emitter?.data?.id ||
