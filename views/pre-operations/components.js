@@ -1453,7 +1453,7 @@ const updateFilters = (value, field) => {
       </Typography>
     </Link>
 
-    <Link href="/buy-orders/notifications" underline="none">
+    <Link href="/operations/electronicSignature" underline="none">
       <Typography
         sx={{
           color: "#5EA3A3",
