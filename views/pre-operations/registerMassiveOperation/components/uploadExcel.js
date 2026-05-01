@@ -16,7 +16,7 @@ import {
   LinearProgress,
 } from "@mui/material";
 
-
+import { useRouter } from "next/router";
 import Skeleton from "@mui/material/Skeleton";
 import InsertDriveFileOutlinedIcon from "@mui/icons-material/InsertDriveFileOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
@@ -263,64 +263,53 @@ const UploadCard = ({ file, onPickFile, inputRef, disabled = false }) => {
       />
 
       <Paper
-        elevation={1}
+        elevation={0}
         onClick={() => !disabled && inputRef.current?.click()}
         sx={{
-          p: 2,
-          height: 90,
+          height: 44,
+          width: 310,
+          px: 1.2,
           display: "flex",
           alignItems: "center",
-          gap: 2,
+          gap: 1.2,
           cursor: disabled ? "default" : "pointer",
-          borderRadius: 1,
-          bgcolor: "#F5F5F5",
-          "&:hover": {
-            bgcolor: disabled ? "#F5F5F5" : "#F1F1F1",
-          },
+          borderRadius: "7px",
+          bgcolor: "#fff",
+          border: "2px solid #A0A0A0",
+          boxShadow: "none",
         }}
       >
-        <Box
+        <InsertDriveFileOutlinedIcon
           sx={{
-            width: 68,
-            height: 68,
-            borderRadius: 1.5,
-            bgcolor: file ? "#9DB8D2" : "#D9D9D9",
-            color: "#fff",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
+            fontSize: 27,
+            color: file ? "#6F777D" : "#CFCFCF",
           }}
-        >
-          <InsertDriveFileOutlinedIcon sx={{ fontSize: 46 }} />
-        </Box>
+        />
 
         {!file ? (
-          <Box>
-            <Typography sx={{ fontSize: 14, fontWeight: 600, color: "#B2B2B2", lineHeight: 1.2 }}>
-              Carga el archivo de Excel generado
+          <Box sx={{ minWidth: 0 }}>
+            <Typography sx={{ fontSize: 13, fontWeight: 700, color: "#BDBDBD", lineHeight: 1 }}>
+              Busca el archivo de Excel
             </Typography>
-            <Typography sx={{ fontSize: 12, color: "#C0C0C0", mt: 0.5 }}>
+            <Typography sx={{ fontSize: 11, color: "#C8C8C8", mt: 0.3 }}>
               Solo se aceptan archivos .xlsx o .xls
             </Typography>
           </Box>
         ) : (
-          <Box sx={{ minWidth: 0 }}>
-            <Typography
-              sx={{
-                fontSize: 14,
-                fontWeight: 600,
-                color: "#B8B8B8",
-                lineHeight: 1.2,
-                wordBreak: "break-word",
-              }}
-            >
-              {file.name}
-            </Typography>
-            <Typography sx={{ fontSize: 12, color: "#C0C0C0", mt: 0.5 }}>
-              Peso {bytesToKb(file.size)}
-            </Typography>
-          </Box>
+          <Typography
+            sx={{
+              fontSize: 12.5,
+              fontWeight: 700,
+              color: "#404040",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {file.name} <Box component="span" sx={{ fontWeight: 600, color: "#666" }}>
+              ({bytesToKb(file.size)})
+            </Box>
+          </Typography>
         )}
       </Paper>
     </>
@@ -437,7 +426,7 @@ const [downloadingPdf, setDownloadingPdf] = useState(false);
 const [downloadingExcel, setDownloadingExcel] = useState(false);
 const [downloadProgress, setDownloadProgress] = useState(0);
 const downloadTimerRef = useRef(null);
-
+ const router = useRouter();
 const [downloadMessageIndex, setDownloadMessageIndex] = useState(0);
 const downloadMessageTimerRef = useRef(null);
 
@@ -1576,61 +1565,66 @@ return (
 
       {status !== "registered_success" && (
         <>
-          <Grid
-  container
-  spacing={2}
-  alignItems="center"
-  sx={{ flexShrink: 0 }}
->
-  <Grid item xs={12} md={4.5}>
-              <UploadCard
-                file={file}
-                onPickFile={handlePickFile}
-                inputRef={inputRef}
-                disabled={status === "processing"}
-              />
-            </Grid>
+ <Box sx={{ flexShrink: 0 }}>
+  <Typography sx={{ fontSize: 15, fontWeight: 500, mb: 1 ,mt:2}}>
+    Carga de Excel
+  </Typography>
 
-            <Grid item xs={12} md={7.5}>
-              <Box
-              sx={{
-  minHeight: 90,
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  gap: 2,
-  overflow: "hidden",
-}}
-              >
-                <ProcessingBanner
-                  status={status}
-                  processedMessage={processedMessage}
-                  errorCount={errorCount}
-                />
+  <Box
+    sx={{
+      height: 64,
+      px: 1.2,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 2,
+      bgcolor:
+        status === "processed_success" || status === "registered_success"
+          ? "#DDF5D6"
+          : "#F1F1F1",
+      boxShadow: "0 4px 7px rgba(0,0,0,0.35)",
+    }}
+  >
+    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+      <UploadCard
+        file={file}
+        onPickFile={handlePickFile}
+        inputRef={inputRef}
+        disabled={status === "processing"}
+      />
 
-                {showRegisterButton ? (
-                  <Button
-                    variant="contained"
-                    onClick={handleRegisterOperation}
-                    sx={{
-                      minWidth: 180,
-                      height: 38,
-                      bgcolor: "#fff",
-                      color: "#2E9B9B",
-                      border: "1px solid #2E9B9B",
-                      boxShadow: "none",
-                      "&:hover": {
-                        bgcolor: "#F6FFFF",
-                        boxShadow: "none",
-                      },
-                    }}
-                  >
-                    Registrar 
-                  </Button>
-                ) : null}
-              </Box>
-            </Grid>
-          </Grid>
+      <ProcessingBanner
+        status={status}
+        processedMessage={processedMessage}
+        errorCount={errorCount}
+      />
+    </Box>
+
+    <Button
+      variant="contained"
+      disabled={!showRegisterButton}
+      onClick={handleRegisterOperation}
+      sx={{
+        width: 220,
+        height: 44,
+        borderRadius: "7px",
+        textTransform: "none",
+        fontSize: 16,
+        fontWeight: 400,
+        bgcolor: showRegisterButton ? "#0D939D" : "#D8D8D8",
+        color: "#fff",
+        boxShadow: "none",
+        border: showRegisterButton ? "none" : "1px solid #A7A7A7",
+        "&:hover": {
+          bgcolor: showRegisterButton ? "#087F88" : "#D8D8D8",
+          boxShadow: "none",
+        },
+      }}
+    >
+      Registrar Operación
+    </Button>
+  </Box>
+</Box>
 
           <Box
   sx={{
@@ -1855,26 +1849,29 @@ return (
   }}
 >
   {/* Botón secundario */}
-  <Button
-    variant="outlined"
-    onClick={() => window.location.reload()}
-    sx={{
-      minWidth: 240,
-      height: 42,
-      borderRadius: "8px",
-      color: "#6FAFB2",
-      borderColor: "#6FAFB2",
-      textTransform: "none",
-      fontWeight: 600,
-      "&:hover": {
-        borderColor: "#2E9B9B",
-        color: "#2E9B9B",
-        backgroundColor: "#F4FBFB",
-      },
-    }}
-  >
-    Registrar otra operación
-  </Button>
+<Button
+  variant="outlined"
+  onClick={() => {
+  router.replace("/pre-operations/registerMassiveOperation?new=true");
+  window.location.href = "/pre-operations/registerMassiveOperation";
+}}
+  sx={{
+    minWidth: 240,
+    height: 42,
+    borderRadius: "8px",
+    color: "#6FAFB2",
+    borderColor: "#6FAFB2",
+    textTransform: "none",
+    fontWeight: 600,
+    "&:hover": {
+      borderColor: "#2E9B9B",
+      color: "#2E9B9B",
+      backgroundColor: "#F4FBFB",
+    },
+  }}
+>
+  Registrar otra operación
+</Button>
 
   {/* Botón principal */}
   <Button

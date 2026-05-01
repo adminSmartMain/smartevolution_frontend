@@ -1,166 +1,38 @@
-import { useEffect, useState,useRef } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { ToastContainer } from "react-toastify";
 import Link from "next/link";
-import { SearchOutlined } from "@mui/icons-material";
 import {
-  Home as HomeIcon,
-  
-} from "@mui/icons-material";
+  Home as HomeIcon,} from "@mui/icons-material";
+import { Tooltip } from "@mui/material";
+import DocumentIcon from '@mui/icons-material/Description';
 
+import CircularProgress from '@mui/material/CircularProgress';
 import  ArticleIcon from "@mui/icons-material/Article"
 import TuneIcon from "@mui/icons-material/Tune";
 import Chip from "@mui/material/Chip";
 import { Box, Button, Fade, FormControl, Grid, IconButton, InputLabel,Menu, MenuItem, InputAdornment , Select, TextField, Typography } from "@mui/material";
-import { styled } from "@mui/material/styles";
-import Modal from "@components/modals/modal";
-import TitleModal from "@components/modals/titleModal";
 import { Toast } from "@components/toast";
-import ValueFormat from "@formats/ValueFormat";
 import { useFetch } from "@hooks/useFetch";
-import responsiveFontSize from "@lib/responsiveFontSize";
-import BackButton from "@styles/buttons/BackButton";
-import MuiButton from "@styles/buttons/button";
-import RedButtonModal from "@styles/buttons/noButtonModal";
-import GreenButtonModal from "@styles/buttons/yesButtonModal";
 import CustomTooltip from "@styles/customTooltip";
-import MuiTextField from "@styles/fields";
-import { StandardTextField } from "@styles/fields/BaseField";
-import InputTitles from "@styles/inputTitles";
 import ModalValorAGirar from "../../shared/components/ModalValorAGirar";
 import AdvancedDateRangePicker from "../../shared/components/AdvancedDateRangePicker";
-import { DataGrid } from "@mui/x-data-grid";
 import ClearIcon from "@mui/icons-material/Clear";
-import scrollSx from "@styles/scroll";
-import CircularProgress from '@mui/material/CircularProgress';
-import CustomDataGrid from "@styles/tables";
-import { DeleteOperation, MassiveUpdateOperation, UpdateOperation ,GetSummaryList} from "./queries";
-import { id } from "date-fns/locale";
+import {
+  DeleteOperation,
+  MassiveUpdateOperation,
+  UpdateOperation,
+  GetSummaryList,
+  getMassiveOperationDrafts,
+  deleteMassiveOperationDraft,
+} from "./queries";
 import moment from "moment";
-import DocumentIcon from '@mui/icons-material/Description';
-import { Tooltip } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import { T } from "@formulajs/formulajs";
-import ListItemText from '@mui/material/ListItemText';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-import CloseIcon from "@mui/icons-material/Close";
 import CheckIcon from "@mui/icons-material/Check";
 import { Breadcrumbs} from "@mui/material";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
-import Skeleton from '@mui/material/Skeleton';
-const TableSkeleton = ({ rows = 15, columns = 9 }) => {
-  return (
-    <Box
-      sx={{
-        border: '1px solid #e0e0e0',
-        borderRadius: '4px',
-        overflow: 'hidden',
-      }}
-    >
-      {/* Header */}
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: `repeat(${columns}, 1fr)`,
-          backgroundColor: '#f5f5f5',
-          borderBottom: '2px solid #e0e0e0',
-          px: 2,
-          py: 1,
-        }}
-      >
-        {Array.from({ length: columns }).map((_, i) => (
-          <Skeleton
-            key={i}
-            variant="text"
-            height={40}
-            sx={{ mx: 1 }}
-          />
-        ))}
-      </Box>
-
-      {/* Rows */}
-      {Array.from({ length: rows }).map((_, rowIndex) => (
-        <Box
-          key={rowIndex}
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: `repeat(${columns}, 1fr)`,
-            px: 2,
-            py: 1,
-            borderBottom: '1px solid #f0f0f0',
-          }}
-        >
-          {Array.from({ length: columns }).map((_, colIndex) => (
-            <Skeleton
-              key={colIndex}
-              variant="rectangular"
-              height={55}
-              sx={{
-                mx: 1,
-                borderRadius: '4px',
-              }}
-            />
-          ))}
-        </Box>
-      ))}
-    </Box>
-  );
-};
-
-const sectionTitleContainerSx = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "rigth",
-};
-
-
-const tableWrapperSx = {
-  marginTop: 2,
-  display: "flex",
-  flexDirection: "column",
-  width: "100%",
-  height: "100%",
-};
-
-const selectSx = {
-  color: "#333333",
-  "&:before": {
-    borderBottom: "1px solid #333333",
-  },
-  "&:after": {
-    borderBottom: "2px solid #488B8F",
-  },
-  "&:hover:not(.Mui-disabled):before": {
-    borderBottom: "2px solid #488B8F",
-  },
-};
-
-
-const SortIcon = () => (
-  <Typography fontFamily="icomoon" fontSize="0.7rem">
-    &#xe908;
-  </Typography>
-);
-
-
-
-const SellOrderButton = (props) => {
-  const { ...rest } = props;
-
-  return (
-    <Link href="/operations/electronicSignature" underline="none">
-      <button
-        className="button-header-preop-title"
-        style={{
-          width: "100%",          // ✅ ocupa toda la celda en móvil
-          boxSizing: "border-box",
-          whiteSpace: "nowrap",
-        }}
-      >
-        Notificaciones de Compra
-      </button>
-    </Link>
-  );
-};
+import { PreOperationsTable } from "./tables/preoperationsTable";
+import { PreOperationsDraftTable } from "./tables/preOperationsDraftTable";
 
 
 export const OperationsComponents = ({
@@ -173,13 +45,85 @@ export const OperationsComponents = ({
  loading
 }) => {
 
+
+  const [draftRows, setDraftRows] = useState([]);
+  const [loadingDrafts, setLoadingDrafts] = useState(false);
+  
   const [filterApplied, setFilterApplied] = useState(false);
   const [anchorElFilters, setAnchorElFilters] = useState(null);
   const openFiltersMenu = Boolean(anchorElFilters);
   const [anchorElRegister, setAnchorElRegister] = useState(null);
-
   const openRegisterMenu = Boolean(anchorElRegister);
+  const calcs = rows[0]?.calcs;
+  const [other, setOther] = useState(calcs?.others || 0);
+  const [tempFilters, setTempFilters] = useState({ ...filtersHandlers.value });
+  const [open, setOpen] = useState([false, ""]);
+  const [rowCount, setRowCount] = useState(dataCount);
+  const [pageSize, setPageSize] = useState(10);
+  const [search, setSearch] = useState("");
+ // Supongamos que `dateRange` es un estado que mantiene el rango de fechas seleccionado
+  const [dateRange, setDateRange] = useState({ startDate: null, endDate: null });
+  const [anchorElCSV, setAnchorElCSV] = useState(null);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const openMenu = Boolean(anchorEl);
+  const openMenuCSV = Boolean(anchorElCSV);
+  const [openWindow, setOpenWindow] = useState(null);
+  const [openModal, setOpenModal] = useState(false);
+  const [openDelete, setOpenDelete] = useState([false, null]);
+  const handleOpenDelete = (id) => setOpenDelete([true, id]);
+  const handleCloseDelete = () => setOpenDelete([false, null]);
+  const [anchorElStatus, setAnchorElStatus] = useState(null);
+  const [selectedStatus, setSelectedStatus] = useState(null);
+  const [haveNegotiationSummary, setHaveNegotiationSummary] = useState({});
+  // Estado para evitar múltiples verificaciones en la misma página
+  const [checkedPages, setCheckedPages] = useState(new Set());
+ const [operationState, setOperationState] = useState(null);
+  // Opciones estáticas de estados
+  const statusOptions = [
+    { value: 0, label: "Por Aprobar", badgeClass: "badge por-aprobar" },
+    
+    { value: 2, label: "Rechazada", badgeClass: "badge rechazado" },
 
+  
+  ];
+  const [activeTab, setActiveTab] = useState("all");
+  
+
+  const {
+    fetch: fetchDeleteOperation,
+    loading: loadingDeleteOperation,
+    error: errorDeleteOperation,
+    data: dataDeleteOperation,
+  } = useFetch({ service: DeleteOperation, init: false });
+
+  
+
+  const {
+    fetch: fetch,
+    loading: loadingNegotiationSummary,
+    error: error,
+    data: data,
+  } = useFetch({
+    service: GetSummaryList,
+    init: true,
+  });
+ 
+  const {
+    fetch: fetchUpdateOperation,
+    loading: loadingUpdateOperation,
+    error: errorUpdateOperation,
+    data: dataUpdateOperation,
+  } = useFetch({ service: UpdateOperation, init: false });
+
+  const {
+    fetch: fetchUpdateOperationMassive,
+    loading: loadingUpdateOperationMassive,
+    error: errorUpdateOperationMassive,
+    data: dataUpdateOperationMassive,
+  } = useFetch({ service: MassiveUpdateOperation, init: false });
+
+
+  
   const handleOpenRegisterMenu = (event) => {
     setAnchorElRegister(event.currentTarget);
   };
@@ -192,11 +136,7 @@ export const OperationsComponents = ({
   };
 
   const handleCloseFilters = () => {
-    setAnchorElFilters(null);
-
-
-    
-  };
+    setAnchorElFilters(null);};
 
 
 const openedWindowsRef = useRef({});
@@ -258,22 +198,6 @@ const handleOpenRegisterMassiveOperation = () => {
 
 
 
-  const {
-    fetch: fetch,
-    loading: loadingNegotiationSummary,
-    error: error,
-    data: data,
-  } = useFetch({
-    service: GetSummaryList,
-    init: true,
-  });
- 
-
-  
-  const [haveNegotiationSummary, setHaveNegotiationSummary] = useState({});
-  // Estado para evitar múltiples verificaciones en la misma página
-  const [checkedPages, setCheckedPages] = useState(new Set());
-
   // Hook para verificar resúmenes
   const checkNegotiationSummaries = async (rowsToCheck) => {
     const results = {};
@@ -317,42 +241,7 @@ const handleOpenRegisterMassiveOperation = () => {
     }
   }, [page, rows, checkedPages, filtersHandlers.value]);
 
-  const calcs = rows[0]?.calcs;
 
-  const [other, setOther] = useState(calcs?.others || 0);
-  const [tempFilters, setTempFilters] = useState({ ...filtersHandlers.value });
-
-  const [open, setOpen] = useState([false, ""]);
-  const [rowCount, setRowCount] = useState(dataCount);
-  const [pageSize, setPageSize] = useState(10);
-
-  const [search, setSearch] = useState("");
- // Supongamos que `dateRange` es un estado que mantiene el rango de fechas seleccionado
-  const [dateRange, setDateRange] = useState({ startDate: null, endDate: null });
-  const [anchorElCSV, setAnchorElCSV] = useState(null);
-  const [anchorEl, setAnchorEl] = useState(null);
-  const openMenu = Boolean(anchorEl);
-  const openMenuCSV = Boolean(anchorElCSV);
-  const [openWindow, setOpenWindow] = useState(null);
-  const [openModal, setOpenModal] = useState(false);
-  const [openDelete, setOpenDelete] = useState([false, null]);
-
-  const handleOpenDelete = (id) => setOpenDelete([true, id]);
-  const handleCloseDelete = () => setOpenDelete([false, null]);
-
-
-
-    const [anchorElStatus, setAnchorElStatus] = useState(null);
-    const [selectedStatus, setSelectedStatus] = useState(null);
-  
-    // Opciones estáticas de estados
-    const statusOptions = [
-      { value: 0, label: "Por Aprobar", badgeClass: "badge por-aprobar" },
-     
-      { value: 2, label: "Rechazada", badgeClass: "badge rechazado" },
-
-   
-    ];
 
 
 
@@ -394,9 +283,6 @@ const handleMenuClick = (event, rowId, rowStatus) => {
 const handleCloseMenu = () => {
   setMenuState({ anchorEl: null, currentRowId: null, currentStatus: null });
 };
-
-
-
 
   const handleOpen = (id) => {
     setOpen([true, id]);
@@ -479,11 +365,6 @@ const handleCloseMenu = () => {
         newWindow.onbeforeunload = () => setOpenWindow(null);
       }
     };
-
-
-  
-    
-  
     return (
       <Typography
         
@@ -516,16 +397,7 @@ const handleCloseMenu = () => {
     );
   };
 
-
-
-
-  
   const DeletePreOperation = ({ id, status }) => {
-
-  
-   
-
-  
     return (
       <>
       <CustomTooltip
@@ -588,12 +460,7 @@ const handleCloseMenu = () => {
   };
 
   const UpdateStatusOperation = ({ id}) => {
-    
-  
-   
-  
-  
-    return (
+      return (
       <>
       
       <CustomTooltip
@@ -656,10 +523,6 @@ const handleCloseMenu = () => {
   };
 
 
-  const handleExportXML = () => {
-    alert("Exportar como XML");
-    handleCloseMenu();
-  };
 
   const handleClearSearch = () => {
     const newFilters = {
@@ -674,10 +537,7 @@ const handleCloseMenu = () => {
     setSearch("");                    // Limpia el estado local de búsqueda si existe
   };
 
-
-
   const handleOpenModal = () => {
- 
     setOpenModal(true);
   };
 
@@ -689,14 +549,7 @@ const handleCloseMenu = () => {
     setOpen([false, ""]);
   };
 
-  const {
-    fetch: fetchDeleteOperation,
-    loading: loadingDeleteOperation,
-    error: errorDeleteOperation,
-    data: dataDeleteOperation,
-  } = useFetch({ service: DeleteOperation, init: false });
 
-  
 
   const mockData =rows[0]?.calcs;
 
@@ -716,21 +569,8 @@ const handleCloseMenu = () => {
     }
   }, [dataDeleteOperation, errorDeleteOperation, loadingDeleteOperation]);
 
-  const {
-    fetch: fetchUpdateOperation,
-    loading: loadingUpdateOperation,
-    error: errorUpdateOperation,
-    data: dataUpdateOperation,
-  } = useFetch({ service: UpdateOperation, init: false });
 
-  const {
-    fetch: fetchUpdateOperationMassive,
-    loading: loadingUpdateOperationMassive,
-    error: errorUpdateOperationMassive,
-    data: dataUpdateOperationMassive,
-  } = useFetch({ service: MassiveUpdateOperation, init: false });
-
-  const [operationState, setOperationState] = useState(null);
+ 
   const handleOperationState = (e) => {
     setOperationState(e.target.value);
   };
@@ -784,6 +624,9 @@ const handleUpdateAllClick = (e) => {
     getOperationsFetch();  // Luego actualiza la lista
   });
 };
+
+
+
   useEffect(() => {
     if (dataUpdateOperation) {
       Toast("Operacion actualizada", "success");
@@ -898,7 +741,116 @@ const checkSingleNegotiationSummary = async (opId) => {
   }
 };
 
- const columns = [
+
+
+const handleTextFieldChange = (evt) => {
+  const value = evt.target.value;
+  setSearch(value);
+  
+  // Si el campo queda vacío, actualizar filtros automáticamente
+  if (value === "") {
+    updateFilters("", "multi");
+  }
+};
+
+const handleDateRangeApply = (dateRangeSelected) => {
+  setDateRange({
+    startDate: dateRangeSelected.startDate,
+    endDate: dateRangeSelected.endDate,
+  });
+
+  filtersHandlers.set({
+    ...filtersHandlers.value,
+    startDate: dateRangeSelected.startDate,
+    endDate: dateRangeSelected.endDate,
+  });
+
+  setPage(1);
+};
+
+const handleClear = () => {
+  setDateRange({
+    startDate: null,
+    endDate: null,
+  });
+
+  filtersHandlers.set({
+    ...filtersHandlers.value,
+    startDate: "",
+    endDate: "",
+  });
+};
+const activeFiltersCount =
+  Number(!!selectedStatus) +
+  Number(!!dateRange?.startDate && !!dateRange?.endDate);
+
+  const formatFilterDate = (date) => {
+  if (!date) return "";
+  return moment(date).format("DD/MM/YYYY");
+};
+
+const updateFilters = (value, field) => {
+  if (field !== "multi") {
+    const newFilters = { 
+      ...tempFilters, 
+      [field]: value
+    };
+    
+    setTempFilters(newFilters);
+    filtersHandlers.set({
+      ...newFilters,
+      page: 1
+    });
+
+    if (tempFilters[field] !== value) {
+      setFilterApplied(true);
+    }
+    return;
+  }
+
+  const onlyDigits = /^\d{3,4}$/;
+  const alphaNumeric = /^[a-zA-Z0-9]{3,10}$/;
+  const hasLetters = /[a-zA-Z]/.test(value);
+  const hasSpaces = /\s/.test(value);
+
+  // SOLUCIÓN: Usar filtersHandlers.value en lugar de tempFilters
+  const newFilters = { 
+    ...filtersHandlers.value, // ← Usar el valor ACTUAL de los filtros
+    opId: "", 
+    billId: "", 
+    investor: "",
+    page: 1
+  };
+
+  if (onlyDigits.test(value)) {
+    newFilters.opId = value;
+  } else if (alphaNumeric.test(value) && !hasLetters && value.length >= 3 && value.length <= 10) {
+    newFilters.billId = value;
+  } else if (hasLetters || hasSpaces || value.length > 4) {
+    newFilters.investor = value;
+  } else {
+    newFilters.investor = value;
+  }
+
+  // Actualizar ambos estados
+  setTempFilters(newFilters);
+  filtersHandlers.set(newFilters);
+
+  setFilterApplied(true);
+  setPage(1);
+};
+  
+      // Modificar el useEffect para resetear checkedPages cuando se aplica un filtro
+  useEffect(() => {
+    if (filterApplied) {
+      setCheckedPages(new Set());
+      setFilterApplied(false);
+    }
+  }, [filterApplied]);
+  
+
+  
+const columns = [
   {
     field: "status",
     headerName: "Estado",
@@ -1234,111 +1186,6 @@ const checkSingleNegotiationSummary = async (opId) => {
     
    
   ];
-const handleTextFieldChange = (evt) => {
-  const value = evt.target.value;
-  setSearch(value);
-  
-  // Si el campo queda vacío, actualizar filtros automáticamente
-  if (value === "") {
-    updateFilters("", "multi");
-  }
-};
-
-const handleDateRangeApply = (dateRangeSelected) => {
-  setDateRange({
-    startDate: dateRangeSelected.startDate,
-    endDate: dateRangeSelected.endDate,
-  });
-
-  filtersHandlers.set({
-    ...filtersHandlers.value,
-    startDate: dateRangeSelected.startDate,
-    endDate: dateRangeSelected.endDate,
-  });
-
-  setPage(1);
-};
-
-const handleClear = () => {
-  setDateRange({
-    startDate: null,
-    endDate: null,
-  });
-
-  filtersHandlers.set({
-    ...filtersHandlers.value,
-    startDate: "",
-    endDate: "",
-  });
-};
-const activeFiltersCount =
-  Number(!!selectedStatus) +
-  Number(!!dateRange?.startDate && !!dateRange?.endDate);
-
-  const formatFilterDate = (date) => {
-  if (!date) return "";
-  return moment(date).format("DD/MM/YYYY");
-};
-
-const updateFilters = (value, field) => {
-  if (field !== "multi") {
-    const newFilters = { 
-      ...tempFilters, 
-      [field]: value
-    };
-    
-    setTempFilters(newFilters);
-    filtersHandlers.set({
-      ...newFilters,
-      page: 1
-    });
-
-    if (tempFilters[field] !== value) {
-      setFilterApplied(true);
-    }
-    return;
-  }
-
-  const onlyDigits = /^\d{3,4}$/;
-  const alphaNumeric = /^[a-zA-Z0-9]{3,10}$/;
-  const hasLetters = /[a-zA-Z]/.test(value);
-  const hasSpaces = /\s/.test(value);
-
-  // SOLUCIÓN: Usar filtersHandlers.value en lugar de tempFilters
-  const newFilters = { 
-    ...filtersHandlers.value, // ← Usar el valor ACTUAL de los filtros
-    opId: "", 
-    billId: "", 
-    investor: "",
-    page: 1
-  };
-
-  if (onlyDigits.test(value)) {
-    newFilters.opId = value;
-  } else if (alphaNumeric.test(value) && !hasLetters && value.length >= 3 && value.length <= 10) {
-    newFilters.billId = value;
-  } else if (hasLetters || hasSpaces || value.length > 4) {
-    newFilters.investor = value;
-  } else {
-    newFilters.investor = value;
-  }
-
-  // Actualizar ambos estados
-  setTempFilters(newFilters);
-  filtersHandlers.set(newFilters);
-
-  setFilterApplied(true);
-  setPage(1);
-};
-  
-      // Modificar el useEffect para resetear checkedPages cuando se aplica un filtro
-  useEffect(() => {
-    if (filterApplied) {
-      setCheckedPages(new Set());
-      setFilterApplied(false);
-    }
-  }, [filterApplied]);
-  
   /* Experimento para exportar los datos del data grid a un archivo csv que pueda ser leido por Excel*/
   const handleExportExcel = () => {
     // Obtener los datos de las filas visibles en la página actual del DataGrid
@@ -1373,6 +1220,77 @@ const updateFilters = (value, field) => {
     link.click();
     document.body.removeChild(link);
   };
+
+
+
+
+  // Tabla de operaciones en borrador
+
+
+
+
+const draftCount = useMemo(() => {
+  return (draftRows || []).filter((item) =>
+    ["DRAFT", "READY_FOR_EXCEL"].includes(item.status)
+  ).length;
+}, [draftRows]);
+
+const hasCriticalDrafts = useMemo(() => {
+  return (draftRows || []).some((draft) => {
+    if (!draft.expiresAt) return false;
+
+    const diffMs = new Date(draft.expiresAt).getTime() - Date.now();
+    const days = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+
+    return days < 5;
+  });
+}, [draftRows]);
+const loadDrafts = async () => {
+  try {
+    setLoadingDrafts(true);
+    const response = await getMassiveOperationDrafts();
+    setDraftRows(response?.data || []);
+  } catch (error) {
+    console.error("Error cargando borradores:", error);
+    Toast("No fue posible cargar los borradores", "error");
+  } finally {
+    setLoadingDrafts(false);
+  }
+};
+
+useEffect(() => {
+  loadDrafts();
+}, []);
+
+const handleContinueDraft = (draft) => {
+  const newWindow = openOrFocusWindow(
+    `registerMassiveOperationDraft-${draft.id}`,
+    `/pre-operations/registerMassiveOperation?draftId=${draft.id}`,
+    "width=1200,height=800"
+  );
+
+  if (!newWindow) {
+    Toast("El navegador bloqueó la ventana emergente", "error");
+  }
+};
+
+const handleDiscardDraft = async (draft) => {
+  try {
+    await deleteMassiveOperationDraft(draft.id);
+    Toast("Borrador descartado", "success");
+    loadDrafts();
+  } catch (error) {
+    console.error("Error descartando borrador:", error);
+    Toast("No fue posible descartar el borrador", "error");
+  }
+};
+
+useEffect(() => {
+  loadDrafts();
+}, []);
+
+
+
   return (
     <>
     
@@ -1415,7 +1333,7 @@ const updateFilters = (value, field) => {
         <Link
           underline="hover"
           color="#5EA3A3"
-          href="/administration"
+          href="/pre-operations"
           sx={{ fontSize: "1.3rem" }}
         >
           <Typography component="h1" className="view-title">
@@ -1824,265 +1742,123 @@ const updateFilters = (value, field) => {
     </Button>
   </Box>
 </Menu>
+<Box
+  sx={{
+    display: "flex",
+    alignItems: "center",
+    gap: 4,
+    mt: 2,
+    mb: 1.5,
+    pl: 1,
+  }}
+>
+  <Button
+    onClick={() => setActiveTab("all")}
+    sx={{
+      color: activeTab === "all" ? "#149A9A" : "#9E9E9E",
+      borderBottom:
+        activeTab === "all"
+          ? "3px solid #149A9A"
+          : "3px solid transparent",
+      borderRadius: 0,
+      textTransform: "none",
+      fontSize: 18,
+      minWidth: 180,
+      pb: 1,
+    }}
+  >
+    Todas
+  </Button>
 
+  <Button
+    onClick={() => setActiveTab("drafts")}
+    sx={{
+      color: activeTab === "drafts" ? "#149A9A" : "#9E9E9E",
+      borderBottom:
+        activeTab === "drafts"
+          ? "3px solid #149A9A"
+          : "3px solid transparent",
+      borderRadius: 0,
+      textTransform: "none",
+      fontSize: 18,
+      minWidth: 180,
+      pb: 1,
+      gap: 1,
+    }}
+  >
+    Borradores
 
-      {loading ? (
-  <TableSkeleton rows={8} columns={columns.length} />
-) : (
-
-      <Box sx={{ ...tableWrapperSx }}>
-      <CustomDataGrid
-          rows={rows}
-          columns={columns}
-          pageSize={15}
-          rowsPerPageOptions={[5]}
-          disableSelectionOnClick
-          disableColumnMenu
-          
-          sx={{
-            border: '1px solid #e0e0e0', // Borde exterior
-            '& .MuiDataGrid-cell': {
-              borderRight: '1px solid #f0f0f0', // Bordes verticales entre celdas
-            },
-            '& .MuiDataGrid-columnHeaders': {
-              backgroundColor: '#f5f5f5', // Fondo del encabezado
-              borderBottom: '2px solid #e0e0e0', // Borde inferior del encabezado
-            },
-            '& .MuiDataGrid-columnHeader': {
-              borderRight: '1px solid #e0e0e0', // Bordes entre columnas
-            },
-            '& .MuiDataGrid-row': {
-              '&:nth-of-type(even)': {
-                backgroundColor: '#fafafa', // Color filas pares
-              },
-              '&:hover': {
-        overflow: 'visible', // Muestra todo el contenido al hacer hover
-        zIndex: 1,
-        position: 'relative'
-      },
-            },
-            '& .MuiDataGrid-footerContainer': {
-              borderTop: '1px solid #e0e0e0', // Borde superior del footer
-            },
-            '& .MuiDataGrid-virtualScroller': {
-              overflowX: 'auto', // Oculta el scroll horizontal si no es necesario
-            },
-            filter: loading ? 'blur(2px)' : 'none', // Efecto de desenfoque
-          transition: 'filter 0.3s ease-out' // Transición suave
-          }}
-          components={{
-            ColumnSortedAscendingIcon: SortIcon,
-            ColumnSortedDescendingIcon: SortIcon,
-            NoRowsOverlay: () => (
-              <Typography
-                fontSize="0.9rem"
-                fontWeight="600"
-                color="#488B8F"
-                height="100%"
-                display="flex"
-                alignItems="center"
-                justifyContent="center"
-                sx={{
-                  border: '1px dashed #e0e0e0', // Borde para el área vacía
-                  margin: '0 16px 16px 16px',
-                  borderRadius: '4px',
-                  
-                }}
-              >
-                No hay pre-operaciones registradas
-              </Typography>
-            ),
-
-            Pagination: () => (
-              <Box
-                container
-                display="flex"
-                flexDirection="row"
-                justifyContent="space-between"
-                alignItems="center"
-              >
-                <Typography fontSize="0.8rem" fontWeight="600" color="#5EA3A3">
-                  {page * 15 - 14} - {page * 15} de {dataCount}{" "}
-                </Typography>
-                <Box
-                  container
-                  display="flex"
-                  flexDirection="row"
-                  justifyContent="space-between"
-                >
-                  <Typography
-                    fontFamily="icomoon"
-                    fontSize="1.2rem"
-                    marginRight="0.3rem"
-                    marginLeft="0.5rem"
-                    sx={{
-                      cursor: "pointer",
-                      transform: "rotate(180deg)",
-                      color: "#63595C",
-                    }}
-                    onClick={() => {
-                      if (page > 1) {
-                       
-                        setPage(page - 1);
-                  
-                      }
-                    }}
-                  >
-                    &#xe91f;
-                  </Typography>
-                  <Typography
-                    fontFamily="icomoon"
-                    fontSize="1.2rem"
-                    marginRight="0.3rem"
-                    marginLeft="0.5rem"
-                    sx={{
-                      cursor: "pointer",
-
-                      color: "#63595C",
-                    }}
-                    onClick={() => {
-                      if (page < dataCount / 15) {
-                       
-                        setPage(page + 1);
-                      }
-                      
-                    }}
-                  >
-                    &#xe91f;
-                  </Typography>
-                </Box>
-              </Box>
-            ),
-          }}
-          componentsProps={{
-            pagination: {
-              color: "#5EA3A3",
-            },
-          }}
-        />
-        
-      </Box>
-
-       )}   
-      <TitleModal
-        open={open[0]}
-        handleClose={handleClose}
-        container
-        Sx={{
-          width: "25%",
-          height: "30%",
+    {draftCount > 0 && (
+      <Box
+        sx={{
+          minWidth: 20,
+          height: 20,
+          borderRadius: "50%",
+          bgcolor: "#C90000",
+          color: "#fff",
+          fontSize: 11,
+          display: "grid",
+          placeItems: "center",
+          fontWeight: 700,
         }}
-        title={"Actualizar estado"}
       >
-        <Box display="flex" flexDirection="column" mt={3} sx={{ ...scrollSx }}>
-          <FormControl variant="standard" fullWidth>
-            <InputLabel
-              sx={{
-                fontSize: "1rem",
-                fontWeight: "600",
-                color: "#488B8F",
-                "&.Mui-focused": {
-                  color: "#488B8F",
-                },
-              }}
-              id="demo-simple-select-label"
-            >
-              Estado
-            </InputLabel>
-            <Select
-              labelId="demo-simple-select-label"
-              id="operationStatus"
-              value={operationState}
-              label="Estado"
-              onChange={handleOperationState}
-              sx={{ ...selectSx }}
-            >
-              <MenuItem value={1}>Aprobada</MenuItem>
-              <MenuItem value={2}>Rechazada</MenuItem>
-            </Select>
-          </FormControl>
+        {draftCount}
+      </Box>
+    )}
+  </Button>
+</Box>
 
-          <Box display="flex" justifyContent="center">
-            <MuiButton
-              variant="standard"
-              onClick={handleUpdateClick}
-              sx={{
-                mb: 2,
-                boxShadow: "none",
-                borderRadius: "4px",
-              }}
-            >
-              <Typography fontSize="80%" fontWeight="bold">
-                Actualizar
-              </Typography>
-              <Typography
-                fontFamily="icomoon"
-                sx={{
-                  color: "#fff",
-                  ml: 2,
-                  fontSize: "medium",
-                }}
-              >
-                &#xe91f;
-              </Typography>
-            </MuiButton>
-            <MuiButton
-              variant="standard"
-              onClick={handleUpdateAllClick}
-              sx={{
-                mb: 2,
-                ml: 2,
-                boxShadow: "none",
-                borderRadius: "4px",
-              }}
-            >
-              <Typography fontSize="80%" fontWeight="bold">
-                Actualizar todos
-              </Typography>
-            </MuiButton>
-          </Box>
-        </Box>
-      </TitleModal>
-      <Modal open={openDelete[0]} handleClose={handleCloseDelete}>
-        <Box
-          display="flex"
-          flexDirection="column"
-          alignItems="center"
-          justifyContent="center"
-          height="100%"
-          width="100%"
-        >
-          <Typography
-            letterSpacing={0}
-            fontSize="1vw"
-            fontWeight="medium"
-            color="#63595C"
-          >
-            ¿Estás seguro que deseas la operación?
-          </Typography>
-
-          <Box
-            display="flex"
-            flexDirection="row"
-            alignItems="center"
-            justifyContent="center"
-            mt={4}
-          >
-            <GreenButtonModal onClick={handleCloseDelete}>
-              Volver
-            </GreenButtonModal>
-            <RedButtonModal
-              sx={{
-                ml: 2,
-              }}
-              onClick={() => handleDelete(openDelete[1])}
-            >
-              Eliminar
-            </RedButtonModal>
-          </Box>
-        </Box>
-      </Modal>
-  
+{activeTab === "drafts" && hasCriticalDrafts && (
+  <Box
+    sx={{
+      mb: 1.5,
+      px: 2,
+      py: 1,
+      borderRadius: "8px",
+      bgcolor: "#FFF3F3",
+      color: "#B71C1C",
+      fontSize: 13,
+      fontWeight: 600,
+    }}
+  >
+    Tienes borradores a punto de expirar. Por favor, gestiónalos pronto.
+  </Box>
+)}
+{activeTab === "drafts" ? (
+  <PreOperationsDraftTable
+  rows={draftRows}
+  loading={loadingDrafts}
+  onContinue={handleContinueDraft}
+  onDiscard={handleDiscardDraft}
+/>
+) : (
+  <PreOperationsTable
+    handleClose={handleClose}
+    handleCloseDelete={handleCloseDelete}
+    handleOpenDelete={handleOpenDelete}
+    openDelete={openDelete}
+    open={open}
+    handleUpdateAllClick={handleUpdateAllClick}
+    handleUpdateClick={handleUpdateClick}
+    setPage={setPage}
+    page={page}
+    dataCount={dataCount}
+    loading={loading}
+    rows={rows}
+    haveNegotiationSummary={haveNegotiationSummary}
+    handleOpenNegotiationSummary={handleOpenNegotiationSummary}
+    handleMenuClick={handleMenuClick}
+    menuState={menuState}
+    handleCloseMenu={handleCloseMenu}
+    UpdateStatusOperation={UpdateStatusOperation}
+    DetailPreOperation={DetailPreOperation}
+    EditPreOperation={EditPreOperation}
+    DeletePreOperation={DeletePreOperation}
+    handleDelete={handleDelete}
+     columns={ columns}
+  />
+)}
+     
       <ToastContainer
         position="top-right"
         autoClose={50000}

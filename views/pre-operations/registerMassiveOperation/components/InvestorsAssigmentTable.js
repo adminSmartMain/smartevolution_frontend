@@ -775,8 +775,13 @@ const [selectionModel, setSelectionModel] = useState([]);
         formatDateForExcelCell(formik?.opDate || opDate),
         emitterName,
         emitterId,
-        formik?.corredorEmisor || "",
-        formik?.emitterBroker || "",
+        formik?.emitterBrokerName ||
+formik?.corredorEmisor ||
+"",
+
+formik?.emitterBroker ||
+formik?.emitterBrokerId ||
+"",
         formik?.nombrepayer || payerName || "",
         formik?.nombrePagador || payerId || "",
         row.billId || "",

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useContext } from "react";
+import { useEffect, useMemo, useState, useContext, useRef } from "react";
 import {
   Box,
   Typography,
@@ -10,11 +10,12 @@ import {
   IconButton,
   Breadcrumbs,
 } from "@mui/material";
+
 import DownloadIcon from "@mui/icons-material/Download";
 import { toast } from "react-toastify";
 import Image from "next/image";
 import Link from "next/link";
-import { ToastContainer } from "react-toastify";
+
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import { Home as HomeIcon } from "@mui/icons-material";
 import EditIcon from "@mui/icons-material/Edit";
@@ -29,6 +30,7 @@ import { styled } from "@mui/material/styles";
 
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { ToastContainer } from "react-toastify";
 import esLocale from "date-fns/locale/es";
 
 import { Formik, Form } from "formik";
@@ -42,7 +44,7 @@ import PayerSelector from "@components/selects/registerMassiveOperations/PayerSe
 import { BillsDualTable } from "./components/BillsDualTable";
 import { InvestorsAssignmentTable } from "./components/InvestorsAssigmentTable";
 import { UploadExcelStep } from "./components/uploadExcel";
-
+import { useRouter } from "next/router";
 import {
   getTypeBill,
   Bills,
@@ -55,7 +57,16 @@ import {
   registerOperationFromUpload,
   downloadMassiveOperationReceiptPdf,
 } from "./queries";
+
+import {
+  createMassiveOperationDraft,
+  updateMassiveOperationDraft,
+  getMassiveOperationDraft,
+  validateMassiveOperationDraft,
+  markMassiveOperationDraftRegistered,
+} from "./queries";
 import { useFetch } from "@hooks/useFetch";
+import { useMassiveOperationDraft } from "@hooks/useMassiveOperationDraft";
 
 const SmartConnector = styled(StepConnector)(() => ({
   "& .MuiStepConnector-line": {
@@ -111,10 +122,10 @@ export const RegisterMassiveOperationComponent = ({
 }) => {
   const [activeStep, setActiveStep] = useState(0);
   const { user } = useContext(authContext);
-
+  
   const JURIDICA_ID = "21cf32d9-522c-43ac-b41c-4dfdf832a7b8";
   const isJuridica = formik?.values?.type_client === JURIDICA_ID;
-
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const emisores = emitters || [];
   const [clientEmitter, setClientEmitter] = useState(null);
   const [clientPagador, setClientPagador] = useState(null);
@@ -132,8 +143,13 @@ export const RegisterMassiveOperationComponent = ({
   const [isCreatingBill, setIsCreatingBill] = useState(false);
   const [emitterSaved, setEmitterSaved] = useState(false);
   const [canGenerateInvestorsExcel, setCanGenerateInvestorsExcel] = useState(false);
-const [generateInvestorsExcelFn, setGenerateInvestorsExcelFn] = useState(null);
-const [registerSummary, setRegisterSummary] = useState(null);
+  const [generateInvestorsExcelFn, setGenerateInvestorsExcelFn] = useState(null);
+  const [registerSummary, setRegisterSummary] = useState(null);
+  const [isRestoringDraft, setIsRestoringDraft] = useState(false);
+  const [draftToRestore, setDraftToRestore] = useState(null);
+const hydratedDraftRef = useRef(null);
+  const router = useRouter();
+  const routeDraftId = router?.query?.draftId;
   const [uploadExcelState, setUploadExcelState] = useState({
     file: null,
     status: "idle",
@@ -156,6 +172,43 @@ const [registerSummary, setRegisterSummary] = useState(null);
     init: false,
   });
 
+
+  const { fetch: createDraftFetch } = useFetch({
+  service: createMassiveOperationDraft,
+  init: false,
+});
+
+const { fetch: updateDraftFetch } = useFetch({
+  service: updateMassiveOperationDraft,
+  init: false,
+});
+
+const { fetch: getDraftFetch } = useFetch({
+  service: getMassiveOperationDraft,
+  init: false,
+});
+
+const { fetch: validateDraftFetch } = useFetch({
+  service: validateMassiveOperationDraft,
+  init: false,
+});
+
+const { fetch: markDraftRegisteredFetch } = useFetch({
+  service: markMassiveOperationDraftRegistered,
+  init: false,
+});
+
+
+const {
+  draftId,
+  setDraftId,
+  draftStatus,
+  lastSavedAt,
+  saveDraft,
+} = useMassiveOperationDraft({
+  createDraftFetch,
+  updateDraftFetch,
+});
   const isLoadingBills = billsLoading ?? billsIsLoading ?? false;
 const { fetch: downloadMassiveOperationReceiptPdfFetch } = useFetch({
   service: downloadMassiveOperationReceiptPdf,
@@ -296,7 +349,213 @@ const { fetch: downloadMassiveOperationReceiptPdfFetch } = useFetch({
 
 
 
+useEffect(() => {
+  if (!routeDraftId) return;
 
+  const loadDraft = async () => {
+    try {
+      setIsRestoringDraft(true);
+
+      const validateResponse = await validateDraftFetch(routeDraftId);
+      const validateData = validateResponse?.data ?? validateResponse;
+
+      if (validateData?.valid === false) {
+        console.warn("Conflictos del borrador:", validateData?.conflicts);
+
+        toast.warning(
+          validateData?.message ||
+            "El borrador tiene conflictos, puedes revisarlo y corregirlo."
+        );
+      }
+
+      const draft = validateData?.data;
+
+      if (!draft) {
+        const response = await getDraftFetch(routeDraftId);
+        const raw = response?.data ?? response;
+        setDraftToRestore(raw?.data ?? raw);
+      } else {
+        setDraftToRestore(draft);
+      }
+
+      const currentDraft = draft || validateData?.data;
+
+      setDraftId(routeDraftId);
+      setActiveStep(Number(currentDraft?.currentStep || 0));
+      setInvestorsExcelGenerated(
+        Boolean(currentDraft?.metadata?.investorsExcelGenerated)
+      );
+      setCanGenerateInvestorsExcel(
+        Boolean(currentDraft?.metadata?.canGenerateInvestorsExcel)
+      );
+    } catch (error) {
+      console.error("Error cargando borrador:", error);
+      toast.error("No fue posible cargar el borrador.");
+    } finally {
+      setIsRestoringDraft(false);
+    }
+  };
+
+  loadDraft();
+}, [routeDraftId]);
+
+
+const getClientData = (option) => option?.data || option || {};
+
+const getClientId = (option) =>
+  option?.id || option?.value || option?.data?.id || "";
+
+const getClientLabel = (option) => {
+  const data = getClientData(option);
+
+  return (
+    option?.label ||
+    data?.social_reason ||
+    data?.full_name ||
+    `${data?.first_name || ""} ${data?.last_name || ""}`.trim() ||
+    ""
+  );
+};
+
+const getClientDocument = (option) => {
+  const data = getClientData(option);
+
+  return String(
+    data?.document_number ||
+      data?.nit ||
+      data?.identification ||
+      data?.document ||
+      ""
+  ).trim();
+};
+
+const findClientOptionById = (list = [], id) => {
+  if (!id) return null;
+
+  return (
+    list.find((item) => String(getClientId(item)) === String(id)) || null
+  );
+};
+
+const buildFilteredPayersFromBills = (facturasEmisor = [], payersList = []) => {
+  const payerDocuments = [
+    ...new Set(
+      (facturasEmisor || [])
+        .map((bill) => String(bill?.payerId || "").trim())
+        .filter(Boolean)
+    ),
+  ];
+
+  return (payersList || []).filter((payer) => {
+    const payerDocument = getClientDocument(payer);
+    return payerDocument && payerDocuments.includes(payerDocument);
+  });
+};
+
+const getBrokerName = (broker) => {
+  const data = broker?.data || broker || {};
+
+  const fullName = `${data?.first_name || ""} ${data?.last_name || ""}`.trim();
+
+  return (
+    broker?.label ||
+    data?.social_reason ||
+    fullName ||
+    data?.name ||
+    ""
+  );
+};
+
+const getBrokerId = (broker) => {
+  const data = broker?.data || broker || {};
+
+  return broker?.id || broker?.value || data?.id || "";
+};
+
+const hydrateDraft = async (draft, setFieldValue) => {
+  if (!draft) return;
+
+  const selectedBills = draft.selectedBills || [];
+  const investorAssignments = draft.investorAssignments || [];
+
+  const emitterObj = findClientOptionById(emisores, draft.emitterId);
+  const payerObj = findClientOptionById(payers, draft.payerId);
+
+  if (emitterObj) {
+    setFieldValue("emitter", emitterObj);
+    setFieldValue("emitterLabel", getClientLabel(emitterObj));
+    setClientEmitter(emitterObj);
+  }
+
+  if (payerObj) {
+    const payerData = getClientData(payerObj);
+
+    setFieldValue("nombrePagador", payerData.id || draft.payerId);
+    setFieldValue("payerId", payerData.id || draft.payerId);
+    setFieldValue("nombrepayer", getClientLabel(payerObj));
+    setClientPagador(payerData);
+  }
+
+  setFieldValue("emitterId", draft.emitterId || "");
+  setFieldValue("payerId", draft.payerId || "");
+  setFieldValue("emitterBrokerId", draft.emitterBrokerId || "");
+  setFieldValue("emitterBroker", draft.emitterBrokerId || "");
+if (draft.emitterId) {
+  try {
+    const brokerResponse = await fetchBrokerByClient(draft.emitterId);
+
+    const brokerRaw =
+      brokerResponse?.data?.data ??
+      brokerResponse?.data ??
+      brokerResponse ??
+      null;
+
+    const broker = Array.isArray(brokerRaw) ? brokerRaw[0] : brokerRaw;
+
+    const brokerId = draft.emitterBrokerId || getBrokerId(broker);
+    const brokerName =
+      draft?.metadata?.emitterBrokerName || getBrokerName(broker);
+
+    if (brokerId) {
+      setClientBrokerEmitter(broker);
+      setFieldValue("emitterBroker", brokerId);
+      setFieldValue("emitterBrokerId", brokerId);
+    }
+
+    if (brokerName) {
+      setFieldValue("emitterBrokerName", brokerName);
+    }
+  } catch (error) {
+    console.error("Error cargando corredor del emisor:", error);
+  }
+}
+  setFieldValue("billsToNegotiate", selectedBills);
+  setFieldValue("investorAssignments", investorAssignments);
+
+  if (!draft.emitterId) return;
+
+  const billsResponse = await cargarFacturas(draft.emitterId);
+  const bills = billsResponse?.data || [];
+
+  const filteredPayers = buildFilteredPayersFromBills(bills, payers);
+  setFieldValue("filteredPayers", filteredPayers);
+
+  const payerDocument =
+    getClientDocument(payerObj) ||
+    String(selectedBills?.[0]?.payerId || "").trim();
+
+  const payerBills = bills.filter((bill) => {
+    const samePayer = payerDocument
+      ? String(bill?.payerId || "").trim() === payerDocument
+      : true;
+
+    const hasBalance = Number(bill?.currentBalance || 0) > 0;
+
+    return samePayer && hasBalance;
+  });
+
+  setFieldValue("takedBills", payerBills);
+};
   return (
    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={esLocale}>
   <ToastContainer position="top-right" autoClose={5000} />
@@ -340,23 +599,103 @@ const { fetch: downloadMassiveOperationReceiptPdfFetch } = useFetch({
         </Box>
 
         <Formik
-          initialValues={{
-            ...initialValues,
-            billsToNegotiate: initialValues?.billsToNegotiate || [],
-            investorAssignments: initialValues?.investorAssignments || [],
-          }}
+       initialValues={{
+  ...initialValues,
+
+  opId: draftToRestore?.opId ?? initialValues?.opId ?? "",
+  opDate: draftToRestore?.opDate
+    ? new Date(draftToRestore.opDate)
+    : initialValues?.opDate ?? null,
+
+  opType: draftToRestore?.opTypeId ?? initialValues?.opType ?? "",
+  emitterId: draftToRestore?.emitterId ?? initialValues?.emitterId ?? "",
+  payerId: draftToRestore?.payerId ?? initialValues?.payerId ?? "",
+  emitterBrokerId:
+    draftToRestore?.emitterBrokerId ?? initialValues?.emitterBrokerId ?? "",
+emitterBrokerName:
+  draftToRestore?.metadata?.emitterBrokerName ??
+  initialValues?.emitterBrokerName ??
+  "",
+  emitterLabel:
+    draftToRestore?.metadata?.emitterName ?? initialValues?.emitterLabel ?? "",
+  nombrepayer:
+    draftToRestore?.metadata?.payerName ?? initialValues?.nombrepayer ?? "",
+  nombrePagador:
+    draftToRestore?.payerId ?? initialValues?.nombrePagador ?? "",
+
+  facturas: initialValues?.facturas ?? [],
+  takedBills: initialValues?.takedBills ?? [],
+
+  billsToNegotiate:
+    draftToRestore?.selectedBills ?? initialValues?.billsToNegotiate ?? [],
+  investorAssignments:
+    draftToRestore?.investorAssignments ??
+    initialValues?.investorAssignments ??
+    [],
+}}
+        enableReinitialize
           validationSchema={validationSchema}
           onSubmit={handleConfirm}
-          enableReinitialize
+         
         >
           {({ values, setFieldValue, touched, errors, setFieldTouched, submitForm }) => {
+console.log(values)
+useEffect(() => {
+  if (!draftToRestore) return;
+  if (isRestoringDraft) return;
+  if (!emisores?.length) return;
+  if (!payers?.length) return;
 
+  if (hydratedDraftRef.current === draftToRestore.id) return;
+
+  hydratedDraftRef.current = draftToRestore.id;
+  hydrateDraft(draftToRestore, setFieldValue);
+}, [draftToRestore?.id, isRestoringDraft, emisores?.length, payers?.length]);
             const safeDateToIso = (value) => {
   if (!value) return null;
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? null : date.toISOString().slice(0, 10);
 };
-            
+          
+
+
+
+const buildDraftPayload = () => ({
+  opId: values.opId || null,
+  opDate: safeDateToIso(values.opDate),
+  opTypeId: values.opType || null,
+  
+  emitterId:
+    values?.emitter?.value ||
+    values?.emitter?.data?.id ||
+    values?.emitterId ||
+    null,
+  payerId:
+    clientPagador?.id ||
+    values?.payerId ||
+    values?.nombrePagador ||
+    null,
+  emitterBrokerId:
+    values?.emitterBroker ||
+    values?.emitterBrokerId ||
+    clientBrokerEmitter?.id ||
+    null,
+  currentStep: activeStep,
+  status: activeStep >= 1 ? "READY_FOR_EXCEL" : "DRAFT",
+  selectedBills: values?.billsToNegotiate || [],
+  investorAssignments: values?.investorAssignments || [],
+  metadata: {
+    emitterBrokerName:
+  values?.emitterBrokerName ||
+  getBrokerName(clientBrokerEmitter),
+    investorsExcelGenerated,
+    selectedBillsCount: values?.billsToNegotiate?.length || 0,
+    assignmentsCount: values?.investorAssignments?.length || 0,
+    canGenerateInvestorsExcel,
+  },
+});
+
+
     const uploadContext = {
    opDate: safeDateToIso(values?.opDate),
   emitterId:
@@ -370,21 +709,30 @@ const { fetch: downloadMassiveOperationReceiptPdfFetch } = useFetch({
     values?.emitterBrokerId ||
     clientBrokerEmitter?.id ||
     "",
+    emitterBrokerName:
+  values?.emitterBrokerName ||
+  getBrokerName(clientBrokerEmitter) ||
+  "",
   payerId:
     clientPagador?.id ||
     values?.payerId ||
     values?.nombrePagador ||
     "",
   rows: (values?.investorAssignments || []).map((row) => ({
-    billId: row?.billUniqueId || row?.billId || "",
-    billFraction: Number(row?.fraction ?? 0),
-    investorId: row?.investorId || "",
-    investorAccount:
-      row?.selectedAccount?.account_number ||
-      row?.selectedAccount?.accountNumber ||
-      row?.selectedAccount?.number ||
-      "",
-  })),
+  billId: row?.billUniqueId || row?.billId || "",
+  billFraction: Number(row?.fraction ?? 0),
+  investorId: row?.investorId || "",
+  investorAccount:
+    row?.selectedAccount?.account_number ||
+    row?.selectedAccount?.accountNumber ||
+    row?.selectedAccount?.number ||
+    "",
+  emitterBrokerName:
+    values?.emitterBrokerName ||
+    getBrokerName(clientBrokerEmitter) ||
+    row?.emitterBrokerName ||
+    "",
+})),
 };
 
 
@@ -430,59 +778,85 @@ const { fetch: downloadMassiveOperationReceiptPdfFetch } = useFetch({
     overflow: "visible",
   }}
 >
-    <Grid
-      item
-      sx={{
-        width: 300,
-        flexShrink: 0,
-        display: "flex",
-        minHeight: 0,
-      }}
-    >
-                    <Box
+<Grid
+  item
+  sx={{
+    width: sidebarCollapsed ? 120 : 300,
+    flexShrink: 0,
+    display: "flex",
+    minHeight: 0,
+    transition: "width 0.25s ease",
+  }}
+>        <Box
   sx={{
     bgcolor: "#F8F8F8",
     borderRadius: 2,
     boxShadow: 1,
-    p: 2.5,
+    p: sidebarCollapsed ? 1.5 : 2.5,
     width: "100%",
     height: "100%",
-    minHeight: 0,
+    position: "relative",
     display: "flex",
     flexDirection: "column",
     overflow: "hidden",
     boxSizing: "border-box",
   }}
 >
-                      <Box sx={{ mb: 3 }}>
-                        <Image
-                          src={smartLogo}
-                          alt="logo"
-                          style={{
-                            maxWidth: 180,
-                            width: "100%",
-                            height: "auto",
-                            objectFit: "contain",
-                          }}
-                        />
-                      </Box>
+  <IconButton
+    size="small"
+    onClick={() => setSidebarCollapsed((prev) => !prev)}
+    sx={{
+      position: "absolute",
+      top: 8,
+      right: 8,
+      color: "#6D6D6D",
+      zIndex: 2,
+    }}
+  >
+    {sidebarCollapsed ? "›" : "‹"}
+  </IconButton>
+                      <Box
+  sx={{
+    mb: sidebarCollapsed ? 7 : 3,
+    display: "flex",
+    justifyContent: sidebarCollapsed ? "center" : "flex-start",
+    mt: sidebarCollapsed ? 3 : 0,
+  }}
+>
+  <Image
+    src={smartLogo}
+    alt="logo"
+    style={{
+      maxWidth: sidebarCollapsed ? 72 : 180,
+      width: "100%",
+      height: "auto",
+      objectFit: "contain",
+    }}
+  />
+</Box>
 
                       <Stepper
-                        activeStep={activeStep}
-                        orientation="vertical"
-                        connector={<SmartConnector />}
-                        sx={{
-                          "& .MuiStep-root": {
-  minHeight: 92,
-},
-                          "& .MuiStepLabel-root": {
-                            alignItems: "flex-start",
-                          },
-                          "& .MuiStepLabel-labelContainer": {
-                            mt: "1px",
-                          },
-                        }}
-                      >
+  activeStep={activeStep}
+  orientation="vertical"
+  connector={<SmartConnector />}
+  sx={{
+    alignItems: sidebarCollapsed ? "center" : "stretch",
+    "& .MuiStep-root": {
+      minHeight: 92,
+    },
+    "& .MuiStepLabel-root": {
+      alignItems: "flex-start",
+      justifyContent: sidebarCollapsed ? "center" : "flex-start",
+    },
+    "& .MuiStepLabel-labelContainer": {
+      display: sidebarCollapsed ? "none" : "block",
+      mt: "1px",
+    },
+    "& .MuiStepConnector-root": {
+      ml: sidebarCollapsed ? 0 : undefined,
+    },
+  }}
+>
                         {steps.map((s, index) => {
                           const status = getStepStatus(index, activeStep);
                           const isCurrent = index === activeStep;
@@ -491,53 +865,41 @@ const { fetch: downloadMassiveOperationReceiptPdfFetch } = useFetch({
                           return (
                             <Step key={`${s.title}-${index}`}>
                               <StepLabel StepIconComponent={SmartStepIcon}>
-                                <Box
-                                  sx={{
-                                    display: "flex",
-                                    flexDirection: "column",
-                                    lineHeight: 1.15,
-                                  }}
-                                >
-                                  <Typography
-                                    sx={{
-                                      fontSize: 12,
-                                      color: "#7D7D7D",
-                                      mb: 0.3,
-                                    }}
-                                  >
-                                    Paso {index + 1}
-                                  </Typography>
+  {!sidebarCollapsed && (
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        lineHeight: 1.15,
+      }}
+    >
+      <Typography sx={{ fontSize: 12, color: "#7D7D7D", mb: 0.3 }}>
+        Paso {index + 1}
+      </Typography>
 
-                                  <Typography
-                                    sx={{
-                                      fontSize: 13,
-                                      fontWeight: 700,
-                                      color: isCurrent
-                                        ? "#111"
-                                        : isDone
-                                        ? "#666"
-                                        : "#8D8D8D",
-                                      mb: 0.3,
-                                    }}
-                                  >
-                                    {s.title}
-                                  </Typography>
+      <Typography
+        sx={{
+          fontSize: 13,
+          fontWeight: 700,
+          color: isCurrent ? "#111" : isDone ? "#666" : "#8D8D8D",
+          mb: 0.3,
+        }}
+      >
+        {s.title}
+      </Typography>
 
-                                  <Typography
-                                    sx={{
-                                      fontSize: 11,
-                                      fontWeight: 600,
-                                      color: isCurrent
-                                        ? "#1A73C9"
-                                        : isDone
-                                        ? "#4E8D5D"
-                                        : "#B4B4B4",
-                                    }}
-                                  >
-                                    {status}
-                                  </Typography>
-                                </Box>
-                              </StepLabel>
+      <Typography
+        sx={{
+          fontSize: 11,
+          fontWeight: 600,
+          color: isCurrent ? "#1A73C9" : isDone ? "#4E8D5D" : "#B4B4B4",
+        }}
+      >
+        {status}
+      </Typography>
+    </Box>
+  )}
+</StepLabel>
                             </Step>
                           );
                         })}
@@ -868,29 +1230,36 @@ const { fetch: downloadMassiveOperationReceiptPdfFetch } = useFetch({
 
   const summary = data?.summary ?? data?.data ?? data ?? {};
 
-  setRegisterSummary({
-    operationId:
-      opIdInfo?.final ??
-      summary?.operationId ??
-      values?.opId ??
-      null,
-    totalOperacion:
-      summary?.totalOperacion ??
-      summary?.total_amount ??
-      summary?.total ??
-      0,
-    facturasRegistradas:
-      summary?.facturasRegistradas ??
-      summary?.registered_rows ??
-      normalizedRows?.length ??
-      0,
-    tasaPromedioPonderada:
-      summary?.tasaPromedioPonderada ??
-      summary?.weightedAverageRate ??
-      summary?.weighted_average_rate ??
-      0,
-    raw: summary,
+const finalOperationId =
+  opIdInfo?.final ??
+  summary?.operationId ??
+  data?.operationId ??
+  values?.opId ??
+  null;
+
+if (draftId && finalOperationId) {
+  await markDraftRegisteredFetch({
+    draftId,
+    registeredOpId: finalOperationId,
   });
+}
+
+setRegisterSummary({
+  operationId: finalOperationId,
+  totalOperacion:
+    summary?.totalOperacion ?? summary?.total_amount ?? summary?.total ?? 0,
+  facturasRegistradas:
+    summary?.facturasRegistradas ??
+    summary?.registered_rows ??
+    normalizedRows?.length ??
+    0,
+  tasaPromedioPonderada:
+    summary?.tasaPromedioPonderada ??
+    summary?.weightedAverageRate ??
+    summary?.weighted_average_rate ??
+    0,
+  raw: summary,
+});
 
   return response;
 }}
@@ -926,8 +1295,53 @@ const { fetch: downloadMassiveOperationReceiptPdfFetch } = useFetch({
     gap: 2,
   }}
 >
+<Box sx={{ mr: "auto", display: "flex", alignItems: "center", gap: 2 }}>
+  <Box>
+    <Typography
+      sx={{
+        fontSize: 12,
+        fontWeight: 700,
+        color: draftStatus === "error" ? "#D32F2F" : "#3E9B59",
+      }}
+    >
+      {draftStatus === "saving"
+        ? "Guardando borrador..."
+        : draftStatus === "saved"
+? "Borrador guardado"
+        : draftStatus === "error"
+        ? "Error al guardar"
+        : "Borrador no guardado"}
+    </Typography>
 
+    {lastSavedAt && (
+      <Typography sx={{ fontSize: 11, color: "#555" }}>
+        Hace unos segundos
+      </Typography>
+    )}
+  </Box>
+
+  <Button
+  variant="outlined"
+  onClick={() => {
+    const hasMinimumData =
+      values?.opId &&
+      values?.opDate &&
+      values?.billsToNegotiate?.length > 0;
+
+    if (!hasMinimumData) {
+      toast.warning("Selecciona facturas antes de guardar el borrador.");
+      return;
+    }
+
+    saveDraft(buildDraftPayload());
+  }}
+>
+  Guardar borrador
+</Button>
+</Box>
    {activeStep > 0 && (
+
+    
                         <Button
   variant="text"
   onClick={() => setActiveStep((prev) => prev - 1)}
