@@ -128,8 +128,8 @@ export const RegisterMassiveReceiptComponent = ({
 }) => {
   const [activeStep, setActiveStep] = useState(0);
   const { user } = useContext(authContext);
-
-const generateReceiptExcelRef = useRef(null);
+  const [registeredReceiptsCount, setRegisteredReceiptsCount] = useState(0);
+  const generateReceiptExcelRef = useRef(null);
   const JURIDICA_ID = "21cf32d9-522c-43ac-b41c-4dfdf832a7b8";
   const isJuridica = formik?.values?.type_client === JURIDICA_ID;
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
@@ -878,21 +878,23 @@ const handleNextStep = async () => {
       return;
     }
 
-    setUploadExcelState({
-      file: null,
-      status: "idle",
-      rows: [],
-      normalizedRows: [],
-      canRegister: false,
-      operationId: null,
-      processedMessage: "",
-      errorCount: 0,
-      modalError: "",
-      summary: {},
-      registerSummary: null,
-    });
+ setUploadExcelState({
+  file: null,
+  status: "idle",
+  rows: [],
+  normalizedRows: [],
+  canRegister: false,
+  operationId: null,
+  processedMessage: "",
+  errorCount: 0,
+  modalError: "",
+  summary: {},
+  registerSummary: null,
+});
 
-    setActiveStep(2);
+setRegisterSummary(null);
+setRegisteredReceiptsCount(0);
+setActiveStep(2);
     return;
   }
 
@@ -1031,36 +1033,45 @@ const buildDraftPayload = () => ({
     ? receiptExcelGenerated && (values?.receiptPreviewRows || []).length > 0
     : true;
 
-    const getRegisteredCount = (summary) => {
-  if (!summary) return 0;
+const getRegisteredCount = (...sources) => {
+  for (const source of sources) {
+    if (!source) continue;
 
-  const directCount = Number(
-    summary?.createdCount ??
-      summary?.created_count ??
-      summary?.registeredRows ??
-      summary?.registered_rows
-  );
+    const directCount = Number(
+      source?.createdCount ??
+        source?.created_count ??
+        source?.count ??
+        source?.registeredRows ??
+        source?.registered_rows
+    );
 
-  if (Number.isFinite(directCount) && directCount > 0) {
-    return directCount;
-  }
+    if (Number.isFinite(directCount) && directCount > 0) {
+      return directCount;
+    }
 
-  if (Array.isArray(summary?.data)) {
-    return summary.data.length;
-  }
+    if (Array.isArray(source?.data) && source.data.length > 0) {
+      return source.data.length;
+    }
 
-  if (Array.isArray(summary?.rows)) {
-    return summary.rows.length;
-  }
+    if (Array.isArray(source?.rows) && source.rows.length > 0) {
+      return source.rows.length;
+    }
 
-  if (Array.isArray(summary?.receipts)) {
-    return summary.receipts.length;
+    if (Array.isArray(source?.receipts) && source.receipts.length > 0) {
+      return source.receipts.length;
+    }
   }
 
   return 0;
 };
 
-const registeredCount = getRegisteredCount(registerSummary);
+const registeredCount = getRegisteredCount(
+  registerSummary,
+  uploadExcelState?.registerSummary,
+  uploadExcelState,
+  { createdCount: registeredReceiptsCount }
+);
+
 
 const parseLocalDate = (value) => {
   if (!value) return null;
@@ -1708,27 +1719,42 @@ const handleDeletePreviewReceiptRow = (row) => {
   <ReceiptUploadExcelStep
     uploadExcelFetch={fetchMassiveReceiptUploadExcel}
     state={uploadExcelState}
-    onNext={(payload) => {
+onNext={(payload) => {
   const createdCount = Number(
     payload?.createdCount ??
       payload?.created_count ??
+      payload?.count ??
       (Array.isArray(payload?.data) ? payload.data.length : 0) ??
       0
   );
 
-  setRegisterSummary({
-    ...payload,
+  const normalizedPayload = {
+    ...(payload || {}),
     createdCount,
-  });
+  };
+
+  console.log("REGISTER SUCCESS PAYLOAD:", normalizedPayload);
+
+  setRegisterSummary(normalizedPayload);
+  setRegisteredReceiptsCount(createdCount);
+
+  setUploadExcelState((prev) => ({
+    ...(prev || {}),
+    status: "registered_success",
+    registerSummary: normalizedPayload,
+    createdCount,
+  }));
 
   setActiveStep(3);
 }}
+
+
     setState={setUploadExcelState}
     uploadContext={uploadContext}
     onProcessedRows={(rows) => {
       setFieldValue("receiptUploadedRows", rows);
     }}
-    registerReceipts={async (normalizedRows) => {
+ registerReceipts={async (normalizedRows) => {
   const response = await fetchMassiveReceiptRegister({
     applicationDate: safeDateToIso(values?.applicationDate || new Date()),
     receiptStatus: values?.receiptStatus || DEFAULT_RECEIPT_STATUS,
@@ -1750,17 +1776,18 @@ const handleDeletePreviewReceiptRow = (row) => {
   const createdCount = Number(
     rawPayload?.createdCount ??
       rawPayload?.created_count ??
-      (Array.isArray(rawPayload?.data) ? rawPayload.data.length : 0) ??
-      normalizedRows?.length ??
+      rawPayload?.count ??
+      (Array.isArray(rawPayload?.data) ? rawPayload.data.length : normalizedRows?.length) ??
       0
   );
 
   const payload = {
-    ...rawPayload,
+    ...(rawPayload || {}),
     createdCount,
   };
 
   setRegisterSummary(payload);
+  setRegisteredReceiptsCount(createdCount);
 
   return payload;
 }}
@@ -1806,10 +1833,9 @@ const handleDeletePreviewReceiptRow = (row) => {
       Recaudos registrados correctamente
     </Typography>
 
-    <Typography sx={{ color: "#666", fontSize: 15 }}>
-      {registerSummary?.message ||
-        `Se registraron ${registerSummary?.createdCount || 0} recaudo(s).`}
-    </Typography>
+  <Typography sx={{ color: "#666", fontSize: 15 }}>
+  Se registraron {registeredCount} recaudo(s).
+</Typography>
   </Box>
 )}</Box>
                    

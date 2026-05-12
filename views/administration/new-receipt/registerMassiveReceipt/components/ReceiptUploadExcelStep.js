@@ -694,47 +694,66 @@ export const ReceiptUploadExcelStep = ({
   };
 
   const handleRegisterReceipts = async () => {
-    if (!registerReceipts || !normalizedRows?.length || !canRegister) return;
+  if (!registerReceipts || !normalizedRows?.length || !canRegister) return;
+
+  updateState({
+    status: "processing",
+    processedMessage: "Registrando recaudos...",
+    modalError: "",
+  });
+
+  try {
+    const response = await registerReceipts(normalizedRows);
+    const data = response?.data ?? response ?? {};
+
+    const createdCount = Number(
+      data?.createdCount ??
+        data?.created_count ??
+        data?.count ??
+        (Array.isArray(data?.data) ? data.data.length : 0) ??
+        0
+    );
+
+    const normalizedData = {
+      ...data,
+      createdCount,
+    };
+
+    const failed =
+      normalizedData?.error === true ||
+      normalizedData?.success === false ||
+      !response;
+
+    if (failed) {
+      throw new Error(
+        normalizedData?.message || "No fue posible registrar los recaudos."
+      );
+    }
 
     updateState({
-      status: "processing",
-      processedMessage: "Registrando recaudos...",
-      modalError: "",
+      status: "registered_success",
+      processedMessage: `Se registraron ${createdCount} recaudo(s).`,
+      registerSummary: normalizedData,
+      createdCount,
     });
 
-    try {
-      const response = await registerReceipts(normalizedRows);
-      const data = response?.data ?? response ?? {};
-      const failed = data?.error === true || data?.success === false || !response;
-
-      if (failed) {
-        throw new Error(data?.message || "No fue posible registrar los recaudos.");
-      }
-
-      updateState({
-        status: "registered_success",
-        processedMessage:
-          data?.message || "Recaudos registrados correctamente.",
-        registerSummary: data,
-      });
-
-      if (typeof onNext === "function") {
-        onNext(data);
-      }
-    } catch (error) {
-      const errorMessage =
-        error?.response?.data?.message ||
-        error?.message ||
-        "Ocurrió un error al registrar los recaudos.";
-
-      updateState({
-        status: "register_error",
-        processedMessage: errorMessage,
-        modalError: errorMessage,
-        registerSummary: null,
-      });
+    if (typeof onNext === "function") {
+      onNext(normalizedData);
     }
-  };
+  } catch (error) {
+    const errorMessage =
+      error?.response?.data?.message ||
+      error?.message ||
+      "Ocurrió un error al registrar los recaudos.";
+
+    updateState({
+      status: "register_error",
+      processedMessage: errorMessage,
+      modalError: errorMessage,
+      registerSummary: null,
+    });
+  }
+};
 
   const columns = useMemo(
     () => [
@@ -1239,51 +1258,7 @@ export const ReceiptUploadExcelStep = ({
         </>
       )}
 
-      {status === "registered_success" && (
-        <Box
-          sx={{
-            width: "100%",
-            minHeight: 520,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 3,
-            pt: 2,
-          }}
-        >
-          <Box
-            sx={{
-              width: 110,
-              height: 110,
-              borderRadius: "50%",
-              border: "8px solid #8BB38F",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#8BB38F",
-              fontSize: 58,
-              fontWeight: 800,
-            }}
-          >
-            ✓
-          </Box>
-
-          <Typography
-            sx={{
-              color: "#7EAF86",
-              fontWeight: 700,
-              fontSize: 28,
-            }}
-          >
-            Recaudos registrados correctamente
-          </Typography>
-
-          <Typography sx={{ color: "#666", fontSize: 15 }}>
-            {processedMessage}
-          </Typography>
-        </Box>
-      )}
+      
     </Box>
   );
 };
