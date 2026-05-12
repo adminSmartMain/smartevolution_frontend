@@ -10,7 +10,7 @@ import {
   IconButton,
   Breadcrumbs,
 } from "@mui/material";
-
+import ReceiptStatusSelect from "@components/selects/registerMassiveReceipts/receiptStatusSelect";
 import DownloadIcon from "@mui/icons-material/Download";
 import { toast } from "react-toastify";
 import Image from "next/image";
@@ -36,14 +36,14 @@ import esLocale from "date-fns/locale/es";
 import { Formik, Form } from "formik";
 
 import authContext from "@context/authContext";
-import smartLogo from "../../../public/assets/Logo Smart - Lite.svg";
+import smartLogo from "../../../../public/assets/Logo Smart - Lite.svg";
 
-import EmitterSelector from "@components/selects/registerMassiveOperations/EmitterSelector";
-import PayerSelector from "@components/selects/registerMassiveOperations/PayerSelector";
+import EmitterSelector from "@components/selects/registerMassiveReceipts/EmitterSelector";
+import PayerSelector from "@components/selects/registerMassiveReceipts/PayerSelector";
 
 import { BillsDualTable } from "./components/BillsDualTable";
-import { InvestorsAssignmentTable } from "./components/InvestorsAssigmentTable";
-import { UploadExcelStep } from "./components/uploadExcel";
+import { ReceiptConsignmentTable } from "./components/ReceiptConsignmentTable";
+import { ReceiptUploadExcelStep } from "./components/ReceiptUploadExcelStep";
 import { useRouter } from "next/router";
 import {
   getTypeBill,
@@ -56,6 +56,10 @@ import {
   uploadExcel,
   registerOperationFromUpload,
   downloadMassiveOperationReceiptPdf,
+  GetOperationsByEmitterPayer,
+  GetPayersFromOperationRelated,
+  MassiveReceiptUploadExcel,
+
 } from "./queries";
 
 import {
@@ -64,6 +68,8 @@ import {
   getMassiveOperationDraft,
   validateMassiveOperationDraft,
   markMassiveOperationDraftRegistered,
+  MassiveReceiptPreview,
+MassiveReceiptRegister,
 } from "./queries";
 import { useFetch } from "@hooks/useFetch";
 import { useMassiveOperationDraft } from "@hooks/useMassiveOperationDraft";
@@ -110,7 +116,7 @@ const getStepStatus = (index, activeStep) => {
   return "Pendiente";
 };
 
-export const RegisterMassiveOperationComponent = ({
+export const RegisterMassiveReceiptComponent = ({
   formik,
   initialValues,
   validationSchema,
@@ -122,7 +128,8 @@ export const RegisterMassiveOperationComponent = ({
 }) => {
   const [activeStep, setActiveStep] = useState(0);
   const { user } = useContext(authContext);
-  
+
+const generateReceiptExcelRef = useRef(null);
   const JURIDICA_ID = "21cf32d9-522c-43ac-b41c-4dfdf832a7b8";
   const isJuridica = formik?.values?.type_client === JURIDICA_ID;
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
@@ -147,6 +154,10 @@ export const RegisterMassiveOperationComponent = ({
   const [registerSummary, setRegisterSummary] = useState(null);
   const [isRestoringDraft, setIsRestoringDraft] = useState(false);
   const [draftToRestore, setDraftToRestore] = useState(null);
+  const [receiptPreviewLoading, setReceiptPreviewLoading] = useState(false);
+const [receiptExcelGenerated, setReceiptExcelGenerated] = useState(false);
+const [generateReceiptExcelFn, setGenerateReceiptExcelFn] = useState(null);
+const [registeringMassiveReceipts, setRegisteringMassiveReceipts] = useState(false);
 const hydratedDraftRef = useRef(null);
   const router = useRouter();
   const routeDraftId = router?.query?.draftId;
@@ -172,9 +183,40 @@ const hydratedDraftRef = useRef(null);
     init: false,
   });
 
+  const {
+  fetch: fetchOperationsByEmitterPayer,
+  data: dataOperationsByEmitterPayer,
+  loading: OperationsByEmitterPayerLoading,
+  isLoading: OperationsByEmitterPayerIsLoading,
+} = useFetch({
+  service: GetOperationsByEmitterPayer,
+  init: false,
+});
+
+const {
+  fetch: fetchGetPayersFromOperationRelated,
+  data: dataGetPayersFromOperationRelated,
+  loading: GetPayersFromOperationRelatedLoading,
+  isLoading: GetPayersFromOperationRelatedIsLoading,
+} = useFetch({
+  service: GetPayersFromOperationRelated,
+  init: false,
+});
+
+  console.log(dataOperationsByEmitterPayer)
 
   const { fetch: createDraftFetch } = useFetch({
   service: createMassiveOperationDraft,
+  init: false,
+});
+
+const { fetch: fetchMassiveReceiptPreview } = useFetch({
+  service: MassiveReceiptPreview,
+  init: false,
+});
+
+const { fetch: fetchMassiveReceiptRegister } = useFetch({
+  service: MassiveReceiptRegister,
   init: false,
 });
 
@@ -198,7 +240,10 @@ const { fetch: markDraftRegisteredFetch } = useFetch({
   init: false,
 });
 
-
+const { fetch: fetchMassiveReceiptUploadExcel } = useFetch({
+  service: MassiveReceiptUploadExcel,
+  init: false,
+});
 const {
   draftId,
   setDraftId,
@@ -256,6 +301,11 @@ const { fetch: downloadMassiveOperationReceiptPdfFetch } = useFetch({
 
   useFetch({ service: getTypeBill, init: true });
 
+
+
+
+  
+
   const cargarTasaDescuento = async (emisor) => {
     if (!emisor) return null;
     try {
@@ -281,21 +331,21 @@ const { fetch: downloadMassiveOperationReceiptPdfFetch } = useFetch({
     return fetchBills(emisor);
   };
 
-  const steps = useMemo(() => {
-    const base = [
-      { title: "Generación de Facturas" },
-      { title: "Asignación de inversionistas" },
-      { title: "Carga de excel" },
-      { title: "Confirmación" },
-    ];
+const steps = useMemo(() => {
+  const base = [
+    { title: "Selección de Operaciones" },
+    { title: "Consignación de recaudos" },
+    { title: "Carga de Excel" },
+    { title: "Confirmación" },
+  ];
 
-    if (isJuridica) {
-      base.push({ title: "Representante Legal" });
-      base.push({ title: "Contacto" });
-    }
+  if (isJuridica) {
+    base.push({ title: "Representante Legal" });
+    base.push({ title: "Contacto" });
+  }
 
-    return base;
-  }, [isJuridica]);
+  return base;
+}, [isJuridica]);
 
   useEffect(() => {
     const lastIndex = steps.length - 1;
@@ -405,6 +455,14 @@ const getClientData = (option) => option?.data || option || {};
 const getClientId = (option) =>
   option?.id || option?.value || option?.data?.id || "";
 
+const buildFilteredPayersFromPreoperationIds = (payerIds = [], payersList = []) => {
+  const ids = new Set((payerIds || []).map((id) => String(id)));
+
+  return (payersList || []).filter((payer) =>
+    ids.has(String(getClientId(payer)))
+  );
+};
+
 const getClientLabel = (option) => {
   const data = getClientData(option);
 
@@ -428,6 +486,7 @@ const getClientDocument = (option) => {
       ""
   ).trim();
 };
+
 
 const findClientOptionById = (list = [], id) => {
   if (!id) return null;
@@ -556,6 +615,96 @@ if (draft.emitterId) {
 
   setFieldValue("takedBills", payerBills);
 };
+
+
+
+
+
+const baseInitialValuesRef = useRef(initialValues || {});
+
+const formInitialValues = useMemo(() => {
+  const base = baseInitialValuesRef.current || {};
+
+  return {
+    ...base,
+
+    opId: draftToRestore?.opId ?? base?.opId ?? "",
+    opDate: draftToRestore?.opDate
+      ? new Date(draftToRestore.opDate)
+      : base?.opDate ?? null,
+
+    opType: draftToRestore?.opTypeId ?? base?.opType ?? "",
+
+    emitterId: draftToRestore?.emitterId ?? base?.emitterId ?? "",
+    payerId: draftToRestore?.payerId ?? base?.payerId ?? "",
+
+    emitterBrokerId:
+      draftToRestore?.emitterBrokerId ?? base?.emitterBrokerId ?? "",
+
+    emitterBrokerName:
+      draftToRestore?.metadata?.emitterBrokerName ??
+      base?.emitterBrokerName ??
+      "",
+
+    emitterLabel:
+      draftToRestore?.metadata?.emitterName ??
+      base?.emitterLabel ??
+      "",
+
+    nombrepayer:
+      draftToRestore?.metadata?.payerName ??
+      base?.nombrepayer ??
+      "",
+
+    nombrePagador:
+      draftToRestore?.payerId ??
+      base?.nombrePagador ??
+      "",
+
+    facturas: base?.facturas ?? [],
+    takedBills: base?.takedBills ?? [],
+    filteredPayers: base?.filteredPayers ?? [],
+
+    billsToNegotiate:
+      draftToRestore?.selectedBills ??
+      base?.billsToNegotiate ??
+      [],
+
+    investorAssignments:
+      draftToRestore?.investorAssignments ??
+      base?.investorAssignments ??
+      [],
+
+    applicationDate:
+      draftToRestore?.metadata?.applicationDate
+        ? new Date(draftToRestore.metadata.applicationDate)
+        : base?.applicationDate ?? new Date(),
+
+    receiptStatus:
+      draftToRestore?.metadata?.receiptStatus ??
+      base?.receiptStatus ??
+      "",
+
+    receiptType:
+      draftToRestore?.metadata?.receiptType ??
+      base?.receiptType ??
+      "Transferencia",
+
+    receiptPreviewRows:
+      draftToRestore?.metadata?.receiptPreviewRows ??
+      base?.receiptPreviewRows ??
+      [],
+
+    receiptPreviewSummary:
+      draftToRestore?.metadata?.receiptPreviewSummary ??
+      base?.receiptPreviewSummary ??
+      {},
+  };
+}, [draftToRestore?.id]);
+
+
+
+
   return (
    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={esLocale}>
   <ToastContainer position="top-right" autoClose={5000} />
@@ -606,58 +755,15 @@ if (draft.emitterId) {
 </Box>
 
         <Formik
-       initialValues={{
-  ...initialValues,
-
-  opId: draftToRestore?.opId ?? initialValues?.opId ?? "",
-  opDate: draftToRestore?.opDate
-    ? new Date(draftToRestore.opDate)
-    : initialValues?.opDate ?? null,
-
-  opType: draftToRestore?.opTypeId ?? initialValues?.opType ?? "",
-  emitterId: draftToRestore?.emitterId ?? initialValues?.emitterId ?? "",
-  payerId: draftToRestore?.payerId ?? initialValues?.payerId ?? "",
-  emitterBrokerId:
-    draftToRestore?.emitterBrokerId ?? initialValues?.emitterBrokerId ?? "",
-emitterBrokerName:
-  draftToRestore?.metadata?.emitterBrokerName ??
-  initialValues?.emitterBrokerName ??
-  "",
-  emitterLabel:
-    draftToRestore?.metadata?.emitterName ?? initialValues?.emitterLabel ?? "",
-  nombrepayer:
-    draftToRestore?.metadata?.payerName ?? initialValues?.nombrepayer ?? "",
-  nombrePagador:
-    draftToRestore?.payerId ?? initialValues?.nombrePagador ?? "",
-
-  facturas: initialValues?.facturas ?? [],
-  takedBills: initialValues?.takedBills ?? [],
-
-  billsToNegotiate:
-    draftToRestore?.selectedBills ?? initialValues?.billsToNegotiate ?? [],
-  investorAssignments:
-    draftToRestore?.investorAssignments ??
-    initialValues?.investorAssignments ??
-    [],
-}}
-        enableReinitialize
-          validationSchema={validationSchema}
-          onSubmit={handleConfirm}
-         
-        >
+     
+  initialValues={formInitialValues}
+  enableReinitialize={Boolean(draftToRestore?.id)}
+  validationSchema={validationSchema}
+  onSubmit={handleConfirm}
+>
           {({ values, setFieldValue, touched, errors, setFieldTouched, submitForm }) => {
 console.log(values)
-useEffect(() => {
-  if (!draftToRestore) return;
-  if (isRestoringDraft) return;
-  if (!emisores?.length) return;
-  if (!payers?.length) return;
-
-  if (hydratedDraftRef.current === draftToRestore.id) return;
-
-  hydratedDraftRef.current = draftToRestore.id;
-  hydrateDraft(draftToRestore, setFieldValue);
-}, [draftToRestore?.id, isRestoringDraft, emisores?.length, payers?.length]);
+const DEFAULT_RECEIPT_STATUS = "ea8518e8-168a-46d7-b56a-1286bf0037cd";
             const safeDateToIso = (value) => {
   if (!value) return null;
   const date = new Date(value);
@@ -667,86 +773,240 @@ useEffect(() => {
 
 
 
+
+const normalizeReceiptOperationPayload = (row) => ({
+  id: row?.preOperationId || row?.id,
+  preOperationId: row?.preOperationId || row?.id,
+  operation: row?.preOperationId || row?.id,
+  billUniqueId: row?.billUniqueId || row?.bill?.id || "",
+  billId: row?.billId || row?.bill?.billId || "",
+  payedAmount:0
+});
+
+const buildMassiveReceiptPreviewPayload = () => ({
+  applicationDate: safeDateToIso(values?.applicationDate || new Date()),
+  receiptStatus: values?.receiptStatus || DEFAULT_RECEIPT_STATUS,
+  receiptType: values?.receiptType || "Transferencia",
+  operations: (values?.billsToNegotiate || []).map(normalizeReceiptOperationPayload),
+});
+
+const loadMassiveReceiptPreview = async (overrideApplicationDate) => {
+  const selectedOperations = Array.isArray(values?.billsToNegotiate)
+    ? values.billsToNegotiate
+    : [];
+
+  if (selectedOperations.length < 5) {
+    toast.warning("Debe seleccionar mínimo 5 facturas.");
+    return false;
+  }
+
+  const applicationDateToUse = overrideApplicationDate || values?.applicationDate;
+
+if (!applicationDateToUse) {
+    toast.warning("Debe seleccionar la fecha de aplicación.");
+    return false;
+  }
+
+ const operationsPayload = selectedOperations.map(normalizeReceiptOperationPayload);
+
+  try {
+    setReceiptPreviewLoading(true);
+    setReceiptExcelGenerated(false);
+
+    const response = await fetchMassiveReceiptPreview({
+      applicationDate: safeDateToIso(applicationDateToUse || new Date()),
+      receiptStatus: values?.receiptStatus || DEFAULT_RECEIPT_STATUS,
+      receiptType: values?.receiptType || "Transferencia",
+      operations: operationsPayload,
+    });
+
+   const payload =
+  response?.data && !Array.isArray(response?.data)
+    ? response.data
+    : response;
+
+if (payload?.error) {
+  toast.error(payload?.message || "No fue posible calcular los recaudos.");
+  return false;
+}
+
+const previewRows = Array.isArray(payload?.data)
+  ? payload.data
+  : Array.isArray(payload)
+  ? payload
+  : [];
+
+    if (!previewRows.length) {
+  console.warn("Preview vacío. Payload enviado:", operationsPayload);
+  console.warn("Respuesta preview:", payload);
+  toast.warning(
+    "El backend no devolvió recaudos calculados para las operaciones seleccionadas."
+  );
+
+  setFieldValue("receiptPreviewRows", []);
+  setFieldValue("receiptPreviewSummary", {});
+  setFieldValue("investorAssignments", []);
+  return false;
+}
+
+setFieldValue("receiptPreviewRows", previewRows);
+setFieldValue("receiptPreviewSummary", payload?.summary || {});
+setFieldValue("investorAssignments", previewRows);
+
+return true;
+  } catch (error) {
+    console.error("Error calculando recaudos:", error);
+    toast.error("No fue posible calcular los recaudos.");
+    return false;
+  } finally {
+    setReceiptPreviewLoading(false);
+  }
+};
+
+const handleNextStep = async () => {
+  if (activeStep === 0) {
+    const ok = await loadMassiveReceiptPreview();
+    if (!ok) return;
+
+    setActiveStep(1);
+    return;
+  }
+
+  if (activeStep === 1) {
+    if (!receiptExcelGenerated) {
+      toast.warning("Debe generar el Excel antes de continuar.");
+      return;
+    }
+
+    setUploadExcelState({
+      file: null,
+      status: "idle",
+      rows: [],
+      normalizedRows: [],
+      canRegister: false,
+      operationId: null,
+      processedMessage: "",
+      errorCount: 0,
+      modalError: "",
+      summary: {},
+      registerSummary: null,
+    });
+
+    setActiveStep(2);
+    return;
+  }
+
+  setActiveStep((prev) => prev + 1);
+};
+
+
 const buildDraftPayload = () => ({
   opId: values.opId || null,
   opDate: safeDateToIso(values.opDate),
   opTypeId: values.opType || null,
-  
+
   emitterId:
     values?.emitter?.value ||
     values?.emitter?.data?.id ||
     values?.emitterId ||
     null,
+
   payerId:
     clientPagador?.id ||
     values?.payerId ||
     values?.nombrePagador ||
     null,
+
   emitterBrokerId:
     values?.emitterBroker ||
     values?.emitterBrokerId ||
     clientBrokerEmitter?.id ||
     null,
+
   currentStep: activeStep,
   status: activeStep >= 1 ? "READY_FOR_EXCEL" : "DRAFT",
+
   selectedBills: values?.billsToNegotiate || [],
-  investorAssignments: values?.investorAssignments || [],
+
+  investorAssignments:
+    values?.receiptPreviewRows ||
+    values?.investorAssignments ||
+    [],
+
   metadata: {
+    emitterName:
+      values?.emitterLabel ||
+      values?.emitter?.label ||
+      values?.emitter?.data?.social_reason ||
+      "",
+
+    payerName:
+      values?.nombrepayer ||
+      values?.payer?.label ||
+      "",
+
     emitterBrokerName:
-  values?.emitterBrokerName ||
-  getBrokerName(clientBrokerEmitter),
-    investorsExcelGenerated,
+      values?.emitterBrokerName ||
+      getBrokerName(clientBrokerEmitter),
+
+    receiptType: values?.receiptType || "Transferencia",
+    receiptStatus: values?.receiptStatus || "",
+    applicationDate: safeDateToIso(values?.applicationDate || new Date()),
+
+    receiptPreviewRows: values?.receiptPreviewRows || [],
+    receiptPreviewSummary: values?.receiptPreviewSummary || {},
+
+    receiptExcelGenerated,
+    investorsExcelGenerated: receiptExcelGenerated,
+
     selectedBillsCount: values?.billsToNegotiate?.length || 0,
-    assignmentsCount: values?.investorAssignments?.length || 0,
-    canGenerateInvestorsExcel,
+    assignmentsCount:
+      values?.receiptPreviewRows?.length ||
+      values?.investorAssignments?.length ||
+      0,
+
+    canGenerateInvestorsExcel:
+      Boolean(values?.receiptPreviewRows?.length),
   },
 });
 
+   const uploadContext = {
+  applicationDate: safeDateToIso(values?.applicationDate || new Date()),
+  receiptStatus: values?.receiptStatus || DEFAULT_RECEIPT_STATUS,
+  receiptType: values?.receiptType || "Transferencia",
 
-    const uploadContext = {
-   opDate: safeDateToIso(values?.opDate),
   emitterId:
     values?.emitter?.value ||
     values?.emitter?.data?.id ||
     values?.emitterId ||
     "",
-  emitterBrokerId:
-    
-    values?.emitterBroker ||
-    values?.emitterBrokerId ||
-    clientBrokerEmitter?.id ||
-    "",
-    emitterBrokerName:
-  values?.emitterBrokerName ||
-  getBrokerName(clientBrokerEmitter) ||
-  "",
+
   payerId:
     clientPagador?.id ||
     values?.payerId ||
     values?.nombrePagador ||
     "",
-  rows: (values?.investorAssignments || []).map((row) => ({
-  billId: row?.billUniqueId || row?.billId || "",
-  billFraction: Number(row?.fraction ?? 0),
-  investorId: row?.investorId || "",
-  investorAccount:
-    row?.selectedAccount?.account_number ||
-    row?.selectedAccount?.accountNumber ||
-    row?.selectedAccount?.number ||
-    "",
-  emitterBrokerName:
-    values?.emitterBrokerName ||
-    getBrokerName(clientBrokerEmitter) ||
-    row?.emitterBrokerName ||
-    "",
-})),
+
+  rows: (values?.receiptPreviewRows || []).map((row) => ({
+    preOperationId: row?.preOperationId || row?.id || "",
+    operation: row?.operation || row?.preOperationId || row?.id || "",
+    billId: row?.billUniqueId || "",
+    billNumber: row?.billId || "",
+    billFraction: Number(row?.fraction ?? 1),
+    investorName: row?.investorName || "",
+    investorAccount: row?.accountNumber || "",
+    account: row?.account || row?.accountId || "",
+    receiptStatus: values?.receiptStatus || DEFAULT_RECEIPT_STATUS,
+    periodStart: row?.periodStart || "",
+    periodEnd: row?.periodEnd || "",
+    toCollect: Number(row?.toCollect || 0),
+  })),
 };
 
 
             const selectedBillsCount = values?.billsToNegotiate?.length || 0;
             const isHeaderLocked = activeStep >= 1;
-            const isSuccessView =
-              uploadExcelState?.status === "registered_success";
+            const isSuccessView = activeStep === 3;
 
             const allAssignmentsComplete =
               Array.isArray(values?.investorAssignments) &&
@@ -764,14 +1024,158 @@ const buildDraftPayload = () => ({
               Array.isArray(uploadExcelState?.normalizedRows) &&
               uploadExcelState.normalizedRows.length > 0;
 
-            const canGoNext =
-              activeStep === 0
-                ? selectedBillsCount >= 5
-                : activeStep === 1
-                ? investorsExcelGenerated
-                : activeStep === 2
-                ? excelLoadedAndValid
-                : true;
+  const canGoNext =
+  activeStep === 0
+    ? selectedBillsCount >= 5
+    : activeStep === 1
+    ? receiptExcelGenerated && (values?.receiptPreviewRows || []).length > 0
+    : true;
+
+    const getRegisteredCount = (summary) => {
+  if (!summary) return 0;
+
+  const directCount = Number(
+    summary?.createdCount ??
+      summary?.created_count ??
+      summary?.registeredRows ??
+      summary?.registered_rows
+  );
+
+  if (Number.isFinite(directCount) && directCount > 0) {
+    return directCount;
+  }
+
+  if (Array.isArray(summary?.data)) {
+    return summary.data.length;
+  }
+
+  if (Array.isArray(summary?.rows)) {
+    return summary.rows.length;
+  }
+
+  if (Array.isArray(summary?.receipts)) {
+    return summary.receipts.length;
+  }
+
+  return 0;
+};
+
+const registeredCount = getRegisteredCount(registerSummary);
+
+const parseLocalDate = (value) => {
+  if (!value) return null;
+
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return value;
+  }
+
+  const stringValue = String(value).slice(0, 10);
+  const match = stringValue.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
+  if (match) {
+    const [, year, month, day] = match;
+    return new Date(Number(year), Number(month) - 1, Number(day));
+  }
+
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const getOperationStartDate = (row) => {
+  return (
+    row?.periodStart ||
+    row?.opDate ||
+    row?.raw?.periodStart ||
+    row?.raw?.opDate ||
+    null
+  );
+};
+
+const getMinApplicationDate = (selectedOperations = []) => {
+  const dates = selectedOperations
+    .map((row) => parseLocalDate(getOperationStartDate(row)))
+    .filter(Boolean);
+
+  if (!dates.length) return null;
+
+  return dates.reduce((latest, current) =>
+    current > latest ? current : latest
+  );
+};
+
+const minApplicationDate = getMinApplicationDate(
+  Array.isArray(values?.billsToNegotiate) ? values.billsToNegotiate : []
+);
+
+
+const buildReceiptSummaryFromRows = (rows = []) => {
+  const summary = {
+    canceledAnticipated: 0,
+    partialAnticipated: 0,
+    canceledExpired: 0,
+    partialExpired: 0,
+    canceledCurrent: 0,
+    partialCurrent: 0,
+  };
+
+  const summaryKeyByStatusKey = {
+    canceled_anticipated: "canceledAnticipated",
+    partial_anticipated: "partialAnticipated",
+    canceled_expired: "canceledExpired",
+    partial_expired: "partialExpired",
+    canceled_current: "canceledCurrent",
+    partial_current: "partialCurrent",
+  };
+
+  rows.forEach((row) => {
+    const summaryKey = summaryKeyByStatusKey[row?.statusKey];
+
+    if (summaryKey) {
+      summary[summaryKey] += 1;
+    }
+  });
+
+  return summary;
+};
+
+const handleDeletePreviewReceiptRow = (row) => {
+  const rowId = String(row?.preOperationId || row?.operation || row?.id || "");
+
+  if (!rowId) return;
+
+  const nextPreviewRows = (values?.receiptPreviewRows || []).filter((item) => {
+    const itemId = String(item?.preOperationId || item?.operation || item?.id || "");
+    return itemId !== rowId;
+  });
+
+  const nextBillsToNegotiate = (values?.billsToNegotiate || []).filter((item) => {
+    const itemId = String(item?.preOperationId || item?.operation || item?.id || "");
+    return itemId !== rowId;
+  });
+
+  setFieldValue("receiptPreviewRows", nextPreviewRows);
+  setFieldValue("investorAssignments", nextPreviewRows);
+  setFieldValue("billsToNegotiate", nextBillsToNegotiate);
+  setFieldValue("receiptPreviewSummary", buildReceiptSummaryFromRows(nextPreviewRows));
+
+  setReceiptExcelGenerated(false);
+  setInvestorsExcelGenerated(false);
+  setCanGenerateInvestorsExcel(false);
+
+  setUploadExcelState({
+    file: null,
+    status: "idle",
+    rows: [],
+    normalizedRows: [],
+    canRegister: false,
+    operationId: null,
+    processedMessage: "",
+    errorCount: 0,
+    modalError: "",
+  });
+
+  toast.info("Operación removida del lote. Debes generar un nuevo Excel.");
+};
 
             return (
               <>
@@ -954,88 +1358,11 @@ const buildDraftPayload = () => ({
     width: "100%",
   }}
 >
-  <Grid item xs={12} md={1} sx={{ minWidth: 80 }}>
-    {isHeaderLocked ? (
-      <HeaderReadOnlyField
-        label="Numero Operación"
-        value={values.opId}
-        minWidth={80}
-      />
-    ) : (
-      <TextField
-        label="OpID *"
-        fullWidth
-        size="small"
-        value={values.opId}
-        name="opId"
-        disabled={isHeaderLocked}
-        onChange={(e) => setFieldValue("opId", e.target.value)}
-        error={touched.opId && Boolean(errors.opId)}
-        helperText={touched.opId && errors.opId ? errors.opId : " "}
-      />
-    )}
-  </Grid>
+  
 
-  <Grid item xs={12} md={1.8} sx={{ minWidth: 140 }}>
-    {isHeaderLocked ? (
-      <HeaderReadOnlyField
-        label="Fecha de Operación"
-        value={
-          values.opDate
-            ? new Date(values.opDate).toLocaleDateString("es-CO")
-            : ""
-        }
-        minWidth={140}
-      />
-    ) : (
-      <DatePicker
-        label="Fecha de Operación *"
-        value={values.opDate}
-        disabled={isHeaderLocked}
-        onChange={(newValue) => setFieldValue("opDate", newValue)}
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            fullWidth
-            size="small"
-            helperText=" "
-          />
-        )}
-      />
-    )}
-  </Grid>
+ 
 
-  <Grid item xs={12} md={1.8} sx={{ minWidth: 150 }}>
-    {isHeaderLocked ? (
-      <HeaderReadOnlyField
-        label="Tipo de Operación"
-        value={
-          typeOperation?.data?.find((opt) => opt.id === values.opType)
-            ?.description || ""
-        }
-        minWidth={150}
-      />
-    ) : (
-      <Autocomplete
-        options={typeOperation?.data || []}
-        getOptionLabel={(o) => o.description || ""}
-        disabled={isHeaderLocked}
-        value={
-          typeOperation?.data?.find((opt) => opt.id === values.opType) || null
-        }
-        onChange={(e, newVal) => setFieldValue("opType", newVal?.id)}
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            label="Tipo Operación *"
-            fullWidth
-            size="small"
-            helperText=" "
-          />
-        )}
-      />
-    )}
-  </Grid>
+  
 
   <Grid item xs={12} md={3.4} sx={{ minWidth: 260 }}>
     {isHeaderLocked ? (
@@ -1062,30 +1389,32 @@ const buildDraftPayload = () => ({
       >
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <EmitterSelector
-            disabled={isHeaderLocked}
-            setClientPagador={setClientPagador}
-            orchestDisabled={orchestDisabled}
-            setIsSelectedPayer={setIsSelectedPayer}
-            setPendingClear={setPendingClear}
-            setFieldValue={setFieldValue}
-            setFieldTouched={setFieldTouched}
-            setEmitterSaved={setEmitterSaved}
-            emitterSaved={emitterSaved}
-            touched={touched}
-            values={values}
-            payers={payers}
-            emisores={emisores}
-            brokeDelete={brokeDelete}
-            isCreatingBill={isCreatingBill}
-            fetchBrokerByClient={fetchBrokerByClient}
-            cargarTasaDescuento={cargarTasaDescuento}
-            setOpenEmitterBrokerModal={setOpenEmitterBrokerModal}
-            setClientEmitter={setClientEmitter}
-            setClientBrokerEmitter={setClientBrokerEmitter}
-            cargarFacturas={cargarFacturas}
-            errors={errors}
-            setIsModalEmitterAd={setIsModalEmitterAd}
-          />
+  disabled={isHeaderLocked}
+  setClientPagador={setClientPagador}
+  orchestDisabled={orchestDisabled}
+  setIsSelectedPayer={setIsSelectedPayer}
+  setPendingClear={setPendingClear}
+  setFieldValue={setFieldValue}
+  setFieldTouched={setFieldTouched}
+  setEmitterSaved={setEmitterSaved}
+  emitterSaved={emitterSaved}
+  touched={touched}
+  values={values}
+  payers={payers}
+  emisores={emisores}
+  brokeDelete={brokeDelete}
+  isCreatingBill={isCreatingBill}
+  fetchBrokerByClient={fetchBrokerByClient}
+  cargarTasaDescuento={cargarTasaDescuento}
+  setOpenEmitterBrokerModal={setOpenEmitterBrokerModal}
+  setClientEmitter={setClientEmitter}
+  setClientBrokerEmitter={setClientBrokerEmitter}
+  cargarFacturas={cargarFacturas}
+  fetchGetPayersFromOperationRelated={fetchGetPayersFromOperationRelated}
+  buildFilteredPayersFromPreoperationIds={buildFilteredPayersFromPreoperationIds}
+  errors={errors}
+  setIsModalEmitterAd={setIsModalEmitterAd}
+/>
         </Box>
 
         {clientEmitter && (
@@ -1134,23 +1463,88 @@ const buildDraftPayload = () => ({
       >
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <PayerSelector
-            disabled={isHeaderLocked}
-            errors={errors}
-            showAllPayers={showAllPayers}
-            payers={payers}
-            values={values}
-            setFieldValue={setFieldValue}
-            setClientPagador={setClientPagador}
-            setIsSelectedPayer={setIsSelectedPayer}
-            touched={touched}
-            orchestDisabled={orchestDisabled}
-            dataBills={dataBills}
-          />
+  disabled={isHeaderLocked}
+  errors={errors}
+  showAllPayers={showAllPayers}
+  payers={payers}
+  values={values}
+  setFieldValue={setFieldValue}
+  setClientPagador={setClientPagador}
+  setIsSelectedPayer={setIsSelectedPayer}
+  touched={touched}
+  orchestDisabled={orchestDisabled}
+  fetchOperationsByEmitterPayer={fetchOperationsByEmitterPayer}
+/>
         </Box>
       </Box>
     )}
   </Grid>
-  
+  {activeStep === 1 && (
+  <>
+     <Grid item sx={{ width: 260, minWidth: 260, flexShrink: 0 }}>
+  <ReceiptStatusSelect
+    disabled={false}
+    formik={{
+      values,
+      touched,
+      errors,
+      setFieldValue,
+      setFieldTouched,
+    }}
+  />
+</Grid>
+
+    <Grid item sx={{ width: 180, minWidth: 180, flexShrink: 0 }}>
+      <DatePicker
+  label="Fecha Aplicación"
+  value={values.applicationDate}
+  minDate={minApplicationDate}
+  inputFormat="dd/MM/yyyy"
+  onChange={async (newValue) => {
+    const isInvalid =
+      minApplicationDate && newValue && newValue < minApplicationDate;
+
+    const nextDate = isInvalid ? minApplicationDate : newValue;
+
+    if (isInvalid) {
+      toast.warning(
+        "La fecha de aplicación no puede ser menor a la fecha de inicio de las operaciones seleccionadas."
+      );
+    }
+
+    setFieldValue("applicationDate", nextDate);
+    setFieldValue("receiptPreviewRows", []);
+    setFieldValue("receiptPreviewSummary", {});
+    setReceiptExcelGenerated(false);
+
+    if (activeStep === 1 && nextDate) {
+      await loadMassiveReceiptPreview(nextDate);
+    }
+  }}
+  renderInput={(params) => (
+    <TextField
+      {...params}
+      fullWidth
+      size="small"
+      sx={{
+        "& .MuiOutlinedInput-root": {
+          height: 44,
+          borderRadius: "10px",
+          backgroundColor: "#fff",
+        },
+        "& .MuiInputBase-input": {
+          fontSize: 13,
+        },
+        "& .MuiInputLabel-root": {
+          fontSize: 13,
+        },
+      }}
+    />
+  )}
+/>
+    </Grid>
+  </>
+)}
 
 <Grid
   item
@@ -1181,10 +1575,17 @@ const buildDraftPayload = () => ({
           size="small"
           disabled={draftStatus === "saving"}
           onClick={() => {
-            const hasMinimumDraftData =
-              values?.opId &&
-              values?.opDate &&
-              values?.billsToNegotiate?.length > 0;
+           const hasMinimumDraftData =
+  (
+    values?.emitter?.value ||
+    values?.emitter?.data?.id ||
+    values?.emitterId
+  ) &&
+  (
+    values?.payerId ||
+    values?.nombrePagador
+  ) &&
+  values?.billsToNegotiate?.length > 0;
 
             if (!hasMinimumDraftData) {
               toast.warning("Selecciona facturas antes de guardar el borrador.");
@@ -1264,117 +1665,153 @@ const buildDraftPayload = () => ({
     display: "flex",
     flexDirection: "column",
   }}
->    {activeStep === 0 && (
-                      <BillsDualTable
-                        takedBills={values?.takedBills || []}
-                        billsToNegotiate={values?.billsToNegotiate || []}
-                        loading={isLoadingBills}
-                        nombrePagador={values?.nombrePagador}
-                        emitterKey={
-                          values?.emitter?.value || values?.emitterId || ""
-                        }
-                        setFieldValue={setFieldValue}
-                      />
-                    )}
+>   {activeStep === 0 && (
+  <BillsDualTable
+    takedBills={values?.takedBills || []}
+    billsToNegotiate={values?.billsToNegotiate || []}
+    loading={isLoadingBills}
+    nombrePagador={values?.nombrePagador}
+    emitterKey={values?.emitter?.value || values?.emitterId || ""}
+    setFieldValue={setFieldValue}
+    OperationsByEmitterPayerLoading={OperationsByEmitterPayerLoading}
+  />
+)}
 
-                    {activeStep === 1 && (
-                      <>
-                    
+{activeStep === 1 && (
+  <ReceiptConsignmentTable
+    rows={values?.receiptPreviewRows || []}
+    summary={values?.receiptPreviewSummary || {}}
+    loading={receiptPreviewLoading}
+    user={user}
+    emitterName={
+      values?.emitterLabel ||
+      values?.emitter?.label ||
+      values?.emitter?.data?.social_reason ||
+      ""
+    }
+    payerName={values?.nombrepayer || values?.payer?.label || ""}
+    applicationDate={values?.applicationDate}
+    receiptTypeLabel={values?.receiptType || "Transferencia"}
+    onDeleteRow={handleDeletePreviewReceiptRow}
+    onExcelGenerated={(generated) => {
+      setReceiptExcelGenerated(Boolean(generated));
+      setInvestorsExcelGenerated(Boolean(generated));
+      setCanGenerateInvestorsExcel(Boolean(generated));
+    }}
+    exposeGenerateExcel={(fn) => {
+      generateReceiptExcelRef.current = fn;
+    }}
+  />
+)}
 
-                   <InvestorsAssignmentTable
-  billsToNegotiate={values?.billsToNegotiate || []}
-  investorAssignments={values?.investorAssignments || []}
-  investors={investors || []}
-  cargarTasaDescuento={cargarTasaDescuento}
-  getBillFractionBulkFetch={getBillFractionBulkFetch}
-  cargarCuentas={fetchAccountsFromClient}
-  cargarBrokerFromInvestor={cargarBrokerFromInvestor}
-  setFieldValue={setFieldValue}
-  opId={values?.opId}
-  opDate={values?.opDate}
-  emitter={values?.emitter}
-  payerId={values?.nombrePagador}
-  payerName={values?.nombrepayer}
-  user={user}
-  formik={values}
-  investorsExcelGenerated={investorsExcelGenerated}
-  setInvestorsExcelGenerated={setInvestorsExcelGenerated}
-  onExcelReadyChange={setCanGenerateInvestorsExcel}
-  exposeGenerateExcel={(fn) => setGenerateInvestorsExcelFn(() => fn)}
-/>
-                      </>
-                    )}
+{activeStep === 2 && (
+  <ReceiptUploadExcelStep
+    uploadExcelFetch={fetchMassiveReceiptUploadExcel}
+    state={uploadExcelState}
+    onNext={(payload) => {
+  const createdCount = Number(
+    payload?.createdCount ??
+      payload?.created_count ??
+      (Array.isArray(payload?.data) ? payload.data.length : 0) ??
+      0
+  );
 
-                    {(activeStep === 2 || isSuccessView) && (
-                      <UploadExcelStep
-                        uploadExcelFetch={uploadExcelFetch}
-                        setActiveStep={setActiveStep}
-                        setUploadExcelState={setUploadExcelState}
-                          downloadReceiptPdfFetch={downloadMassiveOperationReceiptPdfFetch}
-                        setRegisterSummary={setRegisterSummary}
-                        registerOperation={async (normalizedRows) => {
-  const response = await registerOperationFromUploadFetch({
-    rows: normalizedRows,
-    opTypeId: values?.opType,
+  setRegisterSummary({
+    ...payload,
+    createdCount,
   });
 
-  const data = response?.data ?? response ?? {};
-  const opIdInfo = data?.opIdInfo;
+  setActiveStep(3);
+}}
+    setState={setUploadExcelState}
+    uploadContext={uploadContext}
+    onProcessedRows={(rows) => {
+      setFieldValue("receiptUploadedRows", rows);
+    }}
+    registerReceipts={async (normalizedRows) => {
+  const response = await fetchMassiveReceiptRegister({
+    applicationDate: safeDateToIso(values?.applicationDate || new Date()),
+    receiptStatus: values?.receiptStatus || DEFAULT_RECEIPT_STATUS,
+    receiptType: values?.receiptType || "Transferencia",
+    rows: normalizedRows,
+  });
 
-  if (opIdInfo?.changed) {
-    toast.warning(
-      `El opId fue ajustado automáticamente de ${opIdInfo.requested} a ${opIdInfo.final}`
+  const rawPayload =
+    response?.data && !Array.isArray(response?.data)
+      ? response.data
+      : response;
+
+  if (rawPayload?.error) {
+    throw new Error(
+      rawPayload?.message || "No fue posible registrar los recaudos."
     );
-
-    // Opcional: actualizar el valor visible en el formulario
-    setFieldValue("opId", opIdInfo.final);
-  } else if (opIdInfo?.final) {
-    // Opcional: sincronizar por si acaso
-    setFieldValue("opId", opIdInfo.final);
   }
 
-  const summary = data?.summary ?? data?.data ?? data ?? {};
+  const createdCount = Number(
+    rawPayload?.createdCount ??
+      rawPayload?.created_count ??
+      (Array.isArray(rawPayload?.data) ? rawPayload.data.length : 0) ??
+      normalizedRows?.length ??
+      0
+  );
 
-const finalOperationId =
-  opIdInfo?.final ??
-  summary?.operationId ??
-  data?.operationId ??
-  values?.opId ??
-  null;
+  const payload = {
+    ...rawPayload,
+    createdCount,
+  };
 
-if (draftId && finalOperationId) {
-  await markDraftRegisteredFetch({
-    draftId,
-    registeredOpId: finalOperationId,
-  });
-}
+  setRegisterSummary(payload);
 
-setRegisterSummary({
-  operationId: finalOperationId,
-  totalOperacion:
-    summary?.totalOperacion ?? summary?.total_amount ?? summary?.total ?? 0,
-  facturasRegistradas:
-    summary?.facturasRegistradas ??
-    summary?.registered_rows ??
-    normalizedRows?.length ??
-    0,
-  tasaPromedioPonderada:
-    summary?.tasaPromedioPonderada ??
-    summary?.weightedAverageRate ??
-    summary?.weighted_average_rate ??
-    0,
-  raw: summary,
-});
-
-  return response;
+  return payload;
 }}
-                        onNext={() => setActiveStep(3)}
-                        createdByLabel="Usuario Smart Evolution"
-                        state={uploadExcelState}
-                        setState={setUploadExcelState}
-                      uploadContext={uploadContext}
-/>
-                    )}</Box>
+  />
+)}
+
+{activeStep === 3 && (
+  <Box
+    sx={{
+      width: "100%",
+      minHeight: 520,
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 3,
+    }}
+  >
+    <Box
+      sx={{
+        width: 110,
+        height: 110,
+        borderRadius: "50%",
+        border: "8px solid #8BB38F",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: "#8BB38F",
+        fontSize: 58,
+        fontWeight: 800,
+      }}
+    >
+      ✓
+    </Box>
+
+    <Typography
+      sx={{
+        color: "#7EAF86",
+        fontWeight: 700,
+        fontSize: 28,
+      }}
+    >
+      Recaudos registrados correctamente
+    </Typography>
+
+    <Typography sx={{ color: "#666", fontSize: 15 }}>
+      {registerSummary?.message ||
+        `Se registraron ${registerSummary?.createdCount || 0} recaudo(s).`}
+    </Typography>
+  </Box>
+)}</Box>
                    
                     </Box>
                   </Grid>
@@ -1427,8 +1864,13 @@ setRegisterSummary({
   {activeStep === 1 && (
 <Button
   variant="outlined"
-  onClick={() => generateInvestorsExcelFn?.()}
-  disabled={!canGenerateInvestorsExcel}
+onClick={() => {
+ generateReceiptExcelRef.current?.();
+}}
+  disabled={
+  !Array.isArray(values?.receiptPreviewRows) ||
+  values.receiptPreviewRows.length === 0
+}
   startIcon={<DownloadIcon />}
   sx={{
     minWidth: 175,
@@ -1462,40 +1904,25 @@ setRegisterSummary({
 )}
                        
 
-                        {activeStep < 2 && (
+            {activeStep < 2 && (
   <Button
     variant="contained"
-    disabled={!canGoNext}
+    disabled={receiptPreviewLoading || !canGoNext}
+    onClick={handleNextStep}
     sx={{
-      bgcolor: canGoNext ? "#2C9A9A" : "#D0D0D0",
+      bgcolor: "#2C9A9A",
       color: "#fff",
       px: 4,
       "&:hover": {
-        bgcolor: canGoNext ? "#258383" : "#D0D0D0",
+        bgcolor: "#258383",
       },
       "&.Mui-disabled": {
         bgcolor: "#D0D0D0",
         color: "#fff",
       },
     }}
-    onClick={() => {
-      if (activeStep === 0) {
-        if (selectedBillsCount < 5) return;
-        setInvestorsExcelGenerated(false);
-        setCanGenerateInvestorsExcel(false);
-        setGenerateInvestorsExcelFn(null);
-        setActiveStep(1);
-        return;
-      }
-
-      if (activeStep === 1) {
-        if (!investorsExcelGenerated) return;
-        setActiveStep(2);
-        return;
-      }
-    }}
   >
-    Siguiente
+    {activeStep === 0 && receiptPreviewLoading ? "Calculando..." : "Siguiente"}
   </Button>
 )}
                       </Box>
