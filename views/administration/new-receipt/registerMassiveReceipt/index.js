@@ -15,7 +15,7 @@ import {
   GetOperationById,
   GetRiskProfile,
   UpdateOperation,
-  Clients,
+  ClientsWithActiveOperations,
   getOperationsVersionTwo,
 } from "./queries";
 
@@ -35,7 +35,7 @@ export const RegisterMassiveReceiptIndex = () => {
     loading: loading,
     error: error,
     data: data,
-  } = useFetch({ service: Clients, init: true });
+  } = useFetch({ service: ClientsWithActiveOperations, init: true });
   const {
     fetch: getLastId,
     loading: loadingGetLastId,

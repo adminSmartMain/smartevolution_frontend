@@ -137,12 +137,14 @@ export const GetRiskProfile = async (data) => {
   return res.data;
 };
 
-export const Clients = async (data) => {
-  const res = await Axios.get(`${API_URL}/client/all`, {
+export const ClientsWithActiveOperations = async (params = {}) => {
+  const res = await Axios.get(`${API_URL}/client/with-active-operations/`, {
+    params,
     headers: {
       authorization: "Bearer " + localStorage.getItem("access-token"),
     },
   });
+
   return res.data;
 };
 

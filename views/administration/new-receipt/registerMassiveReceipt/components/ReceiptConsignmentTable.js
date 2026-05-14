@@ -418,28 +418,7 @@ const compactTextSx = {
 };
 
 const columns = [
-  {
-    field: "statusKey",
-    headerName: "",
-    width: 26,
-    minWidth: 26,
-    maxWidth: 26,
-    sortable: false,
-    renderCell: (params) => {
-      const config = STATUS_CONFIG[params.row.statusKey] || {};
-
-      return (
-        <Box
-          sx={{
-            width: 16,
-            height: 16,
-            borderRadius: "50%",
-            bgcolor: config.color || "#607D8B",
-          }}
-        />
-      );
-    },
-  },
+ 
   {
     field: "billId",
     headerName: "Factura",
