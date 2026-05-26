@@ -14,6 +14,9 @@ import { DataGrid } from "@mui/x-data-grid";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { GetClientsWithAccounts } from "../queries";
+import IconButton from "@mui/material/IconButton";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+
 
 const InvestorsTableSkeleton = () => {
   return (
@@ -74,12 +77,203 @@ const extractRowsFromBulkResponse = (response) => {
   return raw.flat(Infinity).filter(Boolean);
 };
 
+const getAssignmentKeys = (item = {}) => {
+  const billUniqueId =
+    item?.billUniqueId ||
+    item?.bill_unique_id ||
+    item?.billIdUnique ||
+    item?.bill?.id ||
+    item?.bill;
+
+  const billId =
+    item?.billId ||
+    item?.bill_id ||
+    item?.number ||
+    item?.billNumber ||
+    item?.bill_label;
+
+  const fraction =
+    item?.fraction ??
+    item?.billFraction ??
+    item?.fraccion ??
+    item?.fractionNumber ??
+    item?.bill_fraction ??
+    1;
+
+  const keys = [];
+
+  if (billUniqueId && fraction) {
+    keys.push(`${billUniqueId}-${fraction}`);
+  }
+
+  if (billId && fraction) {
+    keys.push(`${billId}-${fraction}`);
+  }
+
+  if (item?.billFractionId) keys.push(item.billFractionId);
+  if (item?.fractionId) keys.push(item.fractionId);
+  if (item?.rowId) keys.push(item.rowId);
+
+  return keys
+    .filter((v) => v !== undefined && v !== null && String(v).trim() !== "")
+    .map((v) => String(v));
+};
 const buildExistingAssignmentsMap = (assignments = []) => {
   const map = new Map();
+
   assignments.forEach((item) => {
-    map.set(String(item?.id), item);
+    getAssignmentKeys(item).forEach((key) => {
+      if (!map.has(key)) {
+        map.set(key, item);
+      }
+    });
   });
+
   return map;
+};
+const getBillGroupKey = (row = {}) => {
+  return String(
+    row?.billUniqueId ||
+      row?.bill_unique_id ||
+      row?.billIdUnique ||
+      row?.bill?.id ||
+      row?.billId ||
+      row?.bill_id ||
+      row?.number ||
+      row?.billNumber ||
+      ""
+  ).trim();
+};
+
+const getRowFraction = (row = {}) => {
+  return Number(
+    row?.fraction ??
+      row?.billFraction ??
+      row?.fraccion ??
+      row?.fractionNumber ??
+      row?.bill_fraction ??
+      1
+  );
+};
+
+const getBillKeyFromBill = (bill = {}) => {
+  return String(
+    bill?.billUniqueId ||
+      bill?.bill_unique_id ||
+      bill?.billIdUnique ||
+      bill?.bill?.id ||
+      bill?.id ||
+      bill?.billId ||
+      bill?.bill_id ||
+      bill?.number ||
+      bill?.billNumber ||
+      ""
+  ).trim();
+};
+
+const buildAssignmentRowId = (row = {}, fraction = 1) => {
+  const billKey = getBillGroupKey(row);
+  return `${billKey}-${fraction}`;
+};
+
+const renumberAssignmentsByBill = (rows = []) => {
+  const groups = new Map();
+
+  rows.forEach((row) => {
+    const billKey = getBillGroupKey(row);
+    if (!billKey) return;
+
+    if (!groups.has(billKey)) {
+      groups.set(billKey, []);
+    }
+
+    groups.get(billKey).push(row);
+  });
+
+  const result = [];
+
+  groups.forEach((groupRows) => {
+    const ordered = [...groupRows].sort((a, b) => {
+      return getRowFraction(a) - getRowFraction(b);
+    });
+
+    ordered.forEach((row, index) => {
+      const nextFraction = index + 1;
+
+      result.push({
+        ...row,
+        id: buildAssignmentRowId(row, nextFraction),
+        fraction: nextFraction,
+        billFraction: nextFraction,
+        billLabel: row?.billId
+          ? `${row.billId} / ${nextFraction}`
+          : row?.billLabel,
+      });
+    });
+  });
+
+  return result;
+};
+
+const syncBillsFractionsFromAssignments = ({
+  billsToNegotiate = [],
+  assignments = [],
+}) => {
+  const countByBillKey = new Map();
+
+  assignments.forEach((row) => {
+    const billKey = getBillGroupKey(row);
+    if (!billKey) return;
+
+    countByBillKey.set(billKey, (countByBillKey.get(billKey) || 0) + 1);
+  });
+
+  return (Array.isArray(billsToNegotiate) ? billsToNegotiate : [])
+    .map((bill) => {
+      const billKey = getBillKeyFromBill(bill);
+      const count = countByBillKey.get(billKey);
+
+      if (!count) return null;
+
+      return {
+        ...bill,
+        fractionsToSplit: count,
+      };
+    })
+    .filter(Boolean);
+};
+
+const getInvestorIdFromOption = (option) => {
+  return String(
+    option?.value ??
+      option?.data?.id ??
+      option?.id ??
+      ""
+  ).trim();
+};
+
+const hasSameInvestorInSameBill = ({
+  rows = [],
+  currentRow,
+  investorId,
+}) => {
+  const currentBillKey = getBillGroupKey(currentRow);
+
+  if (!currentBillKey || !investorId) return false;
+
+  return rows.some((row) => {
+    if (String(row?.id) === String(currentRow?.id)) return false;
+
+    const rowBillKey = getBillGroupKey(row);
+    const rowInvestorId = String(row?.investorId || "").trim();
+
+    return (
+      rowBillKey &&
+      rowBillKey === currentBillKey &&
+      rowInvestorId &&
+      rowInvestorId === String(investorId)
+    );
+  });
 };
 
 const dedupeById = (rows = []) => {
@@ -106,6 +300,8 @@ const dedupeById = (rows = []) => {
 };
 
 export const InvestorsAssignmentTable = ({
+
+  onInvalidateUploadExcel,
   billsToNegotiate = [],
   investorAssignments = [],
   investors = [],
@@ -117,6 +313,7 @@ export const InvestorsAssignmentTable = ({
   setFieldValue,
   opId,
   opDate,
+  
   emitter,
   payerId,
   payerName,
@@ -253,105 +450,135 @@ const [selectionModel, setSelectionModel] = useState([]);
     );
   }, [billsToNegotiate]);
 
-  useEffect(() => {
-    let cancelled = false;
+useEffect(() => {
+  let cancelled = false;
 
-    const buildRows = async () => {
-      if (!Array.isArray(billsToNegotiate) || billsToNegotiate.length === 0) {
-        lastProcessedSignatureRef.current = "";
+  const buildRows = async () => {
+    if (!Array.isArray(billsToNegotiate) || billsToNegotiate.length === 0) {
+      lastProcessedSignatureRef.current = "";
+      setLoadingRows(false);
+
+      if (!Array.isArray(latestAssignmentsRef.current) || latestAssignmentsRef.current.length === 0) {
         setFieldValue("investorAssignments", []);
-        return;
       }
 
-      if (lastProcessedSignatureRef.current === billsSignature) {
-        return;
-      }
+      return;
+    }
 
-      setLoadingRows(true);
+    if (lastProcessedSignatureRef.current === billsSignature) {
+      setLoadingRows(false);
+      return;
+    }
 
-      try {
-        const payload = {
-          bills: billsToNegotiate.map((bill, index) => ({
-            id: bill?.id ?? bill?.billId ?? bill?.number ?? `bill-${index}`,
-            billId: bill?.billId ?? bill?.number ?? "",
-            fractionsToSplit: Number(bill?.fractionsToSplit ?? 1),
-          })),
+    setLoadingRows(true);
+
+    try {
+      const payload = {
+        bills: billsToNegotiate.map((bill, index) => ({
+          id: bill?.id ?? bill?.billId ?? bill?.number ?? `bill-${index}`,
+          billId: bill?.billId ?? bill?.number ?? "",
+          fractionsToSplit: Number(bill?.fractionsToSplit ?? 1),
+        })),
+      };
+
+      const response = await getBillFractionBulkFetch(payload);
+
+      const extractedRows = extractRowsFromBulkResponse(response);
+      const rowsFromApi = dedupeById(extractedRows);
+
+      if (cancelled) return;
+
+      // Usa la referencia más reciente, no el investorAssignments viejo del closure.
+      const existingAssignmentsMap = buildExistingAssignmentsMap(
+        latestAssignmentsRef.current || []
+      );
+
+      const merged = rowsFromApi.map((row, index) => {
+        const rowId = String(
+          row?.id ??
+            row?.billFractionId ??
+            row?.fractionId ??
+            row?.billId ??
+            `row-${index}`
+        );
+
+        const possibleKeys = getAssignmentKeys({
+  ...row,
+  id: rowId,
+});
+
+        const existing =
+          possibleKeys
+            .map((key) => existingAssignmentsMap.get(key))
+            .find(Boolean) || null;
+
+        if (existing) {
+          return {
+            ...row,
+            ...existing,
+            id: rowId,
+
+            investorId: existing.investorId ?? "",
+            investorLabel: existing.investorLabel ?? "",
+            selectedInvestor: existing.selectedInvestor ?? null,
+
+            investorBrokerId: existing.investorBrokerId ?? "",
+            investorBrokerName: existing.investorBrokerName ?? "",
+
+            accountId: existing.accountId ?? "",
+            selectedAccount: existing.selectedAccount ?? null,
+            availableAccounts: existing.availableAccounts ?? [],
+
+            accountAvailableBalance:
+              existing.accountAvailableBalance ?? 0,
+            accountTotalBalance:
+              existing.accountTotalBalance ?? 0,
+          };
+        }
+
+        return {
+          ...row,
+          id: rowId,
+
+          investorId: "",
+          investorLabel: "",
+          selectedInvestor: null,
+
+          investorBrokerId: "",
+          investorBrokerName: "",
+
+          accountId: "",
+          selectedAccount: null,
+          availableAccounts: [],
+
+          accountAvailableBalance: 0,
+          accountTotalBalance: 0,
         };
+      });
 
-        const response = await getBillFractionBulkFetch(payload);
+      lastProcessedSignatureRef.current = billsSignature;
+      latestAssignmentsRef.current = merged;
 
-        const extractedRows = extractRowsFromBulkResponse(response);
-        const rowsFromApi = dedupeById(extractedRows);
+      setFieldValue("investorAssignments", merged);
+    } catch (error) {
+      console.error("Error building investor rows:", error);
 
-        if (cancelled) return;
-
-        const existingAssignmentsMap =
-          buildExistingAssignmentsMap(investorAssignments);
-
-        const merged = rowsFromApi.map((row, index) => {
-          const rowId = String(
-            row?.id ??
-              row?.billFractionId ??
-              row?.fractionId ??
-              row?.billId ??
-              `row-${index}`
-          );
-
-          const existing = existingAssignmentsMap.get(rowId);
-
-          return existing
-            ? {
-                ...row,
-                ...existing,
-                id: rowId,
-                investorId: existing.investorId ?? "",
-                investorLabel: existing.investorLabel ?? "",
-                selectedInvestor: existing.selectedInvestor ?? null,
-                investorBrokerId: existing.investorBrokerId ?? "",
-                investorBrokerName: existing.investorBrokerName ?? "",
-                accountId: existing.accountId ?? "",
-                selectedAccount: existing.selectedAccount ?? null,
-                availableAccounts: existing.availableAccounts ?? [],
-                accountAvailableBalance:
-                  existing.accountAvailableBalance ?? 0,
-                accountTotalBalance: existing.accountTotalBalance ?? 0,
-              }
-            : {
-                ...row,
-                id: rowId,
-                investorId: "",
-                investorLabel: "",
-                selectedInvestor: null,
-                investorBrokerId: "",
-                investorBrokerName: "",
-                accountId: "",
-                selectedAccount: null,
-                availableAccounts: [],
-                accountAvailableBalance: 0,
-                accountTotalBalance: 0,
-              };
-        });
-
-        lastProcessedSignatureRef.current = billsSignature;
-        setFieldValue("investorAssignments", merged);
-      } catch (error) {
-        console.error("Error building investor rows:", error);
-        if (!cancelled) {
-          setFieldValue("investorAssignments", []);
-        }
-      } finally {
-        if (!cancelled) {
-          setLoadingRows(false);
-        }
+      if (!cancelled) {
+        Toast("No fue posible cargar las fracciones seleccionadas.", "error");
       }
-    };
+    } finally {
+      if (!cancelled) {
+        setLoadingRows(false);
+      }
+    }
+  };
 
-    buildRows();
+  buildRows();
 
-    return () => {
-      cancelled = true;
-    };
-  }, [billsSignature]);
+  return () => {
+    cancelled = true;
+  };
+}, [billsSignature]);
 
  const filteredRows = useMemo(() => {
     const q = norm(search);
@@ -365,15 +592,74 @@ const [selectionModel, setSelectionModel] = useState([]);
     );
   }, [investorAssignments, search]);
 
-  const updateRow = (rowId, patch) => {
-    const updated = (investorAssignments || []).map((row) =>
-      row.id === rowId ? { ...row, ...patch } : row
-    );
+const updateRow = (rowId, patch) => {
+  const sourceRows = latestAssignmentsRef.current?.length
+    ? latestAssignmentsRef.current
+    : investorAssignments || [];
 
-    setFieldValue("investorAssignments", updated);
-    setInvestorsExcelGenerated?.(false);
-  };
+  const updated = sourceRows.map((row) =>
+    String(row.id) === String(rowId) ? { ...row, ...patch } : row
+  );
 
+  latestAssignmentsRef.current = updated;
+
+  setFieldValue("investorAssignments", updated);
+  setInvestorsExcelGenerated?.(false);
+  onInvalidateUploadExcel?.();
+};
+const handleDeleteFractionRow = (rowToDelete) => {
+  const sourceRows = latestAssignmentsRef.current?.length
+    ? latestAssignmentsRef.current
+    : investorAssignments || [];
+
+  const deletedBillKey = getBillGroupKey(rowToDelete);
+
+  const remainingAssignments = sourceRows.filter(
+    (row) => String(row.id) !== String(rowToDelete.id)
+  );
+
+  const remainingCountForDeletedBill = remainingAssignments.filter(
+    (row) => getBillGroupKey(row) === deletedBillKey
+  ).length;
+
+  const updatedBillsToNegotiate = (Array.isArray(billsToNegotiate)
+    ? billsToNegotiate
+    : []
+  )
+    .map((bill) => {
+      const billKey = getBillKeyFromBill(bill);
+
+      if (billKey !== deletedBillKey) return bill;
+
+      if (remainingCountForDeletedBill <= 0) {
+        return null;
+      }
+
+      return {
+        ...bill,
+        fractionsToSplit: remainingCountForDeletedBill,
+      };
+    })
+    .filter(Boolean);
+
+  latestAssignmentsRef.current = remainingAssignments;
+
+  setFieldValue("investorAssignments", remainingAssignments);
+  setFieldValue("billsToNegotiate", updatedBillsToNegotiate);
+
+  setSelectionModel((prev) =>
+    Array.isArray(prev)
+      ? prev.filter((id) => String(id) !== String(rowToDelete.id))
+      : []
+  );
+
+  lastProcessedSignatureRef.current = "";
+
+  setInvestorsExcelGenerated?.(false);
+  onInvalidateUploadExcel?.();
+
+  Toast("Fracción eliminada correctamente.", "success");
+};
   const handleInvestorChange = async (row, newInvestor) => {
     if (!newInvestor) {
       updateRow(row.id, {
@@ -394,6 +680,38 @@ const [selectionModel, setSelectionModel] = useState([]);
     const investorId =
       newInvestor?.value ?? newInvestor?.data?.id ?? newInvestor?.id ?? "";
 
+
+    const sourceRows = latestAssignmentsRef.current?.length
+  ? latestAssignmentsRef.current
+  : investorAssignments || [];
+
+if (
+  hasSameInvestorInSameBill({
+    rows: sourceRows,
+    currentRow: row,
+    investorId,
+  })
+) {
+  Toast(
+    "Este inversionista ya está asignado a otra fracción de la misma factura.",
+    "warning"
+  );
+
+  updateRow(row.id, {
+    investorId: "",
+    investorLabel: "",
+    selectedInvestor: null,
+    investorBrokerId: "",
+    investorBrokerName: "",
+    accountId: "",
+    selectedAccount: null,
+    availableAccounts: [],
+    accountAvailableBalance: 0,
+    accountTotalBalance: 0,
+  });
+
+  return;
+}
     const emitterId =
       formik?.emitter?.value ??
       formik?.emitter?.data?.id ??
@@ -560,6 +878,23 @@ const [selectionModel, setSelectionModel] = useState([]);
     }
   };
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   const handleApplyToSelected = async () => {
     if (!bulkInvestor) {
       Toast("Debe seleccionar un inversionista.", "warning");
@@ -574,6 +909,54 @@ const [selectionModel, setSelectionModel] = useState([]);
     const investorId =
       bulkInvestor?.value ?? bulkInvestor?.data?.id ?? bulkInvestor?.id ?? "";
 
+
+      const sourceRows = latestAssignmentsRef.current?.length
+  ? latestAssignmentsRef.current
+  : investorAssignments || [];
+
+const selectedRowsToUpdate = sourceRows.filter((row) =>
+  selectedRowIds.includes(String(row.id))
+);
+
+const selectedBillGroups = selectedRowsToUpdate.reduce((acc, row) => {
+  const billKey = getBillGroupKey(row);
+  if (!billKey) return acc;
+
+  acc[billKey] = acc[billKey] || [];
+  acc[billKey].push(row);
+
+  return acc;
+}, {});
+
+const hasMultipleFractionsFromSameBillSelected = Object.values(
+  selectedBillGroups
+).some((rows) => rows.length > 1);
+
+if (hasMultipleFractionsFromSameBillSelected) {
+  Toast(
+    "No puedes aplicar el mismo inversionista a varias fracciones de la misma factura.",
+    "warning"
+  );
+  return;
+}
+
+const conflictsWithExistingAssignments = selectedRowsToUpdate.some((row) =>
+  hasSameInvestorInSameBill({
+    rows: sourceRows,
+    currentRow: row,
+    investorId,
+  })
+);
+
+if (conflictsWithExistingAssignments) {
+  Toast(
+    "Este inversionista ya está asignado a otra fracción de una de las facturas seleccionadas.",
+    "warning"
+  );
+  return;
+}
+
+      
     const emitterId =
       formik?.emitter?.value ??
       formik?.emitter?.data?.id ??
@@ -620,7 +1003,8 @@ const [selectionModel, setSelectionModel] = useState([]);
       investorBrokerName = "";
     }
 
-    const updated = (investorAssignments || []).map((row) => {
+     
+const updated = sourceRows.map((row) => {
       const rowId = String(row.id);
       if (!selectedRowIds.includes(rowId)) return row;
 
@@ -639,8 +1023,11 @@ const [selectionModel, setSelectionModel] = useState([]);
       };
     });
 
-    setFieldValue("investorAssignments", updated);
-    setInvestorsExcelGenerated?.(false);
+   latestAssignmentsRef.current = updated;
+
+setFieldValue("investorAssignments", updated);
+setInvestorsExcelGenerated?.(false);
+onInvalidateUploadExcel?.();
 
     Toast(
       `Se aplicó el inversionista a ${selectedRowIds.length} factura(s).`,
@@ -667,6 +1054,17 @@ const [selectionModel, setSelectionModel] = useState([]);
       );
     }
   }, [allAssignmentsComplete, investorAssignments, onExcelReadyChange]);
+
+
+  useEffect(() => {
+  setSelectionModel([]);
+  setBulkInvestor(null);
+  setBulkAccount(null);
+  setBulkAccounts([]);
+}, [billsSignature]);
+
+
+
 
   const generateExcel = useCallback(async () => {
     if (!Array.isArray(investorAssignments) || investorAssignments.length === 0) {
@@ -1174,8 +1572,56 @@ formik?.emitterBrokerId ||
         );
       },
     },
+
+    {
+  field: "actions",
+  headerName: "",
+  width: 44,
+  minWidth: 44,
+  maxWidth: 44,
+  sortable: false,
+  filterable: false,
+  disableColumnMenu: true,
+  align: "center",
+  headerAlign: "center",
+  renderCell: (params) => (
+    <IconButton
+      size="small"
+      onClick={() => handleDeleteFractionRow(params.row)}
+      sx={{
+        color: "#D32F2F",
+        p: 0.25,
+        "&:hover": {
+          backgroundColor: "rgba(211, 47, 47, 0.08)",
+        },
+      }}
+    >
+      <DeleteOutlineIcon fontSize="small" />
+    </IconButton>
+  ),
+}
   ];
 
+
+  const handleDeleteAssignmentRow = (rowId) => {
+  const updated = (investorAssignments || []).filter(
+    (row) => String(row.id) !== String(rowId)
+  );
+
+  setFieldValue("investorAssignments", updated);
+
+  setSelectionModel((prev) =>
+    Array.isArray(prev)
+      ? prev.filter((id) => String(id) !== String(rowId))
+      : []
+  );
+
+  setInvestorsExcelGenerated?.(false);
+  onExcelReadyChange?.(false);
+  onInvalidateUploadExcel?.();
+
+  Toast("Asignación removida. Debes generar un nuevo Excel.", "warning");
+};
   return (
     <Grid
       container
@@ -1381,18 +1827,9 @@ formik?.emitterBrokerId ||
               overflow: "hidden",
             }}
           >
-            {loadingRows ? (
-              <Box
-                sx={{
-                  height: "100%",
-                  borderRadius: 1,
-                  backgroundColor: "#F5F5F5",
-                  overflow: "hidden",
-                }}
-              >
-                <InvestorsTableSkeleton />
-              </Box>
-            ) : (
+         {loadingRows && (!Array.isArray(investorAssignments) || investorAssignments.length === 0) ? (
+  <InvestorsTableSkeleton />
+) : (
               <DataGrid
   rows={filteredRows}
   columns={columns}

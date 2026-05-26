@@ -232,169 +232,252 @@ const formatDateForFile = (value = new Date()) => {
   }, [summary, tableRows]);
 
   const generateExcel = useCallback(async () => {
-    if (!tableRows.length) {
-      Toast("No hay recaudos para generar Excel.", "warning");
-      return;
-    }
+  if (!tableRows.length) {
+    Toast("No hay recaudos para generar Excel.", "warning");
+    return;
+  }
 
-    const workbook = new ExcelJS.Workbook();
-    const sheet = workbook.addWorksheet("Recaudos");
+  const workbook = new ExcelJS.Workbook();
+  const sheet = workbook.addWorksheet("Recaudos");
 
-    sheet.getCell("A1").value = "SMART EVOLUTION S.A.S";
-    sheet.getCell("A2").value = "REGISTRO MASIVO DE RECAUDOS";
-    sheet.getCell("A3").value = "Creado el";
-    sheet.getCell("B3").value = formatDateForFile(new Date());
-    sheet.getCell("A4").value = "Creado por";
-    sheet.getCell("B4").value = user?.name || "Usuario Smart Evolution";
-    sheet.getCell("D3").value = "Emisor";
-    sheet.getCell("E3").value = emitterName || "";
-    sheet.getCell("D4").value = "Pagador";
-    sheet.getCell("E4").value = payerName || "";
-    sheet.getCell("G3").value = "Tipo";
-    sheet.getCell("H3").value = receiptTypeLabel || "";
-    sheet.getCell("G4").value = "Fecha Aplicación";
-    sheet.getCell("H4").value = formatDate(applicationDate);
+  sheet.getCell("A1").value = "SMART EVOLUTION S.A.S";
+  sheet.getCell("A2").value = "REGISTRO MASIVO DE RECAUDOS";
 
-    const headers = [
-  "ESTADO",
-  "FACTURA",
-  "FRACCIÓN",
-  "INVERSIONISTA",
-  "OPID",
-  "PERIODO INICIO",
-  "PERIODO FIN",
-  "VALOR FUTURO",
-  "VALOR NOMINAL",
-  "PENDIENTE",
-  "DÍAS ADIC.",
-  "INTERESES",
-  "POR COBRAR",
-  "DÍAS CÁLCULO",
-  "MONTO APLICACIÓN",
-  "PREOPERACIÓN",
-  "ID FACTURA",
-  "TIPO RECAUDO",
-  "ESTADO RECAUDO",
-];
+  sheet.getCell("A3").value = "Creado el";
+  sheet.getCell("B3").value = formatDateForFile(new Date());
 
-    headers.forEach((header, index) => {
-      const cell = sheet.getCell(6, index + 1);
-      cell.value = header;
-      cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
-      cell.fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "1F78D1" },
-      };
-      cell.alignment = { vertical: "middle", horizontal: "center" };
-    });
+  sheet.getCell("A4").value = "Creado por";
+  sheet.getCell("B4").value = user?.name || "Usuario Smart Evolution";
 
-    tableRows.forEach((row, index) => {
-      const excelRow = 7 + index;
-      const statusConfig = STATUS_CONFIG[row.statusKey] || {};
+  sheet.getCell("D3").value = "Emisor";
+  sheet.getCell("E3").value = emitterName || "";
 
-      const values = [
-  statusConfig.label || row.statusKey,
-  row.billId,
-  row.fraction,
-  row.investorName,
-  row.opId,
-  formatDate(row.periodStart),
-formatDate(row.periodEnd),
-  row.futureValue,
-  row.nominalValue,
-  row.pending,
-  row.additionalDays,
-  row.interests,
-  row.toCollect,
+  sheet.getCell("D4").value = "Pagador";
+  sheet.getCell("E4").value = payerName || "";
 
-  // Inputs editables para carga posterior
-  row.calculatedDays || row.additionalDays || 0,
-  row.payedAmount || row.toCollect || 0,
+  sheet.getCell("G3").value = "Tipo";
+  sheet.getCell("H3").value = receiptTypeLabel || "";
 
-  row.preOperationId,
-  row.billUniqueId,
-  row.typeReceipt || row.receiptType,
-  row.receiptStatus,
-];
+  sheet.getCell("G4").value = "Fecha Aplicación";
+  sheet.getCell("H4").value = formatDate(applicationDate);
 
-values.forEach((value, colIndex) => {
-  const cell = sheet.getCell(excelRow, colIndex + 1);
-  cell.value = value;
+  const headers = [
+    "ESTADO",
+    "FACTURA",
+    "FRACCIÓN",
+    "INVERSIONISTA",
+    "OPID",
+    "PERIODO INICIO",
+    "PERIODO FIN",
+    "VALOR FUTURO",
+    "VALOR NOMINAL",
+    "PENDIENTE",
+    "DÍAS ADIC.",
+    "INTERESES",
+    "POR COBRAR",
 
-  if ([13, 14].includes(colIndex)) {
+    // Campos técnicos ocultos
+    "PREOPERACIÓN",
+    "ID FACTURA",
+    "TIPO RECAUDO",
+    "ESTADO RECAUDO",
+
+    // Campos editables al final
+    "DÍAS CÁLCULO",
+    "MONTO APLICACIÓN",
+  ];
+
+  headers.forEach((header, index) => {
+    const cell = sheet.getCell(6, index + 1);
+
+    cell.value = header;
+    cell.font = {
+      bold: true,
+      color: { argb: "FFFFFFFF" },
+    };
     cell.fill = {
       type: "pattern",
       pattern: "solid",
-      fgColor: { argb: "FFFFF2CC" },
+      fgColor: { argb: "1F78D1" },
     };
-
-    cell.font = {
-      bold: true,
-      color: { argb: "FF000000" },
+    cell.alignment = {
+      vertical: "middle",
+      horizontal: "center",
     };
-
     cell.protection = {
-      locked: false,
+      locked: true,
     };
-  }
+  });
 
+  tableRows.forEach((row, index) => {
+    const excelRow = 7 + index;
+    const statusConfig = STATUS_CONFIG[row.statusKey] || {};
 
-
-  if ([7, 8, 9, 11, 12, 14].includes(colIndex)) {
-    cell.numFmt = '"$"#,##0.00';
-  }
-});
-    });
-
-    sheet.columns = [
-  { width: 24 },
-  { width: 24 },
-  { width: 12 },
-  { width: 32 },
-  { width: 14 },
-  { width: 18 },
-  { width: 18 },
-  { width: 18 },
-  { width: 18 },
-  { width: 18 },
-  { width: 14 },
-  { width: 18 },
-  { width: 18 },
-  { width: 16 }, // DÍAS CÁLCULO
-  { width: 20 }, // MONTO APLICACIÓN
-  { width: 36 },
-  { width: 36 },
-  { width: 36 },
-  { width: 36 },
-];
-
-    sheet.autoFilter = {
-      from: { row: 6, column: 1 },
-      to: { row: 6, column: headers.length },
-    };
-
-    sheet.views = [{ state: "frozen", ySplit: 6 }];
-
-    const buffer = await workbook.xlsx.writeBuffer();
-
-    saveAs(
-      new Blob([buffer], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      }),
-      `RecaudosMasivos-${formatDateForFile(new Date())}.xlsx`
+    const calculatedDays = Number(
+      row.calculatedDays ?? row.additionalDays ?? 0
     );
 
-    onExcelGenerated?.(true);
-  }, [
-    tableRows,
-    user,
-    emitterName,
-    payerName,
-    applicationDate,
-    receiptTypeLabel,
-    onExcelGenerated,
-  ]);
+    const payedAmount = Number(
+      row.payedAmount ?? row.toCollect ?? 0
+    );
+
+    const values = [
+      statusConfig.label || row.statusKey,
+      row.billId,
+      row.fraction,
+      row.investorName,
+      row.opId,
+      formatDate(row.periodStart),
+      formatDate(row.periodEnd),
+      Number(row.futureValue || 0),
+      Number(row.nominalValue || 0),
+      Number(row.pending || 0),
+      Number(row.additionalDays || 0),
+      Number(row.interests || 0),
+      Number(row.toCollect || 0),
+
+      // Campos técnicos ocultos
+      row.preOperationId,
+      row.billUniqueId,
+      row.typeReceipt || row.receiptType,
+      row.receiptStatus,
+
+      // Campos editables al final
+      calculatedDays,
+      payedAmount,
+    ];
+
+    values.forEach((value, colIndex) => {
+      const cell = sheet.getCell(excelRow, colIndex + 1);
+
+      cell.value = value;
+
+      // Por defecto todo queda bloqueado
+      cell.protection = {
+        locked: true,
+      };
+
+      cell.alignment = {
+        vertical: "middle",
+      };
+
+      // Columnas editables al final:
+      // R = DÍAS CÁLCULO -> colIndex 17
+      // S = MONTO APLICACIÓN -> colIndex 18
+      const isEditableCell = [17, 18].includes(colIndex);
+
+      if (isEditableCell) {
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FFFFF2CC" },
+        };
+
+        cell.font = {
+          bold: true,
+          color: { argb: "FF000000" },
+        };
+
+        cell.protection = {
+          locked: false,
+        };
+      }
+
+      // Formato moneda:
+      // H VALOR FUTURO
+      // I VALOR NOMINAL
+      // J PENDIENTE
+      // L INTERESES
+      // M POR COBRAR
+      // S MONTO APLICACIÓN
+      if ([7, 8, 9, 11, 12, 18].includes(colIndex)) {
+        cell.numFmt = '"$"#,##0.00';
+      }
+
+      // Formato numérico:
+      // K DÍAS ADIC.
+      // R DÍAS CÁLCULO
+      if ([10, 17].includes(colIndex)) {
+        cell.numFmt = "0";
+      }
+    });
+  });
+
+  sheet.columns = [
+    { width: 24 }, // A ESTADO
+    { width: 24 }, // B FACTURA
+    { width: 12 }, // C FRACCIÓN
+    { width: 32 }, // D INVERSIONISTA
+    { width: 14 }, // E OPID
+    { width: 18 }, // F PERIODO INICIO
+    { width: 18 }, // G PERIODO FIN
+    { width: 18 }, // H VALOR FUTURO
+    { width: 18 }, // I VALOR NOMINAL
+    { width: 18 }, // J PENDIENTE
+    { width: 14 }, // K DÍAS ADIC.
+    { width: 18 }, // L INTERESES
+    { width: 18 }, // M POR COBRAR
+
+    { width: 36 }, // N PREOPERACIÓN
+    { width: 36 }, // O ID FACTURA
+    { width: 22 }, // P TIPO RECAUDO
+    { width: 22 }, // Q ESTADO RECAUDO
+
+    { width: 16 }, // R DÍAS CÁLCULO
+    { width: 20 }, // S MONTO APLICACIÓN
+  ];
+
+  // Ocultar campos técnicos.
+  sheet.getColumn(14).hidden = true; // N PREOPERACIÓN
+  sheet.getColumn(15).hidden = true; // O ID FACTURA
+  sheet.getColumn(16).hidden = true; // P TIPO RECAUDO
+  sheet.getColumn(17).hidden = true; // Q ESTADO RECAUDO
+
+  sheet.autoFilter = {
+    from: { row: 6, column: 1 },
+    to: { row: 6, column: headers.length },
+  };
+
+  sheet.views = [{ state: "frozen", ySplit: 6 }];
+
+  // Protección sin contraseña.
+  // Solo se pueden editar las columnas desbloqueadas:
+  // R DÍAS CÁLCULO y S MONTO APLICACIÓN.
+  await sheet.protect("", {
+    selectLockedCells: true,
+    selectUnlockedCells: true,
+    formatCells: false,
+    formatColumns: false,
+    formatRows: false,
+    insertColumns: false,
+    insertRows: false,
+    insertHyperlinks: false,
+    deleteColumns: false,
+    deleteRows: false,
+    sort: true,
+    autoFilter: true,
+    pivotTables: false,
+  });
+
+  const buffer = await workbook.xlsx.writeBuffer();
+
+  saveAs(
+    new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    }),
+    `RecaudosMasivos-${formatDateForFile(new Date())}.xlsx`
+  );
+
+  onExcelGenerated?.(true);
+}, [
+  tableRows,
+  user,
+  emitterName,
+  payerName,
+  applicationDate,
+  receiptTypeLabel,
+  onExcelGenerated,
+]);
 
   useEffect(() => {
   if (typeof exposeGenerateExcel === "function") {

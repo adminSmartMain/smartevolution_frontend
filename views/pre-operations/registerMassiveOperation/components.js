@@ -297,6 +297,26 @@ const { fetch: downloadMassiveOperationReceiptPdfFetch } = useFetch({
     return base;
   }, [isJuridica]);
 
+
+  const clampStep = (step) => {
+  const parsed = Number(step);
+
+  if (Number.isNaN(parsed)) return 0;
+
+  return Math.max(0, Math.min(parsed, steps.length - 1));
+};
+
+const getDraftCurrentStep = (draft) => {
+  return clampStep(
+    draft?.currentStep ??
+      draft?.current_step ??
+      draft?.metadata?.currentStep ??
+      draft?.metadata?.current_step ??
+      0
+  );
+};
+
+
   useEffect(() => {
     const lastIndex = steps.length - 1;
     if (activeStep > lastIndex) setActiveStep(lastIndex);
@@ -368,26 +388,36 @@ useEffect(() => {
         );
       }
 
-      const draft = validateData?.data;
+      let currentDraft = validateData?.data || null;
 
-      if (!draft) {
+      if (!currentDraft) {
         const response = await getDraftFetch(routeDraftId);
         const raw = response?.data ?? response;
-        setDraftToRestore(raw?.data ?? raw);
-      } else {
-        setDraftToRestore(draft);
+        currentDraft = raw?.data ?? raw;
       }
 
-      const currentDraft = draft || validateData?.data;
+      if (!currentDraft) {
+        toast.error("No se encontró información del borrador.");
+        return;
+      }
+
+      setDraftToRestore(currentDraft);
 
       setDraftId(routeDraftId);
-      setActiveStep(Number(currentDraft?.currentStep || 0));
+      setActiveStep(getDraftCurrentStep(currentDraft));
+
       setInvestorsExcelGenerated(
         Boolean(currentDraft?.metadata?.investorsExcelGenerated)
       );
+
       setCanGenerateInvestorsExcel(
         Boolean(currentDraft?.metadata?.canGenerateInvestorsExcel)
       );
+
+      setUploadExcelState((prev) => ({
+        ...prev,
+        ...(currentDraft?.metadata?.uploadExcelState || {}),
+      }));
     } catch (error) {
       console.error("Error cargando borrador:", error);
       toast.error("No fue posible cargar el borrador.");
@@ -398,7 +428,6 @@ useEffect(() => {
 
   loadDraft();
 }, [routeDraftId]);
-
 
 const getClientData = (option) => option?.data || option || {};
 
@@ -415,6 +444,118 @@ const getClientLabel = (option) => {
     `${data?.first_name || ""} ${data?.last_name || ""}`.trim() ||
     ""
   );
+};
+
+const normalizeDraftAssignments = async (assignments = []) => {
+  if (!Array.isArray(assignments)) return [];
+
+  const normalized = await Promise.all(
+    assignments.map(async (row) => {
+      const investorId =
+        row?.investorId ||
+        row?.investor_id ||
+        row?.selectedInvestor?.value ||
+        row?.selectedInvestor?.id ||
+        row?.selectedInvestor?.data?.id ||
+        "";
+
+      const selectedInvestor =
+        row?.selectedInvestor ||
+        investors?.find((inv) => String(getClientId(inv)) === String(investorId)) ||
+        null;
+
+      const investorLabel =
+        row?.investorLabel ||
+        row?.investorName ||
+        row?.selectedInvestor?.label ||
+        getClientLabel(selectedInvestor) ||
+        "";
+
+      let availableAccounts = Array.isArray(row?.availableAccounts)
+        ? row.availableAccounts
+        : [];
+
+      if (investorId && availableAccounts.length === 0) {
+        try {
+          const accountsResponse = await fetchAccountsFromClient(investorId);
+          availableAccounts =
+            accountsResponse?.data?.data ||
+            accountsResponse?.data ||
+            accountsResponse ||
+            [];
+        } catch (error) {
+          console.error("Error restaurando cuentas del inversionista:", error);
+          availableAccounts = [];
+        }
+      }
+
+      const accountId =
+        row?.accountId ||
+        row?.account_id ||
+        row?.selectedAccount?.id ||
+        "";
+
+      const selectedAccount =
+        row?.selectedAccount ||
+        availableAccounts.find((acc) => String(acc?.id) === String(accountId)) ||
+        null;
+
+      let investorBrokerId = row?.investorBrokerId || "";
+      let investorBrokerName = row?.investorBrokerName || "";
+
+      if (investorId && (!investorBrokerId || !investorBrokerName)) {
+        try {
+          const brokerResponse = await cargarBrokerFromInvestor(investorId);
+          const brokerData =
+            brokerResponse?.data?.data ||
+            brokerResponse?.data ||
+            brokerResponse ||
+            null;
+
+          investorBrokerId =
+            investorBrokerId ||
+            brokerData?.id ||
+            brokerData?.value ||
+            "";
+
+          investorBrokerName =
+            investorBrokerName ||
+            brokerData?.label ||
+            brokerData?.social_reason ||
+            `${brokerData?.first_name || ""} ${brokerData?.last_name || ""}`.trim() ||
+            "";
+        } catch (error) {
+          console.error("Error restaurando broker del inversionista:", error);
+        }
+      }
+
+      return {
+        ...row,
+        investorId,
+        investorLabel,
+        selectedInvestor,
+        availableAccounts,
+        accountId,
+        selectedAccount,
+        investorBrokerId,
+        investorBrokerName,
+        accountAvailableBalance:
+          row?.accountAvailableBalance ??
+          selectedAccount?.availableBalance ??
+          selectedAccount?.available_balance ??
+          selectedAccount?.balance ??
+          0,
+        accountTotalBalance:
+          row?.accountTotalBalance ??
+          selectedAccount?.totalBalance ??
+          selectedAccount?.total_balance ??
+          selectedAccount?.balance ??
+          0,
+      };
+    })
+  );
+
+  return normalized;
 };
 
 const getClientDocument = (option) => {
@@ -476,7 +617,9 @@ const hydrateDraft = async (draft, setFieldValue) => {
   if (!draft) return;
 
   const selectedBills = draft.selectedBills || [];
-  const investorAssignments = draft.investorAssignments || [];
+const investorAssignments = await normalizeDraftAssignments(
+  draft.investorAssignments || []
+);
 
   const emitterObj = findClientOptionById(emisores, draft.emitterId);
   const payerObj = findClientOptionById(payers, draft.payerId);
@@ -556,6 +699,25 @@ if (draft.emitterId) {
 
   setFieldValue("takedBills", payerBills);
 };
+
+
+
+const resetUploadExcelState = () => {
+  setUploadExcelState({
+    file: null,
+    status: "idle",
+    rows: [],
+    normalizedRows: [],
+    canRegister: false,
+    operationId: null,
+    processedMessage: "",
+    errorCount: 0,
+    modalError: "",
+    registerSummary: null,
+  });
+
+  setRegisterSummary(null);
+};
   return (
    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={esLocale}>
   <ToastContainer position="top-right" autoClose={5000} />
@@ -604,47 +766,60 @@ if (draft.emitterId) {
     Creado por: {user?.name ?? "Desconocido"}
   </Typography>
 </Box>
+<Formik
+  initialValues={{
+    ...initialValues,
 
-        <Formik
-       initialValues={{
-  ...initialValues,
+    opId: draftToRestore?.opId ?? initialValues?.opId ?? "",
+    opDate: draftToRestore?.opDate
+      ? new Date(draftToRestore.opDate)
+      : initialValues?.opDate ?? null,
 
-  opId: draftToRestore?.opId ?? initialValues?.opId ?? "",
-  opDate: draftToRestore?.opDate
-    ? new Date(draftToRestore.opDate)
-    : initialValues?.opDate ?? null,
+    opType: draftToRestore?.opTypeId ?? initialValues?.opType ?? "",
 
-  opType: draftToRestore?.opTypeId ?? initialValues?.opType ?? "",
-  emitterId: draftToRestore?.emitterId ?? initialValues?.emitterId ?? "",
-  payerId: draftToRestore?.payerId ?? initialValues?.payerId ?? "",
-  emitterBrokerId:
-    draftToRestore?.emitterBrokerId ?? initialValues?.emitterBrokerId ?? "",
-emitterBrokerName:
-  draftToRestore?.metadata?.emitterBrokerName ??
-  initialValues?.emitterBrokerName ??
-  "",
-  emitterLabel:
-    draftToRestore?.metadata?.emitterName ?? initialValues?.emitterLabel ?? "",
-  nombrepayer:
-    draftToRestore?.metadata?.payerName ?? initialValues?.nombrepayer ?? "",
-  nombrePagador:
-    draftToRestore?.payerId ?? initialValues?.nombrePagador ?? "",
+    emitterId: draftToRestore?.emitterId ?? initialValues?.emitterId ?? "",
+    payerId: draftToRestore?.payerId ?? initialValues?.payerId ?? "",
 
-  facturas: initialValues?.facturas ?? [],
-  takedBills: initialValues?.takedBills ?? [],
+    emitterBrokerId:
+      draftToRestore?.emitterBrokerId ?? initialValues?.emitterBrokerId ?? "",
 
-  billsToNegotiate:
-    draftToRestore?.selectedBills ?? initialValues?.billsToNegotiate ?? [],
-  investorAssignments:
-    draftToRestore?.investorAssignments ??
-    initialValues?.investorAssignments ??
-    [],
-}}
-        enableReinitialize
-          validationSchema={validationSchema}
-          onSubmit={handleConfirm}
-         
-        >
+    emitterBrokerName:
+      draftToRestore?.metadata?.emitterBrokerName ??
+      initialValues?.emitterBrokerName ??
+      "",
+
+    emitterLabel:
+      draftToRestore?.metadata?.emitterName ??
+      initialValues?.emitterLabel ??
+      "",
+
+    nombrepayer:
+      draftToRestore?.metadata?.payerName ??
+      initialValues?.nombrepayer ??
+      "",
+
+    nombrePagador:
+      draftToRestore?.payerId ??
+      initialValues?.nombrePagador ??
+      "",
+
+    facturas: initialValues?.facturas ?? [],
+    takedBills: initialValues?.takedBills ?? [],
+
+    billsToNegotiate:
+      draftToRestore?.selectedBills ??
+      initialValues?.billsToNegotiate ??
+      [],
+
+    investorAssignments:
+      draftToRestore?.investorAssignments ??
+      initialValues?.investorAssignments ??
+      [],
+  }}
+  enableReinitialize
+  validationSchema={validationSchema}
+  onSubmit={handleConfirm}
+>
           {({ values, setFieldValue, touched, errors, setFieldTouched, submitForm }) => {
 console.log(values)
 useEffect(() => {
@@ -671,38 +846,168 @@ const buildDraftPayload = () => ({
   opId: values.opId || null,
   opDate: safeDateToIso(values.opDate),
   opTypeId: values.opType || null,
-  
+
   emitterId:
     values?.emitter?.value ||
     values?.emitter?.data?.id ||
     values?.emitterId ||
     null,
+
   payerId:
     clientPagador?.id ||
     values?.payerId ||
     values?.nombrePagador ||
     null,
+
   emitterBrokerId:
     values?.emitterBroker ||
     values?.emitterBrokerId ||
     clientBrokerEmitter?.id ||
     null,
-  currentStep: activeStep,
-  status: activeStep >= 1 ? "READY_FOR_EXCEL" : "DRAFT",
+
+  currentStep: clampStep(activeStep),
+
+  status:
+    activeStep >= 3
+      ? "READY_TO_REGISTER"
+      : activeStep >= 1
+      ? "READY_FOR_EXCEL"
+      : "DRAFT",
+
   selectedBills: values?.billsToNegotiate || [],
-  investorAssignments: values?.investorAssignments || [],
+ investorAssignments: (values?.investorAssignments || []).map((row) => ({
+  ...row,
+
+  investorId:
+    row?.investorId ||
+    row?.selectedInvestor?.value ||
+    row?.selectedInvestor?.id ||
+    row?.selectedInvestor?.data?.id ||
+    "",
+
+  investorLabel:
+    row?.investorLabel ||
+    row?.selectedInvestor?.label ||
+    getClientLabel(row?.selectedInvestor) ||
+    "",
+
+  accountId:
+    row?.accountId ||
+    row?.selectedAccount?.id ||
+    "",
+
+  selectedAccount: row?.selectedAccount || null,
+
+  selectedInvestor: row?.selectedInvestor || null,
+
+  availableAccounts: Array.isArray(row?.availableAccounts)
+    ? row.availableAccounts
+    : [],
+
+  investorBrokerId: row?.investorBrokerId || "",
+  investorBrokerName: row?.investorBrokerName || "",
+
+  accountAvailableBalance: row?.accountAvailableBalance ?? 0,
+  accountTotalBalance: row?.accountTotalBalance ?? 0,
+})),
+
   metadata: {
+    emitterName:
+      values?.emitterLabel ||
+      values?.emitter?.label ||
+      values?.emitter?.data?.social_reason ||
+      "",
+
+    payerName:
+      values?.nombrepayer ||
+      values?.payer?.label ||
+      "",
+
     emitterBrokerName:
-  values?.emitterBrokerName ||
-  getBrokerName(clientBrokerEmitter),
-    investorsExcelGenerated,
+      values?.emitterBrokerName ||
+      getBrokerName(clientBrokerEmitter),
+
+    currentStep: clampStep(activeStep),
+
+    uploadExcelState,
+
     selectedBillsCount: values?.billsToNegotiate?.length || 0,
     assignmentsCount: values?.investorAssignments?.length || 0,
+
+    investorsExcelGenerated,
     canGenerateInvestorsExcel,
   },
 });
 
+const persistDraftStep = async (nextStep, extraMetadata = {}) => {
+  const safeStep = clampStep(nextStep);
 
+  const hasMinimumDraftData =
+    values?.opId &&
+    values?.opDate &&
+    Array.isArray(values?.billsToNegotiate) &&
+    values.billsToNegotiate.length > 0;
+
+  if (!hasMinimumDraftData) return;
+
+  const payload = buildDraftPayload();
+
+  await saveDraft({
+    ...payload,
+    currentStep: safeStep,
+    metadata: {
+      ...(payload?.metadata || {}),
+      ...extraMetadata,
+      currentStep: safeStep,
+      investorsExcelGenerated,
+      canGenerateInvestorsExcel,
+      uploadExcelState,
+    },
+  });
+};
+
+const handleBackStep = async () => {
+  const previousStep = clampStep(activeStep - 1);
+
+  setActiveStep(previousStep);
+  await persistDraftStep(previousStep);
+};
+
+const handleNextStep = async () => {
+  if (activeStep === 0) {
+    if (selectedBillsCount < 5) return;
+
+    setInvestorsExcelGenerated(false);
+    setCanGenerateInvestorsExcel(false);
+    setGenerateInvestorsExcelFn(null);
+
+    const nextStep = 1;
+    setActiveStep(nextStep);
+    await persistDraftStep(nextStep, {
+      investorsExcelGenerated: false,
+      canGenerateInvestorsExcel: false,
+    });
+
+    return;
+  }
+
+  if (activeStep === 1) {
+    if (!investorsExcelGenerated) return;
+
+    const nextStep = 2;
+    setActiveStep(nextStep);
+    await persistDraftStep(nextStep, {
+      investorsExcelGenerated: true,
+      canGenerateInvestorsExcel,
+    });
+
+    return;
+  }
+
+  const nextStep = clampStep(activeStep + 1);
+  setActiveStep(nextStep);
+  await persistDraftStep(nextStep);
+};
     const uploadContext = {
    opDate: safeDateToIso(values?.opDate),
   emitterId:
@@ -772,6 +1077,11 @@ const buildDraftPayload = () => ({
                 : activeStep === 2
                 ? excelLoadedAndValid
                 : true;
+
+
+
+
+
 
             return (
               <>
@@ -1180,19 +1490,19 @@ const buildDraftPayload = () => ({
         <IconButton
           size="small"
           disabled={draftStatus === "saving"}
-          onClick={() => {
-            const hasMinimumDraftData =
-              values?.opId &&
-              values?.opDate &&
-              values?.billsToNegotiate?.length > 0;
+          onClick={async () => {
+  const hasMinimumDraftData =
+    values?.opId &&
+    values?.opDate &&
+    values?.billsToNegotiate?.length > 0;
 
-            if (!hasMinimumDraftData) {
-              toast.warning("Selecciona facturas antes de guardar el borrador.");
-              return;
-            }
+  if (!hasMinimumDraftData) {
+    toast.warning("Selecciona facturas antes de guardar el borrador.");
+    return;
+  }
 
-            saveDraft(buildDraftPayload());
-          }}
+  await persistDraftStep(activeStep);
+}}
           sx={{
             width: 44,
             height: 44,
@@ -1269,11 +1579,21 @@ const buildDraftPayload = () => ({
                         takedBills={values?.takedBills || []}
                         billsToNegotiate={values?.billsToNegotiate || []}
                         loading={isLoadingBills}
+                        investorAssignments={values.investorAssignments}
                         nombrePagador={values?.nombrePagador}
                         emitterKey={
                           values?.emitter?.value || values?.emitterId || ""
                         }
                         setFieldValue={setFieldValue}
+          onInvalidateNextSteps={() => {
+  // No borres investorAssignments aquí.
+  // InvestorsAssignmentTable se encargará de conservar las asignaciones existentes
+  // y agregar filas nuevas si seleccionas más facturas/fracciones.
+  setInvestorsExcelGenerated(false);
+  setCanGenerateInvestorsExcel(false);
+  setGenerateInvestorsExcelFn(null);
+  resetUploadExcelState();
+}}
                       />
                     )}
 
@@ -1285,6 +1605,9 @@ const buildDraftPayload = () => ({
   billsToNegotiate={values?.billsToNegotiate || []}
   investorAssignments={values?.investorAssignments || []}
   investors={investors || []}
+   onInvalidateUploadExcel={() => {
+    resetUploadExcelState();
+  }}
   cargarTasaDescuento={cargarTasaDescuento}
   getBillFractionBulkFetch={getBillFractionBulkFetch}
   cargarCuentas={fetchAccountsFromClient}
@@ -1348,6 +1671,24 @@ if (draftId && finalOperationId) {
     registeredOpId: finalOperationId,
   });
 }
+await persistDraftStep(3, {
+  registeredOperationId: finalOperationId,
+  registerSummary: {
+    operationId: finalOperationId,
+    totalOperacion:
+      summary?.totalOperacion ?? summary?.total_amount ?? summary?.total ?? 0,
+    facturasRegistradas:
+      summary?.facturasRegistradas ??
+      summary?.registered_rows ??
+      normalizedRows?.length ??
+      0,
+    tasaPromedioPonderada:
+      summary?.tasaPromedioPonderada ??
+      summary?.weightedAverageRate ??
+      summary?.weighted_average_rate ??
+      0,
+  },
+});
 
 setRegisterSummary({
   operationId: finalOperationId,
@@ -1368,10 +1709,29 @@ setRegisterSummary({
 
   return response;
 }}
-                        onNext={() => setActiveStep(3)}
+                        onNext={async () => {
+  const nextStep = 3;
+  setActiveStep(nextStep);
+
+  await persistDraftStep(nextStep, {
+    uploadExcelState,
+    investorsExcelGenerated: true,
+    canGenerateInvestorsExcel,
+  });
+}}
                         createdByLabel="Usuario Smart Evolution"
                         state={uploadExcelState}
-                        setState={setUploadExcelState}
+                        setState={(nextState) => {
+  setUploadExcelState((prev) => {
+    const resolved =
+      typeof nextState === "function" ? nextState(prev) : nextState;
+
+    return {
+      ...prev,
+      ...resolved,
+    };
+  });
+}}
                       uploadContext={uploadContext}
 />
                     )}</Box>
@@ -1404,9 +1764,9 @@ setRegisterSummary({
    {activeStep > 0 && (
 
     
-                        <Button
+      <Button
   variant="text"
-  onClick={() => setActiveStep((prev) => prev - 1)}
+  onClick={handleBackStep}
   sx={{
     minWidth: "auto",
     padding: 0,
@@ -1478,22 +1838,7 @@ setRegisterSummary({
         color: "#fff",
       },
     }}
-    onClick={() => {
-      if (activeStep === 0) {
-        if (selectedBillsCount < 5) return;
-        setInvestorsExcelGenerated(false);
-        setCanGenerateInvestorsExcel(false);
-        setGenerateInvestorsExcelFn(null);
-        setActiveStep(1);
-        return;
-      }
-
-      if (activeStep === 1) {
-        if (!investorsExcelGenerated) return;
-        setActiveStep(2);
-        return;
-      }
-    }}
+    onClick={handleNextStep}
   >
     Siguiente
   </Button>

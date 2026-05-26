@@ -1002,6 +1002,7 @@ const buildDraftPayload = () => ({
     periodStart: row?.periodStart || "",
     periodEnd: row?.periodEnd || "",
     toCollect: Number(row?.toCollect || 0),
+    opPendingAmount: Number(row?.opPendingAmount || 0),
   })),
 };
 
@@ -1557,7 +1558,7 @@ const handleDeletePreviewReceiptRow = (row) => {
   </>
 )}
 
-<Grid
+{/*<Grid
   item
   sx={{
     width: 210,
@@ -1655,7 +1656,7 @@ const handleDeletePreviewReceiptRow = (row) => {
   </Box>
 </Grid>
 
-
+*/}
 
 
 

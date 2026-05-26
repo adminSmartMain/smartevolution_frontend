@@ -627,6 +627,13 @@ const PRIMARY_SECTIONS = [
             href: "/administration/new-receipt/receiptList",
             text: "Consulta de Recaudos",
           },
+          {
+            href: "/administration/new-receipt/registerMassiveReceipt",
+            text: "Registrar Recaudos Masivos",
+             openInWindow: true,
+            windowKey: "registerMassiveOperation",
+            windowFeatures: "width=1200,height=800",
+          },
         ],
       },
     ],

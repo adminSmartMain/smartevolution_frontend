@@ -10,7 +10,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Button,
+  Button,Chip, Tooltip 
 } from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import CloseIcon from "@mui/icons-material/Close";
@@ -436,6 +436,7 @@ export const BillsDualTable = ({
     const emitterId = getEmitterId(item);
     const emitterName = getEmitterName(item);
     const opId = getOpId(item);
+    const opPendingAmount = Number(item?.opPendingAmount ?? currentBalance);
 
     return {
       id,
@@ -456,6 +457,7 @@ export const BillsDualTable = ({
       expirationDate,
       total: Number(item?.total ?? item?.bill?.total ?? billValue),
       fraction,
+      opPendingAmount,
       raw: {
         ...item,
         id,
@@ -590,55 +592,114 @@ export const BillsDualTable = ({
     setOpenClearLotDialog(false);
   };
 
+
+  const isExpired = (expirationDate) => {
+  if (!expirationDate) return false;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const expDate = new Date(expirationDate);
+  expDate.setHours(0, 0, 0, 0);
+
+  return expDate < today;
+};
+
+const isExpiringSoon = (expirationDate, days = 5) => {
+  if (!expirationDate) return false;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const expDate = new Date(expirationDate);
+  expDate.setHours(0, 0, 0, 0);
+
+  const diffTime = expDate.getTime() - today.getTime();
+  const diffDays = diffTime / (1000 * 60 * 60 * 24);
+
+  return diffDays >= 0 && diffDays <= days;
+};
+
   const leftColumns = useMemo(
     () => [
       {
-        field: "billLabel",
-        headerName: "ID Factura / Frac",
-        flex: 1.05,
-        minWidth: 190,
-        sortable: true,
-        headerAlign: "left",
-        align: "left",
-        renderCell: (params) => (
-          <Box sx={{ display: "flex", flexDirection: "column", lineHeight: 1.1 }}>
-            <Typography
-              sx={{
-                fontSize: 11,
-                color: "#D32F2F",
-                fontWeight: 500,
-                mb: 0.2,
-              }}
-            >
-              {formatDate(params.row.dateBill)}
-            </Typography>
+  field: "billLabel",
+  headerName: "ID Factura / Frac",
+  flex: 1.05,
+  minWidth: 190,
+  sortable: true,
+  headerAlign: "left",
+  align: "left",
+  renderCell: (params) => {
+    const expired = isExpired(params.row.expirationDate);
+    const expiringSoon = isExpiringSoon(params.row.expirationDate);
 
-            <Typography
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          lineHeight: 1.1,
+          py: 0.5,
+        }}
+      >
+  
+
+        <Typography
+          sx={{
+            fontSize: 13,
+            fontWeight: 700,
+            color: "#000",
+          }}
+        >
+          {params.row.billLabel}
+        </Typography>
+
+        {params.row.expirationDate && (
+          <Tooltip
+            title={
+              expired
+                ? "Esta factura ya se encuentra expirada"
+                : "Fecha límite de recaudo de esta factura"
+            }
+            arrow
+          >
+            <Chip
+              label={`Expira en: ${formatDate(params.row.expirationDate)}`}
+              size="small"
               sx={{
-                fontSize: 13,
-                fontWeight: 800,
-                color: "#1F1F1F",
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
+                mt: 0.5,
+                width: "fit-content",
+                height: 18,
+                fontSize: 10,
+                fontWeight: 600,
+                borderRadius: "6px",
+                color: expired
+                  ? "#D32F2F"
+                  : expiringSoon
+                  ? "#B45309"
+                  : "green",
+                backgroundColor: expired
+                  ? "#FDECEC"
+                  : expiringSoon
+                  ? "#FEF3C7"
+                  : "#F3F4F6",
+                border: expired
+                  ? "1px solid #F5B5B5"
+                  : expiringSoon
+                  ? "1px solid #FCD34D"
+                  : "1px solid #E5E7EB",
+                "& .MuiChip-label": {
+                  px: 0.8,
+                },
               }}
-            >
-              {params.row.billId || "-"}
-              <Typography
-                component="span"
-                sx={{
-                  color: "#0A8F8F",
-                  fontWeight: 800,
-                  fontSize: 13,
-                }}
-              >
-                {" "}
-                / {params.row.fraction || 1}
-              </Typography>
-            </Typography>
-          </Box>
-        ),
-      },
+            />
+          </Tooltip>
+        )}
+      </Box>
+    );
+  },
+},
       {
         field: "investorName",
         headerName: "Inversionista",
@@ -671,8 +732,8 @@ export const BillsDualTable = ({
         ),
       },
       {
-        field: "currentBalance",
-        headerName: "Pendiente",
+        field: "opPendingAmount",
+        headerName: "Pendiente por cobrar",
         flex: 0.85,
         minWidth: 150,
         sortable: false,
@@ -683,6 +744,8 @@ export const BillsDualTable = ({
     ],
     []
   );
+
+  console.log(filteredAvailable)
 
   return (
     <>
@@ -770,8 +833,8 @@ export const BillsDualTable = ({
                       sortModel: [{ field: "billLabel", sort: "desc" }],
                     },
                   }}
-                  rowHeight={42}
-                  columnHeaderHeight={34}
+                  rowHeight={72}
+                  columnHeaderHeight={42}
                   sx={{
                     border: 0,
                     height: "100%",
@@ -985,7 +1048,7 @@ export const BillsDualTable = ({
                       textAlign: "right",
                     }}
                   >
-                    Pendiente
+                    Pendiente por cobrar
                   </Typography>
 
                   <Box />
@@ -1067,7 +1130,7 @@ export const BillsDualTable = ({
                           whiteSpace: "nowrap",
                         }}
                       >
-                        {formatCurrency(row.currentBalance)}
+                        {formatCurrency(row.opPendingAmount)}
                       </Typography>
 
                       <IconButton
@@ -1112,6 +1175,14 @@ export const BillsDualTable = ({
                 >
                   Total ({selectedRows.length} facturas)
                 </Typography>
+                <Typography
+                                    sx={{
+                                      fontSize: 12,
+                                      fontWeight: 700,
+                                    }}
+                                  >
+                                    El mínimo de facturas a seleccionar es 5
+                                  </Typography>
 
                 <Typography
                   sx={{

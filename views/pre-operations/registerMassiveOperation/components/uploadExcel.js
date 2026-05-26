@@ -916,49 +916,44 @@ const handleDownloadReceiptPdf = async () => {
     await handleProcessSelectedFile(picked);
     event.target.value = "";
   };
+const handleDeleteRow = (rowId) => {
+  const updatedRows = (rows || []).filter(
+    (row) => String(row.id) !== String(rowId)
+  );
 
-  const handleDeleteRow = (rowId) => {
-    const updatedRows = rows.filter((row) => row.id !== rowId);
-    const updatedNormalizedRows = normalizedRows.filter(
-      (row) => String(row.rowNumber ?? row.id) !== String(rowId)
-    );
+  const updatedNormalizedRows = (normalizedRows || []).filter(
+    (row) => String(row.rowNumber ?? row.id) !== String(rowId)
+  );
 
-    const updatedErrorCount = updatedRows.filter((row) => row.hasErrors).length;
+  const updatedErrorCount = updatedRows.filter((row) => row.hasErrors).length;
 
-    updateState({
-      rows: updatedRows,
-      normalizedRows: updatedNormalizedRows,
-      errorCount: updatedErrorCount,
-      registerSummary: null,
-    });
+  const nextCanRegister =
+    updatedRows.length > 0 &&
+    updatedNormalizedRows.length > 0 &&
+    updatedErrorCount === 0;
 
-    if (typeof onProcessedRows === "function") {
-      onProcessedRows(updatedNormalizedRows);
-    }
+  updateState({
+    rows: updatedRows,
+    normalizedRows: updatedNormalizedRows,
+    errorCount: updatedErrorCount,
+    canRegister: nextCanRegister,
+    registerSummary: null,
+    status:
+      updatedRows.length === 0
+        ? "idle"
+        : updatedErrorCount > 0
+        ? "processed_error"
+        : "processed_success",
+    processedMessage:
+      updatedRows.length === 0
+        ? ""
+        : updatedErrorCount > 0
+        ? "El archivo contiene errores. Revise los valores resaltados."
+        : `Se han registrado ${updatedRows.length} facturas a la operación ${operationId ?? ""}`.trim(),
+  });
 
-    if (updatedRows.length > 0 && updatedErrorCount === 0) {
-      updateState({
-        status: "processed_success",
-        canRegister: true,
-        processedMessage:
-          `Se han registrado ${updatedRows.length} facturas a la operación ${operationId ?? ""}`.trim(),
-      });
-      return;
-    }
-
-    if (updatedRows.length > 0 && updatedErrorCount > 0) {
-      updateState({
-        status: "processed_error",
-        canRegister: false,
-      });
-      return;
-    }
-
-    updateState({
-      status: "idle",
-      canRegister: false,
-    });
-  };
+  onProcessedRows?.(updatedNormalizedRows);
+};
 
  const handleRegisterOperation = async () => {
   if (!registerOperation || !normalizedRows?.length || !canRegister) return;
