@@ -6,6 +6,10 @@ import {
   Grid,
   Autocomplete,
   Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 
 import { Toast } from "@components/toast";
@@ -333,7 +337,13 @@ export const InvestorsAssignmentTable = ({
     pageSize: 100,
   });
 const [selectionModel, setSelectionModel] = useState([]);
+const MIN_BILLS_REQUIRED = 5;
 
+const [minimumBillsModalOpen, setMinimumBillsModalOpen] = useState(false);
+const [minimumBillsModalData, setMinimumBillsModalData] = useState({
+  currentBillsCount: 0,
+  nextBillsCount: 0,
+});
   const [bulkInvestor, setBulkInvestor] = useState(null);
   const [bulkAccounts, setBulkAccounts] = useState([]);
   const [bulkAccount, setBulkAccount] = useState(null);
@@ -641,6 +651,22 @@ const handleDeleteFractionRow = (rowToDelete) => {
       };
     })
     .filter(Boolean);
+
+  const currentBillsCount = Array.isArray(billsToNegotiate)
+    ? billsToNegotiate.length
+    : 0;
+
+  const nextBillsCount = updatedBillsToNegotiate.length;
+
+  if (nextBillsCount < MIN_BILLS_REQUIRED) {
+    setMinimumBillsModalData({
+      currentBillsCount,
+      nextBillsCount,
+    });
+
+    setMinimumBillsModalOpen(true);
+    return;
+  }
 
   latestAssignmentsRef.current = remainingAssignments;
 
@@ -1623,6 +1649,53 @@ formik?.emitterBrokerId ||
   Toast("Asignación removida. Debes generar un nuevo Excel.", "warning");
 };
   return (
+
+    <>
+       <Dialog
+      open={minimumBillsModalOpen}
+      onClose={() => setMinimumBillsModalOpen(false)}
+      maxWidth="xs"
+      fullWidth
+    >
+      <DialogTitle
+        sx={{
+          fontSize: 18,
+          fontWeight: 700,
+          color: "#D32F2F",
+        }}
+      >
+        No se puede eliminar la factura
+      </DialogTitle>
+
+      <DialogContent>
+        <Typography sx={{ fontSize: 14, color: "#4D4D4D", mb: 1 }}>
+          La operación masiva debe tener mínimo {MIN_BILLS_REQUIRED} facturas.
+        </Typography>
+
+        <Typography sx={{ fontSize: 14, color: "#4D4D4D" }}>
+          Actualmente tienes {minimumBillsModalData.currentBillsCount} factura(s).
+          Si eliminas este registro quedarían {minimumBillsModalData.nextBillsCount}.
+        </Typography>
+      </DialogContent>
+
+      <DialogActions sx={{ px: 3, pb: 2 }}>
+        <Button
+          variant="contained"
+          onClick={() => setMinimumBillsModalOpen(false)}
+          sx={{
+            backgroundColor: "#2E9B9B",
+            textTransform: "none",
+            fontWeight: 600,
+            "&:hover": {
+              backgroundColor: "#257F7F",
+            },
+          }}
+        >
+          Entendido
+        </Button>
+      </DialogActions>
+    </Dialog>
+
     <Grid
       container
       spacing={0}
@@ -1909,5 +1982,7 @@ formik?.emitterBrokerId ||
         </Box>
       </Grid>
     </Grid>
+    </>
+    
   );
 };
