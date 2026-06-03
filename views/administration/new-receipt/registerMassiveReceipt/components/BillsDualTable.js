@@ -10,7 +10,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Button,Chip, Tooltip 
+  Button, Chip, Tooltip
 } from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import CloseIcon from "@mui/icons-material/Close";
@@ -330,23 +330,23 @@ export const BillsDualTable = ({
   const getCurrentBalance = (row) => {
     return Number(
       row?.currentBalance ??
-        row?.bill?.currentBalance ??
-        row?.amount ??
-        row?.billValue ??
-        row?.bill?.billValue ??
-        row?.balance ??
-        0
+      row?.bill?.currentBalance ??
+      row?.amount ??
+      row?.billValue ??
+      row?.bill?.billValue ??
+      row?.balance ??
+      0
     );
   };
 
   const getBillValue = (row) => {
     return Number(
       row?.billValue ??
-        row?.bill?.billValue ??
-        row?.total ??
-        row?.bill?.total ??
-        row?.amount ??
-        0
+      row?.bill?.billValue ??
+      row?.total ??
+      row?.bill?.total ??
+      row?.amount ??
+      0
     );
   };
 
@@ -375,9 +375,8 @@ export const BillsDualTable = ({
   const getInvestorName = (row) => {
     const client = row?.clientAccount?.client || {};
 
-    const fullName = `${client?.first_name || ""} ${
-      client?.last_name || ""
-    }`.trim();
+    const fullName = `${client?.first_name || ""} ${client?.last_name || ""
+      }`.trim();
 
     return (
       row?.investorName ||
@@ -409,11 +408,11 @@ export const BillsDualTable = ({
   const getFraction = (row) => {
     return Number(
       row?.fraction ??
-        row?.frac ??
-        row?.billFraction ??
-        row?.bill?.fraction ??
-        row?.bill?.frac ??
-        1
+      row?.frac ??
+      row?.billFraction ??
+      row?.bill?.fraction ??
+      row?.bill?.frac ??
+      1
     );
   };
 
@@ -535,7 +534,7 @@ export const BillsDualTable = ({
 
   const selectedTotalBalance = useMemo(() => {
     return selectedRows.reduce(
-      (acc, row) => acc + Number(row.currentBalance ?? 0),
+      (acc, row) => acc + Number(row.opPendingAmount ?? 0),
       0
     );
   }, [selectedRows]);
@@ -594,112 +593,112 @@ export const BillsDualTable = ({
 
 
   const isExpired = (expirationDate) => {
-  if (!expirationDate) return false;
+    if (!expirationDate) return false;
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-  const expDate = new Date(expirationDate);
-  expDate.setHours(0, 0, 0, 0);
+    const expDate = new Date(expirationDate);
+    expDate.setHours(0, 0, 0, 0);
 
-  return expDate < today;
-};
+    return expDate < today;
+  };
 
-const isExpiringSoon = (expirationDate, days = 5) => {
-  if (!expirationDate) return false;
+  const isExpiringSoon = (expirationDate, days = 5) => {
+    if (!expirationDate) return false;
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-  const expDate = new Date(expirationDate);
-  expDate.setHours(0, 0, 0, 0);
+    const expDate = new Date(expirationDate);
+    expDate.setHours(0, 0, 0, 0);
 
-  const diffTime = expDate.getTime() - today.getTime();
-  const diffDays = diffTime / (1000 * 60 * 60 * 24);
+    const diffTime = expDate.getTime() - today.getTime();
+    const diffDays = diffTime / (1000 * 60 * 60 * 24);
 
-  return diffDays >= 0 && diffDays <= days;
-};
+    return diffDays >= 0 && diffDays <= days;
+  };
 
   const leftColumns = useMemo(
     () => [
       {
-  field: "billLabel",
-  headerName: "ID Factura / Frac",
-  flex: 1.05,
-  minWidth: 190,
-  sortable: true,
-  headerAlign: "left",
-  align: "left",
-  renderCell: (params) => {
-    const expired = isExpired(params.row.expirationDate);
-    const expiringSoon = isExpiringSoon(params.row.expirationDate);
+        field: "billLabel",
+        headerName: "ID Factura / Frac",
+        flex: 1.05,
+        minWidth: 190,
+        sortable: true,
+        headerAlign: "left",
+        align: "left",
+        renderCell: (params) => {
+          const expired = isExpired(params.row.expirationDate);
+          const expiringSoon = isExpiringSoon(params.row.expirationDate);
 
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          lineHeight: 1.1,
-          py: 0.5,
-        }}
-      >
-  
-
-        <Typography
-          sx={{
-            fontSize: 13,
-            fontWeight: 700,
-            color: "#000",
-          }}
-        >
-          {params.row.billLabel}
-        </Typography>
-
-        {params.row.expirationDate && (
-          <Tooltip
-            title={
-              expired
-                ? "Esta factura ya se encuentra expirada"
-                : "Fecha límite de recaudo de esta factura"
-            }
-            arrow
-          >
-            <Chip
-              label={`Expira en: ${formatDate(params.row.expirationDate)}`}
-              size="small"
+          return (
+            <Box
               sx={{
-                mt: 0.5,
-                width: "fit-content",
-                height: 18,
-                fontSize: 10,
-                fontWeight: 600,
-                borderRadius: "6px",
-                color: expired
-                  ? "#D32F2F"
-                  : expiringSoon
-                  ? "#B45309"
-                  : "green",
-                backgroundColor: expired
-                  ? "#FDECEC"
-                  : expiringSoon
-                  ? "#FEF3C7"
-                  : "#F3F4F6",
-                border: expired
-                  ? "1px solid #F5B5B5"
-                  : expiringSoon
-                  ? "1px solid #FCD34D"
-                  : "1px solid #E5E7EB",
-                "& .MuiChip-label": {
-                  px: 0.8,
-                },
+                display: "flex",
+                flexDirection: "column",
+                lineHeight: 1.1,
+                py: 0.5,
               }}
-            />
-          </Tooltip>
-        )}
-      </Box>
-    );
-  },
-},
+            >
+
+
+              <Typography
+                sx={{
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: "#000",
+                }}
+              >
+                {params.row.billLabel}
+              </Typography>
+
+              {params.row.expirationDate && (
+                <Tooltip
+                  title={
+                    expired
+                      ? "Esta factura ya se encuentra expirada"
+                      : "Fecha límite de recaudo de esta factura"
+                  }
+                  arrow
+                >
+                  <Chip
+                    label={`Expira en: ${formatDate(params.row.expirationDate)}`}
+                    size="small"
+                    sx={{
+                      mt: 0.5,
+                      width: "fit-content",
+                      height: 18,
+                      fontSize: 10,
+                      fontWeight: 600,
+                      borderRadius: "6px",
+                      color: expired
+                        ? "#D32F2F"
+                        : expiringSoon
+                          ? "#B45309"
+                          : "green",
+                      backgroundColor: expired
+                        ? "#FDECEC"
+                        : expiringSoon
+                          ? "#FEF3C7"
+                          : "#F3F4F6",
+                      border: expired
+                        ? "1px solid #F5B5B5"
+                        : expiringSoon
+                          ? "1px solid #FCD34D"
+                          : "1px solid #E5E7EB",
+                      "& .MuiChip-label": {
+                        px: 0.8,
+                      },
+                    }}
+                  />
+                </Tooltip>
+              )}
+            </Box>
+          );
+        },
+      },
       {
         field: "investorName",
         headerName: "Inversionista",
@@ -822,8 +821,7 @@ const isExpiringSoon = (expirationDate, days = 5) => {
                     MuiTablePagination: {
                       labelRowsPerPage: "Filas por página:",
                       labelDisplayedRows: ({ from, to, count }) =>
-                        `${from}-${to} de ${
-                          count !== -1 ? count : `más de ${to}`
+                        `${from}-${to} de ${count !== -1 ? count : `más de ${to}`
                         }`,
                     },
                   }}
@@ -872,9 +870,9 @@ const isExpiringSoon = (expirationDate, days = 5) => {
                       alignItems: "center",
                     },
                     "& .MuiDataGrid-cell:focus, & .MuiDataGrid-columnHeader:focus":
-                      {
-                        outline: "none",
-                      },
+                    {
+                      outline: "none",
+                    },
                     "& .MuiDataGrid-row.Mui-selected": {
                       backgroundColor: "rgba(54,167,167,0.12)",
                     },
@@ -889,10 +887,10 @@ const isExpiringSoon = (expirationDate, days = 5) => {
                       color: "#2C9A9A !important",
                     },
                     "& .MuiDataGrid-columnHeaderCheckbox, & .MuiDataGrid-cellCheckbox":
-                      {
-                        justifyContent: "center",
-                        alignItems: "center",
-                      },
+                    {
+                      justifyContent: "center",
+                      alignItems: "center",
+                    },
                     "& .MuiDataGrid-footerContainer": {
                       minHeight: 36,
                       borderTop: "none",
@@ -1176,13 +1174,13 @@ const isExpiringSoon = (expirationDate, days = 5) => {
                   Total ({selectedRows.length} facturas)
                 </Typography>
                 <Typography
-                                    sx={{
-                                      fontSize: 12,
-                                      fontWeight: 700,
-                                    }}
-                                  >
-                                    El mínimo de facturas a seleccionar es 5
-                                  </Typography>
+                  sx={{
+                    fontSize: 12,
+                    fontWeight: 700,
+                  }}
+                >
+                  El mínimo de facturas a seleccionar es 5
+                </Typography>
 
                 <Typography
                   sx={{

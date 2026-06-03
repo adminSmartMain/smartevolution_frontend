@@ -764,13 +764,35 @@ const formInitialValues = useMemo(() => {
           {({ values, setFieldValue, touched, errors, setFieldTouched, submitForm }) => {
 console.log(values)
 const DEFAULT_RECEIPT_STATUS = "ea8518e8-168a-46d7-b56a-1286bf0037cd";
-            const safeDateToIso = (value) => {
+const safeDateToIso = (value) => {
   if (!value) return null;
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? null : date.toISOString().slice(0, 10);
-};
-          
 
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+
+    const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (isoMatch) {
+      const [, year, month, day] = isoMatch;
+      return `${year}-${month}-${day}`;
+    }
+
+    const localMatch = trimmed.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+    if (localMatch) {
+      const [, day, month, year] = localMatch;
+      return `${year}-${month}-${day}`;
+    }
+  }
+
+  const date = value instanceof Date ? value : new Date(value);
+
+  if (Number.isNaN(date.getTime())) return null;
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+};
 
 
 
