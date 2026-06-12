@@ -515,22 +515,22 @@ const SectionTitle = ({ title, isExpanded }) => (
     sx={{
       ...(isExpanded
         ? {
-            width: "80%",
-            padding: "8px 16px",
-            marginTop: "16px",
-            marginBottom: "4px",
-            color: "#666",
-            fontSize: "0.75rem",
-            fontWeight: 600,
-            textTransform: "uppercase",
-          }
+          width: "80%",
+          padding: "8px 16px",
+          marginTop: "16px",
+          marginBottom: "4px",
+          color: "#666",
+          fontSize: "0.75rem",
+          fontWeight: 600,
+          textTransform: "uppercase",
+        }
         : {
-            opacity: 0,
-            height: 0,
-            margin: 0,
-            padding: 0,
-            overflow: "hidden",
-          }),
+          opacity: 0,
+          height: 0,
+          margin: 0,
+          padding: 0,
+          overflow: "hidden",
+        }),
     }}
   >
     {title}
@@ -626,6 +626,13 @@ const PRIMARY_SECTIONS = [
           {
             href: "/administration/new-receipt/receiptList",
             text: "Consulta de Recaudos",
+          },
+          {
+            href: "/administration/new-receipt/registerMassiveReceipt",
+            text: "Registrar Recaudos Masivos",
+            openInWindow: true,
+            windowKey: "registerMassiveOperation",
+            windowFeatures: "width=1200,height=800",
           },
         ],
       },

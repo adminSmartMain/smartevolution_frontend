@@ -5,6 +5,7 @@ import {
   Home as HomeIcon,
 
 } from "@mui/icons-material";
+import TuneIcon from "@mui/icons-material/Tune";
 /* Modal imports*/
 import ValueFormat from "@formats/ValueFormat";
 import { useFetch } from "@hooks/useFetch";
@@ -219,7 +220,17 @@ export const ReceiptListComponent = () => {
     const openMenuCSV = Boolean(anchorElCSV);
     const openStatus = Boolean(anchorElStatus);
 
+const [anchorElFilters, setAnchorElFilters] = useState(null);
 
+const openFiltersMenu = Boolean(anchorElFilters);
+
+const handleOpenFilters = (event) => {
+  setAnchorElFilters(event.currentTarget);
+};
+
+const handleCloseFilters = () => {
+  setAnchorElFilters(null);
+};
 
     const formatNumberWithThousandsSeparator = (value) => {
     if (value === undefined || value === null) return '';
@@ -855,84 +866,64 @@ const receipt =
   return (
     <>
        <Box sx={{ ...sectionTitleContainerSx }}>
+  <Box className="view-header">
+    <Typography
+      letterSpacing={0}
+      fontSize="1.7rem"
+      fontWeight="regular"
+      marginBottom="0.7rem"
+      color="#5EA3A3"
+    >
+      <Breadcrumbs
+        separator={<NavigateNextIcon fontSize="small" />}
+        aria-label="breadcrumb"
+        sx={{ ml: 1, mt: 1 }}
+      >
+        <Link href="/dashboard" underline="none">
+          <a>
+            <HomeIcon
+              fontSize="large"
+              sx={{
+                color: "#488b8f",
+                opacity: 0.8,
+                strokeWidth: 1,
+              }}
+            />
+          </a>
+        </Link>
 
-<Box className="view-header">
-  
-
-               <Typography
-                      letterSpacing={0}
-                      fontSize="1.7rem"
-                      fontWeight="regular"
-                      marginBottom="0.7rem"
-                      color="#5EA3A3"
-                    >
-                        <Breadcrumbs
-                    separator={<NavigateNextIcon fontSize="small" />}
-                    aria-label="breadcrumb"
-                    sx={{ ml: 1, mt: 1 }}
-                  >
-                    <Link href="/dashboard" underline="none">
-              <a>
-                 <HomeIcon
-                                        fontSize="large" 
-                                        sx={{ 
-                                          color: '#488b8f',
-                                          opacity: 0.8, // Ajusta la transparencia (0.8 = 80% visible)
-                                          strokeWidth: 1, // Grosor del contorno
-                                        }} 
-                                      />
-
-              </a>
-
-            </Link>
-                    <Link
-                      underline="hover"
-                      color="#5EA3A3"
-                      href="/administration"
-                      sx={{ fontSize: "1.3rem" }}
-                    >
-                 <Typography component="h1" className="view-title">
-            
+        <Link
+          underline="hover"
+          color="#5EA3A3"
+          href="/administration"
+          sx={{ fontSize: "1.3rem" }}
+        >
+          <Typography component="h1" className="view-title">
             Administración
-                         
-                      </Typography>
-                     
-                    </Link>
-            
-                 <Typography
-                               component="h1" className="view-title">
-              Consulta de recaudos
-                    </Typography>
-                  </Breadcrumbs>
-            
-                    </Typography>
-       
+          </Typography>
+        </Link>
+
+        <Typography component="h1" className="view-title">
+          Consulta de recaudos
+        </Typography>
+      </Breadcrumbs>
+    </Typography>
+  </Box>
+
+  <Box sx={{ ...sectionTitleContainerSx }}></Box>
 </Box>
-       
-        <Box sx={{ ...sectionTitleContainerSx }}>
-      
-              </Box>
-      </Box>
+
 <Box
   sx={{
     width: "100%",
     mb: 2,
-
-    // ✅ Desktop sigue igual
     display: { xs: "flex", sm: "flex" },
     flexDirection: { xs: "column", sm: "row" },
-
-    // ✅ gap coherente
     gap: { xs: 1.2, sm: 2 },
-
-    // ✅ en desktop alineado centro
     alignItems: { xs: "stretch", sm: "center" },
-
-    // ✅ en desktop se distribuye igual que antes
     justifyContent: { sm: "space-between" },
   }}
 >
-  {/* 🔎 BUSCADOR */}
   <TextField
     variant="outlined"
     id="searchBar"
@@ -954,9 +945,13 @@ const receipt =
         height: 35,
         fontSize: "14px",
         paddingRight: 0,
+        borderRadius: "8px",
       },
       "& .MuiInputBase-input": {
         padding: "6px 8px",
+      },
+      "& .MuiOutlinedInput-notchedOutline": {
+        borderColor: "#5EA3A3",
       },
     }}
     InputProps={{
@@ -970,136 +965,197 @@ const receipt =
     }}
   />
 
-  {/* ✅ BLOQUE DERECHO */}
   <Box
     sx={{
-      display: "grid",
-
-      // ✅ móvil todo en 1 columna
-      gridTemplateColumns: { xs: "1fr", sm: "auto auto auto" },
-
-      // ✅ desktop lo mantiene en fila
+      display: "flex",
       alignItems: "center",
-      justifyContent: { sm: "flex-end" },
-
-      gap: { xs: 1, sm: 1.2 },
-
+      justifyContent: { xs: "flex-start", sm: "flex-end" },
+      gap: 1,
+      flexWrap: "wrap",
       width: { xs: "100%", sm: "auto" },
     }}
   >
-    {/* ✅ ESTADO (full en móvil, auto en desktop) */}
-    <Box sx={{ display: "flex", gap: 1, width: "100%" }}>
+    <Button
+      onClick={handleOpenFilters}
+      variant="outlined"
+      sx={{
+        minWidth: 42,
+        width: 42,
+        height: 42,
+        border: "1px solid #5EA3A3",
+        borderRadius: "8px",
+        color: "#488B8F",
+        backgroundColor: "#fff",
+        p: 0,
+        "&:hover": {
+          backgroundColor: "#488B8F",
+          borderColor: "#488B8F",
+          color: "#fff",
+        },
+        "&:hover svg": {
+          color: "#fff",
+        },
+      }}
+    >
+      <TuneIcon fontSize="small" />
+    </Button>
+
+    <Link href="/administration/new-receipt/registerMassiveReceipt" passHref>
       <Button
-        className="button-header-preop-title"
-        variant="outlined"
-        onClick={handleClickStatus}
+        component="a"
+        variant="contained"
         sx={{
-          width: { xs: "100%", sm: "auto" }, // ✅ full en móvil
-          justifyContent: "space-between",
-          minWidth: { xs: "100%", sm: 200 },
-          height: 36,
+          height: 42,
+          borderRadius: "8px",
+          backgroundColor: "#1C9AA0",
+          color: "#fff",
+          px: 2.5,
           textTransform: "none",
+          fontWeight: 600,
+          boxShadow: "none",
           whiteSpace: "nowrap",
-          color: selectedStatus ? "text.primary" : "text.secondary",
-          borderColor: selectedStatus ? "primary.main" : "grey.400",
           "&:hover": {
-            borderColor: selectedStatus ? "primary.dark" : "grey.600",
+            backgroundColor: "#16848A",
+            boxShadow: "none",
           },
         }}
       >
-        {selectedStatus ? selectedStatus.description : "Seleccionar estado"}
-        <KeyboardArrowDownIcon sx={{ ml: 1, fontSize: 18 }} />
+        Registro Masivo de Recaudos
       </Button>
+    </Link>
 
-      {selectedStatus && (
-        <IconButton
-          onClick={handleClearStatus}
-          size="small"
-          sx={{
-            color: "grey.500",
-            "&:hover": {
-              color: "error.main",
-              backgroundColor: "error.light",
-            },
-          }}
-        >
-          <ClearIcon fontSize="small" />
-        </IconButton>
-      )}
-    </Box>
-
-    {/* ✅ Menu estados */}
-    <Menu
-      anchorEl={anchorElStatus}
-      open={openStatus}
-      onClose={handleCloseStatus}
-      anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-      transformOrigin={{ vertical: "top", horizontal: "left" }}
-    >
-      {dataReceipt?.data?.map((status) => (
-        <MenuItem
-          key={status.id}
-          onClick={() => handleSelectStatus(status)}
-          selected={selectedStatus?.id === status.id}
-          sx={{
-            "&.Mui-selected": {
-              backgroundColor: "#488B8F10",
-              "&:hover": {
-                backgroundColor: "#488B8F15",
-              },
-            },
-            px: 2,
-            py: 1,
-            minWidth: 200,
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <span>{status.description}</span>
-          {selectedStatus?.id === status.id && (
-            <CheckIcon fontSize="small" sx={{ color: "#488B8F", ml: 1 }} />
-          )}
-        </MenuItem>
-      ))}
-    </Menu>
-
-    {/* ✅ DATEPICKER + MENU 3 PUNTOS: misma fila en móvil */}
-    <Box
+    <IconButton
+      onClick={handleMenuClickCSV}
+      className="context-menu"
       sx={{
-        display: "grid",
-        gridTemplateColumns: { xs: "1fr auto", sm: "auto auto" },
-        gap: 1,
-        alignItems: "center",
-        width: "100%",
+        p: 0.5,
       }}
     >
-      <Box sx={{ width: "100%" }}>
-        <AdvancedDateRangePicker
-          className="date-picker"
-          onApply={handleDateRangeApply}
-          onClean={handleClear}
-        />
-      </Box>
+      <MoreVertIcon />
+    </IconButton>
 
-      <IconButton
-        onClick={handleMenuClickCSV}
-        className="context-menu"
-        sx={{
-          justifySelf: "end",
-          p: 0.5,
-        }}
-      >
-        <MoreVertIcon />
-      </IconButton>
-
-      <Menu anchorEl={anchorElCSV} open={openMenuCSV} onClose={handleCloseMenuCSV}>
-        <MenuItem onClick={handleExportExcel}>Exportar a CSV</MenuItem>
-      </Menu>
-    </Box>
+    <Menu
+      anchorEl={anchorElCSV}
+      open={openMenuCSV}
+      onClose={handleCloseMenuCSV}
+    >
+      <MenuItem onClick={handleExportExcel}>Exportar a CSV</MenuItem>
+    </Menu>
   </Box>
 </Box>
 
+<Menu
+  anchorEl={anchorElFilters}
+  open={openFiltersMenu}
+  onClose={handleCloseFilters}
+  anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+  transformOrigin={{ vertical: "top", horizontal: "left" }}
+  PaperProps={{
+    sx: {
+      width: 330,
+      borderRadius: "14px",
+      mt: 1,
+      overflow: "hidden",
+      boxShadow: "0px 8px 24px rgba(0,0,0,0.12)",
+    },
+  }}
+>
+  <Box sx={{ px: 2.5, py: 2 }}>
+    <Typography
+      sx={{
+        fontWeight: 700,
+        fontSize: "1.8rem",
+        color: "#C7DFDF",
+        mb: 1.5,
+      }}
+    >
+      Fecha
+    </Typography>
+
+    <AdvancedDateRangePicker
+      className="date-picker"
+      onApply={handleDateRangeApply}
+      onClean={handleClear}
+    />
+  </Box>
+
+  <Box sx={{ px: 2.5, py: 1 }}>
+    <Typography
+      sx={{
+        fontWeight: 700,
+        fontSize: "1.8rem",
+        color: "#C7DFDF",
+        mb: 1.5,
+      }}
+    >
+      Estado
+    </Typography>
+
+    {dataReceipt?.data?.map((status) => (
+      <MenuItem
+        key={status.id}
+        onClick={() => handleSelectStatus(status)}
+        selected={selectedStatus?.id === status.id}
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          borderRadius: "6px",
+          mb: 0.5,
+        }}
+      >
+        <span>{status.description}</span>
+
+        {selectedStatus?.id === status.id && (
+          <CheckIcon fontSize="small" sx={{ color: "#488B8F" }} />
+        )}
+      </MenuItem>
+    ))}
+  </Box>
+
+  <Box sx={{ borderTop: "1px solid #eee" }} />
+
+  <Box
+    sx={{
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      px: 2.5,
+      py: 1.5,
+    }}
+  >
+    <Button
+      onClick={() => {
+        handleClearStatus();
+        handleClear();
+      }}
+      sx={{
+        textTransform: "none",
+        color: "#b5b5b5",
+        fontWeight: 600,
+      }}
+    >
+      Limpiar filtros
+    </Button>
+
+    <Button
+      onClick={handleCloseFilters}
+      variant="contained"
+      sx={{
+        textTransform: "none",
+        backgroundColor: "#488B8F",
+        borderRadius: "8px",
+        px: 2.5,
+        boxShadow: "0px 4px 10px rgba(0,0,0,0.12)",
+        "&:hover": {
+          backgroundColor: "#5EA3A3",
+        },
+      }}
+    >
+      Aplicar
+    </Button>
+  </Box>
+</Menu>
 
    {loading ? (
   <TableSkeleton rows={8} columns={columns.length} />

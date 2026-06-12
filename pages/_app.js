@@ -30,7 +30,8 @@ const pathsWithoutDefaultLayout = [
       "/administration/new-receipt",
       "/administration/new-receipt/receipt-visualization",
       "/customers",
-      "/pre-operations/registerMassiveOperation"
+      "/pre-operations/registerMassiveOperation",
+      "/administration/new-receipt/registerMassiveReceipt"
 ];
 
 function MyApp({ Component, pageProps }) {
