@@ -1,4 +1,4 @@
-import React,{ useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Box, Typography, IconButton, Menu, MenuItem, } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { useFetch } from "@hooks/useFetch";
@@ -20,9 +20,10 @@ import Modal from "@components/modals/modal";
 import InputTitles from "@styles/inputTitles";
 import RedButtonModal from "@styles/buttons/noButtonModal";
 import GreenButtonModal from "@styles/buttons/yesButtonModal";
-import { useRouter } from "next/router"; 
+import { useRouter } from "next/router";
 import Button from "@mui/material/Button";
-
+import ShieldOutlinedIcon from "@mui/icons-material/ShieldOutlined";
+import AccountBalanceWalletOutlinedIcon from "@mui/icons-material/AccountBalanceWalletOutlined";
 import moment from "moment";
 
 const RiskTooltip = ({ children, row }) => (
@@ -277,7 +278,7 @@ const ColumnHeader2 = ({ top, bottom }) => (
 
 
 export const ClientListComponent = () => {
-   const router = useRouter();
+  const router = useRouter();
 
   const [page, setPage] = useState(1);
   const [open, setOpen] = useState([false, "", null]);
@@ -285,9 +286,9 @@ export const ClientListComponent = () => {
   const [query, setQuery] = useState("");
   const [openWindow, setOpenWindow] = useState(null);
 
-    const handleOpenViewCustomer = (id) => {
-    
-      
+  const handleOpenViewCustomer = (id) => {
+
+
     if (openWindow && !openWindow.closed) {
       openWindow.focus();
     } else {
@@ -305,13 +306,13 @@ export const ClientListComponent = () => {
   };
 
   const handleOpenEditCustomer = (id) => {
-    
-      
+
+
     if (openWindow && !openWindow.closed) {
       openWindow.focus();
     } else {
       const newWindow = window.open(
-       `/customers?modify=${id}`,
+        `/customers?modify=${id}`,
         "_blank",
         "width=800,height=600"
       );
@@ -381,45 +382,45 @@ export const ClientListComponent = () => {
 
 
 
-const showRiskProfile = (e) => {
-  e?.stopPropagation?.();
+  const showRiskProfile = (e) => {
+    e?.stopPropagation?.();
 
-  const row = actionsMenu.row;
-  closeMenu(e);
+    const row = actionsMenu.row;
+    closeMenu(e);
 
-  if (row?.id) {
-    router.push(
-      `/customers/financialAnalysisInformation?id=${encodeURIComponent(row.id)}&tab=1`
-    );
-  }
-};
+    if (row?.id) {
+      router.push(
+        `/customers/financialAnalysisInformation?id=${encodeURIComponent(row.id)}&tab=1`
+      );
+    }
+  };
 
-const showFinancialProfileOld = (e) => {
-  e?.stopPropagation?.();
+  const showFinancialProfileOld = (e) => {
+    e?.stopPropagation?.();
 
-  const row = actionsMenu.row;
-  closeMenu(e);
+    const row = actionsMenu.row;
+    closeMenu(e);
 
-  if (row?.id) {
-    router.push(
-      `/financialProfile/financialStatement?id=${encodeURIComponent(row.id)}&tab=1`
-    );
-  }
-};
+    if (row?.id) {
+      router.push(
+        `/financialProfile/financialStatement?id=${encodeURIComponent(row.id)}&tab=1`
+      );
+    }
+  };
 
-const showRiskProfileOld = (e) => {
-  e?.stopPropagation?.();
+  const showRiskProfileOld = (e) => {
+    e?.stopPropagation?.();
 
-  const row = actionsMenu.row;
-  closeMenu(e);
+    const row = actionsMenu.row;
+    closeMenu(e);
 
-  if (row?.id) {
-    router.push(
-      `/riskProfile?id=${encodeURIComponent(row.id)}`
-    );
-  }
-};
-  
+    if (row?.id) {
+      router.push(
+        `/riskProfile?id=${encodeURIComponent(row.id)}`
+      );
+    }
+  };
+
 
   const [dateRange, setDateRange] = useState({
     startDate: "",
@@ -432,65 +433,64 @@ const showRiskProfileOld = (e) => {
     init: true,
   });
 
-const safeDate = (iso) => {
-  if (!iso) return "—";
-  const m = moment(iso);
-  return m.isValid() ? m.format("DD/MM/YYYY") : "—";
-};
+  const safeDate = (iso) => {
+    if (!iso) return "—";
+    const m = moment(iso);
+    return m.isValid() ? m.format("DD/MM/YYYY") : "—";
+  };
 
-const toNumber = (v) => {
-  if (v === null || v === undefined || v === "") return null;
-  const n = Number(v);
-  return Number.isFinite(n) ? n : null;
-};
+  const toNumber = (v) => {
+    if (v === null || v === undefined || v === "") return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  };
 
-// ✅ Cuando cambia data -> map customers
-useEffect(() => {
-  const mapped =
-    data?.results?.map((customer) => {
-      const roleNames = (customer.rolesData ?? [])
-        .map((a) => a?.role?.name)
-        .filter(Boolean);
+  // ✅ Cuando cambia data -> map customers
+  useEffect(() => {
+    const mapped =
+      data?.results?.map((customer) => {
+        const roleNames = (customer.rolesData ?? [])
+          .map((a) => a?.role?.name)
+          .filter(Boolean);
 
-      return {
-        id: customer.id,
+        return {
+          id: customer.id,
 
-        DocumentNumber: customer.document_number,
-        Customer: `${customer.first_name ?? ""} ${customer.last_name ?? ""} ${
-          customer.social_reason ?? ""
-        }`.trim(),
+          DocumentNumber: customer.document_number,
+          Customer: `${customer.first_name ?? ""} ${customer.last_name ?? ""} ${customer.social_reason ?? ""
+            }`.trim(),
 
-        created_at: customer.created_at,
-        RegisteredAt: customer.RegisteredAt,
-        LastOperationAt: customer.LastOperationAt,
+          created_at: customer.created_at,
+          RegisteredAt: customer.RegisteredAt,
+          LastOperationAt: customer.LastOperationAt,
 
-        AvatarUrl: customer.profile_image,
+          AvatarUrl: customer.profile_image,
 
-        FinancialProfile: customer.financial_profile,
-        RiskProfile: customer.riskProfile,
+          FinancialProfile: customer.financial_profile,
+          RiskProfile: customer.riskProfile,
 
-        Email: customer.email,
-        Phone: customer.phone_number,
+          Email: customer.email,
+          Phone: customer.phone_number,
 
-        InvoicesPending: customer.InvoicesPending ?? 0,
-        InvoicesTotal: customer.InvoicesTotal ?? 0,
+          InvoicesPending: customer.InvoicesPending ?? 0,
+          InvoicesTotal: customer.InvoicesTotal ?? 0,
 
-        // ✅ NUEVOS (backend)
-        IsInvestor: Boolean(customer.IsInvestor),
-        SaldoCuenta: toNumber(customer.SaldoCuenta),         // "0.00" -> 0
-        PorCobrar: toNumber(customer.PorCobrar),             // "1000.00" -> 1000
-        TotalPortafolio: toNumber(customer.TotalPortafolio), // "1000.00" -> 1000
+          // ✅ NUEVOS (backend)
+          IsInvestor: Boolean(customer.IsInvestor),
+          SaldoCuenta: toNumber(customer.SaldoCuenta),         // "0.00" -> 0
+          PorCobrar: toNumber(customer.PorCobrar),             // "1000.00" -> 1000
+          TotalPortafolio: toNumber(customer.TotalPortafolio), // "1000.00" -> 1000
 
-        // ✅ Roles por cliente
-        Roles: roleNames.length ? roleNames.join(", ") : "—",
+          // ✅ Roles por cliente
+          Roles: roleNames.length ? roleNames.join(", ") : "—",
 
-        // ✅ riesgo (ajusta el path real)
-        risk_level: customer.riskProfileData?.riskLevels ?? "No aplica",
-      };
-    }) || [];
+          // ✅ riesgo (ajusta el path real)
+          risk_level: customer.riskProfileData?.riskLevels ?? "No aplica",
+        };
+      }) || [];
 
-  setCustomers(mapped);
-}, [data]);
+    setCustomers(mapped);
+  }, [data]);
 
 
 
@@ -541,365 +541,365 @@ useEffect(() => {
     });
   };
 
-   const dataCount = data?.count || 0;
-  const  columns = [
-  // NIT / Nombre (con icono + 2 líneas)
-  {
-    field: "nitNombre",
-    headerName: "NIT / Nombre",
-    width: 260,
-    sortable: true,
-    renderCell: (params) => {
-      // Ajusta a tu data real:
-      const nit = params.row?.DocumentNumber ?? "1234567890";
-      const name = params.row?.Customer ?? "Nombre completo cliente A";
-      const iconUrl =
-        params.row?.AvatarUrl ??
-        "https://devsmartevolution.s3.us-east-1.amazonaws.com/clients-profiles/default-profile.svg"; // placeholder
+  const dataCount = data?.count || 0;
+  const columns = [
+    // NIT / Nombre (con icono + 2 líneas)
+    {
+      field: "nitNombre",
+      headerName: "NIT / Nombre",
+      width: 260,
+      sortable: true,
+      renderCell: (params) => {
+        // Ajusta a tu data real:
+        const nit = params.row?.DocumentNumber ?? "1234567890";
+        const name = params.row?.Customer ?? "Nombre completo cliente A";
+        const iconUrl =
+          params.row?.AvatarUrl ??
+          "https://devsmartevolution.s3.us-east-1.amazonaws.com/clients-profiles/default-profile.svg"; // placeholder
 
-      return (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, width: "100%" }}>
-          <Box
-            component="img"
-            src={iconUrl}
-            alt="icon"
-            sx={{ width: 28, height: 28, objectFit: "contain" }}
-          />
-          <Box sx={{ minWidth: 0 }}>
-            <Typography sx={{ fontSize: 11, fontWeight: 700, color: "#4b4b4b" }}>
-              {nit}
+        return (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, width: "100%" }}>
+            <Box
+              component="img"
+              src={iconUrl}
+              alt="icon"
+              sx={{ width: 28, height: 28, objectFit: "contain" }}
+            />
+            <Box sx={{ minWidth: 0 }}>
+              <Typography sx={{ fontSize: 11, fontWeight: 700, color: "#4b4b4b" }}>
+                {nit}
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: "#2b8c90",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  maxWidth: 200,
+                }}
+                title={name}
+              >
+                {name}
+              </Typography>
+            </Box>
+          </Box>
+        );
+      },
+    },
+
+    // Registrado / Ultima op.
+    {
+      field: "registered",
+      width: 130,
+      renderHeader: () => <ColumnHeader2 top="Registrado" bottom="Ultima op." />,
+      renderCell: (params) => {
+        const reg = moment(params.row?.created_at).format("DD/MM/YYYY") ?? "12/01/2026";
+        const lastOpRaw = params.row?.LastOperationAt;
+        const lastOp = lastOpRaw && moment(lastOpRaw).isValid()
+          ? moment(lastOpRaw).format("DD/MM/YYYY")
+          : "Sin operación";
+
+        return (
+          <Box sx={{ display: "flex", flexDirection: "column", lineHeight: 1.15 }}>
+            <Typography sx={{ fontSize: 12, fontWeight: 700, color: "#4b4b4b" }}>
+              {reg}
             </Typography>
+            <Typography sx={{ fontSize: 11, fontWeight: 600, color: "#8a8a8a" }}>
+              {lastOp}
+            </Typography>
+          </Box>
+        );
+      },
+    },
+
+    // Rol(es)
+    {
+      field: "roles",
+      headerName: "Rol(es)",
+      width: 150,
+      renderCell: (params) => {
+        const raw = params.row?.Roles ?? ""; // ej: "Emisor, Inversionista, Pagador"
+        const roles = raw
+          .split(",")
+          .map(r => r.trim())
+          .filter(Boolean);
+
+        if (roles.length === 0) {
+          return (
+            <Typography sx={{ fontSize: 12, fontWeight: 700, color: "#4b4b4b" }}>
+              —
+            </Typography>
+          );
+        }
+
+        const maxVisible = 1;
+        const visible = roles.slice(0, maxVisible);
+        const rest = roles.slice(maxVisible);
+        const moreCount = rest.length;
+
+        return (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.8, minWidth: 0 }}>
             <Typography
               sx={{
                 fontSize: 12,
                 fontWeight: 700,
+                color: "#4b4b4b",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {visible.join(", ")}
+            </Typography>
+
+            {moreCount > 0 && (
+              <Tooltip
+                title={
+                  <Box sx={{ p: 0.5 }}>
+                    <Typography sx={{ fontSize: 11, fontWeight: 800, color: "#2b8c90" }}>
+                      Roles adicionales
+                    </Typography>
+                    <Typography sx={{ fontSize: 11, fontWeight: 600, color: "#6b7280", mt: 0.25 }}>
+                      {rest.join(", ")}
+                    </Typography>
+                  </Box>
+                }
+                arrow
+                placement="right"
+                PopperProps={{
+                  modifiers: [{ name: "offset", options: { offset: [10, 8] } }],
+                }}
+                componentsProps={{
+                  tooltip: {
+                    sx: {
+                      backgroundColor: "#fff",
+                      color: "#4b4b4b",
+                      border: "1px solid #E5E7EB",
+                      boxShadow: "0px 8px 20px rgba(0,0,0,0.12)",
+                      borderRadius: "10px",
+                      p: 1.2,
+                      maxWidth: 260,
+                    },
+                  },
+                  arrow: {
+                    sx: {
+                      color: "#fff",
+                      "&:before": { border: "1px solid #E5E7EB" },
+                    },
+                  },
+                }}
+              >
+                <Box
+                  onClick={(e) => e.stopPropagation()}
+                  sx={{
+                    ml: 0.5,
+                    px: 0.8,
+                    py: 0.1,
+                    fontSize: 11,
+                    fontWeight: 800,
+                    lineHeight: 1.4,
+                    borderRadius: "999px",
+                    color: "#0F766E",
+                    backgroundColor: "#ECFDF5",
+                    border: "1px solid #A7F3D0",
+                    cursor: "pointer",
+                    userSelect: "none",
+                    "&:hover": {
+                      backgroundColor: "#D1FAE5",
+                    },
+                  }}
+                >
+                  +{moreCount}
+                </Box>
+              </Tooltip>
+            )}
+
+          </Box>
+        );
+      },
+    }
+    ,
+
+
+    // Riesgo (carita / semáforo)
+    {
+      field: "risk",
+      headerName: "Riesgo",
+      width: 80,
+      align: "center",
+      headerAlign: "center",
+      sortable: false,
+      renderCell: (params) => {
+        const hasRiskProfile = Boolean(params.row?.riskProfile);
+
+        const risk = hasRiskProfile
+          ? (params.row?.RiskLevel ?? "No aplica").trim()
+          : "No aplica";
+
+        const map = {
+          "Muy Bajo": { bg: "#E6F4EA", color: "#1E8E3E", Icon: AddReactionIcon },
+          "Bajo": { bg: "#E6F4EA", color: "#43A047", Icon: SentimentSatisfiedSharpIcon },
+          "Regular": { bg: "#FFF4E5", color: "#E3A400", Icon: SentimentNeutralRoundedIcon },
+          "Alto": { bg: "#FCE8E6", color: "#E66431", Icon: SentimentVeryDissatisfiedIcon },
+          "Muy Alto": { bg: "#FCE8E6", color: "#D93025", Icon: SentimentVeryDissatisfiedRoundedIcon },
+          "No aplica": { bg: "#eeeeee", color: "#777777", Icon: AddReactionIcon },
+        };
+
+        const cfg = map[risk] ?? map["No aplica"];
+        const IconComp = cfg.Icon;
+
+        const IconBubble = (
+          <Box
+            sx={{
+              width: 22,
+              height: 22,
+              borderRadius: "50%",
+              background: cfg.bg,
+              display: "grid",
+              placeItems: "center",
+              cursor: hasRiskProfile ? "pointer" : "default",
+              "&:hover": hasRiskProfile
+                ? { backgroundColor: "#B5D1C980" }
+                : undefined,
+            }}
+          >
+            <IconComp sx={{ fontSize: 16, color: cfg.color }} />
+          </Box>
+        );
+
+        return (
+          <RiskTooltip row={params.row}>
+            {hasRiskProfile ? (
+              <Link
+                href={`/riskProfile?id=${params.row.id}`}
+                style={{ textDecoration: "none" }}
+              >
+                {IconBubble}
+              </Link>
+            ) : (
+              IconBubble
+            )}
+          </RiskTooltip>
+        );
+      },
+    },
+
+
+    // Perfil S (icono tipo banco)
+    {
+      field: "Perfil Financiero Cliente",
+      headerName: "",
+      width: 20,
+      sortable: false,
+      filterable: false,
+      renderCell: (params) => {
+        const loaded = Boolean(params.row?.FinancialProfile); // 👈 viene del serializer
+
+        return (
+          <Link href={`/financialProfile/financialStatement/?id=${params.row.id}`}>
+            <AccountBalanceRoundedIcon
+              sx={{
+                color: loaded ? "#488B8F" : "#BDBDBD", // ✅ activo / inactivo
+                fontSize: 20,
+                cursor: "pointer",
+                borderRadius: "5px",
+                "&:hover": {
+                  backgroundColor: "#B5D1C980",
+                },
+              }}
+            />
+          </Link>
+        );
+      },
+    },
+
+
+    // Contacto (correo + teléfono, subrayado como link)
+    {
+      field: "contact",
+      headerName: "Contacto",
+      width: 220,
+      sortable: false,
+      renderCell: (params) => {
+        const email = params.row?.Email ?? "correoprincipal@usuario.com";
+        const phone = params.row?.Phone ?? "+584241234567";
+
+        return (
+          <Box sx={{ display: "flex", flexDirection: "column", lineHeight: 1.15 }}>
+            <Typography
+              sx={{
+                fontSize: 11,
+                fontWeight: 700,
                 color: "#2b8c90",
+                textDecoration: "underline",
                 whiteSpace: "nowrap",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
-                maxWidth: 200,
+                maxWidth: 210,
               }}
-              title={name}
+              title={email}
             >
-              {name}
+              {email}
+            </Typography>
+            <Typography sx={{ fontSize: 11, fontWeight: 700, color: "#4b4b4b" }}>
+              {phone}
             </Typography>
           </Box>
-        </Box>
-      );
+        );
+      },
     },
-  },
 
-  // Registrado / Ultima op.
-  {
-    field: "registered",
-    width: 130,
-    renderHeader: () => <ColumnHeader2 top="Registrado" bottom="Ultima op." />,
-    renderCell: (params) => {
-      const reg = moment(params.row?.created_at).format("DD/MM/YYYY") ?? "12/01/2026";
-      const lastOpRaw = params.row?.LastOperationAt;
-const lastOp = lastOpRaw && moment(lastOpRaw).isValid()
-  ? moment(lastOpRaw).format("DD/MM/YYYY")
-  : "Sin operación";
+    // Saldo cuenta
+    {
+      field: "SaldoCuenta",
+      headerName: "Saldo cuenta",
+      width: 130,
+      renderCell: (params) => {
+        const isInvestor = params.row?.IsInvestor;
+        const v = params.row?.SaldoCuenta;
 
-      return (
-        <Box sx={{ display: "flex", flexDirection: "column", lineHeight: 1.15 }}>
+        return (
           <Typography sx={{ fontSize: 12, fontWeight: 700, color: "#4b4b4b" }}>
-            {reg}
+            {!isInvestor ? "No Aplica" : money(v ?? 0)}
           </Typography>
-          <Typography sx={{ fontSize: 11, fontWeight: 600, color: "#8a8a8a" }}>
-            {lastOp}
-          </Typography>
-        </Box>
-      );
-    },
-  },
-
-  // Rol(es)
-  {
-  field: "roles",
-  headerName: "Rol(es)",
-  width: 150,
-  renderCell: (params) => {
-    const raw = params.row?.Roles ?? ""; // ej: "Emisor, Inversionista, Pagador"
-    const roles = raw
-      .split(",")
-      .map(r => r.trim())
-      .filter(Boolean);
-
-    if (roles.length === 0) {
-      return (
-        <Typography sx={{ fontSize: 12, fontWeight: 700, color: "#4b4b4b" }}>
-          —
-        </Typography>
-      );
-    }
-
-    const maxVisible = 1;
-    const visible = roles.slice(0, maxVisible);
-    const rest = roles.slice(maxVisible);
-    const moreCount = rest.length;
-
-    return (
-      <Box sx={{ display: "flex", alignItems: "center", gap: 0.8, minWidth: 0 }}>
-        <Typography
-          sx={{
-            fontSize: 12,
-            fontWeight: 700,
-            color: "#4b4b4b",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {visible.join(", ")}
-        </Typography>
-
-        {moreCount > 0 && (
-  <Tooltip
-    title={
-      <Box sx={{ p: 0.5 }}>
-        <Typography sx={{ fontSize: 11, fontWeight: 800, color: "#2b8c90" }}>
-          Roles adicionales
-        </Typography>
-        <Typography sx={{ fontSize: 11, fontWeight: 600, color: "#6b7280", mt: 0.25 }}>
-          {rest.join(", ")}
-        </Typography>
-      </Box>
-    }
-    arrow
-    placement="right"
-    PopperProps={{
-      modifiers: [{ name: "offset", options: { offset: [10, 8] } }],
-    }}
-    componentsProps={{
-      tooltip: {
-        sx: {
-          backgroundColor: "#fff",
-          color: "#4b4b4b",
-          border: "1px solid #E5E7EB",
-          boxShadow: "0px 8px 20px rgba(0,0,0,0.12)",
-          borderRadius: "10px",
-          p: 1.2,
-          maxWidth: 260,
-        },
+        );
       },
-      arrow: {
-        sx: {
-          color: "#fff",
-          "&:before": { border: "1px solid #E5E7EB" },
-        },
-      },
-    }}
-  >
-    <Box
-      onClick={(e) => e.stopPropagation()}
-      sx={{
-        ml: 0.5,
-        px: 0.8,
-        py: 0.1,
-        fontSize: 11,
-        fontWeight: 800,
-        lineHeight: 1.4,
-        borderRadius: "999px",
-        color: "#0F766E",
-        backgroundColor: "#ECFDF5",
-        border: "1px solid #A7F3D0",
-        cursor: "pointer",
-        userSelect: "none",
-        "&:hover": {
-          backgroundColor: "#D1FAE5",
-        },
-      }}
-    >
-      +{moreCount}
-    </Box>
-  </Tooltip>
-)}
-
-      </Box>
-    );
-  },
-}
-,
-
-
-  // Riesgo (carita / semáforo)
-{
-  field: "risk",
-  headerName: "Riesgo",
-  width: 80,
-  align: "center",
-  headerAlign: "center",
-  sortable: false,
-  renderCell: (params) => {
-    const hasRiskProfile = Boolean(params.row?.riskProfile);
-
-    const risk = hasRiskProfile
-      ? (params.row?.RiskLevel ?? "No aplica").trim()
-      : "No aplica";
-
-    const map = {
-      "Muy Bajo": { bg: "#E6F4EA", color: "#1E8E3E", Icon: AddReactionIcon },
-      "Bajo": { bg: "#E6F4EA", color: "#43A047", Icon: SentimentSatisfiedSharpIcon },
-      "Regular": { bg: "#FFF4E5", color: "#E3A400", Icon: SentimentNeutralRoundedIcon },
-      "Alto": { bg: "#FCE8E6", color: "#E66431", Icon: SentimentVeryDissatisfiedIcon },
-      "Muy Alto": { bg: "#FCE8E6", color: "#D93025", Icon: SentimentVeryDissatisfiedRoundedIcon },
-      "No aplica": { bg: "#eeeeee", color: "#777777", Icon: AddReactionIcon },
-    };
-
-    const cfg = map[risk] ?? map["No aplica"];
-    const IconComp = cfg.Icon;
-
-    const IconBubble = (
-      <Box
-        sx={{
-          width: 22,
-          height: 22,
-          borderRadius: "50%",
-          background: cfg.bg,
-          display: "grid",
-          placeItems: "center",
-          cursor: hasRiskProfile ? "pointer" : "default",
-          "&:hover": hasRiskProfile
-            ? { backgroundColor: "#B5D1C980" }
-            : undefined,
-        }}
-      >
-        <IconComp sx={{ fontSize: 16, color: cfg.color }} />
-      </Box>
-    );
-
-    return (
-      <RiskTooltip row={params.row}>
-        {hasRiskProfile ? (
-          <Link
-            href={`/riskProfile?id=${params.row.id}`}
-            style={{ textDecoration: "none" }}
-          >
-            {IconBubble}
-          </Link>
-        ) : (
-          IconBubble
-        )}
-      </RiskTooltip>
-    );
-  },
-},
-
-
-  // Perfil S (icono tipo banco)
- {
-  field: "Perfil Financiero Cliente",
-  headerName: "",
-  width: 20,
-  sortable: false,
-  filterable: false,
-  renderCell: (params) => {
-    const loaded = Boolean(params.row?.FinancialProfile); // 👈 viene del serializer
-
-    return (
-      <Link href={`/financialProfile/financialStatement/?id=${params.row.id}`}>
-        <AccountBalanceRoundedIcon
-          sx={{
-            color: loaded ? "#488B8F" : "#BDBDBD", // ✅ activo / inactivo
-            fontSize: 20,
-            cursor: "pointer",
-            borderRadius: "5px",
-            "&:hover": {
-              backgroundColor: "#B5D1C980",
-            },
-          }}
-        />
-      </Link>
-    );
-  },
-},
-
-
-  // Contacto (correo + teléfono, subrayado como link)
-  {
-    field: "contact",
-    headerName: "Contacto",
-    width: 220,
-    sortable: false,
-    renderCell: (params) => {
-      const email = params.row?.Email ?? "correoprincipal@usuario.com";
-      const phone = params.row?.Phone ?? "+584241234567";
-
-      return (
-        <Box sx={{ display: "flex", flexDirection: "column", lineHeight: 1.15 }}>
-          <Typography
-            sx={{
-              fontSize: 11,
-              fontWeight: 700,
-              color: "#2b8c90",
-              textDecoration: "underline",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              maxWidth: 210,
-            }}
-            title={email}
-          >
-            {email}
-          </Typography>
-          <Typography sx={{ fontSize: 11, fontWeight: 700, color: "#4b4b4b" }}>
-            {phone}
-          </Typography>
-        </Box>
-      );
     },
-  },
-
-  // Saldo cuenta
- {
-  field: "SaldoCuenta",
-  headerName: "Saldo cuenta",
-  width: 130,
-  renderCell: (params) => {
-    const isInvestor = params.row?.IsInvestor;
-    const v = params.row?.SaldoCuenta;
-
-    return (
-      <Typography sx={{ fontSize: 12, fontWeight: 700, color: "#4b4b4b" }}>
-        {!isInvestor ? "No Aplica" : money(v ?? 0)}
-      </Typography>
-    );
-  },
-},
 
 
-  // Facturas (ej: 13 (10))
- {
-  field: "invoices",
-  headerName: "Facturas",
-  width: 90,
-  renderCell: (params) => {
-    const total = params.row?.InvoicesTotal ?? 0;
-    const pending = params.row?.InvoicesPending ?? 0;
+    // Facturas (ej: 13 (10))
+    {
+      field: "invoices",
+      headerName: "Facturas",
+      width: 90,
+      renderCell: (params) => {
+        const total = params.row?.InvoicesTotal ?? 0;
+        const pending = params.row?.InvoicesPending ?? 0;
 
-    return (
-      <Typography sx={{ fontSize: 12, fontWeight: 700, color: "#4b4b4b" }}>
-        {total} ({pending})
-      </Typography>
-    );
-  },
-},
+        return (
+          <Typography sx={{ fontSize: 12, fontWeight: 700, color: "#4b4b4b" }}>
+            {total} ({pending})
+          </Typography>
+        );
+      },
+    },
 
-  // Total Portafolio
-{
-  field: "TotalPortafolio",
-  headerName: "Total Portafolio",
-  width: 170,
-  renderCell: (params) => {
-    const v = params.row?.TotalPortafolio;
-    return (
-      <Typography sx={{ fontSize: 12, fontWeight: 700, color: "#4b4b4b" }}>
-        {money(v ?? 0)}
-      </Typography>
-    );
-  },
-},
+    // Total Portafolio
+    {
+      field: "TotalPortafolio",
+      headerName: "Total Portafolio",
+      width: 170,
+      renderCell: (params) => {
+        const v = params.row?.TotalPortafolio;
+        return (
+          <Typography sx={{ fontSize: 12, fontWeight: 700, color: "#4b4b4b" }}>
+            {money(v ?? 0)}
+          </Typography>
+        );
+      },
+    },
 
     {
       field: "actions",
@@ -921,43 +921,43 @@ const lastOp = lastOpRaw && moment(lastOpRaw).isValid()
     },
 
 
-];
- 
+  ];
+
   return (
     <>
-     
+
       <Box sx={{ ...sectionTitleContainerSx }}>
 
         <ClientHeader
-        query={query}
-        setQuery={setQuery}
-        onSearch={handleSearch}
-        onClearSearch={handleClearSearch}
-        onOpenFilters={() => console.log("Abrir modal filtros")}
-        onApplyDateRange={handleApplyDateRange}
-        onClearDateRange={handleClearDateRange}
-      />
+          query={query}
+          setQuery={setQuery}
+          onSearch={handleSearch}
+          onClearSearch={handleClearSearch}
+          onOpenFilters={() => console.log("Abrir modal filtros")}
+          onApplyDateRange={handleApplyDateRange}
+          onClearDateRange={handleClearDateRange}
+        />
       </Box>
 
-            {loading ? (
-  <TableSkeleton rows={8} columns={columns.length} />
-) : (  
-    <ClientTableComponent
+      {loading ? (
+        <TableSkeleton rows={8} columns={columns.length} />
+      ) : (
+        <ClientTableComponent
 
-    rows={customers}
-    columns={columns}
-    page={page}
-    dataCount={dataCount}
-    setPage={setPage}
-    fetch={fetch}
-    query={query}
-    loading={loading}
+          rows={customers}
+          columns={columns}
+          page={page}
+          dataCount={dataCount}
+          setPage={setPage}
+          fetch={fetch}
+          query={query}
+          loading={loading}
 
-    
-    />
-    
-      
-       )}
+
+        />
+
+
+      )}
 
 
       <Menu
@@ -990,7 +990,7 @@ const lastOp = lastOpRaw && moment(lastOpRaw).isValid()
                 modifiers: [{ name: "offset", options: { offset: [0, -15] } }],
               }}
             >
-             <Typography
+              <Typography
                 fontFamily="icomoon"
                 fontSize="1.9rem"
                 color="#999999"
@@ -1009,42 +1009,12 @@ const lastOp = lastOpRaw && moment(lastOpRaw).isValid()
             </Typography>
           </Box>
         </MenuItem>
-        {/* ELIMINAR */}
-        <MenuItem sx={{ gap: 1 }} onClick={askDelete}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <CustomTooltip
-              title="Eliminar"
-              arrow
-              placement="bottom-start"
-              TransitionComponent={Fade}
-              PopperProps={{
-                modifiers: [{ name: "offset", options: { offset: [0, -15] } }],
-              }}
-            >
-              <Typography
-                fontFamily="icomoon"
-                fontSize="1.9rem"
-                color="#999999"
-                borderRadius="5px"
-                sx={{
-                  "&:hover": { backgroundColor: "#B5D1C980", color: "#488B8F" },
-                  cursor: "pointer",
-                }}
-              >
-                &#xe901;
-              </Typography> 
-            </CustomTooltip>
 
-            <Typography sx={{ fontSize: 13, fontWeight: 700, color: "#4b4b4b" }}>
-              Ver Cuenta
-            </Typography>
-          </Box>
-        </MenuItem>
-        {/* ELIMINAR */}
+        {/* Perfil de riesgo */}
         <MenuItem sx={{ gap: 1 }} onClick={showRiskProfile}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <CustomTooltip
-              title="Eliminar"
+              title="Ver perfil de riesgo"
               arrow
               placement="bottom-start"
               TransitionComponent={Fade}
@@ -1052,18 +1022,24 @@ const lastOp = lastOpRaw && moment(lastOpRaw).isValid()
                 modifiers: [{ name: "offset", options: { offset: [0, -15] } }],
               }}
             >
-              <Typography
-                fontFamily="icomoon"
-                fontSize="1.9rem"
-                color="#999999"
-                borderRadius="5px"
+              <Box
                 sx={{
-                  "&:hover": { backgroundColor: "#B5D1C980", color: "#488B8F" },
+                  width: 32,
+                  height: 32,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: "5px",
+                  color: "#999999",
                   cursor: "pointer",
+                  "&:hover": {
+                    backgroundColor: "#B5D1C980",
+                    color: "#488B8F",
+                  },
                 }}
               >
-                &#xe901;
-              </Typography>
+                <ShieldOutlinedIcon sx={{ fontSize: 23 }} />
+              </Box>
             </CustomTooltip>
 
             <Typography sx={{ fontSize: 13, fontWeight: 700, color: "#4b4b4b" }}>
@@ -1072,8 +1048,45 @@ const lastOp = lastOpRaw && moment(lastOpRaw).isValid()
           </Box>
         </MenuItem>
 
+        {/* Perfil financiero */}
+        <MenuItem sx={{ gap: 1 }} onClick={askDelete}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <CustomTooltip
+              title="Ver perfil financiero"
+              arrow
+              placement="bottom-start"
+              TransitionComponent={Fade}
+              PopperProps={{
+                modifiers: [{ name: "offset", options: { offset: [0, -15] } }],
+              }}
+            >
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: "5px",
+                  color: "#999999",
+                  cursor: "pointer",
+                  "&:hover": {
+                    backgroundColor: "#B5D1C980",
+                    color: "#488B8F",
+                  },
+                }}
+              >
+                <AccountBalanceWalletOutlinedIcon sx={{ fontSize: 23 }} />
+              </Box>
+            </CustomTooltip>
 
-         <MenuItem sx={{ gap: 1 }} onClick={showRiskProfileOld}>
+            <Typography sx={{ fontSize: 13, fontWeight: 700, color: "#4b4b4b" }}>
+              Ver Perfil Financiero
+            </Typography>
+          </Box>
+        </MenuItem>
+
+        <MenuItem sx={{ gap: 1 }} onClick={showRiskProfileOld}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <CustomTooltip
               title="Eliminar"
@@ -1084,7 +1097,7 @@ const lastOp = lastOpRaw && moment(lastOpRaw).isValid()
                 modifiers: [{ name: "offset", options: { offset: [0, -15] } }],
               }}
             >
-             <Typography
+              <Typography
                 fontFamily="icomoon"
                 fontSize="1.9rem"
                 color="#999999"
@@ -1105,67 +1118,8 @@ const lastOp = lastOpRaw && moment(lastOpRaw).isValid()
         </MenuItem>
 
 
-         <MenuItem sx={{ gap: 1 }} onClick={showFinancialProfileOld}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <CustomTooltip
-              title="Eliminar"
-              arrow
-              placement="bottom-start"
-              TransitionComponent={Fade}
-              PopperProps={{
-                modifiers: [{ name: "offset", options: { offset: [0, -15] } }],
-              }}
-            >
-              <Typography
-                fontFamily="icomoon"
-                fontSize="1.9rem"
-                color="#999999"
-                borderRadius="5px"
-                sx={{
-                  "&:hover": { backgroundColor: "#B5D1C980", color: "#488B8F" },
-                  cursor: "pointer",
-                }}
-              >
-                &#xe901;
-              </Typography>
-            </CustomTooltip>
 
-            <Typography sx={{ fontSize: 13, fontWeight: 700, color: "#4b4b4b" }}>
-              Ver Perfil financiero Viejo
-            </Typography>
-          </Box>
-        </MenuItem>
-        {/* ELIMINAR */}
-        <MenuItem sx={{ gap: 1 }} onClick={askDelete}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <CustomTooltip
-              title="Eliminar"
-              arrow
-              placement="bottom-start"
-              TransitionComponent={Fade}
-              PopperProps={{
-                modifiers: [{ name: "offset", options: { offset: [0, -15] } }],
-              }}
-            >
-             <Typography
-                fontFamily="icomoon"
-                fontSize="1.9rem"
-                color="#999999"
-                borderRadius="5px"
-                sx={{
-                  "&:hover": { backgroundColor: "#B5D1C980", color: "#488B8F" },
-                  cursor: "pointer",
-                }}
-              >
-                &#xe901;
-              </Typography>
-            </CustomTooltip>
 
-            <Typography sx={{ fontSize: 13, fontWeight: 700, color: "#4b4b4b" }}>
-              Ver Perfil Financiero
-            </Typography>
-          </Box>
-        </MenuItem>
         {/* EDITAR */}
         <MenuItem sx={{ gap: 1 }} onClick={goModify}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>

@@ -22,10 +22,11 @@ import scrollSx from "@styles/scroll";
 import dayjs from "dayjs";
 import InfoIcon from '@mui/icons-material/Info';
 import { Dialog,DialogContent, CircularProgress,Grid,TextField,Divider,Tooltip, ClickAwayListener, IconButton} from "@mui/material";
-import { CheckCircle, Error } from "@mui/icons-material";
+import { CheckCircle, Error, Edit as EditIcon, Block as BlockIcon, InfoOutlined as InfoOutlinedIcon } from "@mui/icons-material";
 import ModalConfirmation from "@components/modals/receiptBillModals/modalConfirmation";
-import {typeReceipt, GetReceiptList,Clients,Users} from "./queries";
+import {typeReceipt, GetReceiptList,Clients,Users, VoidReceipt, AdjustReceipt} from "./queries";
 import ProcessModal from "@components/modals/receiptBillModals/processModal"
+import ReceiptActionModal from "@components/modals/receiptBillModals/ReceiptActionModal"
 import authContext from "@context/authContext";
 import { toast } from "react-toastify";
 import { DatePicker } from '@mui/x-date-pickers';
@@ -41,6 +42,11 @@ import CustomDataGrid from "@styles/tables";
 import moment from "moment";
 import ValueFormat from "@formats/ValueFormat";
 import PayedAmountField from "@components/selects/receipts/montoAplicacion";
+
+const MIN_RECEIPT_REASON_LENGTH = 50;
+const MAX_RECEIPT_REASON_LENGTH = 500;
+const RECEIPT_REASON_VALIDATION_MESSAGE = "El motivo es obligatorio y debe tener al menos 50 caracteres";
+
 
 
 
@@ -126,7 +132,6 @@ if (dataClients?.data) {
     clientsMap[client.id] = client;
   });
 }
-console.log(dataGetReceiptList,dataUsers)
 
 
 const usersMap = {};
@@ -194,11 +199,325 @@ const receipt = dataGetReceiptList?.results?.map((receipt) => {
     tableInterests: receipt.tableInterests || 0,
     tableRemaining: receipt.tableRemaining || 0,
     presentValueInvestor: receipt.presentValueInvestor || 0,
+    controlStatus: receipt.controlStatus || "ACTIVE",
+    state: receipt.state,
+    voidReason: receipt.voidReason || "",
+    voidedAt: receipt.voidedAt || "",
+    adjustmentReason: receipt.adjustmentReason || "",
+    originalReceipt: receipt.originalReceipt || receipt.originalReceipt_id || null,
+    replacedBy: receipt.replacedBy || receipt.replacedBy_id || null,
+    canEdit: Boolean(receipt.canEdit),
+    canVoid: Boolean(receipt.canVoid),
+    blockReason: receipt.blockReason || "Solo se puede modificar el último recaudo activo de la operación.",
     user_created_at_id:userName,
     created_at:receipt.created_at ?  formatDateToDDMMYYYY(receipt.created_at) : 'N/A',
   };
 }) || [];
+
+const getReceiptControlStatus = (row) => String(row?.controlStatus || "").toUpperCase();
+
+const hasReceiptRelation = (value) => {
+  if (!value) return false;
+  if (typeof value === "object") return Boolean(value?.id);
+  return true;
+};
+
+const isReceiptVoided = (row) => {
+  const controlStatus = getReceiptControlStatus(row);
+  return controlStatus === "VOIDED" || (!controlStatus && row?.state === 0);
+};
+
+const isReceiptAdjusted = (row) =>
+  getReceiptControlStatus(row) === "ADJUSTED" || hasReceiptRelation(row?.replacedBy);
+
+const isReceiptCorrected = (row) => hasReceiptRelation(row?.originalReceipt);
+
+const isReceiptClosedForActions = (row) =>
+  isReceiptVoided(row);
+
+const getReceiptControlLabel = (row) => {
+  if (isReceiptAdjusted(row)) return "AJUSTADO";
+  if (isReceiptCorrected(row)) return "CORREGIDO";
+  if (isReceiptVoided(row)) return "ANULADO";
+  return "";
+};
+
+const getReceiptControlSx = (row) => {
+  if (isReceiptVoided(row)) {
+    return {
+      bgcolor: "#FDECEC",
+      color: "#B42318",
+      borderColor: "#F2B8B5",
+    };
+  }
+
+  return {
+    bgcolor: "#EAF6F6",
+    color: "#488B8F",
+    borderColor: "#9CCFD0",
+  };
+};
+
+const getReceiptReason = (row) => {
+  if (isReceiptAdjusted(row) || isReceiptCorrected(row)) {
+    return (
+      row?.adjustmentReason ||
+      row?.originalReceipt?.adjustmentReason ||
+      row?.replacedBy?.adjustmentReason ||
+      row?.voidReason ||
+      row?.blockReason ||
+      "No hay motivo registrado para este ajuste."
+    );
+  }
+
+  return (
+    row?.voidReason ||
+    row?.adjustmentReason ||
+    row?.blockReason ||
+    "No hay motivo registrado para este recaudo."
+  );
+};
+
+
+const [receiptActionModal, setReceiptActionModal] = useState({
+  open: false,
+  mode: null,
+  row: null,
+  reason: "",
+  date: "",
+  payedAmount: "",
+  calculatedDays: "",
+});
+
+const handleReceiptActionModalChange = (field, value) => {
+  setReceiptActionModal((previous) => ({
+    ...previous,
+    [field]: value,
+  }));
+};
+
+const handleCloseReceiptActionModal = () => {
+  setReceiptActionModal({
+    open: false,
+    mode: null,
+    row: null,
+    reason: "",
+    date: "",
+    payedAmount: "",
+    calculatedDays: "",
+  });
+};
+
+const handleVoidReceipt = (row) => {
+  if (isReceiptVoided(row)) {
+    Toast("Este recaudo ya está anulado", "warning");
+    return;
+  }
+
+  if (!row?.canVoid) {
+    Toast(row?.blockReason || "Este recaudo no se puede anular", "warning");
+    return;
+  }
+
+  setReceiptActionModal({
+    open: true,
+    mode: "void",
+    row,
+    reason: "",
+    date: row?.date || "",
+    payedAmount: row?.payedAmount ?? "",
+    calculatedDays: row?.calculatedDays ?? "",
+  });
+};
+
+const handleAdjustReceipt = (row) => {
+  if (isReceiptVoided(row)) {
+    Toast("Este recaudo está anulado y no se puede editar", "warning");
+    return;
+  }
+
+  if (!row?.canEdit) {
+    Toast(row?.blockReason || "Este recaudo no se puede editar", "warning");
+    return;
+  }
+
+  setReceiptActionModal({
+    open: true,
+    mode: "adjust",
+    row,
+    reason: "",
+    date: row?.date || "",
+    payedAmount: row?.payedAmount ?? "",
+    calculatedDays: row?.calculatedDays ?? "",
+  });
+};
+
+
+const handleViewReceiptReason = (row) => {
+  setReceiptActionModal({
+    open: true,
+    mode: "reason",
+    row,
+    reason: getReceiptReason(row),
+    date: row?.date || "",
+    payedAmount: row?.payedAmount ?? "",
+    calculatedDays: row?.calculatedDays ?? "",
+  });
+};
+
+const handleSubmitReceiptAction = async () => {
+  const row = receiptActionModal.row;
+  const reason = String(receiptActionModal.reason || "").trim();
+
+  if (!row?.id) {
+    Toast("No se encontró el recaudo seleccionado", "error");
+    return;
+  }
+
+  if (!reason || reason.length < MIN_RECEIPT_REASON_LENGTH) {
+    Toast(RECEIPT_REASON_VALIDATION_MESSAGE, "error");
+    return;
+  }
+
+  if (reason.length > MAX_RECEIPT_REASON_LENGTH) {
+    Toast(`El motivo no puede superar ${MAX_RECEIPT_REASON_LENGTH} caracteres.`, "error");
+    return;
+  }
+
+  try {
+    if (receiptActionModal.mode === "void") {
+      await VoidReceipt(row.id, { reason });
+      Toast("Recaudo anulado correctamente", "success");
+    } else {
+      if (!receiptActionModal.date) {
+        Toast("La fecha de aplicación es obligatoria", "error");
+        return;
+      }
+
+      if (receiptActionModal.payedAmount === "" || receiptActionModal.payedAmount === null) {
+        Toast("El monto aplicado es obligatorio", "error");
+        return;
+      }
+
+      await AdjustReceipt(row.id, {
+        reason,
+        date: receiptActionModal.date,
+        payedAmount: receiptActionModal.payedAmount,
+        calculatedDays: receiptActionModal.calculatedDays,
+      });
+      Toast("Recaudo ajustado correctamente", "success");
+    }
+
+    handleCloseReceiptActionModal();
+    fetchGetReceiptList();
+  } catch (error) {
+    const message = error?.response?.data?.message || "No fue posible completar la acción sobre el recaudo";
+    Toast(message, "error");
+  }
+};
+
 const columns = [
+  {
+    field: "actions",
+    headerName: "ACCIONES",
+    width: 230,
+    sortable: false,
+    renderCell: (params) => {
+      const isVoided = isReceiptVoided(params.row);
+      const hasReason = Boolean(getReceiptControlLabel(params.row));
+      const controlSx = getReceiptControlSx(params.row);
+
+      if (isVoided) {
+        return (
+          <Box display="flex" gap={1} alignItems="center">
+            <CustomTooltip title="Ver motivo de anulación" placement="bottom">
+              <IconButton
+                size="small"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  handleViewReceiptReason(params.row);
+                }}
+                sx={{
+                  color: controlSx.color,
+                  border: `1px solid ${controlSx.borderColor}`,
+                  backgroundColor: controlSx.bgcolor,
+                  width: 30,
+                  height: 30,
+                  "&:hover": {
+                    backgroundColor: controlSx.bgcolor,
+                  },
+                }}
+              >
+                <InfoOutlinedIcon sx={{ fontSize: "1rem" }} />
+              </IconButton>
+            </CustomTooltip>
+          </Box>
+        );
+      }
+
+      return (
+        <Box display="flex" gap={1} alignItems="center">
+          <Button
+            size="small"
+            variant="outlined"
+            disabled={!params.row.canEdit}
+            onClick={(event) => {
+              event.stopPropagation();
+              handleAdjustReceipt(params.row);
+            }}
+            sx={{
+              color: "#488B8F",
+              borderColor: "#488B8F",
+              fontSize: "0.72rem",
+              minWidth: 64,
+            }}
+          >
+            Editar
+          </Button>
+          <Button
+            size="small"
+            variant="outlined"
+            disabled={!params.row.canVoid}
+            onClick={(event) => {
+              event.stopPropagation();
+              handleVoidReceipt(params.row);
+            }}
+            sx={{
+              color: "#c62828",
+              borderColor: "#c62828",
+              fontSize: "0.72rem",
+              minWidth: 68,
+            }}
+          >
+            Anular
+          </Button>
+          {hasReason && (
+            <CustomTooltip title="Ver motivo de ajuste" placement="bottom">
+              <IconButton
+                size="small"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  handleViewReceiptReason(params.row);
+                }}
+                sx={{
+                  color: controlSx.color,
+                  border: `1px solid ${controlSx.borderColor}`,
+                  backgroundColor: controlSx.bgcolor,
+                  width: 30,
+                  height: 30,
+                  "&:hover": {
+                    backgroundColor: controlSx.bgcolor,
+                  },
+                }}
+              >
+                <InfoOutlinedIcon sx={{ fontSize: "1rem" }} />
+              </IconButton>
+            </CustomTooltip>
+          )}
+        </Box>
+      );
+    },
+  },
  {
   field: "typeReceipt",
   headerName: "TIPO / ESTADO",
@@ -206,10 +525,13 @@ const columns = [
   renderCell: (params) => {
     const type = params.row.typeReceipt || '';
     const status = params.row.statusReceipt || '';
+    const controlLabel = getReceiptControlLabel(params.row);
+    const controlSx = getReceiptControlSx(params.row);
+    const reason = getReceiptReason(params.row);
 
     return (
       <CustomTooltip
-        title={`${type} / ${status}`}
+        title={controlLabel ? `${type} / ${status} - ${controlLabel}: ${reason}` : `${type} / ${status}`}
         placement="bottom-start"
         TransitionComponent={Fade}
       >
@@ -229,6 +551,29 @@ const columns = [
           >
             {status}
           </Typography>
+          {controlLabel && (
+            <Box
+              component="span"
+              sx={{
+                mt: 0.35,
+                width: 22,
+                height: 22,
+                borderRadius: "999px",
+                bgcolor: controlSx.bgcolor,
+                color: controlSx.color,
+                border: `1px solid ${controlSx.borderColor}`,
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              {isReceiptVoided(params.row) ? (
+                <BlockIcon sx={{ fontSize: "0.9rem" }} />
+              ) : (
+                <EditIcon sx={{ fontSize: "0.9rem" }} />
+              )}
+            </Box>
+          )}
         </Box>
       </CustomTooltip>
     );
@@ -466,6 +811,12 @@ const columns = [
   //},
 ];
 
+const orderedColumns = [
+  ...columns.filter((column) => column.field !== "actions"),
+  ...columns.filter((column) => column.field === "actions"),
+];
+
+
 
  const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -592,6 +943,14 @@ const getColorByType = (typeId) => {
 
   return (
     <>
+      <ReceiptActionModal
+        open={receiptActionModal.open}
+        mode={receiptActionModal.mode}
+        values={receiptActionModal}
+        onChange={handleReceiptActionModalChange}
+        onClose={handleCloseReceiptActionModal}
+        onSubmit={handleSubmitReceiptAction}
+      />
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Box sx={{ padding: 5, backgroundColor: 'white', borderRadius: 1, boxShadow: 1 }}>
         <Box sx={{ 
@@ -1343,7 +1702,7 @@ const getColorByType = (typeId) => {
     
        <CustomDataGrid
   rows={receipt}
-  columns={columns}
+  columns={orderedColumns}
   pageSize={15}
   rowsPerPageOptions={[5]}
   disableSelectionOnClick

@@ -7,7 +7,7 @@ import Step from "@mui/material/Step";
 import StepLabel from "@mui/material/StepLabel";
 import StepConnector from "@mui/material/StepConnector";
 import { styled } from "@mui/material/styles";
-import { Button, InputAdornment } from "@mui/material";
+import { Button, IconButton, InputAdornment } from "@mui/material";
 import smartLogo from "../../../public/assets/Logo Smart - Lite.svg";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DesktopDatePicker } from "@mui/x-date-pickers/DesktopDatePicker";
@@ -112,8 +112,8 @@ function AvatarDropzone({ valueUrl, onPickFile, disabled }) {
     >
       <Box
         sx={{
-          width: 140,
-          height: 140,
+          width: 78,
+          height: 78,
           borderRadius: "999px",
           overflow: "hidden",
           cursor: disabled ? "not-allowed" : "pointer",
@@ -174,8 +174,8 @@ export function Paso0ConAvatar({ formik, option }) {
 
 
   return (
-    <Box sx={{ textAlign: "center", mb: 2, ml: 2 }}>
-      <Box sx={{ textAlign: "center", mb: 2, ml: 2 }}>
+    <Box sx={{ textAlign: "center", mb: 0.75, ml: 0 }}>
+      <Box sx={{ textAlign: "center", mb: 0.75, ml: 0 }}>
         <AvatarDropzone
           valueUrl={avatarUrl}
           onPickFile={onPickFile}
@@ -214,14 +214,14 @@ function SmartStepIcon(props) {
   return (
     <Box
       sx={{
-        width: 22,
-        height: 22,
+        width: 20,
+        height: 20,
         borderRadius: "999px",
         border: `2px solid ${border}`,
         backgroundColor: bg,
         display: "grid",
         placeItems: "center",
-        fontSize: 12,
+        fontSize: 11,
         fontWeight: 800,
         color,
       }}
@@ -258,17 +258,512 @@ const FormWrap = ({ children }) => (
   <Box
     sx={{
       width: "100%",
-      maxWidth: 560,
-      display: "flex",
-      flexDirection: "column",
-      gap: 2,
+      maxWidth: "none",
+      display: "grid",
+      gridTemplateColumns: "minmax(0, 1fr)",
+      rowGap: { xs: 0.75, md: 0.85 },
+      alignItems: "start",
+      boxSizing: "border-box",
     }}
   >
     {children}
   </Box>
 );
 
-const FieldWrap = ({ children }) => <Box sx={{ width: "100%" }}>{children}</Box>;
+const FieldWrap = ({ children }) => (
+  <Box sx={{ width: "100%", minWidth: 0, boxSizing: "border-box" }}>{children}</Box>
+);
+
+const fullRowSx = {
+  width: "100%",
+  minWidth: 0,
+  boxSizing: "border-box",
+};
+
+const namePairRowSx = {
+  width: "100%",
+  minWidth: 0,
+  display: "grid",
+  gridTemplateColumns: { xs: "1fr", sm: "minmax(0, 1fr) minmax(0, 1fr)" },
+  columnGap: { xs: 0, sm: 1.4 },
+  rowGap: { xs: 0.75, sm: 0 },
+  alignItems: "start",
+  boxSizing: "border-box",
+  mb: 0.55,
+};
+
+const cleanNativeInputSx = (hasError = false) => ({
+  width: "100%",
+  minWidth: 0,
+  height: 40,
+  border: `1.4px solid ${hasError ? "#E66431" : "#9CCFD0"}`,
+  borderRadius: "6px",
+  boxSizing: "border-box",
+  backgroundColor: "#FFFFFF",
+  color: "#202A33",
+  fontFamily: "inherit",
+  fontSize: "0.98rem",
+  lineHeight: "40px",
+  px: 1.5,
+  outline: "none",
+  display: "block",
+  boxShadow: "none",
+  "&::placeholder": {
+    color: "#C9C9C9",
+    opacity: 1,
+  },
+  "&:focus": {
+    borderColor: hasError ? "#E66431" : "#5EA9AA",
+  },
+  "&:disabled": {
+    color: "#202A33",
+    WebkitTextFillColor: "#202A33",
+    opacity: 1,
+    backgroundColor: "#FFFFFF",
+    cursor: "default",
+  },
+});
+
+const phoneNativeWrapSx = (hasError = false) => ({
+  width: "100%",
+  minWidth: 0,
+  height: 40,
+  border: `1.4px solid ${hasError ? "#E66431" : "#9CCFD0"}`,
+  borderRadius: "6px",
+  boxSizing: "border-box",
+  backgroundColor: "#FFFFFF",
+  display: "flex",
+  alignItems: "center",
+  overflow: "hidden",
+  mb: 0.55,
+  "&:focus-within": {
+    borderColor: hasError ? "#E66431" : "#5EA9AA",
+  },
+});
+
+function CleanCustomerInput({ formik, name, placeholder, disabled }) {
+  const hasError = Boolean(formik?.touched?.[name] && formik?.errors?.[name]);
+
+  return (
+    <Box sx={{ width: "100%", minWidth: 0 }}>
+      <Box
+        component="input"
+        name={name}
+        value={formik?.values?.[name] || ""}
+        placeholder={placeholder}
+        disabled={disabled}
+        onChange={formik?.handleChange}
+        onBlur={formik?.handleBlur}
+        sx={cleanNativeInputSx(hasError)}
+      />
+      {hasError && <HelperText>{formik?.errors?.[name]}</HelperText>}
+    </Box>
+  );
+}
+
+function CleanCustomerPhoneInput({ formik, disabled }) {
+  const value = formik?.values?.phone_number ?? formik?.values?.phone ?? "";
+  const hasError = Boolean(
+    (formik?.touched?.phone_number && formik?.errors?.phone_number) ||
+      (formik?.touched?.phone && formik?.errors?.phone)
+  );
+  const errorText = formik?.errors?.phone_number || formik?.errors?.phone;
+
+  return (
+    <Box sx={{ width: "100%", minWidth: 0, boxSizing: "border-box", display: "block" }}>
+      <Box sx={phoneNativeWrapSx(hasError)}>
+        <Box
+          component="span"
+          sx={{
+            flex: "0 0 auto",
+            px: 1.15,
+            color: "#5EA9AA",
+            fontSize: "1.15rem",
+            lineHeight: 1,
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
+          +
+        </Box>
+        <Box
+          component="input"
+          name="phone_number"
+          value={value || ""}
+          placeholder="Ingresa tu número de teléfono"
+          disabled={disabled}
+          onChange={(event) => {
+            const nextValue = event.target.value;
+            formik?.setFieldValue?.("phone_number", nextValue);
+            formik?.setFieldValue?.("phone", nextValue);
+          }}
+          onBlur={formik?.handleBlur}
+          sx={{
+            flex: 1,
+            minWidth: 0,
+            width: "100%",
+            height: "100%",
+            border: 0,
+            outline: "none",
+            boxShadow: "none",
+            backgroundColor: "transparent",
+            color: "#202A33",
+            fontFamily: "inherit",
+            fontSize: "0.98rem",
+            px: 0.5,
+            "&::placeholder": { color: "#C9C9C9", opacity: 1 },
+            "&:disabled": {
+              color: "#202A33",
+              WebkitTextFillColor: "#202A33",
+              opacity: 1,
+              cursor: "default",
+            },
+          }}
+        />
+      </Box>
+      {hasError && <HelperText>{errorText}</HelperText>}
+    </Box>
+  );
+}
+
+
+const cleanNamePairShellSx = (hasFirstError = false, hasLastError = false) => ({
+  width: "100%",
+  minWidth: 0,
+  height: 40,
+  display: "grid",
+  gridTemplateColumns: { xs: "1fr", sm: "minmax(0, 1fr) minmax(0, 1fr)" },
+  border: `1.4px solid ${hasFirstError || hasLastError ? "#E66431" : "#9CCFD0"}`,
+  borderRadius: "6px",
+  overflow: "hidden",
+  boxSizing: "border-box",
+  backgroundColor: "#FFFFFF",
+  mb: 0.55,
+  "&:focus-within": {
+    borderColor: hasFirstError || hasLastError ? "#E66431" : "#5EA9AA",
+  },
+});
+
+const cleanNamePairInputSx = (side = "left") => ({
+  width: "100%",
+  minWidth: 0,
+  height: "100%",
+  border: 0,
+  outline: "none",
+  boxShadow: "none",
+  backgroundColor: "#FFFFFF",
+  color: "#202A33",
+  fontFamily: "inherit",
+  fontSize: "0.98rem",
+  lineHeight: "1.25",
+  padding: "7px 14px",
+  boxSizing: "border-box",
+  borderLeft: {
+    xs: 0,
+    sm: side === "right" ? "1.4px solid #9CCFD0" : 0,
+  },
+  "&::placeholder": {
+    color: "#C9C9C9",
+    opacity: 1,
+  },
+  "&:disabled": {
+    color: "#202A33",
+    WebkitTextFillColor: "#202A33",
+    opacity: 1,
+    cursor: "default",
+  },
+});
+
+function CleanCustomerNamePair({ formik, disabled }) {
+  const firstError = Boolean(formik?.touched?.first_name && formik?.errors?.first_name);
+  const lastError = Boolean(formik?.touched?.last_name && formik?.errors?.last_name);
+
+  return (
+    <Box sx={{ width: "100%", minWidth: 0, boxSizing: "border-box", display: "block" }}>
+      <Box sx={cleanNamePairShellSx(firstError, lastError)}>
+        <Box
+          component="input"
+          name="first_name"
+          value={formik?.values?.first_name || ""}
+          placeholder="Nombre"
+          disabled={disabled}
+          onChange={formik?.handleChange}
+          onBlur={formik?.handleBlur}
+          sx={cleanNamePairInputSx("left")}
+        />
+        <Box
+          component="input"
+          name="last_name"
+          value={formik?.values?.last_name || ""}
+          placeholder="Apellido"
+          disabled={disabled}
+          onChange={formik?.handleChange}
+          onBlur={formik?.handleBlur}
+          sx={cleanNamePairInputSx("right")}
+        />
+      </Box>
+      {(firstError || lastError) && (
+        <HelperText>{formik?.errors?.first_name || formik?.errors?.last_name}</HelperText>
+      )}
+    </Box>
+  );
+}
+
+
+const twoColumnPersonSx = {
+  width: "100%",
+  display: "grid",
+  gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))" },
+  columnGap: { xs: 0, sm: 1.4, md: 1.6 },
+  rowGap: { xs: 0.35, sm: 0 },
+  alignItems: "start",
+  mb: 0.25,
+};
+
+const compactPhoneSx = {
+  my: "4px !important",
+  width: "100%",
+  border: "1px solid #9CCFD0 !important",
+  borderRadius: "6px !important",
+  backgroundColor: "#FFFFFF",
+  overflow: "hidden",
+  boxSizing: "border-box",
+  boxShadow: "none !important",
+  "& .MuiInputBase-root, & .MuiOutlinedInput-root": {
+    minHeight: "40px !important",
+    height: "40px !important",
+    border: "0 !important",
+    boxShadow: "none !important",
+    backgroundColor: "#FFFFFF",
+    display: "flex",
+    alignItems: "center",
+  },
+  "& .MuiInputAdornment-root": {
+    marginLeft: "4px",
+    marginRight: "2px",
+    color: "#5EA9AA",
+  },
+  "& input": {
+    padding: "7px 12px !important",
+    fontSize: "0.98rem !important",
+    lineHeight: "1.25 !important",
+  },
+  "& fieldset": {
+    border: "0 !important",
+  },
+};
+
+
+const personFieldItemSx = {
+  minWidth: 0,
+  width: "100%",
+  "& .MuiFormControl-root": {
+    width: "100%",
+    margin: "4px 0 !important",
+  },
+};
+
+const compactMuiTextFieldSx = {
+  my: "4px !important",
+  width: "100%",
+  "& .MuiInputBase-root": {
+    minHeight: "40px !important",
+    border: "1px solid #9CCFD0 !important",
+    borderRadius: "6px !important",
+    backgroundColor: "#FFFFFF",
+    boxShadow: "none !important",
+    display: "flex",
+    alignItems: "center",
+    boxSizing: "border-box",
+  },
+  "& .MuiInputBase-input": {
+    padding: "7px 12px !important",
+    fontSize: "0.98rem !important",
+    lineHeight: "1.25 !important",
+  },
+  "& .MuiInput-root:before, & .MuiInput-root:after": {
+    display: "none !important",
+  },
+  "& fieldset": {
+    border: "0 !important",
+  },
+};
+
+const compactMuiTextFieldErrorSx = {
+  "& .MuiInputBase-root": {
+    borderColor: "#E66431 !important",
+  },
+};
+
+const phoneFieldWrapperSx = {
+  width: "100%",
+  minWidth: 0,
+  "& .MuiFormControl-root": {
+    width: "100%",
+    margin: "4px 0 !important",
+  },
+  "& .MuiInputBase-root, & .MuiOutlinedInput-root": {
+    minHeight: "40px !important",
+    borderRadius: "6px !important",
+    backgroundColor: "#FFFFFF",
+    boxSizing: "border-box",
+    display: "flex",
+    alignItems: "center",
+  },
+  "& input": {
+    padding: "7px 12px !important",
+    fontSize: "0.98rem !important",
+    lineHeight: "1.25 !important",
+  },
+  "& .MuiInputAdornment-root": {
+    marginLeft: "4px",
+    marginRight: "2px",
+    color: "#5EA9AA",
+  },
+};
+
+
+
+
+const SmartStepperSidebar = ({
+  steps,
+  activeStep,
+  getStepHasError,
+  sidebarCollapsed,
+  setSidebarCollapsed,
+}) => (
+  <Grid
+    item
+    sx={{
+      display: { xs: "none", md: "flex" },
+      width: sidebarCollapsed ? 78 : 292,
+      flexShrink: 0,
+      minHeight: 0,
+      transition: "width 0.25s ease",
+    }}
+  >
+    <Box
+      sx={{
+        bgcolor: "#F8FAFA",
+        border: "1px solid #E3EEEE",
+        borderRadius: 3,
+        boxShadow: "0px 10px 28px rgba(28, 62, 62, 0.08)",
+        p: sidebarCollapsed ? 1 : 1.5,
+        width: "100%",
+        height: "calc(100vh - 48px)",
+        minHeight: "calc(100vh - 48px)",
+        maxHeight: "calc(100vh - 48px)",
+        position: { md: "sticky", xs: "static" },
+        top: { md: 12, xs: "auto" },
+        overflow: "hidden",
+        boxSizing: "border-box",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <IconButton
+        size="small"
+        onClick={() => setSidebarCollapsed((prev) => !prev)}
+        sx={{
+          position: "absolute",
+          top: 8,
+          right: 8,
+          width: 28,
+          height: 28,
+          color: "#6D7777",
+          bgcolor: "transparent",
+          border: "0",
+          boxShadow: "none",
+          zIndex: 2,
+          "&:hover": { bgcolor: "#EAF4F4", color: "#2B8C90" },
+        }}
+        aria-label={sidebarCollapsed ? "Expandir pasos" : "Contraer pasos"}
+      >
+        <Typography sx={{ fontSize: 22, lineHeight: 1, fontWeight: 900 }}>
+          {sidebarCollapsed ? "›" : "‹"}
+        </Typography>
+      </IconButton>
+
+      <Box
+        sx={{
+          mb: sidebarCollapsed ? 4 : 2,
+          mt: sidebarCollapsed ? 3.2 : 0,
+          display: "flex",
+          justifyContent: sidebarCollapsed ? "center" : "flex-start",
+        }}
+      >
+        <Image
+          src={smartLogo}
+          alt="logo"
+          style={{
+            maxWidth: sidebarCollapsed ? 54 : 148,
+            width: "100%",
+            height: "auto",
+            objectFit: "contain",
+          }}
+        />
+      </Box>
+
+      {false && !sidebarCollapsed && null}
+
+      <Stepper
+        activeStep={activeStep}
+        orientation="vertical"
+        connector={<SmartConnector />}
+        sx={{
+          flex: 1,
+          overflowY: "auto",
+          pr: sidebarCollapsed ? 0 : 0.5,
+          alignItems: sidebarCollapsed ? "center" : "stretch",
+          "& .MuiStep-root": { minHeight: sidebarCollapsed ? 88 : 82 },
+          "& .MuiStepLabel-root": {
+            alignItems: "flex-start",
+            justifyContent: sidebarCollapsed ? "center" : "flex-start",
+          },
+          "& .MuiStepLabel-labelContainer": {
+            display: sidebarCollapsed ? "none" : "block",
+            mt: "1px",
+            ml: 1,
+          },
+          "& .MuiStepConnector-root": {
+            ml: sidebarCollapsed ? 0 : undefined,
+          },
+        }}
+      >
+        {steps.map((s, index) => {
+          const completed = index < activeStep && !getStepHasError(index);
+          const active = index === activeStep;
+          const error = getStepHasError(index);
+          const status = error
+            ? "Incompleto"
+            : completed
+            ? "Completado"
+            : active
+            ? "En proceso"
+            : "Pendiente";
+
+          return (
+            <Step key={`${s.title}-${index}`} completed={completed} active={active}>
+              <StepLabel StepIconComponent={SmartStepIcon} error={error}>
+                {!sidebarCollapsed && (
+                  <StepLabelContent
+                    stepNumber={index + 1}
+                    title={s.title}
+                    status={status}
+                    active={active}
+                    completed={completed}
+                    error={error}
+                  />
+                )}
+              </StepLabel>
+            </Step>
+          );
+        })}
+      </Stepper>
+    </Box>
+  </Grid>
+);
+
 
 // -------------------- Helpers: errores por step --------------------
 
@@ -344,6 +839,7 @@ export const CreateCustomerForm = ({
   roles,
 }) => {
   const [activeStep, setActiveStep] = useState(0);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -476,103 +972,89 @@ export const CreateCustomerForm = ({
   return (
   <Box
     sx={{
-      width: "90%",
-      px: { xs: 1.5, sm: 2, md: 3 },
-      py: { xs: 2, md: 2 },
+      width: "100%",
+      maxWidth: "100%",
+      mx: 0,
+      px: { xs: 1, sm: 1.25, md: 1.5 },
+      py: { xs: 1, md: 1.5 },
       bgcolor: { xs: "transparent", md: "transparent" },
+      boxSizing: "border-box",
+      overflowX: "hidden",
     }}
   >
-    <Grid container spacing={{ xs: 2, md: 3 }} alignItems="stretch">
-      {/* ===================== LEFT PANEL (DESKTOP ONLY) ===================== */}
-      <Grid
-        item
-        xs={12}
-        md={4}
-        lg={4}
-        sx={{
-          display: { xs: "none", md: "block" },
-          height: "100%",           // ✅
-        }}
-      >
-        <Box
-          sx={{
-            bgcolor: "#fff",
-            borderRadius: 2,
-            boxShadow: "0px 6px 20px rgba(0,0,0,0.08)",
-            p: 3,
-            position: { md: "sticky", xs: "static" },
-            top: { md: 16, xs: "auto" },
-            height: "fit-content",
-            maxHeight: "calc(100vh - 32px)",
-            overflow: "auto",
+    <Grid container spacing={0} alignItems="stretch" sx={{ minHeight: { md: "calc(100vh - 48px)" }, columnGap: { md: 1.5 }, flexWrap: { md: "nowrap" }, width: "100%", m: 0, overflowX: "hidden" }}>
 
-          }}
-        >
-          {/* Logo */}
-          <Box sx={{ display: "flex", justifyContent: "center", mb: 3 }}>
-            <Image
-              component="img"
-              src={smartLogo}
-              alt="logo"
-              sx={{ maxWidth: 180, width: "100%", objectFit: "contain" }}
-            />
-          </Box>
-
-          <Stepper
-            activeStep={activeStep}
-            orientation="vertical"
-            connector={<SmartConnector />}
-            sx={{ "& .MuiStepLabel-labelContainer": { ml: 1 } }}
-          >
-            {steps.map((s, index) => {
-              const completed = index < activeStep && !getStepHasError(index);
-              const active = index === activeStep;
-              const error = getStepHasError(index);
-
-              const status = error
-                ? "Incompleto"
-                : completed
-                ? "Completada"
-                : active
-                ? "En progreso"
-                : "";
-
-              return (
-                <Step key={s.title} completed={completed} active={active}>
-                  <StepLabel StepIconComponent={SmartStepIcon} error={error}>
-                    <StepLabelContent
-                      stepNumber={index + 1}
-                      title={s.title}
-                      status={status}
-                      active={active}
-                      completed={completed}
-                      error={error}
-                    />
-                  </StepLabel>
-                </Step>
-              );
-            })}
-          </Stepper>
-        </Box>
-      </Grid>
+      <SmartStepperSidebar
+        steps={steps}
+        activeStep={activeStep}
+        getStepHasError={getStepHasError}
+        sidebarCollapsed={sidebarCollapsed}
+        setSidebarCollapsed={setSidebarCollapsed}
+      />
 
       {/* ===================== RIGHT PANEL (FORM) ===================== */}
-      <Grid item xs={12} md={8} lg={8}>
+      <Grid item xs sx={{ minWidth: 0, display: "flex" }}>
         {/* Card wrapper */}
         <Box
           sx={{
             bgcolor: "#fff",
             borderRadius: 2,
-            boxShadow: { xs: "none", md: "0px 6px 20px rgba(0,0,0,0.06)" },
-            p: { xs: 1.5, sm: 2, md: 2.5 },
+            boxShadow: { xs: "none", md: "0px 10px 28px rgba(28, 62, 62, 0.07)" },
+            border: { xs: "none", md: "1px solid #E8F0F0" },
+            p: { xs: 1.25, sm: 1.75, md: 2.25 },
+            width: "100%",
+            boxSizing: "border-box",
+            overflowX: "hidden",
+            overflowY: "auto",
+            scrollbarGutter: "stable",
+            height: { md: "calc(100vh - 48px)" },
+            minHeight: { md: "calc(100vh - 48px)" },
+            "& form": { margin: 0 },
+            "& .MuiFormControl-root": { my: "4px" },
+            "& .MuiInputBase-root": {
+              minHeight: 38,
+              fontSize: "0.98rem",
+            },
+            "& .MuiInputBase-input": {
+              py: "7px !important",
+              px: "12px !important",
+            },
+            "& .MuiAutocomplete-inputRoot": {
+              py: "0px !important",
+              minHeight: 38,
+            },
+            "& label": { fontSize: "0.84rem" },
+            "& .MuiTypography-root": { lineHeight: 1.18 },
+            boxSizing: "border-box",
+            overflowX: "hidden",
+            overflowY: "auto",
+            scrollbarGutter: "stable",
+            height: { md: "calc(100vh - 48px)" },
+            minHeight: { md: "calc(100vh - 48px)" },
+            "& form": { margin: 0 },
+            "& .MuiFormControl-root": { my: "4px" },
+            "& .MuiInputBase-root": {
+              minHeight: 38,
+              fontSize: "0.98rem",
+            },
+            "& .MuiInputBase-input": {
+              py: "7px !important",
+              px: "12px !important",
+            },
+            "& .MuiAutocomplete-inputRoot": {
+              py: "0px !important",
+              minHeight: 38,
+            },
+            "& label": { fontSize: "0.84rem" },
+            "& .MuiTypography-root": { lineHeight: 1.18 },
           }}
         >
           {/* Title */}
           <Typography
             letterSpacing={0}
-            fontSize={{ xs: "1.25rem", sm: "1.5rem", md: "1.8rem" }}
+            fontSize={{ xs: "1.15rem", sm: "1.35rem", md: "1.55rem" }}
             fontWeight="700"
-            mb={{ xs: 1.5, md: 2 }}
+            mb={{ xs: 1, md: 1 }}
             color="#2B8C90"
             sx={{ textAlign: { xs: "left", md: "left" } }}
           >
@@ -624,8 +1106,10 @@ export const CreateCustomerForm = ({
           <Box
             sx={{
               width: "100%",
-              maxWidth: 560, // ✅ misma idea que tu FormWrap
-              mx: "auto", // ✅ centra el formulario
+              maxWidth: "none", // ✅ usa todo el ancho disponible
+              mx: 0, // ✅ evita espacios laterales innecesarios
+              px: { xs: 0.75, md: 1.5 },
+              boxSizing: "border-box",
             }}
           >
             {/* PASO 0 */}
@@ -649,14 +1133,7 @@ export const CreateCustomerForm = ({
 
                     {/* Natural */}
                     {formik?.values.type_client === "26c885fc-2a53-4199-a6c1-7e4e92032696" && (
-                      <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                        <FieldWrap>
-                          <NombreClientSelect formik={formik} option={option} />
-                        </FieldWrap>
-                        <FieldWrap>
-                          <ApellidoClientSelect formik={formik} option={option} />
-                        </FieldWrap>
-                      </Box>
+                      <CleanCustomerNamePair formik={formik} disabled={option === "preview"} />
                     )}
 
                     {/* Jurídica */}
@@ -715,7 +1192,7 @@ export const CreateCustomerForm = ({
                 </FieldWrap>
 
                 <FieldWrap>
-                  <TelefonoClientSelect formik={formik} option={option} />
+                  <CleanCustomerPhoneInput formik={formik} disabled={option === "preview"} />
                 </FieldWrap>
 
                 <FieldWrap>
@@ -898,7 +1375,7 @@ export const CreateCustomerForm = ({
                           boxShadow: "none",
                           textTransform: "none",
                           fontWeight: "700",
-                          py: 1.2,
+                          py: 0.8,
                           "& .MuiButton-startIcon i": { fontSize: "16px" },
                         }}
                         disabled={option === "preview"}
@@ -917,12 +1394,13 @@ export const CreateCustomerForm = ({
             <Box
               sx={{
                 width: "100%",
-                maxWidth: 560,
-                mx: "auto",
+                maxWidth: "none",
+                mx: 0,
                
                 display: "flex",
-                justifyContent: "space-between",
-                gap: { xs: 0.75, sm: 1.25, md: 1.5 },
+                justifyContent: activeStep === 0 ? "flex-end" : "space-between",
+                gap: { xs: 0.75, sm: 1, md: 1 },
+                mt: { xs: 1, md: 1 },
               }}
             >
               <MuiButton
@@ -930,9 +1408,9 @@ export const CreateCustomerForm = ({
                 disabled={activeStep === 0}
                 onClick={handleBack}
                 sx={{
-                  flex: 1,
-                  minWidth: 0,     // ✅ evita que el botón empuje el layout
-                  width: "100%",   // ✅ fuerza a ocupar su columna
+                  display: activeStep === 0 ? "none" : "inline-flex",
+                  minWidth: 132,
+                  width: 132,
                   boxShadow: "none",
                   borderRadius: "10px",
                   "&:disabled": { color: "#999999", backgroundColor: "#CECECE" },
@@ -949,9 +1427,8 @@ export const CreateCustomerForm = ({
                     type="submit"
                     onClick={formik.handleSubmit}
                     sx={{
-                      flex: 1,
-                      minWidth: 0,   // ✅
-                      width: "100%", // ✅
+                      minWidth: 132,
+                      width: 132,
                       boxShadow: "none",
                       borderRadius: "10px",
                     }}
@@ -965,9 +1442,8 @@ export const CreateCustomerForm = ({
                   <MuiButton
                     onClick={() => console.log("")}
                     sx={{
-                      flex: 1,
-                      minWidth: 0,   // ✅
-                      width: "100%", // ✅
+                      minWidth: 132,
+                      width: 132,
                       boxShadow: "none",
                       borderRadius: "10px",
                     }}
@@ -981,9 +1457,8 @@ export const CreateCustomerForm = ({
                 <MuiButton
                   onClick={handleNext}
                   sx={{
-                    flex: 1,
-                    minWidth: 0,   // ✅
-                    width: "100%", // ✅
+                    minWidth: 132,
+                    width: 132,
                     boxShadow: "none",
                     borderRadius: "10px",
                   }}
@@ -999,13 +1474,6 @@ export const CreateCustomerForm = ({
                   </Box>
                 </Grid>
               </Grid>
-              {process.env.NODE_ENV === 'development' && (
-                <div style={{ marginTop: 20 }}>
-                  <h4>Errores:</h4>
-                  <pre>{JSON.stringify(formik.errors, null, 2)}</pre>
-                  <pre>{JSON.stringify(formik.values, null, 2)}</pre>
-                </div>
-              )}
             </Box>
 
             
