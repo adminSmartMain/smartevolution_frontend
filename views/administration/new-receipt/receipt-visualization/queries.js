@@ -67,6 +67,23 @@ console.log(cleanParams)
   });
   return res.data;
 };
+export const GetReceiptOperationHistory = async ({ id, ...params }) => {
+  const cleanParams = {};
+  Object.keys(params || {}).forEach(key => {
+    if (params[key] !== undefined && params[key] !== null && params[key] !== "") {
+      cleanParams[key] = params[key];
+    }
+  });
+
+  const res = await Axios.get(`${API_URL}/receipt/${id}/operation-history/`, {
+    headers: {
+      authorization: "Bearer " + localStorage.getItem("access-token"),
+    },
+    params: cleanParams,
+  });
+  return res.data;
+};
+
 
 export const Clients = async (data) => {
   const res = await Axios.get(`${API_URL}/client/all`, {

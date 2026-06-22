@@ -22,9 +22,9 @@ import scrollSx from "@styles/scroll";
 import dayjs from "dayjs";
 import InfoIcon from '@mui/icons-material/Info';
 import { Dialog,DialogContent, CircularProgress,Grid,TextField,Divider,Tooltip, ClickAwayListener, IconButton} from "@mui/material";
-import { CheckCircle, Error, Edit as EditIcon, Block as BlockIcon, InfoOutlined as InfoOutlinedIcon } from "@mui/icons-material";
+import { CheckCircle, Error, InfoOutlined as InfoOutlinedIcon } from "@mui/icons-material";
 import ModalConfirmation from "@components/modals/receiptBillModals/modalConfirmation";
-import {typeReceipt, GetReceiptList,Clients,Users, VoidReceipt, AdjustReceipt} from "./queries";
+import {typeReceipt, GetReceiptOperationHistory,Clients,Users, VoidReceipt, AdjustReceipt} from "./queries";
 import ProcessModal from "@components/modals/receiptBillModals/processModal"
 import ReceiptActionModal from "@components/modals/receiptBillModals/ReceiptActionModal"
 import authContext from "@context/authContext";
@@ -80,9 +80,9 @@ const {
   error: errorGetReceiptList,
   data: dataGetReceiptList,
 } = useFetch({
-  service: (args) => GetReceiptList({ 
-    page, 
-    opId:data?.[0].operation.opId || "", 
+  service: (args) => GetReceiptOperationHistory({ 
+    id: data?.[0]?.id,
+    page,
     ...args 
   }),
   init: false, // No ejecutar inmediatamente
@@ -95,12 +95,14 @@ useEffect(() => {
   }
 }, [user]);
 
-// Ejecutar cuando data.opId esté disponible
+// Ejecutar cuando el recaudo seleccionado esté disponible.
+// Importante: se consulta por ID interno del recaudo para que el backend traiga
+// la PreOperation exacta, no todos los recaudos del mismo opId de negocio.
 useEffect(() => {
-  if (data?.[0].operation.opId) {
+  if (data?.[0]?.id) {
     fetchGetReceiptList();
   }
-}, [data?.[0].operation.opId]);
+}, [data?.[0]?.id]);
 
 const dataCount = dataGetReceiptList?.count || 0;
 
@@ -171,6 +173,8 @@ const receipt = dataGetReceiptList?.results?.map((receipt) => {
     typeReceipt: receipt.typeReceipt?.description || 'N/A',
     statusReceipt: receipt.receiptStatus?.description || 'N/A',
     operation: receipt.operation?.opId || 'N/A',
+    billId: receipt.billId || receipt.operation?.bill?.billId || 'N/A',
+    fraction: receipt.fraction || receipt.operation?.billFraction || 1,
     investor: investorName, // ← Aquí agregamos el nombre del inversionista
     payedAmount: receipt.payedAmount || 0,
     realDays: receipt.realDays || 0,
@@ -534,29 +538,6 @@ const columns = [
           >
             {status}
           </Typography>
-          {controlLabel && (
-            <Box
-              component="span"
-              sx={{
-                mt: 0.35,
-                width: 22,
-                height: 22,
-                borderRadius: "999px",
-                bgcolor: controlSx.bgcolor,
-                color: controlSx.color,
-                border: `1px solid ${controlSx.borderColor}`,
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              {isReceiptVoided(params.row) ? (
-                <BlockIcon sx={{ fontSize: "0.9rem" }} />
-              ) : (
-                <EditIcon sx={{ fontSize: "0.9rem" }} />
-              )}
-            </Box>
-          )}
         </Box>
       </CustomTooltip>
     );
