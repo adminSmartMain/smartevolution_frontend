@@ -72,8 +72,19 @@ export const DashboardContent = () => {
     try {
       setLoading(true);
       const response = await fetch(
-        `${API_URL}/dashboard?periodo=${selectedPeriod}`
+        `${API_URL}/dashboard?periodo=${selectedPeriod}`,
+        { headers: { Authorization: `Bearer ${localStorage.getItem("access-token")}` } }
       );
+      if (response.status === 401) {
+        localStorage.removeItem("access-token");
+        localStorage.removeItem("refresh-token");
+        window.location.assign("/auth/login");
+        return;
+      }
+      if (response.status === 403) {
+        window.location.assign("/403");
+        return;
+      }
       const result = await response.json();
       if (result.success) setDashboardData(result.data);
       else setError("Error al cargar los datos del dashboard");

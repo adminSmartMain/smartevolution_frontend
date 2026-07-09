@@ -12,6 +12,7 @@ import "../styles/globals.css";
 import theme from "../styles/themes";
 import SecurityDialog from "@components/modals/infoModal";
 import { AuthProvider } from "@context/authContext";
+import RouteGuard from "@components/routeGuard";
 
 const pathsWithoutDefaultLayout = [
   "/",
@@ -21,6 +22,8 @@ const pathsWithoutDefaultLayout = [
   "/financialProfile/indicators",
   "/auth/resetPassword",
   "/auth/forgotPassword",
+  "/auth/clientPortalUnavailable",
+  "/403",
   "/pre-operations/manage",
   "/pre-operations/detailPreOp",
   "/pre-operations/editPreOp",
@@ -50,14 +53,14 @@ function MyApp({ Component, pageProps }) {
               <title>Smart Evolution</title>
             </Head>
 
-            {!pathsWithoutDefaultLayout.includes(router.pathname) &&
+            <RouteGuard>{!pathsWithoutDefaultLayout.includes(router.pathname) &&
             !isErrorPage ? (
               <Layout>
                 <Component {...pageProps} />
               </Layout>
             ) : (
               <Component {...pageProps} />
-            )}
+            )}</RouteGuard>
           </>
 
           </SidebarProvider>

@@ -1,0 +1,14 @@
+import Axios from "axios";
+const API = `${process.env.NEXT_PUBLIC_API_URL}/access-control`;
+const config = () => ({ headers: { authorization: `Bearer ${localStorage.getItem("access-token")}` } });
+export const getRoles = () => Axios.get(`${API}/roles/`,config()).then(r=>r.data.data);
+export const getPermissions = () => Axios.get(`${API}/permissions/`,config()).then(r=>r.data.data);
+export const getUsers = () => Axios.get(`${API}/users/`,config()).then(r=>r.data.data);
+export const createUser = (data) => Axios.post(`${API}/users/`,data,config()).then(r=>r.data);
+export const getClientAccess = () => Axios.get(`${API}/client-access/`,config()).then(r=>r.data.data);
+export const getAccessOptions = () => Axios.get(`${API}/client-access/options/`,config()).then(r=>r.data.data);
+export const getAudit = () => Axios.get(`${API}/audit/`,config()).then(r=>r.data.data);
+export const saveRole = (role) => role.id ? Axios.patch(`${API}/roles/${role.id}/`,role,config()) : Axios.post(`${API}/roles/`,role,config());
+export const updateUser = (id,data) => Axios.patch(`${API}/users/${id}/`,data,config());
+export const updateClientAccess = (id,data) => Axios.patch(`${API}/client-access/${id}/`,data,config());
+export const createClientAccess = (data) => Axios.post(`${API}/client-access/`,data,config());

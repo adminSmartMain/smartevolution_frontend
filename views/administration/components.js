@@ -1,193 +1,65 @@
+import { useContext } from "react";
 import Link from "next/link";
-
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { Box, Typography, Breadcrumbs } from "@mui/material";
+import { Box, Breadcrumbs, Card, CardContent, Chip, Grid, Typography } from "@mui/material";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
-import { Home as HomeIcon } from "@mui/icons-material";
+import HomeIcon from "@mui/icons-material/Home";
+import AccountBalanceWalletOutlinedIcon from "@mui/icons-material/AccountBalanceWalletOutlined";
+import PaidOutlinedIcon from "@mui/icons-material/PaidOutlined";
+import ManageAccountsOutlinedIcon from "@mui/icons-material/ManageAccountsOutlined";
+import SecurityOutlinedIcon from "@mui/icons-material/SecurityOutlined";
+import BusinessCenterOutlinedIcon from "@mui/icons-material/BusinessCenterOutlined";
+import authContext from "@context/authContext";
 
-const adminCards = [
-  {
-    title: "Giros Emisor",
-    iconClass: "fa-regular fa-paper-plane",
-    actions: [{ label: "Acceder a esta sección", href: "/administration/deposit-emitter/depositList" }],
-  },
-  {
-    title: "Giros Inversionista",
-    iconClass: "fa-regular fa-paper-plane",
-    actions: [{ label: "Acceder a esta sección", href: "/administration/deposit-investor/depositList" }],
-  },
-  {
-    title: "Negociaciones",
-    iconClass: "fa-regular fa-handshake",
-    actions: [{ label: "Acceder a esta sección", href: "/administration/negotiation-summary/summaryList" }],
-  },
-  {
-    title: "Reintegros",
-    iconClass: "fa-solid fa-person-walking-arrow-loop-left",
-    actions: [{ label: "Acceder a esta sección", href: "/administration/refund/refundList" }],
-  },
-  {
-    title: "Recaudos",
-    iconClass: "fa-light fa-coin",
-    actions: [
-      { label: "Consulta de recaudos", href: "/administration/new-receipt/receiptList" },
-      { label: "Historial de cambios", href: "/administration/new-receipt/receiptHistory" },
-    ],
-  },
+const sections=[
+  {title:"Tesorería",description:"Giros y movimientos financieros.",Icon:AccountBalanceWalletOutlinedIcon,items:[
+    {label:"Giros emisor",href:"/administration/deposit-emitter/depositList",permission:"deposits.view"},
+    {label:"Giros inversionista",href:"/administration/deposit-investor/depositList",permission:"deposits.view"},
+  ]},
+  {title:"Operaciones",description:"Procesos administrativos de las operaciones.",Icon:PaidOutlinedIcon,items:[
+    {label:"Negociaciones",href:"/administration/negotiation-summary/summaryList",permission:"negotiations.view"},
+    {label:"Reintegros",href:"/administration/refund/refundList",permission:"refunds.view"},
+    {label:"Recaudos",href:"/administration/new-receipt/receiptList",permission:"receipts.view"},
+    {label:"Historial de recaudos",href:"/administration/new-receipt/receiptHistory",permission:"receipts.history"},
+  ]},
+  {title:"Usuarios y accesos",description:"Cuentas internas y cuentas de clientes.",Icon:ManageAccountsOutlinedIcon,items:[
+    {label:"Administrar usuarios",href:"/administration/users",permission:"users.view"},
+    {label:"Cuentas de clientes",href:"/administration/users",permission:"client_access.view"},
+  ]},
+  {title:"Seguridad",description:"Roles, permisos y trazabilidad.",Icon:SecurityOutlinedIcon,items:[
+    {label:"Roles y permisos",href:"/administration/security",permission:"security.access"},
+    {label:"Auditoría",href:"/administration/security",permission:"audit.view"},
+  ]},
+  {title:"Organización",description:"Terceros y estructura comercial.",Icon:BusinessCenterOutlinedIcon,items:[
+    {label:"Lista de corredores",href:"/brokers/brokerList",permission:"brokers.view"},
+    {label:"Crear corredor",href:"/brokers?register",permission:"brokers.create"},
+  ]},
 ];
 
-const actionButtonSx = {
-  display: "flex",
-  flexDirection: "row",
-  alignItems: "center",
-  justifyContent: "center",
-  borderRadius: "4px",
-  border: "2px solid #488B8F",
-  padding: "0.5rem 0.7rem",
-  textDecoration: "none",
-  color: "#488B8F",
-  width: "100%",
-  boxSizing: "border-box",
-  "&:hover": {
-    backgroundColor: "#E7F3F3",
-  },
-};
-
-function AdminCard({ title, iconClass, actions }) {
+function SectionCard({title,description,Icon,items}){
   return (
-    <Box
-      height="100%"
-      width="19%"
-      minWidth={{ xs: "100%", sm: "230px", md: "19%" }}
-      display="flex"
-      justifyContent="space-between"
-      flexDirection="column"
-      sx={{
-        borderRadius: "4px",
-        border: "2px solid #488B8F",
-        backgroundColor: "transparent",
-        "&:hover": {
-          backgroundColor: "#CFDDDD",
-        },
-        cursor: "default",
-        alignItems: "center",
-        p: 0,
-        boxSizing: "border-box",
-      }}
-    >
-      <Box flexGrow={0} />
-      <Box textAlign="center">
-        <i
-          className={iconClass}
-          style={{
-            fontSize: "3rem",
-            color: "#488B8F",
-            marginBottom: "1.5rem",
-          }}
-        />
-        <Typography
-          letterSpacing={0}
-          fontSize="80%"
-          fontWeight="bold"
-          color="#488B8F"
-          textTransform="uppercase"
-        >
-          {title}
-        </Typography>
-      </Box>
-
-      <Box sx={{ width: "70%", mb: "3rem", display: "flex", flexDirection: "column", gap: 1 }}>
-        {actions.map((action) => (
-          <Link key={action.href} href={action.href} passHref>
-            <Box component="a" sx={actionButtonSx}>
-              <Typography
-                letterSpacing={0}
-                fontSize="80%"
-                fontWeight="bold"
-                color="#488B8F"
-                textTransform="uppercase"
-                textAlign="center"
-              >
-                {action.label}
-              </Typography>
-              <ArrowBackIcon
-                sx={{
-                  color: "#488B8F",
-                  transform: "rotate(180deg)",
-                  marginLeft: "0.5rem",
-                  flexShrink: 0,
-                }}
-              />
-            </Box>
-          </Link>
-        ))}
-      </Box>
-    </Box>
+    <Card variant="outlined" sx={{width:"100%",minHeight:{xs:0,sm:340},borderColor:"#d5dddd",borderRadius:2,transition:"transform .18s, box-shadow .18s","&:hover":{transform:"translateY(-2px)",boxShadow:"0 8px 24px rgba(72,139,143,.12)"}}}>
+      <CardContent sx={{p:{xs:2.5,md:3},display:"flex",flexDirection:"column",boxSizing:"border-box","&:last-child":{pb:{xs:2.5,md:3}}}}>
+        <Box sx={{display:"flex",alignItems:"center",gap:1.5,mb:1.5}}>
+          <Icon sx={{color:"#16777c",fontSize:31}}/>
+          <Typography variant="h6" fontWeight={700}>{title}</Typography>
+        </Box>
+        <Typography color="text.secondary" variant="body2" sx={{minHeight:{sm:40},mb:2}}>{description}</Typography>
+        <Box sx={{borderTop:"1px solid #e5eaea",pt:1.25,mt:{xs:1,sm:"auto"}}}>
+          {items.map(item=>(
+            <Link key={`${item.href}-${item.label}`} href={item.href} passHref>
+              <Box component="a" sx={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:2,py:1.05,px:1.25,borderRadius:1,textDecoration:"none",color:"#16777c",fontWeight:600,"&:hover":{bgcolor:"#eef7f7"}}}>
+                <span>{item.label}</span><span>{"→"}</span>
+              </Box>
+            </Link>
+          ))}
+        </Box>
+      </CardContent>
+    </Card>
   );
 }
 
-export const AdministrationComponents = () => {
-  return (
-    <>
-      <Box className="view-header">
-        <Typography
-          letterSpacing={0}
-          fontSize="1.7rem"
-          fontWeight="regular"
-          marginBottom="0.7rem"
-          color="#5EA3A3"
-        >
-          <Breadcrumbs
-            separator={<NavigateNextIcon fontSize="small" />}
-            aria-label="breadcrumb"
-            sx={{ ml: 1, mt: 1 }}
-          >
-            <Link href="/dashboard" underline="none">
-              <a>
-                <HomeIcon
-                  fontSize="large"
-                  sx={{
-                    color: "#488b8f",
-                    opacity: 0.8,
-                    strokeWidth: 1,
-                  }}
-                />
-              </a>
-            </Link>
-            <Link underline="hover" color="#5EA3A3" href="/administration" sx={{ fontSize: "1.3rem" }}>
-              <Typography component="h1" className="view-title">
-                Administración
-              </Typography>
-            </Link>
-          </Breadcrumbs>
-        </Typography>
-      </Box>
-
-      <Typography
-        letterSpacing={0}
-        fontSize="1.2vw"
-        fontWeight="medium"
-        marginBottom="0.7rem"
-        color="#333333"
-      >
-        Bienvenido al módulo de Administración.
-        <br />A continuación selecciona a donde deseas acceder
-      </Typography>
-
-      <Box
-        display="flex"
-        flexDirection="row"
-        alignItems="center"
-        justifyContent="space-between"
-        width="100%"
-        height="100%"
-        gap={2}
-        sx={{ flexWrap: { xs: "wrap", md: "nowrap" } }}
-      >
-        {adminCards.map((card) => (
-          <AdminCard key={card.title} {...card} />
-        ))}
-      </Box>
-    </>
-  );
+export const AdministrationComponents=()=>{
+  const {can}=useContext(authContext);
+  const visibleSections=sections.map(section=>({...section,items:section.items.filter(item=>can(item.permission))})).filter(section=>section.items.length);
+  return <Box sx={{width:"100%",maxWidth:1500,mx:"auto",pb:{xs:3,md:5}}}><Breadcrumbs separator={<NavigateNextIcon fontSize="small"/>} sx={{mb:1}}><Link href="/dashboard" passHref><Box component="a" sx={{display:"flex",color:"#488b8f"}}><HomeIcon/></Box></Link><Typography color="#488b8f" fontWeight={700}>Administración</Typography></Breadcrumbs><Typography variant="h4" fontWeight={700} sx={{mb:1,lineHeight:1.2}}>Bienvenido al módulo de Administración</Typography><Box sx={{display:"flex",alignItems:"center",gap:1,mb:{xs:3,md:4},flexWrap:"wrap"}}><Typography color="text.secondary">Selecciona una sección disponible para tu rol.</Typography><Chip size="small" label={`${visibleSections.length} secciones habilitadas`} sx={{bgcolor:"#e8f3f3",color:"#16777c"}}/></Box>{visibleSections.length?<Grid container spacing={{xs:2,md:3}} alignItems="stretch">{visibleSections.map(section=><Grid item xs={12} sm={6} lg={4} key={section.title} sx={{display:"flex"}}><SectionCard {...section}/></Grid>)}</Grid>:<Card variant="outlined"><CardContent><Typography>No tienes secciones administrativas asignadas. Solicita acceso al administrador de seguridad.</Typography></CardContent></Card>}</Box>;
 };

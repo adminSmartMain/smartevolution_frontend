@@ -17,8 +17,6 @@ export const NewPasswordIndex = () => {
   const [circularProgressVisible, setCircularProgressVisible] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
 
-  console.log(uidb64, token);
-
   // Estado para manejar el token válido
   const [isTokenValid, setIsTokenValid] = useState(null); // null indica que aún no se valida
 

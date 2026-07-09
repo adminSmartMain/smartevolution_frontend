@@ -16,6 +16,8 @@ import {
 } from "@mui/icons-material";
 
 import React, { useCallback, useState, useEffect, useRef } from "react";
+import { useContext } from "react";
+import authContext from "@context/authContext";
 
 // ================== HOOK PERSONALIZADO PARA VENTANAS ==================
 const useWindowManager = () => {
@@ -668,25 +670,33 @@ const SECONDARY_SECTIONS = [
         href: "/administration",
         text: "Administración",
         Icon: AdminPanelSettingsIcon,
-        subItems: [
-          {
-            href: "/administration/deposit-emitter/depositList",
-            text: "Giro Emisor",
-          },
-          {
-            href: "/administration/deposit-investor/depositList",
-            text: "Giro Inversionista",
-          },
-          { href: "/administration/refund/refundList", text: "Reintegros" },
-        ],
+        requiredPermission: "administration.access",
       },
     ],
   },
 ];
 
+const permissionForPath = (href) => {
+  const exact = {
+    "/administration": "administration.access", "/brochures": "prospects.view", "/customers": "clients.create",
+    "/customers/customerList": "clients.view", "/customers/accountList": "client_accounts.view",
+    "/bills": "bills.create", "/bills/billList": "bills.view", "/bills/createBill": "bills.create",
+    "/pre-operations": "preoperations.view", "/pre-operations/manage": "preoperations.create",
+    "/pre-operations/registerMassiveOperation": "preoperations.import", "/operations": "operations.view",
+    "/operations/electronicSignature": "operations.view", "/administration/negotiation-summary/summaryList": "negotiations.view",
+    "/administration/new-receipt/receiptList": "receipts.view", "/administration/new-receipt/registerMassiveReceipt": "receipts.import",
+    "/brokers": "brokers.create", "/brokers/brokerList": "brokers.view",
+    "/administration/deposit-emitter/depositList": "deposits.view", "/administration/deposit-investor/depositList": "deposits.view",
+    "/administration/refund/refundList": "refunds.view", "/administration/access-control": "users.view",
+    "/administration/users": "users.view", "/administration/security": "security.access",
+  };
+  return exact[href] || null;
+};
+
 // ================== COMPONENTE SIDEBAR PRINCIPAL ==================
 export default function Sidebar({ isExpanded, onClick, isMobile = false }) {
   const router = useRouter();
+  const { can } = useContext(authContext);
   const [openSubmenus, setOpenSubmenus] = useState({});
 
   const toggleSubmenu = useCallback(
@@ -714,6 +724,9 @@ export default function Sidebar({ isExpanded, onClick, isMobile = false }) {
   );
 
   const renderNavItem = (path) => {
+    const required = path.requiredPermission || permissionForPath(path.href);
+    if (required && !can(required)) return null;
+    if (path.subItems) path = { ...path, subItems: path.subItems.filter(item => { const permission = item.requiredPermission || permissionForPath(item.href); return !permission || can(permission); }) };
     const isActive = isPathActive(path.href);
 
     if (path.subItems?.length > 0) {
