@@ -1,5 +1,6 @@
-import { useContext, useState } from "react";
+﻿import { useContext, useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/router";
 import {
   AppBar,
   Avatar,
@@ -29,6 +30,7 @@ export default function Header({
   onToggleMobile,
   user,
 }) {
+  const router = useRouter();
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
   const { logout } = useContext(authContext);
@@ -37,11 +39,20 @@ export default function Header({
     setAnchorEl(event.currentTarget);
   };
 
-  const handleClose = (evt, reason) => {
+  const closeMenu = () => setAnchorEl(null);
+
+  const goToProfile = () => {
+    closeMenu();
+    router.push("/profile");
+  };
+
+  const handleLogout = () => {
+    closeMenu();
+    logout();
+  };
+
+  const handleClose = () => {
     setAnchorEl(null);
-    if (reason !== "backdropClick") {
-      logout();
-    }
   };
 
   const nameInitials = user?.name
@@ -76,7 +87,7 @@ export default function Header({
             sx={{
               width: "130px",
               height: "40px",
-              display: { xs: "none", lg: "flex" }, // ← OCULTO EN MÓVIL
+              display: { xs: "none", lg: "flex" }, // â† OCULTO EN MÃ“VIL
               alignItems: "center",
               justifyContent: "flex-start",
               ml: { xs: 1, md: 2 },
@@ -93,7 +104,7 @@ export default function Header({
             />
           </Box>
 
-          {/* Botón hamburguesa - Desktop */}
+          {/* BotÃ³n hamburguesa - Desktop */}
           <IconButton
             onClick={onToggleSidebar}
             sx={{
@@ -105,13 +116,13 @@ export default function Header({
             <MenuIcon />
           </IconButton>
 
-          {/* Botón hamburguesa - Mobile */}
+          {/* BotÃ³n hamburguesa - Mobile */}
           <IconButton
             onClick={onToggleMobile}
             sx={{
               color: "text.primary",
               display: { xs: "flex", lg: "none" },
-              ml: { xs: 1, lg: 0 }, // ← Margen en móvil para separar del borde
+              ml: { xs: 1, lg: 0 }, // â† Margen en mÃ³vil para separar del borde
             }}
           >
             <MenuIcon />
@@ -129,6 +140,7 @@ export default function Header({
         >
           <Avatar
             onClick={handleClick}
+            src={user?.profile_photo || ""}
             sx={{
               backgroundColor: "#488B8F",
               fontSize: 16,
@@ -148,7 +160,10 @@ export default function Header({
           transformOrigin={{ horizontal: "right", vertical: "top" }}
           anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
         >
-          <MenuItem dense onClick={handleClose}>
+          <MenuItem dense onClick={goToProfile}>
+            Mi perfil
+          </MenuItem>
+          <MenuItem dense onClick={handleLogout}>
             Cerrar sesión
           </MenuItem>
         </Menu>

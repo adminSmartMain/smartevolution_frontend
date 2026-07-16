@@ -653,6 +653,11 @@ const SECONDARY_SECTIONS = [
     title: "Otros",
     paths: [
       {
+        href: "/profile",
+        text: "Mi perfil",
+        Icon: AccountCircleIcon,
+      },
+      {
         href: "/brokers/brokerList",
         text: "Corredores",
         Icon: SupportAgentIcon,

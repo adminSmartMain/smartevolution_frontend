@@ -19,7 +19,7 @@ export const AuthProvider = (child) => {
 
   const [authToken, setAuthToken] = useState("");
   const [refreshToken, setRefreshToken] = useState("");
-  const [user, setUser] = useState({ id: 0, name: "" });
+  const [user, setUser] = useState({ id: 0, name: "", profile_photo: "" });
   const [admin, setAdmin] = useState(false);
   const [roles, setRoles] = useState([]);
   const [permissions, setPermissions] = useState([]);
@@ -31,6 +31,7 @@ export const AuthProvider = (child) => {
     localStorage.removeItem("refresh-token");
     setAuthToken("");
     setRefreshToken("");
+    setUser({ id: 0, name: "", profile_photo: "" });
     setRoles([]);
     setPermissions([]);
     setClient(null);
@@ -58,7 +59,7 @@ export const AuthProvider = (child) => {
         }
 
         if (token.account_scope === "CLIENT_PORTAL") {
-          setUser({ id: token.user_id, name: token.name });
+          setUser({ id: token.user_id, name: token.name, profile_photo: token.profile_photo || "" });
           setClient(token.client || null);
           setRoles(token.roles || []);
           setPermissions([]);
@@ -67,7 +68,7 @@ export const AuthProvider = (child) => {
           return;
         }
 
-        setUser({ id: token.user_id, name: token.name });
+        setUser({ id: token.user_id, name: token.name, profile_photo: token.profile_photo || "" });
         setAdmin(token.is_superuser);
         setRoles(token.roles || []);
         setPermissions(token.permissions || []);
@@ -88,6 +89,7 @@ export const AuthProvider = (child) => {
               setRoles(result.data.roles || []);
               setPermissions(result.data.permissions || []);
               setClient(result.data.client || null);
+              setUser((current) => ({ ...current, profile_photo: result.data.profile_photo || current.profile_photo || "" }));
             }
           } else {
             console.warn("No se pudo cargar el perfil de acceso; se usaran los permisos del token.");
@@ -129,10 +131,11 @@ export const AuthProvider = (child) => {
     router.replace("/auth/login");
   };
 
+  const setSessionUser = (nextUser) => setUser((current) => ({ ...current, ...nextUser }));
   const can = (permission) => admin || permissions.includes(permission);
   return (
     <authContext.Provider
-      value={{ authToken, refreshToken, user, admin, roles, permissions, client, authReady, can, logout }}
+      value={{ authToken, refreshToken, user, admin, roles, permissions, client, authReady, can, logout, setSessionUser }}
     >
       {child.children}
     </authContext.Provider>

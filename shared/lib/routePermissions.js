@@ -1,5 +1,6 @@
 const exactPermissions = {
   "/dashboard": "__authenticated__",
+  "/profile": "__authenticated__",
   "/brochures": "prospects.view",
   "/requests": "prospects.view",
   "/customers": "clients.create",

@@ -1,12 +1,13 @@
 import { useContext, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
-import { Alert, Box, Button, Chip, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, InputLabel, MenuItem, Paper, Select, Tab, Tabs, TextField, Typography } from "@mui/material";
+import { Alert, Avatar, Box, Button, Chip, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, InputLabel, MenuItem, Paper, Select, Tab, Tabs, TextField, Typography } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import authContext from "@context/authContext";
 import { createClientAccess,createUser,getAccessOptions,getAudit,getClientAccess,getPermissions,getRoles,getUsers,saveRole,updateClientAccess,updateUser } from "./queries";
 
 const emptyRole={code:"",name:"",description:"",audience:"INTERNAL",permissions:[]};
-const emptyUser={email:"",first_name:"",last_name:"",phone_number:"",roles:[]};
+const emptyUser={email:"",first_name:"",last_name:"",phone_number:"",profile_photo:"",roles:[]};
+const fileToDataUrl=(file)=>new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file);});
 
 export default function AccessControl({mode="users"}){
   const securityMode=mode==="security";
@@ -20,6 +21,7 @@ export default function AccessControl({mode="users"}){
   const saveNewUser=async()=>{try{const r=await createUser(userForm);setNotice(`Usuario creado. Contraseña temporal: ${r.temporary_password}`);setUserForm(null);load();}catch(e){setError(e.response?.data?.message||"No fue posible crear el usuario.")}};
   const saveAccess=async()=>{try{const r=await createClientAccess(accessForm);setNotice(r.data.temporary_password?`Cuenta creada. Contraseña temporal: ${r.data.temporary_password}`:"Cuenta vinculada correctamente.");setAccessForm(null);load();}catch(e){setError(e.response?.data?.message||"No fue posible vincular la cuenta.")}};
   const userColumns=[
+    {field:"profile_photo",headerName:"Foto",width:82,sortable:false,renderCell:p=><Avatar src={p.value||""} sx={{width:34,height:34}}>{`${p.row.first_name||p.row.email||"U"}`.charAt(0).toUpperCase()}</Avatar>},
     {field:"email",headerName:"Usuario",flex:1,minWidth:230},{field:"full_name",headerName:"Nombre",flex:1,minWidth:180,valueGetter:p=>`${p.row.first_name||""} ${p.row.last_name||""}`},
     {field:"roles",headerName:"Roles",flex:1,minWidth:220,renderCell:p=><Box>{p.value.map(x=><Chip key={x} size="small" label={x} sx={{mr:.5}}/>)}</Box>},
     {field:"is_active",headerName:"Estado",width:120,renderCell:p=><Chip color={p.value?"success":"error"} label={p.value?"Activo":"Bloqueado"}/>} ,
@@ -39,7 +41,34 @@ export default function AccessControl({mode="users"}){
 
     <Dialog open={!!roleForm} onClose={()=>setRoleForm(null)} fullWidth maxWidth="md"><DialogTitle>{roleForm?.id?"Editar rol":"Crear rol"}</DialogTitle><DialogContent>{roleForm&&<><TextField fullWidth margin="normal" label="Código estable" disabled={!!roleForm.id} value={roleForm.code} onChange={e=>setRoleForm({...roleForm,code:e.target.value.toUpperCase().replace(/\s+/g,"_")})}/><TextField fullWidth margin="normal" label="Nombre" value={roleForm.name} onChange={e=>setRoleForm({...roleForm,name:e.target.value})}/><TextField fullWidth margin="normal" label="Descripción" value={roleForm.description} onChange={e=>setRoleForm({...roleForm,description:e.target.value})}/><FormControl fullWidth margin="normal"><InputLabel>Ámbito</InputLabel><Select label="Ámbito" value={roleForm.audience} onChange={e=>setRoleForm({...roleForm,audience:e.target.value})}><MenuItem value="INTERNAL">Interno</MenuItem><MenuItem value="CLIENT_PORTAL">Portal de clientes</MenuItem></Select></FormControl>{Object.entries(modules).map(([module,items])=><Box key={module} sx={{mt:2}}><Typography fontWeight={700} sx={{textTransform:"capitalize"}}>{module.replaceAll("_"," ")}</Typography>{items.map(p=><Chip key={p.code} clickable color={roleForm.permissions.includes(p.code)?"primary":"default"} label={p.name} onClick={()=>setRoleForm({...roleForm,permissions:roleForm.permissions.includes(p.code)?roleForm.permissions.filter(x=>x!==p.code):[...roleForm.permissions,p.code]})} sx={{m:.5}}/>)}</Box>)}</>}</DialogContent><DialogActions><Button onClick={()=>setRoleForm(null)}>Cancelar</Button><Button variant="contained" disabled={!roleForm?.code||!roleForm?.name} onClick={()=>saveRole(roleForm).then(()=>{setRoleForm(null);load()})}>Guardar</Button></DialogActions></Dialog>
 
-    <Dialog open={!!userForm} onClose={()=>setUserForm(null)} fullWidth><DialogTitle>Crear usuario</DialogTitle><DialogContent>{userForm&&<><TextField fullWidth required margin="normal" label="Correo" value={userForm.email} onChange={e=>setUserForm({...userForm,email:e.target.value})}/><TextField fullWidth margin="normal" label="Nombres" value={userForm.first_name} onChange={e=>setUserForm({...userForm,first_name:e.target.value})}/><TextField fullWidth margin="normal" label="Apellidos" value={userForm.last_name} onChange={e=>setUserForm({...userForm,last_name:e.target.value})}/><FormControl fullWidth margin="normal"><InputLabel>Roles</InputLabel><Select multiple label="Roles" value={userForm.roles} onChange={e=>setUserForm({...userForm,roles:e.target.value})}>{roles.filter(r=>r.state).map(r=><MenuItem key={r.code} value={r.code}>{r.name} ({r.code})</MenuItem>)}</Select></FormControl></>}</DialogContent><DialogActions><Button onClick={()=>setUserForm(null)}>Cancelar</Button><Button variant="contained" disabled={!userForm?.email} onClick={saveNewUser}>Crear</Button></DialogActions></Dialog>
+    <Dialog open={!!userForm} onClose={()=>setUserForm(null)} fullWidth>
+      <DialogTitle>Crear usuario</DialogTitle>
+      <DialogContent>
+        {userForm&&<>
+          <Box sx={{display:"flex",alignItems:"center",gap:2,my:2}}>
+            <Avatar src={userForm.profile_photo||""} sx={{width:64,height:64}}>
+              {`${userForm.first_name||userForm.email||"U"}`.charAt(0).toUpperCase()}
+            </Avatar>
+            <Box>
+              <Button variant="outlined" component="label">
+                Foto de perfil
+                <input hidden accept="image/png,image/jpeg,image/webp" type="file" onChange={async e=>{const file=e.target.files?.[0];if(!file)return;setUserForm({...userForm,profile_photo:await fileToDataUrl(file)});}}/>
+              </Button>
+              {userForm.profile_photo&&<Button sx={{ml:1}} onClick={()=>setUserForm({...userForm,profile_photo:""})}>Quitar</Button>}
+              <Typography variant="caption" display="block" sx={{mt:1,color:"text.secondary"}}>Se guardará en S3 en la carpeta user-profiles.</Typography>
+            </Box>
+          </Box>
+          <TextField fullWidth required margin="normal" label="Correo" value={userForm.email} onChange={e=>setUserForm({...userForm,email:e.target.value})}/>
+          <TextField fullWidth margin="normal" label="Nombres" value={userForm.first_name} onChange={e=>setUserForm({...userForm,first_name:e.target.value})}/>
+          <TextField fullWidth margin="normal" label="Apellidos" value={userForm.last_name} onChange={e=>setUserForm({...userForm,last_name:e.target.value})}/>
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Roles</InputLabel>
+            <Select multiple label="Roles" value={userForm.roles} onChange={e=>setUserForm({...userForm,roles:e.target.value})}>{roles.filter(r=>r.state).map(r=><MenuItem key={r.code} value={r.code}>{r.name} ({r.code})</MenuItem>)}</Select>
+          </FormControl>
+        </>}
+      </DialogContent>
+      <DialogActions><Button onClick={()=>setUserForm(null)}>Cancelar</Button><Button variant="contained" disabled={!userForm?.email} onClick={saveNewUser}>Crear</Button></DialogActions>
+    </Dialog>
 
     <Dialog open={!!roleUser} onClose={()=>setRoleUser(null)} fullWidth><DialogTitle>Roles de {roleUser?.email}</DialogTitle><DialogContent>{roleUser&&<FormControl fullWidth margin="normal"><InputLabel>Roles asignados</InputLabel><Select multiple label="Roles asignados" value={roleUser.roles} onChange={e=>setRoleUser({...roleUser,roles:e.target.value})}>{roles.filter(r=>r.state).map(r=><MenuItem key={r.code} value={r.code}>{r.name} ({r.code})</MenuItem>)}</Select></FormControl>}</DialogContent><DialogActions><Button onClick={()=>setRoleUser(null)}>Cancelar</Button><Button variant="contained" onClick={()=>updateUser(roleUser.id,{roles:roleUser.roles}).then(()=>{setRoleUser(null);load()})}>Guardar</Button></DialogActions></Dialog>
 
