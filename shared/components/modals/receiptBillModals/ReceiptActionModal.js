@@ -23,6 +23,24 @@ const MIN_REASON_LENGTH = 50;
 const MAX_REASON_LENGTH = 500;
 const REQUIRED_REASON_MESSAGE = "El motivo es obligatorio y debe tener al menos 50 caracteres";
 
+const dateOnlyToUtc = (value) => {
+  if (!value) return null;
+
+  const [year, month, day] = String(value).slice(0, 10).split("-").map(Number);
+  if (!year || !month || !day) return null;
+
+  return Date.UTC(year, month - 1, day);
+};
+
+const calculateDaysFromDates = (applicationDate, operationStartDate) => {
+  const applicationUtc = dateOnlyToUtc(applicationDate);
+  const operationUtc = dateOnlyToUtc(operationStartDate);
+
+  if (applicationUtc === null || operationUtc === null) return null;
+
+  return Math.max(Math.round((applicationUtc - operationUtc) / 86400000), 0);
+};
+
 export default function ReceiptActionModal({
   open,
   mode,
@@ -84,6 +102,24 @@ export default function ReceiptActionModal({
     }
 
     onChange(field, value);
+
+    if (isAdjust && field === "date") {
+      const originalDate = values?.row?.date || "";
+      const originalCalculatedDays = values?.row?.calculatedDays ?? "";
+      const operationStartDate =
+        values?.row?.operationStartDate ||
+        values?.row?.operation?.opDate ||
+        "";
+
+      const recalculatedDays =
+        value === originalDate
+          ? originalCalculatedDays
+          : calculateDaysFromDates(value, operationStartDate);
+
+      if (recalculatedDays !== null) {
+        onChange("calculatedDays", recalculatedDays);
+      }
+    }
   };
 
   const handleSubmit = () => {
@@ -179,7 +215,7 @@ export default function ReceiptActionModal({
                 onChange={(event) => handleFieldChange("calculatedDays", event.target.value)}
                 fullWidth
                 error={Boolean(errors.calculatedDays)}
-                helperText={errors.calculatedDays || " "}
+                helperText={errors.calculatedDays || "Se actualiza automáticamente al cambiar la fecha."}
                 sx={inputSx}
               />
             </Box>

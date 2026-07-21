@@ -85,8 +85,8 @@ const {
   data: dataGetReceiptList,
 } = useFetch({
   service: (args) => GetReceiptList({ 
-    page, 
-    opId: data?.opId || "", 
+    page,
+    operationId: data?.id || "",
     ...args 
   }),
   init: false, // No ejecutar inmediatamente
@@ -100,12 +100,13 @@ useEffect(() => {
   }
 }, [user]);
 
-// Ejecutar cuando data.opId esté disponible
+// Consultar por el ID interno de la PreOperation para no mezclar operaciones
+// que comparten el mismo opId de negocio.
 useEffect(() => {
-  if (data?.opId) {
+  if (data?.id) {
     fetchGetReceiptList();
   }
-}, [data?.opId]);
+}, [data?.id]);
 
 const dataCount = dataGetReceiptList?.count || 0;
 
@@ -187,6 +188,7 @@ const receipt = dataGetReceiptList?.results?.map((receipt) => {
     typeReceipt: receipt.typeReceipt?.description || 'N/A',
     statusReceipt: receipt.receiptStatus?.description || 'N/A',
     operation: receipt.operation?.opId || 'N/A',
+    operationStartDate: receipt.operation?.opDate || data?.opDate || "",
     investor: investorName, // ← Aquí agregamos el nombre del inversionista
     payedAmount: receipt.payedAmount || 0,
     realDays: receipt.realDays || 0,

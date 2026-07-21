@@ -173,6 +173,7 @@ const receipt = dataGetReceiptList?.results?.map((receipt) => {
     typeReceipt: receipt.typeReceipt?.description || 'N/A',
     statusReceipt: receipt.receiptStatus?.description || 'N/A',
     operation: receipt.operation?.opId || 'N/A',
+    operationStartDate: receipt.operation?.opDate || "",
     billId: receipt.billId || receipt.operation?.bill?.billId || 'N/A',
     fraction: receipt.fraction || receipt.operation?.billFraction || 1,
     investor: investorName, // ← Aquí agregamos el nombre del inversionista

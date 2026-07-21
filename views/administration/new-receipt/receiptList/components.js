@@ -1110,6 +1110,7 @@ export const ReceiptListComponent = () => {
         statusReceipt: receipt.receiptStatus.description,
         operation: receipt.operation,
         operation2: receipt.operation,
+        operationStartDate: receipt.operation?.opDate || "",
         billId: receipt.billId || receipt.operation?.bill?.billId || "",
         fraction: receipt.fraction || receipt.operation?.billFraction || 1,
         payedAmount: receipt.payedAmount,
