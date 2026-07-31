@@ -1220,6 +1220,7 @@ const setQuickFilter = (type) => {
         sx={{ ...tableWrapperSx }}
       >
         <CustomDataGrid
+          className="main-list-data-grid"
           rows={summary}
           columns={columns}
           pageSize={15}

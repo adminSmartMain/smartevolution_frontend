@@ -611,6 +611,7 @@ export const AccountListComponent = () => {
           }}
         >
           <CustomDataGrid
+            className="main-list-data-grid"
             rows={customer}
             columns={columns}
             pageSize={15}

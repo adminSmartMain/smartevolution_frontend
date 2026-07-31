@@ -689,7 +689,7 @@ const renderPreviewContent = () => {
           marginBottom: 3,
           paddingBottom: 2,
           borderBottom: '1px solid #e0e0e0'
-        }}> <Typography variant="h4" gutterBottom>
+        }}> <Typography className="legacy-page-title" variant="h4" gutterBottom>
             Registrar Operación
           </Typography>
           {user ? (
@@ -1839,4 +1839,4 @@ const renderPreviewContent = () => {
     </LocalizationProvider>
   );
 };
-export default ManageOperationC;   
+export default ManageOperationC;

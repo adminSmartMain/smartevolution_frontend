@@ -124,7 +124,6 @@ export default function ProfileView() {
 
   return (
     <Box sx={{ maxWidth: 980, mx: "auto", width: "100%" }}>
-      <Typography variant="h4" sx={{ mb: 2 }}>Mi perfil</Typography>
       {error && <Alert severity="error" onClose={() => setError("")} sx={{ mb: 2 }}>{error}</Alert>}
       {notice && <Alert severity="success" onClose={() => setNotice("")} sx={{ mb: 2 }}>{notice}</Alert>}
 

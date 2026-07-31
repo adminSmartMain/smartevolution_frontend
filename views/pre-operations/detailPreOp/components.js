@@ -193,7 +193,7 @@ export const ManageOperationDetails = ({
           paddingBottom: 2,
           borderBottom: '1px solid #e0e0e0'
         }}>
-          <Typography variant="h4" gutterBottom sx={{ fontWeight: 'medium' }}>
+          <Typography className="legacy-page-title" variant="h4" gutterBottom sx={{ fontWeight: 'medium' }}>
             Ver Operación
           </Typography>
           {usuarioEncontrado || usuarioEncontradoEdit ? (

@@ -1,8 +1,6 @@
 import { useContext } from "react";
 import Link from "next/link";
-import { Box, Breadcrumbs, Card, CardContent, Chip, Grid, Typography } from "@mui/material";
-import NavigateNextIcon from "@mui/icons-material/NavigateNext";
-import HomeIcon from "@mui/icons-material/Home";
+import { Box, Card, CardContent, Chip, Grid, Typography } from "@mui/material";
 import AccountBalanceWalletOutlinedIcon from "@mui/icons-material/AccountBalanceWalletOutlined";
 import PaidOutlinedIcon from "@mui/icons-material/PaidOutlined";
 import ManageAccountsOutlinedIcon from "@mui/icons-material/ManageAccountsOutlined";
@@ -61,5 +59,5 @@ function SectionCard({title,description,Icon,items}){
 export const AdministrationComponents=()=>{
   const {can}=useContext(authContext);
   const visibleSections=sections.map(section=>({...section,items:section.items.filter(item=>can(item.permission))})).filter(section=>section.items.length);
-  return <Box sx={{width:"100%",maxWidth:1500,mx:"auto",pb:{xs:3,md:5}}}><Breadcrumbs separator={<NavigateNextIcon fontSize="small"/>} sx={{mb:1}}><Link href="/dashboard" passHref><Box component="a" sx={{display:"flex",color:"#488b8f"}}><HomeIcon/></Box></Link><Typography color="#488b8f" fontWeight={700}>Administración</Typography></Breadcrumbs><Typography variant="h4" fontWeight={700} sx={{mb:1,lineHeight:1.2}}>Bienvenido al módulo de Administración</Typography><Box sx={{display:"flex",alignItems:"center",gap:1,mb:{xs:3,md:4},flexWrap:"wrap"}}><Typography color="text.secondary">Selecciona una sección disponible para tu rol.</Typography><Chip size="small" label={`${visibleSections.length} secciones habilitadas`} sx={{bgcolor:"#e8f3f3",color:"#16777c"}}/></Box>{visibleSections.length?<Grid container spacing={{xs:2,md:3}} alignItems="stretch">{visibleSections.map(section=><Grid item xs={12} sm={6} lg={4} key={section.title} sx={{display:"flex"}}><SectionCard {...section}/></Grid>)}</Grid>:<Card variant="outlined"><CardContent><Typography>No tienes secciones administrativas asignadas. Solicita acceso al administrador de seguridad.</Typography></CardContent></Card>}</Box>;
+  return <Box sx={{width:"100%",maxWidth:1500,mx:"auto",pb:{xs:3,md:5}}}><Box sx={{display:"flex",alignItems:"center",gap:1,mb:{xs:3,md:4},flexWrap:"wrap"}}><Chip size="small" label={`${visibleSections.length} secciones habilitadas`} sx={{bgcolor:"#e8f3f3",color:"#16777c"}}/></Box>{visibleSections.length?<Grid container spacing={{xs:2,md:3}} alignItems="stretch">{visibleSections.map(section=><Grid item xs={12} sm={6} lg={4} key={section.title} sx={{display:"flex"}}><SectionCard {...section}/></Grid>)}</Grid>:<Card variant="outlined"><CardContent><Typography>No tienes secciones administrativas asignadas. Solicita acceso al administrador de seguridad.</Typography></CardContent></Card>}</Box>;
 };

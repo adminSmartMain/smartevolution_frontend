@@ -1,4 +1,4 @@
-import { Title } from '@mui/icons-material';
+import Title from '@mui/icons-material/Title';
 import {
   Tabs,
   Tab,

@@ -521,6 +521,7 @@ className="view-header"
       >
       
         <CustomDataGrid
+          className="main-list-data-grid"
           rows={data}
           columns={columns}
           pageSize={15}

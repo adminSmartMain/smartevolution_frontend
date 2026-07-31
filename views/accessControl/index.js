@@ -4,12 +4,18 @@ import { Alert, Avatar, Box, Button, Chip, CircularProgress, Dialog, DialogActio
 import { DataGrid } from "@mui/x-data-grid";
 import authContext from "@context/authContext";
 import { createClientAccess,createUser,getAccessOptions,getAudit,getClientAccess,getPermissions,getRoles,getUsers,saveRole,updateClientAccess,updateUser } from "./queries";
+import UsersModule from "./UsersModule";
 
 const emptyRole={code:"",name:"",description:"",audience:"INTERNAL",permissions:[]};
 const emptyUser={email:"",first_name:"",last_name:"",phone_number:"",profile_photo:"",roles:[]};
 const fileToDataUrl=(file)=>new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file);});
 
 export default function AccessControl({mode="users"}){
+  if(mode==="users") return <UsersModule/>;
+  return <SecurityAccessControl mode={mode}/>;
+}
+
+function SecurityAccessControl({mode="security"}){
   const securityMode=mode==="security";
   const {can,authReady}=useContext(authContext); const router=useRouter();
   const [tab,setTab]=useState(0),[loading,setLoading]=useState(true),[error,setError]=useState(""),[notice,setNotice]=useState("");
@@ -31,7 +37,7 @@ export default function AccessControl({mode="users"}){
   const accessColumns=[{field:"client_name",headerName:"Cliente",flex:1},{field:"user_email",headerName:"Cuenta",flex:1},{field:"status",headerName:"Estado",width:140,renderCell:p=><Chip label={p.value} color={p.value==="ACTIVE"?"success":p.value==="BLOCKED"?"error":"default"}/>},{field:"edit",headerName:"Acciones",width:210,renderCell:p=><>{can("client_access.update")&&<Button size="small" onClick={()=>updateClientAccess(p.row.id,{status:"ACTIVE",blocked_reason:""}).then(load)}>Activar</Button>}{can("client_access.block")&&<Button size="small" color="error" onClick={()=>setBlockForm({...p.row,blocked_reason:""})}>Bloquear</Button>}</>}];
   const auditColumns=[{field:"created_at",headerName:"Fecha",width:190,valueGetter:p=>new Date(p.value).toLocaleString()},{field:"actor_email",headerName:"Ejecutado por",width:240},{field:"action",headerName:"Acción",width:220},{field:"target_type",headerName:"Tipo",width:150},{field:"target_id",headerName:"Registro",flex:1,minWidth:220},{field:"ip_address",headerName:"IP",width:140}];
   if(!authReady||loading)return <Box sx={{p:6,textAlign:"center"}}><CircularProgress/></Box>;
-  return <Box><Typography variant="h4" sx={{mb:2}}>{securityMode?"Configuración de seguridad":"Usuarios y cuentas de clientes"}</Typography>{error&&<Alert severity="error" onClose={()=>setError("")} sx={{mb:2}}>{error}</Alert>}{notice&&<Alert severity="success" onClose={()=>setNotice("")} sx={{mb:2}}>{notice}</Alert>}
+  return <Box>{error&&<Alert severity="error" onClose={()=>setError("")} sx={{mb:2}}>{error}</Alert>}{notice&&<Alert severity="success" onClose={()=>setNotice("")} sx={{mb:2}}>{notice}</Alert>}
     <Paper><Tabs value={tab} onChange={(_,v)=>setTab(v)}>{securityMode?[<Tab key="roles" label={`Roles y permisos (${roles.length})`}/>,<Tab key="audit" label={`Auditoría (${auditRows.length})`}/>]:[<Tab key="users" label={`Usuarios (${users.length})`}/>,<Tab key="clients" label={`Cuentas de clientes (${access.length})`}/>]}</Tabs><Box sx={{height:620,p:2}}>
       {!securityMode&&tab===0&&<>{can("users.create")&&<Button variant="contained" sx={{mb:2}} onClick={()=>setUserForm({...emptyUser})}>Crear usuario</Button>}<DataGrid rows={users} columns={userColumns} pageSize={25}/></>}
       {!securityMode&&tab===1&&<>{can("client_access.create")&&<Button variant="contained" sx={{mb:2}} onClick={()=>setAccessForm({client:"",user:"",status:"ACTIVE",create_user:false})}>Vincular o crear cuenta</Button>}<DataGrid rows={access} columns={accessColumns} pageSize={25}/></>}

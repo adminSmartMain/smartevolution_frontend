@@ -1,11 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { Toast } from "@components/toast";
-import { SearchOutlined } from "@mui/icons-material";
+import SearchOutlined from "@mui/icons-material/SearchOutlined";
 import { Box, Button, Fade, Typography, TextField, Menu, MenuItem, IconButton, Divider, InputAdornment, } from "@mui/material";
-import {
-  Home as HomeIcon,
-
-} from "@mui/icons-material";
+import HomeIcon from "@mui/icons-material/Home";
 import TuneIcon from "@mui/icons-material/Tune";
 /* Modal imports*/
 import ValueFormat from "@formats/ValueFormat";
@@ -29,11 +26,8 @@ import Link from "next/link";
 import moment from "moment";
 import AdvancedDateRangePicker from "../../../../shared/components/AdvancedDateRangePicker";
 import { useRouter } from "next/router";
-import {
-
-  Clear as ClearIcon,
-  KeyboardArrowDown as KeyboardArrowDownIcon
-} from '@mui/icons-material';
+import ClearIcon from '@mui/icons-material/Clear';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
 import Skeleton from '@mui/material/Skeleton';
 import { Breadcrumbs } from "@mui/material";
@@ -1508,7 +1502,7 @@ export const ReceiptListComponent = () => {
         <TableSkeleton rows={8} columns={columns.length} />
       ) : (
         <Box
-          marginTop={4}
+          marginTop={2}
           display="flex"
           flexDirection="column"
           width="100%"
@@ -1520,6 +1514,7 @@ export const ReceiptListComponent = () => {
           }}
         >
           <CustomDataGrid
+            className="main-list-data-grid"
             rows={receipt}
             columns={orderedColumns}
             pageSize={15}

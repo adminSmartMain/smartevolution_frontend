@@ -1685,6 +1685,7 @@ const handleOpenDetailBill = (id, tab = 0) => {
   <TableSkeleton rows={8} columns={columns.length} />
 ) : (
   <CustomDataGrid
+    className="main-list-data-grid"
     rows={bill}
     columns={columns}
     pageSize={15}

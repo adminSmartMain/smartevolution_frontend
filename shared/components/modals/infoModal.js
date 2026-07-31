@@ -9,7 +9,8 @@ import {
   IconButton,
   Typography
 } from '@mui/material';
-import { Lock as LockIcon, Close as CloseIcon } from '@mui/icons-material';
+import LockIcon from '@mui/icons-material/Lock';
+import CloseIcon from '@mui/icons-material/Close';
 import { useTheme } from '@mui/material/styles';
 import { useRouter } from 'next/router';
 

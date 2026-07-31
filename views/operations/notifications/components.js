@@ -481,6 +481,7 @@ export const NotificationListC = () => {
         height="100%"
       >
         <CustomDataGrid
+          className="main-list-data-grid"
           rows={data}
           columns={columns}
           pageSize={15}

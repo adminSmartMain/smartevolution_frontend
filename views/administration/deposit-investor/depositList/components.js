@@ -683,6 +683,7 @@ export const DepositListComponent = () => {
         height="100%"
       >
         <CustomDataGrid
+          className="main-list-data-grid"
           rows={deposit}
           columns={columns}
           pageSize={15}

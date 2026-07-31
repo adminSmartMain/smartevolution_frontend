@@ -5,6 +5,21 @@ import scrollSx from "@styles/scroll";
 
 const CustomDataGrid = styled(DataGrid)({
   border: "none",
+
+  "&.main-list-data-grid": {
+    width: "100%",
+    height: "clamp(420px, calc(100vh - 430px), 620px) !important",
+    minHeight: "420px !important",
+    maxHeight: "620px !important",
+  },
+
+  "@media (max-width: 767px)": {
+    "&.main-list-data-grid": {
+      height: "480px !important",
+      minHeight: "480px !important",
+      maxHeight: "480px !important",
+    },
+  },
   
   '& .MuiDataGrid-detailPanel': {
     overflow: 'visible !important',
@@ -38,6 +53,8 @@ const CustomDataGrid = styled(DataGrid)({
 
   "& .MuiDataGrid-cell": {
     border: "0px solid transparent",
+    display: "flex",
+    alignItems: "center",
     "&:focus": {
       outline: "none",
     },
