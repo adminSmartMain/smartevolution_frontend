@@ -51,12 +51,16 @@ export default function Layout({ children }) {
 
   // CALCULAR ESTILOS UNA VEZ
   const mainStyles = {
-    flex: "1 0 auto",
+    flex: "1 1 auto",
     display: "flex",
     flexDirection: "column",
     padding: 3,
     marginLeft: isDesktop ? (isSidebarExpanded ? "280px" : "80px") : 0,
     width: isDesktop ? (isSidebarExpanded ? "calc(100% - 280px)" : "calc(100% - 80px)") : "100%",
+    maxWidth: isDesktop ? (isSidebarExpanded ? "calc(100% - 280px)" : "calc(100% - 80px)") : "100%",
+    minWidth: 0,
+    boxSizing: "border-box",
+    overflowX: "hidden",
     minHeight: `calc(100vh - ${headerHeight}px)`,
     // ELIMINAR TRANSICIONES DURANTE CARGA DE DATOS
    transition: "none",
@@ -70,11 +74,15 @@ export default function Layout({ children }) {
     marginTop: 2,
     marginLeft: isDesktop ? (isSidebarExpanded ? "280px" : "80px") : 0,
     width: isDesktop ? (isSidebarExpanded ? "calc(100% - 280px)" : "calc(100% - 80px)") : "100%",
+    maxWidth: isDesktop ? (isSidebarExpanded ? "calc(100% - 280px)" : "calc(100% - 80px)") : "100%",
+    minWidth: 0,
+    boxSizing: "border-box",
+    overflowX: "hidden",
     transition: isDesktop ? "margin-left 0.2s ease, width 0.2s ease" : "none",
   };
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh", backgroundColor: 'white' }}>
+    <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh", maxWidth: "100vw", overflowX: "hidden", backgroundColor: 'white' }}>
       {/* Header fijo y simple */}
       <Box sx={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1300 }}>
         <Header 
@@ -86,7 +94,7 @@ export default function Layout({ children }) {
       </Box>
 
       {/* Main Content */}
-      <Box sx={{ flex: "1 0 auto", display: "flex", alignItems: "stretch", width: "100%", pt: `${headerHeight}px` }}>
+      <Box sx={{ flex: "1 1 auto", display: "flex", alignItems: "stretch", width: "100%", minWidth: 0, maxWidth: "100%", overflowX: "hidden", pt: `${headerHeight}px` }}>
         
         {/* Sidebar Desktop */}
         {isDesktop && (
@@ -107,6 +115,7 @@ export default function Layout({ children }) {
         <Box
           sx={{
             ...mainStyles,
+            "& .platform-page-content": { minWidth: 0, maxWidth: "100%" },
             "& .platform-page-content .MuiBreadcrumbs-root": { display: "none" },
             "& .platform-page-content .view-title": { display: "none" },
             "& .platform-page-content .view-header": { display: "none" },

@@ -979,7 +979,7 @@ export const ReceiptListComponent = () => {
     {
       field: "actions",
       headerName: "ACCIONES",
-      width: 230,
+      width: 150,
       sortable: false,
       renderCell: (params) => {
         const isVoided = isReceiptVoided(params.row);
@@ -988,7 +988,7 @@ export const ReceiptListComponent = () => {
 
         if (isVoided) {
           return (
-            <Box display="flex" gap={1} alignItems="center">
+            <Box display="flex" gap={0.5} alignItems="center" justifyContent="center" width="100%">
               <CustomTooltip title="Ver motivo de anulación" placement="bottom">
                 <IconButton
                   size="small"
@@ -1015,10 +1015,11 @@ export const ReceiptListComponent = () => {
         }
 
         return (
-          <Box display="flex" gap={1} alignItems="center">
-            <Button
+          <Box display="flex" gap={0.5} alignItems="center" justifyContent="center" width="100%">
+            <CustomTooltip title={params.row.canEdit ? "Editar recaudo" : "Este recaudo no se puede editar"} placement="bottom">
+              <span>
+            <IconButton
               size="small"
-              variant="outlined"
               disabled={!params.row.canEdit}
               onClick={(event) => {
                 event.stopPropagation();
@@ -1026,16 +1027,19 @@ export const ReceiptListComponent = () => {
               }}
               sx={{
                 color: "#488B8F",
-                borderColor: "#488B8F",
-                fontSize: "0.72rem",
-                minWidth: 64,
+                width: 32,
+                height: 32,
+                "&:hover": { backgroundColor: "#E7F3F3" },
               }}
             >
-              Editar
-            </Button>
-            <Button
+              <EditIcon fontSize="small" />
+            </IconButton>
+              </span>
+            </CustomTooltip>
+            <CustomTooltip title={params.row.canVoid ? "Anular recaudo" : "Este recaudo no se puede anular"} placement="bottom">
+              <span>
+            <IconButton
               size="small"
-              variant="outlined"
               disabled={!params.row.canVoid}
               onClick={(event) => {
                 event.stopPropagation();
@@ -1043,13 +1047,15 @@ export const ReceiptListComponent = () => {
               }}
               sx={{
                 color: "#c62828",
-                borderColor: "#c62828",
-                fontSize: "0.72rem",
-                minWidth: 68,
+                width: 32,
+                height: 32,
+                "&:hover": { backgroundColor: "#FDECEC" },
               }}
             >
-              Anular
-            </Button>
+              <BlockIcon fontSize="small" />
+            </IconButton>
+              </span>
+            </CustomTooltip>
             {hasReason && (
               <CustomTooltip title="Ver motivo de ajuste" placement="bottom">
                 <IconButton

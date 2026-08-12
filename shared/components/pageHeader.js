@@ -18,7 +18,8 @@ export default function PageHeader({ title, subtitle, breadcrumbs = [], actions 
           mb: { xs: 1, md: 1.25 },
           color: "#66727c",
           "& .MuiBreadcrumbs-separator": { mx: 1, color: "#78838c" },
-          "& .MuiBreadcrumbs-ol": { flexWrap: "wrap" },
+          "& .MuiBreadcrumbs-ol": { flexWrap: "wrap", alignItems: "center" },
+          "& .MuiBreadcrumbs-li, & .MuiBreadcrumbs-separator": { display: "inline-flex", alignItems: "center" },
         }}
       >
         <NextLink href="/dashboard" passHref legacyBehavior>

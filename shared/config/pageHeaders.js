@@ -88,4 +88,7 @@ export function getPageHeader(pathname) {
   };
 }
 
-export const ROUTES_WITH_LOCAL_PAGE_HEADER = new Set(["/administration/users"]);
+export const ROUTES_WITH_LOCAL_PAGE_HEADER = new Set([
+  "/administration/users",
+  "/bills/billy-pending",
+]);
