@@ -39,8 +39,8 @@ export default function BrokerSelect({ formik, disabled }) {
   console.log(data)
 
   return (
-    <Box width="17vw">
-      <Box>
+    <>
+   
         <InputTitles marginBottom={2}>Corredor</InputTitles>
         <Autocomplete
           id="broker"
@@ -58,7 +58,7 @@ export default function BrokerSelect({ formik, disabled }) {
           color="#5EA3A3"
           value={
             broker.filter(
-              (option) => option.value === formik.values.broker
+              (option) => option.value === formik?.values.broker
             )[0] || null
           }
           popupIcon={<KeyboardArrowDownIcon sx={{ color: "#5EA3A3" }} />}
@@ -69,10 +69,10 @@ export default function BrokerSelect({ formik, disabled }) {
               {...params}
               name="broker"
               placeholder="Corredor"
-              value={formik.values.broker}
-              error={formik.touched.broker && Boolean(formik.errors.broker)}
+              value={formik?.values.broker}
+              error={formik?.touched.broker && Boolean(formik?.errors.broker)}
               sx={
-                formik.touched.broker && Boolean(formik.errors.broker)
+                formik?.touched.broker && Boolean(formik?.errors.broker)
                   ? { border: "1.4px solid #E6643180" }
                   : null
               }
@@ -87,9 +87,9 @@ export default function BrokerSelect({ formik, disabled }) {
           )}
         />
         <HelperText mt={0.8}>
-          {formik.touched.broker && formik.errors.broker}
+          {formik?.touched.broker && formik?.errors.broker}
         </HelperText>
-      </Box>
-    </Box>
+  
+    </>
   );
 }

@@ -37,9 +37,10 @@ export default function CitizenshipSelect2({ formik, disabled }) {
   }, [data, loading, error]);
 
   return (
-    <Box ml="3rem" width="17vw">
-      <Box>
-        <InputTitles marginBottom={2}>Nacionalidad</InputTitles>
+
+    <>
+
+
         <Autocomplete
           id="citizenship"
           disablePortal
@@ -92,11 +93,13 @@ export default function CitizenshipSelect2({ formik, disabled }) {
             />
           )}
         />
-      </Box>
+  
       <HelperText mt={0.8}>
         {formik.touched.legal_representative?.citizenship &&
           formik.errors.legal_representative?.citizenship}
       </HelperText>
-    </Box>
+
+    </>
+    
   );
 }

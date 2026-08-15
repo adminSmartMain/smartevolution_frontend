@@ -5,6 +5,7 @@ import * as Yup from 'yup';
 import { addDays, differenceInDays, format, subDays } from "date-fns";
 import { RegisterMassiveOperationComponent } from "./components"
 import { useFormik } from "formik";
+import { Box, CircularProgress, Typography } from "@mui/material";
 import {
   CreateOperation,
   DeleteOperation,
@@ -309,24 +310,65 @@ const initialValues = {
       }
     },
   });
-    return (
 
-        <>
-        
+  const isInitialLoading =
+  loading ||
+  loadingGetLastId ||
+  loadingTypeIdSelect ||
+  !opId ||
+  !data ||
+  !dataTypeIdSelect ||
+  client.length === 0 ||
+  payer.length === 0;
+return (
+  <>
+    {isInitialLoading ? (
+      <Box
+        sx={{
+          width: "100%",
+          height: "100vh",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 2,
+          color: "#488B8F",
+        }}
+      >
+        <CircularProgress sx={{ color: "#488B8F" }} />
 
-        {opId && < RegisterMassiveOperationComponent 
-              formik= {formik} 
-              initialValues={initialValues} 
-              validationSchema={validationSchema}
-              handleConfirm={handleConfirm}
-              opId={opId}
-              emitters={client}
-              investors={client}
-              payers={payer}
-              typeOperation={dataTypeIdSelect}/>}
+        <Typography
+          sx={{
+            fontSize: 16,
+            fontWeight: 600,
+            color: "#488B8F",
+          }}
+        >
+          Cargando registro masivo...
+        </Typography>
 
-
-        
-        </>
-    )
+        <Typography
+          sx={{
+            fontSize: 13,
+            color: "#777",
+          }}
+        >
+          Preparando clientes, pagadores y datos de operación
+        </Typography>
+      </Box>
+    ) : (
+      <RegisterMassiveOperationComponent
+        formik={formik}
+        initialValues={initialValues}
+        validationSchema={validationSchema}
+        handleConfirm={handleConfirm}
+        opId={opId}
+        emitters={client}
+        investors={client}
+        payers={payer}
+        typeOperation={dataTypeIdSelect}
+      />
+    )}
+  </>
+);
 }

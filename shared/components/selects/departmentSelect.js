@@ -37,9 +37,9 @@ export default function DepartmentSelect({ formik, disabled }) {
   }, [data, loading, error]);
 
   return (
-    <Box width="17vw">
+
       <Box>
-        <InputTitles marginBottom={2}>Departamento</InputTitles>
+      
         <Autocomplete
           id="department"
           disablePortal
@@ -56,7 +56,7 @@ export default function DepartmentSelect({ formik, disabled }) {
           }}
           value={
             department.filter(
-              (option) => option.value === formik.values.department
+              (option) => option.value === formik?.values.department
             )[0] || null
           }
           color="#5EA3A3"
@@ -79,6 +79,6 @@ export default function DepartmentSelect({ formik, disabled }) {
           )}
         />
       </Box>
-    </Box>
+
   );
 }

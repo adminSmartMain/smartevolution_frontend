@@ -288,3 +288,88 @@ export const downloadMassiveOperationReceiptPdf = async (opId) => {
 
   return res.data;
 };
+
+export const createMassiveOperationDraft = async (payload) => {
+  const res = await Axios.post(
+    `${API_URL}/preOperation/massive-drafts`,
+    payload,
+    {
+      headers: {
+        authorization: "Bearer " + localStorage.getItem("access-token"),
+      },
+    }
+  );
+
+  return res.data;
+};
+
+export const updateMassiveOperationDraft = async ({ draftId, payload }) => {
+  const res = await Axios.patch(
+    `${API_URL}/preOperation/massive-drafts/${draftId}`,
+    payload,
+    {
+      headers: {
+        authorization: "Bearer " + localStorage.getItem("access-token"),
+      },
+    }
+  );
+
+  return res.data;
+};
+
+export const getMassiveOperationDraft = async (draftId) => {
+  const res = await Axios.get(
+    `${API_URL}/preOperation/massive-drafts/${draftId}`,
+    {
+      headers: {
+        authorization: "Bearer " + localStorage.getItem("access-token"),
+      },
+    }
+  );
+
+  return res.data;
+};
+
+export const validateMassiveOperationDraft = async (draftId) => {
+  const res = await Axios.post(
+    `${API_URL}/preOperation/massive-drafts/${draftId}/validate`,
+    {},
+    {
+      headers: {
+        authorization: "Bearer " + localStorage.getItem("access-token"),
+      },
+    }
+  );
+
+  return res.data;
+};
+
+export const markMassiveOperationDraftRegistered = async ({
+  draftId,
+  registeredOpId,
+}) => {
+  const res = await Axios.post(
+    `${API_URL}/preOperation/massive-drafts/${draftId}/mark-registered`,
+    { registeredOpId },
+    {
+      headers: {
+        authorization: "Bearer " + localStorage.getItem("access-token"),
+      },
+    }
+  );
+
+  return res.data;
+};
+
+export const getMassiveOperationDrafts = async () => {
+  const res = await Axios.get(
+    `${API_URL}/preOperation/massive-drafts?status=DRAFT`,
+    {
+      headers: {
+        authorization: "Bearer " + localStorage.getItem("access-token"),
+      },
+    }
+  );
+
+  return res.data;
+};

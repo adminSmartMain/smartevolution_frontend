@@ -38,9 +38,7 @@ export default function DepartmentSelect2({ formik, disabled }) {
   }, [data, loading, error]);
 
   return (
-    <Box width="17vw">
-      <Box>
-        <InputTitles marginBottom={2}>Departamento</InputTitles>
+
         <Autocomplete
           id="legal_representative.department"
           disablePortal
@@ -94,11 +92,6 @@ export default function DepartmentSelect2({ formik, disabled }) {
             />
           )}
         />
-      </Box>
-      <HelperText mt={0.8}>
-        {formik.touched.legal_representative?.department &&
-          formik.errors.legal_representative?.department}
-      </HelperText>
-    </Box>
+  
   );
 }

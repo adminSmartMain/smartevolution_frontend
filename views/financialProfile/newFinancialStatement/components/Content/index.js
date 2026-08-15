@@ -54,9 +54,7 @@ export const FinancialStat = ({ formik, data, fetch, id, setID }) => {
           height: "100vh",
         }}
       >
-        <Grid item xs={1}>
-          <Header />
-        </Grid>
+       
         <Grid
           item
           xs

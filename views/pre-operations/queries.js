@@ -79,3 +79,28 @@ export const DeleteOperation = async (item) => {
 };
 
 
+export const getMassiveOperationDrafts = async () => {
+  const res = await Axios.get(
+    `${API_URL}/preOperation/massive-drafts`,
+    {
+      headers: {
+        authorization: "Bearer " + localStorage.getItem("access-token"),
+      },
+    }
+  );
+
+  return res.data;
+};
+
+export const deleteMassiveOperationDraft = async (draftId) => {
+  const res = await Axios.delete(
+    `${API_URL}/preOperation/massive-drafts/${draftId}`,
+    {
+      headers: {
+        authorization: "Bearer " + localStorage.getItem("access-token"),
+      },
+    }
+  );
+
+  return res.data;
+};

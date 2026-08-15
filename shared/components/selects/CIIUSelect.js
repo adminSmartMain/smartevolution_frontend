@@ -48,10 +48,8 @@ export default function CIIUSelect({ formik, disabled }) {
   }, [data, loading, error]);
 
   return (
-    <Box width="calc(34vw + 3rem)">
-      <Box>
-        <InputTitles marginBottom={2}>CIIU</InputTitles>
-        <Autocomplete
+   <>
+    <Autocomplete
           id="ciiu"
           disablePortal
           disabled={disabled}
@@ -97,7 +95,9 @@ export default function CIIUSelect({ formik, disabled }) {
         <HelperText mt={0.8}>
           {formik.touched.ciiu && formik.errors.ciiu}
         </HelperText>
-      </Box>
-    </Box>
+    
+   </>
+        
+       
   );
 }

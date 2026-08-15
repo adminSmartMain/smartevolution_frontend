@@ -15,14 +15,12 @@ import GreenButtonModal from "@styles/buttons/yesButtonModal";
 
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 
-import {
-  Home as HomeIcon,
-
-} from "@mui/icons-material";
+import HomeIcon from "@mui/icons-material/Home";
 import { DeleteOperation, MassiveUpdateOperation, UpdateOperation,TypeOperation, } from "./queries";
 import { id } from "date-fns/locale";
 import moment from "moment";
-import { ExpandMore, ExpandLess } from '@mui/icons-material';
+import ExpandMore from '@mui/icons-material/ExpandMore';
+import ExpandLess from '@mui/icons-material/ExpandLess';
 import * as React from 'react';
 import PropTypes from 'prop-types';
 import ClearIcon from "@mui/icons-material/Clear";

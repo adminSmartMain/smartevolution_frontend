@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useContext } from "react";
+import { useEffect, useMemo, useState, useContext, useRef } from "react";
 import {
   Box,
   Typography,
@@ -10,17 +10,18 @@ import {
   IconButton,
   Breadcrumbs,
 } from "@mui/material";
+
 import DownloadIcon from "@mui/icons-material/Download";
 import { toast } from "react-toastify";
 import Image from "next/image";
 import Link from "next/link";
-import { ToastContainer } from "react-toastify";
+
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import { Home as HomeIcon } from "@mui/icons-material";
 import EditIcon from "@mui/icons-material/Edit";
 import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
-
+import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
 import Stepper from "@mui/material/Stepper";
 import Step from "@mui/material/Step";
 import StepLabel from "@mui/material/StepLabel";
@@ -29,6 +30,7 @@ import { styled } from "@mui/material/styles";
 
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { ToastContainer } from "react-toastify";
 import esLocale from "date-fns/locale/es";
 
 import { Formik, Form } from "formik";
@@ -42,7 +44,7 @@ import PayerSelector from "@components/selects/registerMassiveOperations/PayerSe
 import { BillsDualTable } from "./components/BillsDualTable";
 import { InvestorsAssignmentTable } from "./components/InvestorsAssigmentTable";
 import { UploadExcelStep } from "./components/uploadExcel";
-
+import { useRouter } from "next/router";
 import {
   getTypeBill,
   Bills,
@@ -55,7 +57,16 @@ import {
   registerOperationFromUpload,
   downloadMassiveOperationReceiptPdf,
 } from "./queries";
+
+import {
+  createMassiveOperationDraft,
+  updateMassiveOperationDraft,
+  getMassiveOperationDraft,
+  validateMassiveOperationDraft,
+  markMassiveOperationDraftRegistered,
+} from "./queries";
 import { useFetch } from "@hooks/useFetch";
+import { useMassiveOperationDraft } from "@hooks/useMassiveOperationDraft";
 
 const SmartConnector = styled(StepConnector)(() => ({
   "& .MuiStepConnector-line": {
@@ -111,10 +122,10 @@ export const RegisterMassiveOperationComponent = ({
 }) => {
   const [activeStep, setActiveStep] = useState(0);
   const { user } = useContext(authContext);
-
+  
   const JURIDICA_ID = "21cf32d9-522c-43ac-b41c-4dfdf832a7b8";
   const isJuridica = formik?.values?.type_client === JURIDICA_ID;
-
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const emisores = emitters || [];
   const [clientEmitter, setClientEmitter] = useState(null);
   const [clientPagador, setClientPagador] = useState(null);
@@ -132,8 +143,13 @@ export const RegisterMassiveOperationComponent = ({
   const [isCreatingBill, setIsCreatingBill] = useState(false);
   const [emitterSaved, setEmitterSaved] = useState(false);
   const [canGenerateInvestorsExcel, setCanGenerateInvestorsExcel] = useState(false);
-const [generateInvestorsExcelFn, setGenerateInvestorsExcelFn] = useState(null);
-const [registerSummary, setRegisterSummary] = useState(null);
+  const [generateInvestorsExcelFn, setGenerateInvestorsExcelFn] = useState(null);
+  const [registerSummary, setRegisterSummary] = useState(null);
+  const [isRestoringDraft, setIsRestoringDraft] = useState(false);
+  const [draftToRestore, setDraftToRestore] = useState(null);
+const hydratedDraftRef = useRef(null);
+  const router = useRouter();
+  const routeDraftId = router?.query?.draftId;
   const [uploadExcelState, setUploadExcelState] = useState({
     file: null,
     status: "idle",
@@ -156,6 +172,43 @@ const [registerSummary, setRegisterSummary] = useState(null);
     init: false,
   });
 
+
+  const { fetch: createDraftFetch } = useFetch({
+  service: createMassiveOperationDraft,
+  init: false,
+});
+
+const { fetch: updateDraftFetch } = useFetch({
+  service: updateMassiveOperationDraft,
+  init: false,
+});
+
+const { fetch: getDraftFetch } = useFetch({
+  service: getMassiveOperationDraft,
+  init: false,
+});
+
+const { fetch: validateDraftFetch } = useFetch({
+  service: validateMassiveOperationDraft,
+  init: false,
+});
+
+const { fetch: markDraftRegisteredFetch } = useFetch({
+  service: markMassiveOperationDraftRegistered,
+  init: false,
+});
+
+
+const {
+  draftId,
+  setDraftId,
+  draftStatus,
+  lastSavedAt,
+  saveDraft,
+} = useMassiveOperationDraft({
+  createDraftFetch,
+  updateDraftFetch,
+});
   const isLoadingBills = billsLoading ?? billsIsLoading ?? false;
 const { fetch: downloadMassiveOperationReceiptPdfFetch } = useFetch({
   service: downloadMassiveOperationReceiptPdf,
@@ -244,6 +297,26 @@ const { fetch: downloadMassiveOperationReceiptPdfFetch } = useFetch({
     return base;
   }, [isJuridica]);
 
+
+  const clampStep = (step) => {
+  const parsed = Number(step);
+
+  if (Number.isNaN(parsed)) return 0;
+
+  return Math.max(0, Math.min(parsed, steps.length - 1));
+};
+
+const getDraftCurrentStep = (draft) => {
+  return clampStep(
+    draft?.currentStep ??
+      draft?.current_step ??
+      draft?.metadata?.currentStep ??
+      draft?.metadata?.current_step ??
+      0
+  );
+};
+
+
   useEffect(() => {
     const lastIndex = steps.length - 1;
     if (activeStep > lastIndex) setActiveStep(lastIndex);
@@ -296,7 +369,355 @@ const { fetch: downloadMassiveOperationReceiptPdfFetch } = useFetch({
 
 
 
+useEffect(() => {
+  if (!routeDraftId) return;
 
+  const loadDraft = async () => {
+    try {
+      setIsRestoringDraft(true);
+
+      const validateResponse = await validateDraftFetch(routeDraftId);
+      const validateData = validateResponse?.data ?? validateResponse;
+
+      if (validateData?.valid === false) {
+        console.warn("Conflictos del borrador:", validateData?.conflicts);
+
+        toast.warning(
+          validateData?.message ||
+            "El borrador tiene conflictos, puedes revisarlo y corregirlo."
+        );
+      }
+
+      let currentDraft = validateData?.data || null;
+
+      if (!currentDraft) {
+        const response = await getDraftFetch(routeDraftId);
+        const raw = response?.data ?? response;
+        currentDraft = raw?.data ?? raw;
+      }
+
+      if (!currentDraft) {
+        toast.error("No se encontró información del borrador.");
+        return;
+      }
+
+      setDraftToRestore(currentDraft);
+
+      setDraftId(routeDraftId);
+      setActiveStep(getDraftCurrentStep(currentDraft));
+
+      setInvestorsExcelGenerated(
+        Boolean(currentDraft?.metadata?.investorsExcelGenerated)
+      );
+
+      setCanGenerateInvestorsExcel(
+        Boolean(currentDraft?.metadata?.canGenerateInvestorsExcel)
+      );
+
+      setUploadExcelState((prev) => ({
+        ...prev,
+        ...(currentDraft?.metadata?.uploadExcelState || {}),
+      }));
+    } catch (error) {
+      console.error("Error cargando borrador:", error);
+      toast.error("No fue posible cargar el borrador.");
+    } finally {
+      setIsRestoringDraft(false);
+    }
+  };
+
+  loadDraft();
+}, [routeDraftId]);
+
+const getClientData = (option) => option?.data || option || {};
+
+const getClientId = (option) =>
+  option?.id || option?.value || option?.data?.id || "";
+
+const getClientLabel = (option) => {
+  const data = getClientData(option);
+
+  return (
+    option?.label ||
+    data?.social_reason ||
+    data?.full_name ||
+    `${data?.first_name || ""} ${data?.last_name || ""}`.trim() ||
+    ""
+  );
+};
+
+const normalizeDraftAssignments = async (assignments = []) => {
+  if (!Array.isArray(assignments)) return [];
+
+  const normalized = await Promise.all(
+    assignments.map(async (row) => {
+      const investorId =
+        row?.investorId ||
+        row?.investor_id ||
+        row?.selectedInvestor?.value ||
+        row?.selectedInvestor?.id ||
+        row?.selectedInvestor?.data?.id ||
+        "";
+
+      const selectedInvestor =
+        row?.selectedInvestor ||
+        investors?.find((inv) => String(getClientId(inv)) === String(investorId)) ||
+        null;
+
+      const investorLabel =
+        row?.investorLabel ||
+        row?.investorName ||
+        row?.selectedInvestor?.label ||
+        getClientLabel(selectedInvestor) ||
+        "";
+
+      let availableAccounts = Array.isArray(row?.availableAccounts)
+        ? row.availableAccounts
+        : [];
+
+      if (investorId && availableAccounts.length === 0) {
+        try {
+          const accountsResponse = await fetchAccountsFromClient(investorId);
+          availableAccounts =
+            accountsResponse?.data?.data ||
+            accountsResponse?.data ||
+            accountsResponse ||
+            [];
+        } catch (error) {
+          console.error("Error restaurando cuentas del inversionista:", error);
+          availableAccounts = [];
+        }
+      }
+
+      const accountId =
+        row?.accountId ||
+        row?.account_id ||
+        row?.selectedAccount?.id ||
+        "";
+
+      const selectedAccount =
+        row?.selectedAccount ||
+        availableAccounts.find((acc) => String(acc?.id) === String(accountId)) ||
+        null;
+
+      let investorBrokerId = row?.investorBrokerId || "";
+      let investorBrokerName = row?.investorBrokerName || "";
+
+      if (investorId && (!investorBrokerId || !investorBrokerName)) {
+        try {
+          const brokerResponse = await cargarBrokerFromInvestor(investorId);
+          const brokerData =
+            brokerResponse?.data?.data ||
+            brokerResponse?.data ||
+            brokerResponse ||
+            null;
+
+          investorBrokerId =
+            investorBrokerId ||
+            brokerData?.id ||
+            brokerData?.value ||
+            "";
+
+          investorBrokerName =
+            investorBrokerName ||
+            brokerData?.label ||
+            brokerData?.social_reason ||
+            `${brokerData?.first_name || ""} ${brokerData?.last_name || ""}`.trim() ||
+            "";
+        } catch (error) {
+          console.error("Error restaurando broker del inversionista:", error);
+        }
+      }
+
+      return {
+        ...row,
+        investorId,
+        investorLabel,
+        selectedInvestor,
+        availableAccounts,
+        accountId,
+        selectedAccount,
+        investorBrokerId,
+        investorBrokerName,
+        accountAvailableBalance:
+          row?.accountAvailableBalance ??
+          selectedAccount?.availableBalance ??
+          selectedAccount?.available_balance ??
+          selectedAccount?.balance ??
+          0,
+        accountTotalBalance:
+          row?.accountTotalBalance ??
+          selectedAccount?.totalBalance ??
+          selectedAccount?.total_balance ??
+          selectedAccount?.balance ??
+          0,
+      };
+    })
+  );
+
+  return normalized;
+};
+
+const getClientDocument = (option) => {
+  const data = getClientData(option);
+
+  return String(
+    data?.document_number ||
+      data?.nit ||
+      data?.identification ||
+      data?.document ||
+      ""
+  ).trim();
+};
+
+const findClientOptionById = (list = [], id) => {
+  if (!id) return null;
+
+  return (
+    list.find((item) => String(getClientId(item)) === String(id)) || null
+  );
+};
+
+const buildFilteredPayersFromBills = (facturasEmisor = [], payersList = []) => {
+  const payerDocuments = [
+    ...new Set(
+      (facturasEmisor || [])
+        .map((bill) => String(bill?.payerId || "").trim())
+        .filter(Boolean)
+    ),
+  ];
+
+  return (payersList || []).filter((payer) => {
+    const payerDocument = getClientDocument(payer);
+    return payerDocument && payerDocuments.includes(payerDocument);
+  });
+};
+
+const getBrokerName = (broker) => {
+  const data = broker?.data || broker || {};
+
+  const fullName = `${data?.first_name || ""} ${data?.last_name || ""}`.trim();
+
+  return (
+    broker?.label ||
+    data?.social_reason ||
+    fullName ||
+    data?.name ||
+    ""
+  );
+};
+
+const getBrokerId = (broker) => {
+  const data = broker?.data || broker || {};
+
+  return broker?.id || broker?.value || data?.id || "";
+};
+
+const hydrateDraft = async (draft, setFieldValue) => {
+  if (!draft) return;
+
+  const selectedBills = draft.selectedBills || [];
+const investorAssignments = await normalizeDraftAssignments(
+  draft.investorAssignments || []
+);
+
+  const emitterObj = findClientOptionById(emisores, draft.emitterId);
+  const payerObj = findClientOptionById(payers, draft.payerId);
+
+  if (emitterObj) {
+    setFieldValue("emitter", emitterObj);
+    setFieldValue("emitterLabel", getClientLabel(emitterObj));
+    setClientEmitter(emitterObj);
+  }
+
+  if (payerObj) {
+    const payerData = getClientData(payerObj);
+
+    setFieldValue("nombrePagador", payerData.id || draft.payerId);
+    setFieldValue("payerId", payerData.id || draft.payerId);
+    setFieldValue("nombrepayer", getClientLabel(payerObj));
+    setClientPagador(payerData);
+  }
+
+  setFieldValue("emitterId", draft.emitterId || "");
+  setFieldValue("payerId", draft.payerId || "");
+  setFieldValue("emitterBrokerId", draft.emitterBrokerId || "");
+  setFieldValue("emitterBroker", draft.emitterBrokerId || "");
+if (draft.emitterId) {
+  try {
+    const brokerResponse = await fetchBrokerByClient(draft.emitterId);
+
+    const brokerRaw =
+      brokerResponse?.data?.data ??
+      brokerResponse?.data ??
+      brokerResponse ??
+      null;
+
+    const broker = Array.isArray(brokerRaw) ? brokerRaw[0] : brokerRaw;
+
+    const brokerId = draft.emitterBrokerId || getBrokerId(broker);
+    const brokerName =
+      draft?.metadata?.emitterBrokerName || getBrokerName(broker);
+
+    if (brokerId) {
+      setClientBrokerEmitter(broker);
+      setFieldValue("emitterBroker", brokerId);
+      setFieldValue("emitterBrokerId", brokerId);
+    }
+
+    if (brokerName) {
+      setFieldValue("emitterBrokerName", brokerName);
+    }
+  } catch (error) {
+    console.error("Error cargando corredor del emisor:", error);
+  }
+}
+  setFieldValue("billsToNegotiate", selectedBills);
+  setFieldValue("investorAssignments", investorAssignments);
+
+  if (!draft.emitterId) return;
+
+  const billsResponse = await cargarFacturas(draft.emitterId);
+  const bills = billsResponse?.data || [];
+
+  const filteredPayers = buildFilteredPayersFromBills(bills, payers);
+  setFieldValue("filteredPayers", filteredPayers);
+
+  const payerDocument =
+    getClientDocument(payerObj) ||
+    String(selectedBills?.[0]?.payerId || "").trim();
+
+  const payerBills = bills.filter((bill) => {
+    const samePayer = payerDocument
+      ? String(bill?.payerId || "").trim() === payerDocument
+      : true;
+
+    const hasBalance = Number(bill?.currentBalance || 0) > 0;
+
+    return samePayer && hasBalance;
+  });
+
+  setFieldValue("takedBills", payerBills);
+};
+
+
+
+const resetUploadExcelState = () => {
+  setUploadExcelState({
+    file: null,
+    status: "idle",
+    rows: [],
+    normalizedRows: [],
+    canRegister: false,
+    operationId: null,
+    processedMessage: "",
+    errorCount: 0,
+    modalError: "",
+    registerSummary: null,
+  });
+
+  setRegisterSummary(null);
+};
   return (
    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={esLocale}>
   <ToastContainer position="top-right" autoClose={5000} />
@@ -333,31 +754,260 @@ const { fetch: downloadMassiveOperationReceiptPdfFetch } = useFetch({
           </Typography>
         </Box>
 
-        <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 0.5 }}>
-          <Typography sx={{ fontSize: 12, color: "#444" }}>
-            Creado por: {user?.name ?? "Desconocido"}
-          </Typography>
-        </Box>
+        <Box
+  sx={{
+    display: "flex",
+    justifyContent: "flex-end",
+    mb: 0.25,
+    pr: 0.75,
+  }}
+>
+  <Typography sx={{ fontSize: 12, color: "#444" }}>
+    Creado por: {user?.name ?? "Desconocido"}
+  </Typography>
+</Box>
+<Formik
+  initialValues={{
+    ...initialValues,
 
-        <Formik
-          initialValues={{
-            ...initialValues,
-            billsToNegotiate: initialValues?.billsToNegotiate || [],
-            investorAssignments: initialValues?.investorAssignments || [],
-          }}
-          validationSchema={validationSchema}
-          onSubmit={handleConfirm}
-          enableReinitialize
-        >
+    opId: draftToRestore?.opId ?? initialValues?.opId ?? "",
+    opDate: draftToRestore?.opDate
+      ? new Date(draftToRestore.opDate)
+      : initialValues?.opDate ?? null,
+
+    opType: draftToRestore?.opTypeId ?? initialValues?.opType ?? "",
+
+    emitterId: draftToRestore?.emitterId ?? initialValues?.emitterId ?? "",
+    payerId: draftToRestore?.payerId ?? initialValues?.payerId ?? "",
+
+    emitterBrokerId:
+      draftToRestore?.emitterBrokerId ?? initialValues?.emitterBrokerId ?? "",
+
+    emitterBrokerName:
+      draftToRestore?.metadata?.emitterBrokerName ??
+      initialValues?.emitterBrokerName ??
+      "",
+
+    emitterLabel:
+      draftToRestore?.metadata?.emitterName ??
+      initialValues?.emitterLabel ??
+      "",
+
+    nombrepayer:
+      draftToRestore?.metadata?.payerName ??
+      initialValues?.nombrepayer ??
+      "",
+
+    nombrePagador:
+      draftToRestore?.payerId ??
+      initialValues?.nombrePagador ??
+      "",
+
+    facturas: initialValues?.facturas ?? [],
+    takedBills: initialValues?.takedBills ?? [],
+
+    billsToNegotiate:
+      draftToRestore?.selectedBills ??
+      initialValues?.billsToNegotiate ??
+      [],
+
+    investorAssignments:
+      draftToRestore?.investorAssignments ??
+      initialValues?.investorAssignments ??
+      [],
+  }}
+  enableReinitialize
+  validationSchema={validationSchema}
+  onSubmit={handleConfirm}
+>
           {({ values, setFieldValue, touched, errors, setFieldTouched, submitForm }) => {
+console.log(values)
+useEffect(() => {
+  if (!draftToRestore) return;
+  if (isRestoringDraft) return;
+  if (!emisores?.length) return;
+  if (!payers?.length) return;
 
-            
-    const safeDateToIso = (value) => {
+  if (hydratedDraftRef.current === draftToRestore.id) return;
+
+  hydratedDraftRef.current = draftToRestore.id;
+  hydrateDraft(draftToRestore, setFieldValue);
+}, [draftToRestore?.id, isRestoringDraft, emisores?.length, payers?.length]);
+            const safeDateToIso = (value) => {
   if (!value) return null;
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? null : date.toISOString().slice(0, 10);
 };
-            
+          
+
+
+
+const buildDraftPayload = () => ({
+  opId: values.opId || null,
+  opDate: safeDateToIso(values.opDate),
+  opTypeId: values.opType || null,
+
+  emitterId:
+    values?.emitter?.value ||
+    values?.emitter?.data?.id ||
+    values?.emitterId ||
+    null,
+
+  payerId:
+    clientPagador?.id ||
+    values?.payerId ||
+    values?.nombrePagador ||
+    null,
+
+  emitterBrokerId:
+    values?.emitterBroker ||
+    values?.emitterBrokerId ||
+    clientBrokerEmitter?.id ||
+    null,
+
+  currentStep: clampStep(activeStep),
+
+  status:
+    activeStep >= 3
+      ? "READY_TO_REGISTER"
+      : activeStep >= 1
+      ? "READY_FOR_EXCEL"
+      : "DRAFT",
+
+  selectedBills: values?.billsToNegotiate || [],
+ investorAssignments: (values?.investorAssignments || []).map((row) => ({
+  ...row,
+
+  investorId:
+    row?.investorId ||
+    row?.selectedInvestor?.value ||
+    row?.selectedInvestor?.id ||
+    row?.selectedInvestor?.data?.id ||
+    "",
+
+  investorLabel:
+    row?.investorLabel ||
+    row?.selectedInvestor?.label ||
+    getClientLabel(row?.selectedInvestor) ||
+    "",
+
+  accountId:
+    row?.accountId ||
+    row?.selectedAccount?.id ||
+    "",
+
+  selectedAccount: row?.selectedAccount || null,
+
+  selectedInvestor: row?.selectedInvestor || null,
+
+  availableAccounts: Array.isArray(row?.availableAccounts)
+    ? row.availableAccounts
+    : [],
+
+  investorBrokerId: row?.investorBrokerId || "",
+  investorBrokerName: row?.investorBrokerName || "",
+
+  accountAvailableBalance: row?.accountAvailableBalance ?? 0,
+  accountTotalBalance: row?.accountTotalBalance ?? 0,
+})),
+
+  metadata: {
+    emitterName:
+      values?.emitterLabel ||
+      values?.emitter?.label ||
+      values?.emitter?.data?.social_reason ||
+      "",
+
+    payerName:
+      values?.nombrepayer ||
+      values?.payer?.label ||
+      "",
+
+    emitterBrokerName:
+      values?.emitterBrokerName ||
+      getBrokerName(clientBrokerEmitter),
+
+    currentStep: clampStep(activeStep),
+
+    uploadExcelState,
+
+    selectedBillsCount: values?.billsToNegotiate?.length || 0,
+    assignmentsCount: values?.investorAssignments?.length || 0,
+
+    investorsExcelGenerated,
+    canGenerateInvestorsExcel,
+  },
+});
+
+const persistDraftStep = async (nextStep, extraMetadata = {}) => {
+  const safeStep = clampStep(nextStep);
+
+  const hasMinimumDraftData =
+    values?.opId &&
+    values?.opDate &&
+    Array.isArray(values?.billsToNegotiate) &&
+    values.billsToNegotiate.length > 0;
+
+  if (!hasMinimumDraftData) return;
+
+  const payload = buildDraftPayload();
+
+  await saveDraft({
+    ...payload,
+    currentStep: safeStep,
+    metadata: {
+      ...(payload?.metadata || {}),
+      ...extraMetadata,
+      currentStep: safeStep,
+      investorsExcelGenerated,
+      canGenerateInvestorsExcel,
+      uploadExcelState,
+    },
+  });
+};
+
+const handleBackStep = async () => {
+  const previousStep = clampStep(activeStep - 1);
+
+  setActiveStep(previousStep);
+  await persistDraftStep(previousStep);
+};
+
+const handleNextStep = async () => {
+  if (activeStep === 0) {
+    if (selectedBillsCount < 5) return;
+
+    setInvestorsExcelGenerated(false);
+    setCanGenerateInvestorsExcel(false);
+    setGenerateInvestorsExcelFn(null);
+
+    const nextStep = 1;
+    setActiveStep(nextStep);
+    await persistDraftStep(nextStep, {
+      investorsExcelGenerated: false,
+      canGenerateInvestorsExcel: false,
+    });
+
+    return;
+  }
+
+  if (activeStep === 1) {
+    if (!investorsExcelGenerated) return;
+
+    const nextStep = 2;
+    setActiveStep(nextStep);
+    await persistDraftStep(nextStep, {
+      investorsExcelGenerated: true,
+      canGenerateInvestorsExcel,
+    });
+
+    return;
+  }
+
+  const nextStep = clampStep(activeStep + 1);
+  setActiveStep(nextStep);
+  await persistDraftStep(nextStep);
+};
     const uploadContext = {
    opDate: safeDateToIso(values?.opDate),
   emitterId:
@@ -371,21 +1021,30 @@ const { fetch: downloadMassiveOperationReceiptPdfFetch } = useFetch({
     values?.emitterBrokerId ||
     clientBrokerEmitter?.id ||
     "",
+    emitterBrokerName:
+  values?.emitterBrokerName ||
+  getBrokerName(clientBrokerEmitter) ||
+  "",
   payerId:
     clientPagador?.id ||
     values?.payerId ||
     values?.nombrePagador ||
     "",
   rows: (values?.investorAssignments || []).map((row) => ({
-    billId: row?.billUniqueId || row?.billId || "",
-    billFraction: Number(row?.fraction ?? 0),
-    investorId: row?.investorId || "",
-    investorAccount:
-      row?.selectedAccount?.account_number ||
-      row?.selectedAccount?.accountNumber ||
-      row?.selectedAccount?.number ||
-      "",
-  })),
+  billId: row?.billUniqueId || row?.billId || "",
+  billFraction: Number(row?.fraction ?? 0),
+  investorId: row?.investorId || "",
+  investorAccount:
+    row?.selectedAccount?.account_number ||
+    row?.selectedAccount?.accountNumber ||
+    row?.selectedAccount?.number ||
+    "",
+  emitterBrokerName:
+    values?.emitterBrokerName ||
+    getBrokerName(clientBrokerEmitter) ||
+    row?.emitterBrokerName ||
+    "",
+})),
 };
 
 
@@ -419,6 +1078,11 @@ const { fetch: downloadMassiveOperationReceiptPdfFetch } = useFetch({
                 ? excelLoadedAndValid
                 : true;
 
+
+
+
+
+
             return (
               <>
 <Grid
@@ -431,59 +1095,85 @@ const { fetch: downloadMassiveOperationReceiptPdfFetch } = useFetch({
     overflow: "visible",
   }}
 >
-    <Grid
-      item
-      sx={{
-        width: 300,
-        flexShrink: 0,
-        display: "flex",
-        minHeight: 0,
-      }}
-    >
-                    <Box
+<Grid
+  item
+  sx={{
+    width: sidebarCollapsed ? 120 : 300,
+    flexShrink: 0,
+    display: "flex",
+    minHeight: 0,
+    transition: "width 0.25s ease",
+  }}
+>        <Box
   sx={{
     bgcolor: "#F8F8F8",
     borderRadius: 2,
     boxShadow: 1,
-    p: 2.5,
+    p: sidebarCollapsed ? 1.5 : 2.5,
     width: "100%",
     height: "100%",
-    minHeight: 0,
+    position: "relative",
     display: "flex",
     flexDirection: "column",
     overflow: "hidden",
     boxSizing: "border-box",
   }}
 >
-                      <Box sx={{ mb: 3 }}>
-                        <Image
-                          src={smartLogo}
-                          alt="logo"
-                          style={{
-                            maxWidth: 180,
-                            width: "100%",
-                            height: "auto",
-                            objectFit: "contain",
-                          }}
-                        />
-                      </Box>
+  <IconButton
+    size="small"
+    onClick={() => setSidebarCollapsed((prev) => !prev)}
+    sx={{
+      position: "absolute",
+      top: 8,
+      right: 8,
+      color: "#6D6D6D",
+      zIndex: 2,
+    }}
+  >
+    {sidebarCollapsed ? "›" : "‹"}
+  </IconButton>
+                      <Box
+  sx={{
+    mb: sidebarCollapsed ? 7 : 3,
+    display: "flex",
+    justifyContent: sidebarCollapsed ? "center" : "flex-start",
+    mt: sidebarCollapsed ? 3 : 0,
+  }}
+>
+  <Image
+    src={smartLogo}
+    alt="logo"
+    style={{
+      maxWidth: sidebarCollapsed ? 72 : 180,
+      width: "100%",
+      height: "auto",
+      objectFit: "contain",
+    }}
+  />
+</Box>
 
                       <Stepper
-                        activeStep={activeStep}
-                        orientation="vertical"
-                        connector={<SmartConnector />}
-                        sx={{
-                          "& .MuiStep-root": {
-  minHeight: 92,
-},
-                          "& .MuiStepLabel-root": {
-                            alignItems: "flex-start",
-                          },
-                          "& .MuiStepLabel-labelContainer": {
-                            mt: "1px",
-                          },
-                        }}
-                      >
+  activeStep={activeStep}
+  orientation="vertical"
+  connector={<SmartConnector />}
+  sx={{
+    alignItems: sidebarCollapsed ? "center" : "stretch",
+    "& .MuiStep-root": {
+      minHeight: 92,
+    },
+    "& .MuiStepLabel-root": {
+      alignItems: "flex-start",
+      justifyContent: sidebarCollapsed ? "center" : "flex-start",
+    },
+    "& .MuiStepLabel-labelContainer": {
+      display: sidebarCollapsed ? "none" : "block",
+      mt: "1px",
+    },
+    "& .MuiStepConnector-root": {
+      ml: sidebarCollapsed ? 0 : undefined,
+    },
+  }}
+>
                         {steps.map((s, index) => {
                           const status = getStepStatus(index, activeStep);
                           const isCurrent = index === activeStep;
@@ -492,53 +1182,41 @@ const { fetch: downloadMassiveOperationReceiptPdfFetch } = useFetch({
                           return (
                             <Step key={`${s.title}-${index}`}>
                               <StepLabel StepIconComponent={SmartStepIcon}>
-                                <Box
-                                  sx={{
-                                    display: "flex",
-                                    flexDirection: "column",
-                                    lineHeight: 1.15,
-                                  }}
-                                >
-                                  <Typography
-                                    sx={{
-                                      fontSize: 12,
-                                      color: "#7D7D7D",
-                                      mb: 0.3,
-                                    }}
-                                  >
-                                    Paso {index + 1}
-                                  </Typography>
+  {!sidebarCollapsed && (
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        lineHeight: 1.15,
+      }}
+    >
+      <Typography sx={{ fontSize: 12, color: "#7D7D7D", mb: 0.3 }}>
+        Paso {index + 1}
+      </Typography>
 
-                                  <Typography
-                                    sx={{
-                                      fontSize: 13,
-                                      fontWeight: 700,
-                                      color: isCurrent
-                                        ? "#111"
-                                        : isDone
-                                        ? "#666"
-                                        : "#8D8D8D",
-                                      mb: 0.3,
-                                    }}
-                                  >
-                                    {s.title}
-                                  </Typography>
+      <Typography
+        sx={{
+          fontSize: 13,
+          fontWeight: 700,
+          color: isCurrent ? "#111" : isDone ? "#666" : "#8D8D8D",
+          mb: 0.3,
+        }}
+      >
+        {s.title}
+      </Typography>
 
-                                  <Typography
-                                    sx={{
-                                      fontSize: 11,
-                                      fontWeight: 600,
-                                      color: isCurrent
-                                        ? "#1A73C9"
-                                        : isDone
-                                        ? "#4E8D5D"
-                                        : "#B4B4B4",
-                                    }}
-                                  >
-                                    {status}
-                                  </Typography>
-                                </Box>
-                              </StepLabel>
+      <Typography
+        sx={{
+          fontSize: 11,
+          fontWeight: 600,
+          color: isCurrent ? "#1A73C9" : isDone ? "#4E8D5D" : "#B4B4B4",
+        }}
+      >
+        {status}
+      </Typography>
+    </Box>
+  )}
+</StepLabel>
                             </Step>
                           );
                         })}
@@ -745,7 +1423,7 @@ const { fetch: downloadMassiveOperationReceiptPdfFetch } = useFetch({
     )}
   </Grid>
 
-  <Grid item xs={12} md={3.5} sx={{ minWidth: 280 }}>
+  <Grid item xs={12} md={3.1} sx={{ minWidth: 260 }}>
     {isHeaderLocked ? (
       <HeaderReadOnlyField
         label="Nombre Pagador"
@@ -782,6 +1460,104 @@ const { fetch: downloadMassiveOperationReceiptPdfFetch } = useFetch({
       </Box>
     )}
   </Grid>
+  
+
+<Grid
+  item
+  sx={{
+    width: 210,
+    minWidth: 210,
+    flexShrink: 0,
+    display: "flex",
+    alignItems: "flex-start",
+    justifyContent: "flex-end",
+    pt: "0px",
+  }}
+>
+ <Box
+  sx={{
+    height: 56,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    gap: 1.25,
+    width: "100%",
+    mt: "-8px",
+  }}
+>
+    <Tooltip title="Guardar borrador">
+      <span>
+        <IconButton
+          size="small"
+          disabled={draftStatus === "saving"}
+          onClick={async () => {
+  const hasMinimumDraftData =
+    values?.opId &&
+    values?.opDate &&
+    values?.billsToNegotiate?.length > 0;
+
+  if (!hasMinimumDraftData) {
+    toast.warning("Selecciona facturas antes de guardar el borrador.");
+    return;
+  }
+
+  await persistDraftStep(activeStep);
+}}
+          sx={{
+            width: 44,
+            height: 44,
+            borderRadius: "10px",
+            border: "1px solid #DDECEC",
+            backgroundColor: "#F8FFFF",
+            color: "#4C989B",
+            flexShrink: 0,
+            "&:hover": {
+              backgroundColor: "#EEF9F9",
+              borderColor: "#4C989B",
+            },
+            "&.Mui-disabled": {
+              color: "#AEBBBB",
+              backgroundColor: "#F8F8F8",
+            },
+          }}
+        >
+          <SaveOutlinedIcon fontSize="small" />
+        </IconButton>
+      </span>
+    </Tooltip>
+
+    <Typography
+      sx={{
+        fontSize: 15,
+        fontWeight: 700,
+        color:
+          draftStatus === "error"
+            ? "#D32F2F"
+            : draftStatus === "saved"
+            ? "#3E9B59"
+            : draftStatus === "saving"
+            ? "#4C989B"
+            : "#FF6B6B",
+        whiteSpace: "nowrap",
+        lineHeight: 1,
+      }}
+    >
+      {draftStatus === "saving"
+        ? "Guardando..."
+        : draftStatus === "saved"
+        ? "Guardado"
+        : draftStatus === "error"
+        ? "Error"
+        : "No guardado"}
+    </Typography>
+  </Box>
+</Grid>
+
+
+
+
+
+  
 </Grid>
       </Box>
 
@@ -803,11 +1579,21 @@ const { fetch: downloadMassiveOperationReceiptPdfFetch } = useFetch({
                         takedBills={values?.takedBills || []}
                         billsToNegotiate={values?.billsToNegotiate || []}
                         loading={isLoadingBills}
+                        investorAssignments={values.investorAssignments}
                         nombrePagador={values?.nombrePagador}
                         emitterKey={
                           values?.emitter?.value || values?.emitterId || ""
                         }
                         setFieldValue={setFieldValue}
+          onInvalidateNextSteps={() => {
+  // No borres investorAssignments aquí.
+  // InvestorsAssignmentTable se encargará de conservar las asignaciones existentes
+  // y agregar filas nuevas si seleccionas más facturas/fracciones.
+  setInvestorsExcelGenerated(false);
+  setCanGenerateInvestorsExcel(false);
+  setGenerateInvestorsExcelFn(null);
+  resetUploadExcelState();
+}}
                       />
                     )}
 
@@ -819,6 +1605,9 @@ const { fetch: downloadMassiveOperationReceiptPdfFetch } = useFetch({
   billsToNegotiate={values?.billsToNegotiate || []}
   investorAssignments={values?.investorAssignments || []}
   investors={investors || []}
+   onInvalidateUploadExcel={() => {
+    resetUploadExcelState();
+  }}
   cargarTasaDescuento={cargarTasaDescuento}
   getBillFractionBulkFetch={getBillFractionBulkFetch}
   cargarCuentas={fetchAccountsFromClient}
@@ -869,17 +1658,25 @@ const { fetch: downloadMassiveOperationReceiptPdfFetch } = useFetch({
 
   const summary = data?.summary ?? data?.data ?? data ?? {};
 
-  setRegisterSummary({
-    operationId:
-      opIdInfo?.final ??
-      summary?.operationId ??
-      values?.opId ??
-      null,
+const finalOperationId =
+  opIdInfo?.final ??
+  summary?.operationId ??
+  data?.operationId ??
+  values?.opId ??
+  null;
+
+if (draftId && finalOperationId) {
+  await markDraftRegisteredFetch({
+    draftId,
+    registeredOpId: finalOperationId,
+  });
+}
+await persistDraftStep(3, {
+  registeredOperationId: finalOperationId,
+  registerSummary: {
+    operationId: finalOperationId,
     totalOperacion:
-      summary?.totalOperacion ??
-      summary?.total_amount ??
-      summary?.total ??
-      0,
+      summary?.totalOperacion ?? summary?.total_amount ?? summary?.total ?? 0,
     facturasRegistradas:
       summary?.facturasRegistradas ??
       summary?.registered_rows ??
@@ -890,15 +1687,51 @@ const { fetch: downloadMassiveOperationReceiptPdfFetch } = useFetch({
       summary?.weightedAverageRate ??
       summary?.weighted_average_rate ??
       0,
-    raw: summary,
-  });
+  },
+});
+
+setRegisterSummary({
+  operationId: finalOperationId,
+  totalOperacion:
+    summary?.totalOperacion ?? summary?.total_amount ?? summary?.total ?? 0,
+  facturasRegistradas:
+    summary?.facturasRegistradas ??
+    summary?.registered_rows ??
+    normalizedRows?.length ??
+    0,
+  tasaPromedioPonderada:
+    summary?.tasaPromedioPonderada ??
+    summary?.weightedAverageRate ??
+    summary?.weighted_average_rate ??
+    0,
+  raw: summary,
+});
 
   return response;
 }}
-                        onNext={() => setActiveStep(3)}
+                        onNext={async () => {
+  const nextStep = 3;
+  setActiveStep(nextStep);
+
+  await persistDraftStep(nextStep, {
+    uploadExcelState,
+    investorsExcelGenerated: true,
+    canGenerateInvestorsExcel,
+  });
+}}
                         createdByLabel="Usuario Smart Evolution"
                         state={uploadExcelState}
-                        setState={setUploadExcelState}
+                        setState={(nextState) => {
+  setUploadExcelState((prev) => {
+    const resolved =
+      typeof nextState === "function" ? nextState(prev) : nextState;
+
+    return {
+      ...prev,
+      ...resolved,
+    };
+  });
+}}
                       uploadContext={uploadContext}
 />
                     )}</Box>
@@ -929,9 +1762,11 @@ const { fetch: downloadMassiveOperationReceiptPdfFetch } = useFetch({
 >
 
    {activeStep > 0 && (
-                        <Button
+
+    
+      <Button
   variant="text"
-  onClick={() => setActiveStep((prev) => prev - 1)}
+  onClick={handleBackStep}
   sx={{
     minWidth: "auto",
     padding: 0,
@@ -1003,22 +1838,7 @@ const { fetch: downloadMassiveOperationReceiptPdfFetch } = useFetch({
         color: "#fff",
       },
     }}
-    onClick={() => {
-      if (activeStep === 0) {
-        if (selectedBillsCount < 5) return;
-        setInvestorsExcelGenerated(false);
-        setCanGenerateInvestorsExcel(false);
-        setGenerateInvestorsExcelFn(null);
-        setActiveStep(1);
-        return;
-      }
-
-      if (activeStep === 1) {
-        if (!investorsExcelGenerated) return;
-        setActiveStep(2);
-        return;
-      }
-    }}
+    onClick={handleNextStep}
   >
     Siguiente
   </Button>

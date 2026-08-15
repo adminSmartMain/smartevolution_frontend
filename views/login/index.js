@@ -12,6 +12,8 @@ import { login } from "./queries";
 
 import { useFormik } from "formik";
 import { object, string } from "yup";
+import jwt_decode from "jwt-decode";
+import { landingRouteForPermissions } from "@lib/routePermissions";
 
 export const InputV = () => {
   // Hooks
@@ -34,7 +36,8 @@ export const InputV = () => {
       localStorage.setItem("access-token", data.access);
       localStorage.setItem("refresh-token", data.refresh);
       Toast("Bienvenido", "success");
-      router.push("/dashboard");
+      const token = jwt_decode(data.access);
+      router.push(token.account_scope === "CLIENT_PORTAL" ? "/403" : landingRouteForPermissions(token.permissions,token.is_superuser));
     }
   }, [data, Error]);
 

@@ -38,9 +38,8 @@ export default function TypeIDSelect2({ formik, disabled }) {
 
   return (
     <>
-      <Box position="relative">
-        <Box width="17vw">
-          <InputTitles marginBottom={2}>Tipo de identificación</InputTitles>
+   
+          <InputTitles marginBottom={1}>Tipo de identificación</InputTitles>
           <Autocomplete
             disablePortal
             disabled={disabled}
@@ -95,12 +94,12 @@ export default function TypeIDSelect2({ formik, disabled }) {
               />
             )}
           />
-        </Box>
-        <HelperText mt={0.8}>
+       
+        <HelperText >
           {formik.touched.legal_representative?.type_identity &&
             formik.errors.legal_representative?.type_identity}
         </HelperText>
-      </Box>
+     
     </>
   );
 }

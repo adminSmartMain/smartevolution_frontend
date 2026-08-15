@@ -72,8 +72,19 @@ export const DashboardContent = () => {
     try {
       setLoading(true);
       const response = await fetch(
-        `${API_URL}/dashboard?periodo=${selectedPeriod}`
+        `${API_URL}/dashboard?periodo=${selectedPeriod}`,
+        { headers: { Authorization: `Bearer ${localStorage.getItem("access-token")}` } }
       );
+      if (response.status === 401) {
+        localStorage.removeItem("access-token");
+        localStorage.removeItem("refresh-token");
+        window.location.assign("/auth/login");
+        return;
+      }
+      if (response.status === 403) {
+        window.location.assign("/403");
+        return;
+      }
       const result = await response.json();
       if (result.success) setDashboardData(result.data);
       else setError("Error al cargar los datos del dashboard");
@@ -357,7 +368,7 @@ const TrendIndicator = ({ metricKey }) => {
       {/* Primera fila de gráficos */}
       <Grid container spacing={{ xs: 2, sm: 3, md: 4 }} sx={{ mb: 10 }}>
         {/* Gráfico de volumen */}
-        <Grid item xs={12} lg={12}>
+        <Grid item xs={12} lg={8}>
           <Card sx={{ p: 4, height: "100%" }}>
             {loading ? (
               <ChartSkeleton />
@@ -407,7 +418,7 @@ const TrendIndicator = ({ metricKey }) => {
           </Card>
         </Grid>
 
-        {/* Gráfico de torta - Distribución por sector 
+        {/* Gráfico de torta - Distribución por sector */}
         <Grid item xs={12} lg={4}>
           <Card sx={{ p: 4, height: "100%" }}>
             {loading ? (
@@ -449,10 +460,9 @@ const TrendIndicator = ({ metricKey }) => {
             )}
           </Card>
         </Grid>
-        */}
       </Grid>
 
-      {/* Tabla de últimas operaciones 
+      {/* Tabla de últimas operaciones */}
       <Grid container spacing={3}>
         <Grid item xs={12}>
           <Card sx={{ p: 4 }}>
@@ -525,9 +535,7 @@ const TrendIndicator = ({ metricKey }) => {
             )}
           </Card>
         </Grid>
-        
       </Grid>
-      */}
     </Box>
   );
 };

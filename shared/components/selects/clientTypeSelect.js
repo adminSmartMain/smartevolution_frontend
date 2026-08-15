@@ -40,9 +40,9 @@ export default function ClientTypeSelect({ formik, disabled }) {
   }, [data, loading, error]);
 
   return (
-    <Box mb={5} width="calc(34vw + 3rem)">
+   
       <Box>
-        <InputTitles marginBottom={2}>Tipo de cliente</InputTitles>
+
         <Autocomplete
           id="type_client"
           disablePortal
@@ -58,7 +58,7 @@ export default function ClientTypeSelect({ formik, disabled }) {
           }}
           value={
             type_client.filter(
-              (option) => option.value === formik.values.type_client
+              (option) => option.value === formik?.values.type_client
             )[0] || null
           }
           color="#5EA3A3"
@@ -71,10 +71,10 @@ export default function ClientTypeSelect({ formik, disabled }) {
               name="type_client"
               placeholder="Tipo de cliente"
               error={
-                formik.touched.type_client && Boolean(formik.errors.type_client)
+                formik?.touched.type_client && Boolean(formik?.errors.type_client)
               }
               sx={
-                formik.touched.type_client && Boolean(formik.errors.type_client)
+                formik?.touched.type_client && Boolean(formik?.errors.type_client)
                   ? { border: "1.4px solid #E6643180" }
                   : null
               }
@@ -89,9 +89,9 @@ export default function ClientTypeSelect({ formik, disabled }) {
           )}
         />
         <HelperText mt={0.8}>
-          {formik.touched.type_client && formik.errors.type_client}
+          {formik?.touched.type_client && formik?.errors.type_client}
         </HelperText>
       </Box>
-    </Box>
+
   );
 }

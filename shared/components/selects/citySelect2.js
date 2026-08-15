@@ -49,9 +49,11 @@ export default function CitySelect2({ formik, disabled }) {
   }, [formik.values.legal_representative?.department]);
 
   return (
-    <Box ml="3rem" width="17vw">
-      <Box>
-        <InputTitles marginBottom={2}>Ciudad</InputTitles>
+  
+   
+   <>
+     
+     
         <Autocomplete
           id="legal_representative.city"
           disablePortal
@@ -102,11 +104,11 @@ export default function CitySelect2({ formik, disabled }) {
             />
           )}
         />
-      </Box>
-      <HelperText mt={0.8}>
+  
+      <HelperText >
         {formik.touched.legal_representative?.city &&
           formik.errors.legal_representative?.city}
       </HelperText>
-    </Box>
+   </>
   );
 }

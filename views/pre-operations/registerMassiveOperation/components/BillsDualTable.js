@@ -254,7 +254,9 @@ export const BillsDualTable = ({
   loading = false,
   nombrePagador,
   emitterKey,
+    investorAssignments = [],
   setFieldValue,
+  onInvalidateNextSteps,
 }) => {
   const theme = useTheme();
   const isLgUp = useMediaQuery(theme.breakpoints.up("lg"));
@@ -379,39 +381,56 @@ export const BillsDualTable = ({
     setFieldValue("billsToNegotiate", selectedBills);
   };
 
-  const updateFractionsToSplit = (rowId, value) => {
-    const parsed = parseInt(value, 10);
-    const safeValue = Number.isNaN(parsed) ? 1 : Math.max(1, parsed);
+const updateFractionsToSplit = (rowId, value) => {
+  const parsed = parseInt(value, 10);
+  const safeValue = Number.isNaN(parsed) ? 1 : Math.max(1, parsed);
 
-    const updated = (Array.isArray(billsToNegotiate) ? billsToNegotiate : []).map(
-      (bill) => {
-        const currentId = getBillId(bill);
+  const updated = (Array.isArray(billsToNegotiate) ? billsToNegotiate : []).map(
+    (bill) => {
+      const currentId = getBillId(bill);
 
-        if (currentId !== rowId) return bill;
+      if (String(currentId) !== String(rowId)) return bill;
 
-        return {
-          ...bill,
-          fractionsToSplit: safeValue,
-        };
-      }
+      return {
+        ...bill,
+        fractionsToSplit: safeValue,
+      };
+    }
+  );
+
+  setFieldValue("billsToNegotiate", updated);
+  onInvalidateNextSteps?.();
+};
+const removeFromRight = (rowId) => {
+  const updated = selectedRows
+    .filter((r) => String(r.id) !== String(rowId))
+    .map((r) => ({
+      ...r.raw,
+      fractionsToSplit: Number(r.fractionsToSplit ?? 1),
+    }));
+
+  const removedBill = selectedRows.find((r) => String(r.id) === String(rowId));
+  const removedBillKey = removedBill ? getBillId(removedBill.raw) : null;
+
+  const updatedAssignments = (Array.isArray(investorAssignments)
+    ? investorAssignments
+    : []
+  ).filter((row) => {
+    const rowBillKey = String(
+      row?.billUniqueId ||
+        row?.billId ||
+        row?.bill_id ||
+        row?.number ||
+        ""
     );
 
-    setFieldValue("billsToNegotiate", updated);
-    setFieldValue?.("investorAssignments", []);
-  };
+    return String(rowBillKey) !== String(removedBillKey);
+  });
 
-  const removeFromRight = (rowId) => {
-    const updated = selectedRows
-      .filter((r) => r.id !== rowId)
-      .map((r) => ({
-        ...r.raw,
-        fractionsToSplit: Number(r.fractionsToSplit ?? 1),
-      }));
-
-    setFieldValue("billsToNegotiate", updated);
-    setFieldValue?.("investorAssignments", []);
-  };
-
+  setFieldValue("billsToNegotiate", updated);
+  setFieldValue("investorAssignments", updatedAssignments);
+  onInvalidateNextSteps?.();
+};
   const handleOpenClearLotDialog = () => {
     if (!selectedRows.length) return;
     setOpenClearLotDialog(true);

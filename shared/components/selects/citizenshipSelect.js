@@ -37,10 +37,10 @@ export default function CitizenshipSelect({ formik, disabled }) {
   }, [data, loading, error]);
 
   return (
-    <Box ml="3rem" width="17vw">
+ 
       <Box>
         <InputTitles marginBottom={2}>
-          {formik.values.type_client === "21cf32d9-522c-43ac-b41c-4dfdf832a7b8"
+          {formik?.values.type_client === "21cf32d9-522c-43ac-b41c-4dfdf832a7b8"
             ? "Lugar de constitución"
             : "Nacionalidad"}
         </InputTitles>
@@ -60,7 +60,7 @@ export default function CitizenshipSelect({ formik, disabled }) {
           color="#5EA3A3"
           value={
             citizenship.filter(
-              (option) => option.value === formik.values.citizenship
+              (option) => option.value === formik?.values.citizenship
             )[0] || null
           }
           popupIcon={<KeyboardArrowDownIcon sx={{ color: "#5EA3A3" }} />}
@@ -71,17 +71,17 @@ export default function CitizenshipSelect({ formik, disabled }) {
               {...params}
               name="citizenship"
               placeholder={
-                formik.values.type_client ===
+                formik?.values.type_client ===
                 "21cf32d9-522c-43ac-b41c-4dfdf832a7b8"
                   ? "Lugar de constitución"
                   : "Nacionalidad"
               }
-              value={formik.values.citizenship}
+              value={formik?.values.citizenship}
               error={
-                formik.touched.citizenship && Boolean(formik.errors.citizenship)
+                formik?.touched.citizenship && Boolean(formik?.errors.citizenship)
               }
               sx={
-                formik.touched.citizenship && Boolean(formik.errors.citizenship)
+                formik?.touched.citizenship && Boolean(formik?.errors.citizenship)
                   ? { border: "1.4px solid #E6643180" }
                   : null
               }
@@ -96,9 +96,9 @@ export default function CitizenshipSelect({ formik, disabled }) {
           )}
         />
         <HelperText mt={0.8}>
-          {formik.touched.citizenship && formik.errors.citizenship}
+          {formik?.touched.citizenship && formik?.errors.citizenship}
         </HelperText>
       </Box>
-    </Box>
+   
   );
 }
