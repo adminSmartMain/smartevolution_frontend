@@ -557,6 +557,7 @@ export const BrokerListComponent = () => {
         height="100%"
       >
         <CustomDataGrid
+          className="main-list-data-grid"
           rows={broker}
           columns={columns}
           pageSize={15}

@@ -259,6 +259,12 @@ Toast( `${dataReadBills?.failedBills?.length} facturas no pudieron ser procesada
   }
 }, [dataReadBills?.failedBills?.length])
 
+useEffect(() => {
+  if (dataReadBills?.pendingBillyBills?.length > 0) {
+    Toast(`${dataReadBills.pendingBillyBills.length} facturas fueron extraídas y quedaron pendientes en Billy`, "warning");
+  }
+}, [dataReadBills?.pendingBillyBills?.length])
+
 // Efecto para mostrar modal cuando hay facturas duplicadas en Billy
 useEffect(() => {
   if (!loadingReadBills && dataReadBills) {
@@ -461,6 +467,16 @@ const handleCellEditCommit = (params) => {
   }
 };
 
+// Algunas respuestas de extracción entregan el tipo como { typeBill: UUID }
+// en vez del UUID directo. La tabla y el endpoint de guardado requieren el
+// valor primitivo, nunca el objeto completo.
+const normalizeTypeBill = (value) => {
+  if (value && typeof value === "object") {
+    return value.typeBill || value.id || value.value || "fdb5feb4-24e9-41fc-9689-31aff60b76c9";
+  }
+  return value || "fdb5feb4-24e9-41fc-9689-31aff60b76c9";
+};
+
   useEffect(() => {
     if (dataReadBills) {
       let Bills = [];
@@ -468,7 +484,7 @@ const handleCellEditCommit = (params) => {
         Bills.push({
           id: billToMap.billId,
           billId: billToMap.billId,
-          typeBill: billToMap.typeBill,
+          typeBill: normalizeTypeBill(billToMap.typeBill),
           emitterName: billToMap.emitterName,
           emitterId: billToMap.emitterId,
           currentOwner: billToMap.currentOwner,
@@ -481,6 +497,11 @@ const handleCellEditCommit = (params) => {
           iva: billToMap.iva,
           cufe: billToMap.cufe,
           file: billToMap.file,
+          billySyncStatus: billToMap.billySyncStatus,
+          billyErrorCode: billToMap.billyErrorCode,
+          billyErrorDetail: billToMap.billyErrorDetail,
+          billySyncAttempts: billToMap.billySyncAttempts,
+          billyTokenScope: billToMap.billyTokenScope,
 
           events:
             billToMap.events && billToMap.events.length > 0
@@ -664,14 +685,14 @@ const handleCellEditCommit = (params) => {
             border="1.4px solid #B5D1C9"
             borderRadius="4px"
           >
-            {params.value}
+            {normalizeTypeBill(params.value)}
           </Typography>
         );
       },
      valueGetter: (params) => {
 
       console.log(params.value)
-    switch (params.value) {
+    switch (normalizeTypeBill(params.value)) {
       
         case "a7c70741-8c1a-4485-8ed4-5297e54a978a":
             return "FV-TV";
@@ -1294,17 +1315,6 @@ return (
     rowGap: { xs: 1, md: 0.5 },
   }}
 >
-      <Link href="/dashboard" passHref>
-        <HomeIcon
-          fontSize="large"
-          sx={{
-            color: "#488b8f",
-            opacity: 0.8,
-            strokeWidth: 1,
-          }}
-        />
-      </Link>
-
       <Breadcrumbs
         separator={<NavigateNextIcon fontSize="small" />}
         aria-label="breadcrumb"
@@ -1334,11 +1344,34 @@ return (
         sx={{
           display: "flex",
           flexDirection: { xs: "column", sm: "row" },
+          flexWrap: "wrap",
+          minWidth: 0,
           gap: 1,
           ml: { md: "auto" },
           width: { xs: "100%", md: "auto" },
         }}
       >
+        <Button
+          component={Link}
+          href="/bills/billy-pending"
+          sx={{
+            border: "2px solid #488B8F",
+            borderRadius: "4px",
+            height: { xs: "3rem", md: "2.4rem" },
+            fontSize: { xs: "0.85rem", md: "0.75rem" },
+            px: 1.5,
+            width: { xs: "100%", sm: "auto" },
+            maxWidth: "100%",
+            whiteSpace: "nowrap",
+            textTransform: "none",
+            transition: "all 0.25s ease-in-out",
+            backgroundColor: "white",
+            color: "#488B8F",
+            "&:hover": { backgroundColor: "#488B8F", color: "#ffffff" },
+          }}
+        >
+          Pendientes en Billy
+        </Button>
               <Button
           disabled={loadingBillsProcess}
           startIcon={<UploadFileOutlinedIcon sx={{ color: "#488B8F" }} />}
@@ -1917,6 +1950,7 @@ return (
       </Box>
     ) : (
       <CustomDataGrid
+        className="main-list-data-grid"
         onCellEditCommit={handleCellEditCommit}
         rows={bill}
         columns={columns}

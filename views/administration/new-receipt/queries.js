@@ -65,3 +65,22 @@ export const Users = async (data) => {
   });
   return res.data;
 };
+
+
+export const VoidReceipt = async (id, data) => {
+  const res = await Axios.post(`${API_URL}/receipt/${id}/void/`, data, {
+    headers: {
+      authorization: "Bearer " + localStorage.getItem("access-token"),
+    },
+  });
+  return res.data;
+};
+
+export const AdjustReceipt = async (id, data) => {
+  const res = await Axios.post(`${API_URL}/receipt/${id}/adjust/`, data, {
+    headers: {
+      authorization: "Bearer " + localStorage.getItem("access-token"),
+    },
+  });
+  return res.data;
+};

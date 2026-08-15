@@ -67,6 +67,23 @@ console.log(cleanParams)
   });
   return res.data;
 };
+export const GetReceiptOperationHistory = async ({ id, ...params }) => {
+  const cleanParams = {};
+  Object.keys(params || {}).forEach(key => {
+    if (params[key] !== undefined && params[key] !== null && params[key] !== "") {
+      cleanParams[key] = params[key];
+    }
+  });
+
+  const res = await Axios.get(`${API_URL}/receipt/${id}/operation-history/`, {
+    headers: {
+      authorization: "Bearer " + localStorage.getItem("access-token"),
+    },
+    params: cleanParams,
+  });
+  return res.data;
+};
+
 
 export const Clients = async (data) => {
   const res = await Axios.get(`${API_URL}/client/all`, {
@@ -80,6 +97,25 @@ export const Clients = async (data) => {
 
 export const Users = async (data) => {
   const res = await Axios.get(`${API_URL}/user`, {
+    headers: {
+      authorization: "Bearer " + localStorage.getItem("access-token"),
+    },
+  });
+  return res.data;
+};
+
+
+export const VoidReceipt = async (id, data) => {
+  const res = await Axios.post(`${API_URL}/receipt/${id}/void/`, data, {
+    headers: {
+      authorization: "Bearer " + localStorage.getItem("access-token"),
+    },
+  });
+  return res.data;
+};
+
+export const AdjustReceipt = async (id, data) => {
+  const res = await Axios.post(`${API_URL}/receipt/${id}/adjust/`, data, {
     headers: {
       authorization: "Bearer " + localStorage.getItem("access-token"),
     },

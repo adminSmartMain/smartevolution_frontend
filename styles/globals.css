@@ -22,6 +22,18 @@ body {
   background-color: #ffffff;
 }
 
+/* Mantiene todos los elementos de las migas de pan sobre el mismo eje visual. */
+.MuiBreadcrumbs-ol,
+.MuiBreadcrumbs-li,
+.MuiBreadcrumbs-separator {
+  align-items: center;
+}
+
+.MuiBreadcrumbs-li,
+.MuiBreadcrumbs-separator {
+  display: inline-flex;
+}
+
 
 
 /* Estilos para los contenedores principales */

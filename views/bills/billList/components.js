@@ -657,10 +657,8 @@ const handleOpenDetailBill = (id, tab = 0) => {
   sortable: false,
   renderCell: (params) => {
     const { DateBill, expirationDate } = params.row;
-
-    const isExpired =
-      expirationDate &&
-      moment(expirationDate).isBefore(moment(), "day");
+    const hasValidExpirationDate =
+      Boolean(expirationDate) && moment(expirationDate).isValid();
 
     return (
       <Box
@@ -687,15 +685,14 @@ const handleOpenDetailBill = (id, tab = 0) => {
         <Typography
           sx={{
             fontSize: "0.65rem",
-            color: isExpired ? "#d32f2f" : "#9e9e9e",
-            fontWeight: isExpired ? 600 : 400,
+            color: !hasValidExpirationDate ? "#d32f2f !important" : "#9e9e9e",
+            fontWeight: !hasValidExpirationDate ? 600 : 400,
             whiteSpace: "nowrap",
           }}
         >
-          Vence:{" "}
-          {expirationDate
-            ? moment(expirationDate).format("DD/MM/YYYY")
-            : ""}
+          {hasValidExpirationDate
+            ? `Vence: ${moment(expirationDate).format("DD/MM/YYYY")}`
+            : "De contado"}
         </Typography>
       </Box>
     );
@@ -1380,7 +1377,7 @@ const handleOpenDetailBill = (id, tab = 0) => {
       />
     </Box>
 
-    {/* ================= FILTROS + PILLS ================= */}
+   
 {/* ================= FILTROS + PILLS ================= */}
 <Box
   sx={{
@@ -1685,6 +1682,7 @@ const handleOpenDetailBill = (id, tab = 0) => {
   <TableSkeleton rows={8} columns={columns.length} />
 ) : (
   <CustomDataGrid
+    className="main-list-data-grid"
     rows={bill}
     columns={columns}
     pageSize={15}

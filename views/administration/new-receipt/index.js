@@ -142,7 +142,7 @@ export default function Receipt() {
       formik.setFieldValue("date", data?.data?.opDate);
       formik.setFieldValue("account", data?.data?.clientAccount.id);
       formik.setFieldValue("payedAmount", 0);
-      formik.setFieldValue("opPendingAmount", 0);
+      formik.setFieldValue("opPendingAmount", data?.receipts?.pendingAmount ?? data?.data?.opPendingAmount ?? 0);
       formik.setFieldValue("interest", data?.receipts?.interest);
       formik.setFieldValue("lastDate", data?.receipts?.lastDate);
       formik.setFieldValue("previousPayedAmount", data?.receipts?.payedAmount);
@@ -211,31 +211,26 @@ export default function Receipt() {
 
 
 useEffect(() => {
-  if (!data?.data) return; // Validación inicial
+  if (!data?.data) return;
 
-  let pendingAmount = data.data.payedAmount - (formik.values.payedAmount - formik.values.additionalInterests);
-  
+  // opPendingAmount ya representa el saldo vigente de la operación.
+  // No se vuelven a descontar recaudos históricos porque eso duplicaba su efecto
+  // y podía incluir registros anulados en la referencia visual.
+  const currentPending = Number(
+    data.receipts?.pendingAmount ??
+    data.data.opPendingAmount ??
+    data.data.payedAmount ??
+    0
+  );
+  const appliedAmount = Number(formik.values.payedAmount || 0);
+  const additionalInterests = Number(formik.values.additionalInterests || 0);
+  const netApplied = appliedAmount - additionalInterests;
 
-  // Primero verificar si el monto pagado supera el pendiente
-  if (formik.values.payedAmount - formik.values.additionalInterests > data.data.opPendingAmount) {
-
-    setPendingAmount(0);
-  } 
-  // Luego aplicar el ajuste por receipts si existe
-  else if (data?.receipts?.lastDate) {
-    pendingAmount = pendingAmount - (data.receipts.payedAmount - data.receipts.interest);
-    setPendingAmount(Math.round(pendingAmount));
-  } 
-  // Si no hay receipts y no se supera el pendiente, usar el cálculo inicial
-  else {
-    setPendingAmount(Math.round(pendingAmount));
-  }
-
+  setPendingAmount(Math.max(Math.round(currentPending - netApplied), 0));
 }, [
   formik.values.payedAmount,
   formik.values.additionalInterests,
   data,
-  canceled,
 ]);
 
   useEffect(() => {

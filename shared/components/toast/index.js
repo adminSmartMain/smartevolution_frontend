@@ -1,8 +1,19 @@
 import { toast } from "react-toastify";
+import { isValidElement } from "react";
 
 import Image from "next/image";
 
 export const Toast = (message, type) => {
+  // Los errores de validación de la API suelen venir como objetos. React solo
+  // puede renderizar texto o elementos, por eso los convertimos aquí.
+  const safeMessage = isValidElement(message)
+    ? message
+    : typeof message === "object" && message !== null
+    ? Object.entries(message)
+        .map(([field, errors]) => `${field}: ${Array.isArray(errors) ? errors.join(", ") : String(errors)}`)
+        .join(" | ")
+    : (message || "Ocurrió un error inesperado");
+
   if (type == "success") {
   return toast.success(
     <div style={{ 
@@ -17,7 +28,7 @@ export const Toast = (message, type) => {
         height={"30px"}
       />
       <strong style={{ fontSize: "13px", marginLeft: "10px", color: "#FFFFFF" }}>
-        {message}
+        {safeMessage}
       </strong>
       
       {/* Barra de progreso personalizada */}
@@ -57,7 +68,7 @@ export const Toast = (message, type) => {
         height={"30px"}
       />
          <strong style={{ fontSize: "13px", marginLeft: "10px", color: "#FFFFFF" }}>
-          {message}
+          {safeMessage}
         </strong>
          {/* Barra de progreso personalizada */}
       <style>{`
@@ -97,7 +108,7 @@ export const Toast = (message, type) => {
         height={"30px"}
       />
         <strong style={{ fontSize: "13px", marginLeft: "10px", color: "#FFFFFF" }}>
-          {message}
+          {safeMessage}
         </strong>
          {/* Barra de progreso personalizada */}
       <style>{`
@@ -137,7 +148,7 @@ export const Toast = (message, type) => {
         height={"30px"}
       />
         <strong style={{ fontSize: "13px", marginLeft: "10px", color: "#FFFFFF" }}>
-          {message}
+          {safeMessage}
         </strong>
          {/* Barra de progreso personalizada */}
       <style>{`

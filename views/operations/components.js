@@ -1026,6 +1026,7 @@ const btnCompactSx = {
 ) : (
       <Box sx={{ ...tableWrapperSx }}>
         <CustomDataGrid
+          className="main-list-data-grid"
           rows={rows}
           columns={columns}
           pageSize={15}
