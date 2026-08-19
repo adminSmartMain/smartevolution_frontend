@@ -126,8 +126,9 @@ const tableWrapperSx = {
   marginTop: 2,
   display: "flex",
   flexDirection: "column",
+  flex: 1,
+  minHeight: 0,
   width: "100%",
-  height: "100%",
 };
 
 
@@ -1026,7 +1027,7 @@ const btnCompactSx = {
 ) : (
       <Box sx={{ ...tableWrapperSx }}>
         <CustomDataGrid
-          className="main-list-data-grid"
+          className="main-list-data-grid operations-list-data-grid"
           rows={rows}
           columns={columns}
           pageSize={15}

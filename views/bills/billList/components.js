@@ -1237,8 +1237,10 @@ const handleOpenDetailBill = (id, tab = 0) => {
     marginTop: 2,
     display: "flex",
     flexDirection: "column",
+    flex: "1 1 auto",
     width: "100%",
-    height: "100%",
+    minHeight: "420px",
+    height: "auto",
   };
 
 
@@ -1682,7 +1684,7 @@ const handleOpenDetailBill = (id, tab = 0) => {
   <TableSkeleton rows={8} columns={columns.length} />
 ) : (
   <CustomDataGrid
-    className="main-list-data-grid"
+    className="main-list-data-grid bills-list-data-grid"
     rows={bill}
     columns={columns}
     pageSize={15}

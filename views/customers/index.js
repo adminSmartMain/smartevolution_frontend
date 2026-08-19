@@ -15,7 +15,6 @@ import {
   GetClientByID,
   ModifyClientQuery,
   RegisterClientQuery,
-  GetClienteRoles,
 } from "./queries";
 
 import { useFormik } from "formik";
@@ -58,14 +57,6 @@ export default function RegisterClient() {
     data: data3,
   } = useFetch({ service: ModifyClientQuery, init: false });
   
-
-    const {
-    fetch: fetch4,
-    loading: loading4,
-    error: error4,
-    data: data4,
-  } = useFetch({ service: GetClienteRoles, init: true});
-  
   useEffect(() => {
     if (loading3) Toast("Cargando...", "loading");
     if (error3) Toast("Error al actualizar el cliente", "error");
@@ -77,51 +68,39 @@ export default function RegisterClient() {
     }
   }, [loading3, data3, error3]);
 
-
-
-  
-useEffect(() => {
-  if (option !== "register" && option !== "" && option !== undefined) {
-    fetch2(Object.values(router.query)[0]).then((data) => {
-      const roleIds = (data?.data?.rolesData || [])
-        .map((x) => x?.role?.id)
-        .filter(Boolean);
-
-      formik.setValues({
-        id: data?.data?.id,
-        type_identity: data?.data?.type_identity,
-        document_number: data?.data?.document_number,
-        department: data?.data?.department,
-        first_name: data?.data?.first_name,
-        last_name: data?.data?.last_name,
-        email: data?.data?.email,
-        address: data?.data?.address,
-        phone_number: data?.data?.phone_number,
-        city: data?.data?.city,
-        type_client: data?.data?.type_client,
-        profile_image: data?.data?.profile_image,
-        broker: data?.data?.broker,
-        ciiu: data?.data?.ciiu,
-        citizenship: data?.data?.citizenship,
-        contacts: data?.data?.contacts,
-        legal_representative: data?.data?.legal_representative,
-        social_reason: data?.data?.social_reason,
-        birth_date: data?.data?.birth_date,
-        updatedAt: data?.data?.updated_at?.split("T")[0],
-
-        // ✅ AQUÍ
-        rol_client: roleIds,
+  useEffect(() => {
+    if (option !== "register" && option !== "" && option !== undefined) {
+      fetch2(Object.values(router.query)[0]).then((data) => {
+        formik.setValues({
+          id: data?.data?.id,
+          type_identity: data?.data?.type_identity,
+          document_number: data?.data?.document_number,
+          department: data?.data?.department,
+          first_name: data?.data?.first_name,
+          last_name: data?.data?.last_name,
+          email: data?.data?.email,
+          address: data?.data?.address,
+          phone_number: data?.data?.phone_number,
+          city: data?.data?.city,
+          type_client: data?.data?.type_client,
+          broker: data?.data?.broker,
+          ciiu: data?.data?.ciiu,
+          citizenship: data?.data?.citizenship,
+          contacts: data?.data?.contacts,
+          legal_representative: data?.data?.legal_representative,
+          social_reason: data?.data?.social_reason,
+          birth_date: data?.data?.birth_date,
+          updatedAt: data?.data?.updated_at?.split("T")[0],
+        });
+        const enterBy = data?.data?.entered_by.first_name
+          ? data?.data?.entered_by.first_name +
+            " " +
+            data?.data?.entered_by.last_name
+          : data?.data?.entered_by.social_reason;
+        setEnteredBy(enterBy);
       });
-
-      const enterBy = data?.data?.entered_by.first_name
-        ? data?.data?.entered_by.first_name + " " + data?.data?.entered_by.last_name
-        : data?.data?.entered_by.social_reason;
-
-      setEnteredBy(enterBy);
-    });
-  }
-}, [option]);
-
+    }
+  }, [option]);
 
   const validationSchema = object({
     type_identity: string("Ingresa el tipo de identificación del corredor")
@@ -171,9 +150,7 @@ useEffect(() => {
     type_client: string("Selecciona un tipo de cliente")
       .nullable(true)
       .required("El tipo de cliente es requerido"),
-  rol_client:string("Selecciona un tipo de cliente")
-      .nullable(true)
-      .required("El tipo de cliente es requerido"),
+
     broker: string("Selecciona un corredor")
       .nullable(true)
       .required("El corredor es requerido"),
@@ -332,7 +309,6 @@ useEffect(() => {
     phone_number: "",
     city: null,
     type_client: null,
-    rol_client:[],
     department: null,
     broker: null,
     ciiu: null,
@@ -370,8 +346,7 @@ useEffect(() => {
         setSubmitting(true); // 🔥 Deshabilita el botón antes de cualquier validación
       setSuccess(null); 
       setIsModalOpen(true); // Abrir el modal
-      console.log(values)
-      fetch(values);
+        fetch(values);
 
       } else if (option === "modify") {
         setSubmitting(true); // 🔥 Deshabilita el botón antes de cualquier validación
@@ -440,7 +415,7 @@ useEffect(() => {
         loading={loading2}
         enteredBy={enteredBy}
         updatedAt={updatedAt}
-        roles={data4}
+        
         success={success}
         isModalOpen={isModalOpen}
       />
