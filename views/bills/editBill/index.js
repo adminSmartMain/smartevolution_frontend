@@ -349,6 +349,7 @@ const onSubmit = async (values, { setSubmitting }) => {
     payerName: values.payerName,
     payerId: values.payerId,
     emitterName: values.emitter,
+    cufe: values.cufe?.trim() || null,
     file: values.file,
     ret_fte: values.ret_fte,
     ret_ica: values.ret_ica,
@@ -369,7 +370,12 @@ const onSubmit = async (values, { setSubmitting }) => {
     }
 
     setSuccessA(true);
-    Toast("Operación completada con éxito", "success");
+    Toast(
+      response?.billySync?.status === "pending"
+        ? "Factura actualizada y pendiente de carga en Billy"
+        : "Operación completada con éxito",
+      response?.billySync?.status === "pending" ? "warning" : "success"
+    );
     setIsModalOpen(false); // Cierra el modal inmediatamente
     // Cerrar la ventana después de un breve delay
     setTimeout(() => {
