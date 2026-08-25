@@ -1,7 +1,6 @@
 import React from "react";
 import { toast } from "react-toastify";
 import { Autocomplete, TextField, Box, Button } from "@mui/material";
-import ErrorIcon from '@mui/icons-material/Error';
 import { Toast } from "@components/toast";
 export default function EmitterSelector({
   errors,
@@ -38,7 +37,10 @@ setFieldValue('billdId', values.factura);
       console.log(tasaDescuento)
       if (!tasaDescuento) {
         console.log('c')
-        showRiskProfileError();
+        showRiskProfileError(
+          newValue.data.social_reason ||
+          `${newValue.data.first_name || ''} ${newValue.data.last_name || ''}`.trim()
+        );
         return;
       }
 
@@ -92,12 +94,11 @@ setFieldValue('billdId', values.factura);
     fieldsToReset.forEach(field => setFieldValue(field, field.includes('.') ? '' : []));
   };
 
-  const showRiskProfileError = () => {
+  const showRiskProfileError = (clientName) => {
     Toast(
       <Box display="flex" alignItems="center">
-        <ErrorIcon style={{ marginRight: '10px', color: '#d32f2f' }} />
         <span>
-          Disculpe, el cliente seleccionado no tiene perfil de riesgo configurado. 
+          No se ha encontrado un perfil de riesgo para el cliente {clientName}.
           Por favor, agregue el perfil en el módulo de clientes
         </span>
       </Box>,

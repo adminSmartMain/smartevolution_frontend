@@ -1950,6 +1950,7 @@ return (
       </Box>
     ) : (
       <CustomDataGrid
+        className="main-list-data-grid"
         onCellEditCommit={handleCellEditCommit}
         rows={bill}
         columns={columns}

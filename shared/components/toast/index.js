@@ -1,11 +1,14 @@
 import { toast } from "react-toastify";
+import { isValidElement } from "react";
 
 import Image from "next/image";
 
 export const Toast = (message, type) => {
   // Los errores de validación de la API suelen venir como objetos. React solo
   // puede renderizar texto o elementos, por eso los convertimos aquí.
-  const safeMessage = typeof message === "object" && message !== null
+  const safeMessage = isValidElement(message)
+    ? message
+    : typeof message === "object" && message !== null
     ? Object.entries(message)
         .map(([field, errors]) => `${field}: ${Array.isArray(errors) ? errors.join(", ") : String(errors)}`)
         .join(" | ")

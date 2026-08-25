@@ -424,6 +424,7 @@ const handleSubmit = async (values, actions) => {
     filteredPayers: "",
     billId: '',
     factura: '',
+    cufe: '',
     DateBill:  `${new Date()}`,
     emitterId:'',
     payerName:'',
@@ -506,7 +507,7 @@ const formatFileSize = (bytes) => {
           validationSchema={validationSchema2}
           onSubmit={handleConfirm}
            >
-          {({ values, setFieldValue, touched, errors, handleBlur, setTouched, setFieldTouched, setFieldError,isValid, isSubmitting  }) => {
+          {({ values, setFieldValue, touched, errors, handleChange, handleBlur, setTouched, setFieldTouched, setFieldError,isValid, isSubmitting  }) => {
           return(
               <Form translate="no" onChange={handleOnChange}>
 
@@ -734,7 +735,7 @@ const formatFileSize = (bytes) => {
 
                 {/* fila typeBill */}
                  <Grid container item xs={12} spacing={2}>
-                  <Grid item xs={12} md={6}>
+                  <Grid item xs={12} md={4}>
 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                       <div style={{ flex: 1 }}> {/* Este div ocupa el espacio restante */}
 
@@ -786,7 +787,22 @@ const formatFileSize = (bytes) => {
 
                   </Grid>
 
-                  <Grid item xs={12} md={6}>
+                  <Grid item xs={12} md={4}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      name="cufe"
+                      label="CUFE"
+                      value={values.cufe}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      helperText="Opcional. Permite consultar eventos en RADIAN."
+                      inputProps={{ maxLength: 255 }}
+                      sx={{ '& .MuiInputBase-root': { height: '56px' } }}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} md={4}>
                     <SubTotalSelector
                       values={values}
                       setFieldValue={setFieldValue}

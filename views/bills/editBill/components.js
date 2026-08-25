@@ -463,6 +463,7 @@ console.log( bill?.bill?.currentBalance)
     filteredPayers: "",
     billId: bill?.billId,
     factura: bill?.billId,
+    cufe: bill?.cufe || '',
     emitterId:bill?.emitterId,
     payerName:bill?.payerName,
     payerId:bill?.payerId,
@@ -765,7 +766,7 @@ const verifyBlob = async (blob) => {
           onSubmit={handleConfirm}
           enableReinitialize={true} // Esto permite que Formik se reinicialice cuando cambian las props
         >
-          {({ values, setFieldValue, touched, errors, handleBlur, setTouched, setFieldTouched, setFieldError,isValid, isSubmitting  }) => {
+          {({ values, setFieldValue, touched, errors, handleChange, handleBlur, setTouched, setFieldTouched, setFieldError,isValid, isSubmitting  }) => {
           return(
               <Form translate="no" onChange={handleOnChange}>
 
@@ -799,7 +800,7 @@ const verifyBlob = async (blob) => {
                       debouncedCheckBill={debouncedCheckBill}
                     />
                   </Grid>
-                  
+
                     <Grid item xs={12} md={4} >
                     <SaldoDisponibleSelector
                       values={values}
@@ -1000,7 +1001,7 @@ const verifyBlob = async (blob) => {
 
                 {/* Segunda fila */}
                                  <Grid container item xs={12} spacing={2}>
-                  <Grid item xs={12} md={6}>
+                  <Grid item xs={12} md={4}>
 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                       <div style={{ flex: 1 }}> {/* Este div ocupa el espacio restante */}
 
@@ -1053,7 +1054,22 @@ const verifyBlob = async (blob) => {
 
                   </Grid>
 
-                  <Grid item xs={12} md={6}>
+                  <Grid item xs={12} md={4}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      name="cufe"
+                      label="CUFE"
+                      value={values.cufe}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      helperText="Opcional. Permite consultar eventos en RADIAN."
+                      inputProps={{ maxLength: 255 }}
+                      sx={{ '& .MuiInputBase-root': { height: '56px' } }}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} md={4}>
                     <SubTotalSelector
                       values={values}
                       setFieldValue={setFieldValue}

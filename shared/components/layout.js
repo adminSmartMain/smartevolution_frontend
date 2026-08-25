@@ -21,6 +21,7 @@ export default function Layout({ children }) {
   const headerHeight = 72;
   const pageHeader = getPageHeader(router.pathname);
   const hasLocalPageHeader = ROUTES_WITH_LOCAL_PAGE_HEADER.has(router.pathname);
+  const fillsAvailableHeight = router.pathname === "/bills/billList";
 
   // USAR useRef PARA EVITAR RE-RENDERS
   const routerPathnameRef = useRef(router.pathname);
@@ -55,13 +56,14 @@ export default function Layout({ children }) {
     display: "flex",
     flexDirection: "column",
     padding: 3,
+    paddingBottom: fillsAvailableHeight ? 1 : 3,
     marginLeft: isDesktop ? (isSidebarExpanded ? "280px" : "80px") : 0,
     width: isDesktop ? (isSidebarExpanded ? "calc(100% - 280px)" : "calc(100% - 80px)") : "100%",
     maxWidth: isDesktop ? (isSidebarExpanded ? "calc(100% - 280px)" : "calc(100% - 80px)") : "100%",
     minWidth: 0,
     boxSizing: "border-box",
     overflowX: "hidden",
-    minHeight: `calc(100vh - ${headerHeight}px)`,
+    minHeight: fillsAvailableHeight ? 0 : `calc(100vh - ${headerHeight}px)`,
     // ELIMINAR TRANSICIONES DURANTE CARGA DE DATOS
    transition: "none",
   };
@@ -122,7 +124,15 @@ export default function Layout({ children }) {
           }}
         >
           {!hasLocalPageHeader && <PageHeader {...pageHeader} />}
-          <Box className={hasLocalPageHeader ? undefined : "platform-page-content"}>
+          <Box
+            className={hasLocalPageHeader ? undefined : "platform-page-content"}
+            sx={fillsAvailableHeight ? {
+              flex: "1 1 auto",
+              display: "flex",
+              flexDirection: "column",
+              minHeight: 0,
+            } : undefined}
+          >
           {children}
           </Box>
         </Box>

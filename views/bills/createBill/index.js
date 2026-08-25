@@ -333,6 +333,7 @@ const onSubmit = async (values, { setSubmitting }) => {
     payerName:values.payerName,
     payerId: values.filtroEmitterPagador.payer,
     emitterName:values.emitterName,
+    cufe: values.cufe?.trim() || null,
     file:values.file,
     ret_fte: values.ret_fte || 0,
     ret_ica: values.ret_ica || 0,
@@ -355,7 +356,12 @@ const onSubmit = async (values, { setSubmitting }) => {
     }
     // 5. Manejar éxito
     setSuccess(true); // ✅ Actualizar estado de éxito
-    Toast("Registro de factura con éxito", "success");
+    Toast(
+      response?.billySync?.status === "pending"
+        ? "Factura guardada y pendiente de carga en Billy"
+        : "Registro de factura con éxito",
+      response?.billySync?.status === "pending" ? "warning" : "success"
+    );
    setLoading(false);
     setSubmitting(false);
     setIsFinished(true)   
