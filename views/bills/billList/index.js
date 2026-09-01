@@ -4,6 +4,16 @@ import { BillsComponents } from "./components";
 
 export default function BillList() {
 
+
+
+
+
+
+
+
+
+
+
   return (
     <>
       <Head>
