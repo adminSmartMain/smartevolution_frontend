@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ToastContainer } from "react-toastify";import {
+import { ToastContainer } from "react-toastify"; import {
   Home as HomeIcon,
 
 } from "@mui/icons-material";
@@ -9,7 +9,7 @@ import Skeleton from '@mui/material/Skeleton';
 import TuneIcon from '@mui/icons-material/Tune';
 import Chip from '@mui/material/Chip';
 
-import { Breadcrumbs} from "@mui/material";
+import { Breadcrumbs } from "@mui/material";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 
 import EventIcon from '@mui/icons-material/Event';
@@ -143,16 +143,16 @@ export const BillsComponents = () => {
   const [selectedOptionTypeBill, setSelectedOptionTypeBill] = useState(null);
   const [selectedOptionChannel, setSelectedOptionChannel] = useState(null);
 
-const [anchorElFilters, setAnchorElFilters] = useState(null);
-const openFilters = Boolean(anchorElFilters);
+  const [anchorElFilters, setAnchorElFilters] = useState(null);
+  const openFilters = Boolean(anchorElFilters);
 
-const handleOpenFilters = (e) => {
-  setAnchorElFilters(e.currentTarget);
-};
+  const handleOpenFilters = (e) => {
+    setAnchorElFilters(e.currentTarget);
+  };
 
-const handleCloseFilters = () => {
-  setAnchorElFilters(null);
-};
+  const handleCloseFilters = () => {
+    setAnchorElFilters(null);
+  };
 
   // Hooks
   const {
@@ -438,10 +438,10 @@ const handleCloseFilters = () => {
     handleOpenWindow("/bills/createBill");
   };
 
-const handleOpenDetailBill = (id, tab = 0) => {
-  console.log(tab)
-  handleOpenWindow(`/bills/detailBill?id=${id}&tab=${tab}`);
-};
+  const handleOpenDetailBill = (id, tab = 0) => {
+    console.log(tab)
+    handleOpenWindow(`/bills/detailBill?id=${id}&tab=${tab}`);
+  };
   const handleOpenEditBill = (id) => {
     handleOpenWindow(`/bills/editBill?id=${id}`);
   };
@@ -521,7 +521,7 @@ const handleOpenDetailBill = (id, tab = 0) => {
       field: "typeBill",
       headerName: "Tipo",
       width: 80,
-         // Desactiva el crecimiento flexible
+      // Desactiva el crecimiento flexible
       renderCell: (params) => {
         return (
           <Box
@@ -536,7 +536,7 @@ const handleOpenDetailBill = (id, tab = 0) => {
             <Typography
               sx={{
                 fontSize: "100%",
-                color: "#488B8F !important",  
+                color: "#488B8F !important",
                 fontWeight: "500 !important",
                 textTransform: "uppercase",
                 // Reset de estilos no deseados
@@ -553,152 +553,292 @@ const handleOpenDetailBill = (id, tab = 0) => {
 
         );
       },
-    valueGetter: (params) => {
-    const val = params.value;
+      valueGetter: (params) => {
+        const val = params.value;
 
-    switch (val) {
+        switch (val) {
 
-        case "dcec6f03-5dc1-42ea-a525-afada28686da":
+          case "dcec6f03-5dc1-42ea-a525-afada28686da":
             return "RECHAZADA";
 
-        case "29113618-6ab8-4633-aa8e-b3d6f242e8a4":
+          case "29113618-6ab8-4633-aa8e-b3d6f242e8a4":
             return "ENDOSADA";
 
-        case "a7c70741-8c1a-4485-8ed4-5297e54a978a":
+          case "a7c70741-8c1a-4485-8ed4-5297e54a978a":
             return "FV-TV";
 
-        case "fdb5feb4-24e9-41fc-9689-31aff60b76c9":
-          return "FV";
-
-        case "e079bea4-401e-41f2-8ccc-e4ac42217728":
-            return "PAGADA";
-        default:
+          case "fdb5feb4-24e9-41fc-9689-31aff60b76c9":
             return "FV";
-    }
-}
-,
+
+          case "e079bea4-401e-41f2-8ccc-e4ac42217728":
+            return "PAGADA";
+          default:
+            return "FV";
+        }
+      }
+      ,
     },
-  {
-  field: "billInfo",
-  headerName: "ID / Creada",
-  minWidth: 120,
-  flex: 1,
-  sortable: false,
-  renderCell: (params) => {
-    const { billId, created_at, integrationCode } = params.row;
+    {
+      field: "billySyncStatus",
+      headerName: "Sync",
+      width: 118,
+      sortable: false,
+      filterable: false,
+      renderCell: (params) => {
+        const row = params.row;
+        const errors = Number(row.billyEventsConsecutiveErrors || 0);
+        const hasErrorCode = Boolean(row.billyErrorCode);
+        const hasRetryScheduled = errors > 0 && Boolean(row.billyEventsNextCheckAt);
 
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          //gap: "1px",
-          overflow: "hidden",
-          marginBottom: "10px",
-          marginLeft: "10px",
-        }}
-      >
-        {/* Línea 1: ID */}
-<Typography
-  sx={{
-    fontWeight: 900,              // ✅ bold real
-    fontSize: '0.85rem',          // ✅ tamaño correcto
-    color: '#488B8F !important',  // ✅ evita override del DataGrid
-    whiteSpace: 'nowrap',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    lineHeight: 1.2,
-  }}
->
-  {billId}
-</Typography>
+        const lastAttempt = row.billyEventsLastAttemptAt
+          ? moment(row.billyEventsLastAttemptAt)
+          : null;
+        const lastSuccess = row.billyEventsLastSuccessAt
+          ? moment(row.billyEventsLastSuccessAt)
+          : null;
 
+        const isProcessing = Boolean(
+          lastAttempt &&
+          errors === 0 &&
+          !hasErrorCode &&
+          (!lastSuccess || lastAttempt.isAfter(lastSuccess))
+        );
 
-        {/* Línea 2: Fecha de creación */}
-        <Typography
-          sx={{
-            fontSize: "0.8rem",
-            color: "#9e9e9e",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {created_at ? moment(created_at).format("DD/MM/YYYY") : ""}
-        </Typography>
+        let label = "Sincronizada";
+        let dotColor = "#4CAF50";
+        let backgroundColor = "#EAF7EC";
+        let textColor = "#2E7D32";
+        let shortMessage = "Sincronización saludable";
 
-        {/* Línea 3: Badge Autogestión */}
-        {integrationCode && (
+        if (hasRetryScheduled) {
+          label = "Reintento";
+          dotColor = "#F9A825";
+          backgroundColor = "#FFF8E1";
+          textColor = "#B26A00";
+          shortMessage = "Reintento programado por error temporal";
+        } else if (hasErrorCode) {
+          label = "Error";
+          dotColor = "#D32F2F";
+          backgroundColor = "#FDECEC";
+          textColor = "#B71C1C";
+          shortMessage = "La última sincronización falló";
+        } else if (isProcessing || row.billySyncStatus === "pending") {
+          label = "En proceso";
+          dotColor = "#2196F3";
+          backgroundColor = "#EAF4FF";
+          textColor = "#1565C0";
+          shortMessage = "Sincronización en proceso o pendiente";
+        }
+
+        const formatDateTime = (value) =>
+          value ? moment(value).format("DD/MM/YYYY HH:mm") : "Sin registro";
+
+        const tooltipContent = (
+          <Box sx={{ p: 0.5, minWidth: 230, maxWidth: 310 }}>
+            <Typography sx={{ fontSize: "0.75rem", fontWeight: 700, mb: 0.5 }}>
+              Estado Billy
+            </Typography>
+
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.7, mb: 0.6 }}>
+              <Box
+                sx={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: "50%",
+                  backgroundColor: dotColor,
+                  flexShrink: 0,
+                }}
+              />
+              <Typography sx={{ fontSize: "0.7rem", fontWeight: 600 }}>
+                {shortMessage}
+              </Typography>
+            </Box>
+
+            <Typography sx={{ fontSize: "0.68rem" }}>
+              Último intento: {formatDateTime(row.billyEventsLastAttemptAt)}
+            </Typography>
+            <Typography sx={{ fontSize: "0.68rem" }}>
+              Último éxito: {formatDateTime(row.billyEventsLastSuccessAt)}
+            </Typography>
+            <Typography sx={{ fontSize: "0.68rem" }}>
+              Próxima revisión: {formatDateTime(row.billyEventsNextCheckAt)}
+            </Typography>
+            <Typography sx={{ fontSize: "0.68rem" }}>
+              Errores consecutivos: {errors}
+            </Typography>
+
+            {row.billyErrorDetail && (
+              <Typography
+                sx={{
+                  fontSize: "0.68rem",
+                  mt: 0.5,
+                  color: "#ffdddd",
+                  overflowWrap: "anywhere",
+                }}
+              >
+                {row.billyErrorDetail.length > 140
+                  ? `${row.billyErrorDetail.slice(0, 140)}...`
+                  : row.billyErrorDetail}
+              </Typography>
+            )}
+          </Box>
+        );
+
+        return (
+          <Tooltip title={tooltipContent} arrow placement="bottom">
+            <Box
+              sx={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 0.6,
+                px: 0.9,
+                py: 0.35,
+                borderRadius: "12px",
+                backgroundColor,
+                color: textColor,
+                fontSize: "0.62rem",
+                fontWeight: 600,
+                cursor: "help",
+                whiteSpace: "nowrap",
+                maxWidth: "100%",
+              }}
+            >
+              <Box
+                sx={{
+                  width: 7,
+                  height: 7,
+                  borderRadius: "50%",
+                  backgroundColor: dotColor,
+                  flexShrink: 0,
+                }}
+              />
+              {label}
+            </Box>
+          </Tooltip>
+        );
+      },
+    },
+    {
+      field: "billInfo",
+      headerName: "ID / Creada",
+      minWidth: 120,
+      flex: 1,
+      sortable: false,
+      renderCell: (params) => {
+        const { billId, created_at, integrationCode } = params.row;
+
+        return (
           <Box
             sx={{
-              alignSelf: "flex-start",
-              backgroundColor: "#488B8F",
-              color: "#ffff",
-              borderRadius: "4px",
-              px: 1,
-              py: "1px",
-              fontSize: "0.6rem",
-              fontWeight: 500,
-              lineHeight: 1.2,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              //gap: "1px",
+              overflow: "hidden",
+              marginBottom: "10px",
+              marginLeft: "10px",
             }}
           >
-            Autogestión
+            {/* Línea 1: ID */}
+            <Typography
+              sx={{
+                fontWeight: 900,              // ✅ bold real
+                fontSize: '0.85rem',          // ✅ tamaño correcto
+                color: '#488B8F !important',  // ✅ evita override del DataGrid
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                lineHeight: 1.2,
+              }}
+            >
+              {billId}
+            </Typography>
+
+
+            {/* Línea 2: Fecha de creación */}
+            <Typography
+              sx={{
+                fontSize: "0.8rem",
+                color: "#9e9e9e",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {created_at ? moment(created_at).format("DD/MM/YYYY") : ""}
+            </Typography>
+
+            {/* Línea 3: Badge Autogestión */}
+            {integrationCode && (
+              <Box
+                sx={{
+                  alignSelf: "flex-start",
+                  backgroundColor: "#488B8F",
+                  color: "#ffff",
+                  borderRadius: "4px",
+                  px: 1,
+                  py: "1px",
+                  fontSize: "0.6rem",
+                  fontWeight: 500,
+                  lineHeight: 1.2,
+                }}
+              >
+                Autogestión
+              </Box>
+            )}
           </Box>
-        )}
-      </Box>
-    );
-  },
-}
+        );
+      },
+    }
 
-, {
-  field: "datesInfo",
-  headerName: "Emitido / Vence",
-  minWidth: 140,
-  flex: 1,
-  sortable: false,
-  renderCell: (params) => {
-    const { DateBill, expirationDate } = params.row;
-    const hasValidExpirationDate =
-      Boolean(expirationDate) && moment(expirationDate).isValid();
+    , {
+      field: "datesInfo",
+      headerName: "Emitido / Vence",
+      minWidth: 140,
+      flex: 1,
+      sortable: false,
+      renderCell: (params) => {
+        const { DateBill, expirationDate } = params.row;
+        const hasValidExpirationDate =
+          Boolean(expirationDate) && moment(expirationDate).isValid();
 
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          gap: "2px",
-          overflow: "hidden",
-        }}
-      >
-        {/* Nivel 1: Fecha de emisión */}
-        <Typography
-          sx={{
-            fontSize: "0.75rem",
-            fontWeight: 500,
-            whiteSpace: "nowrap",
-          }}
-        >
-          {DateBill ? moment(DateBill).format("DD/MM/YYYY") : ""}
-        </Typography>
+        return (
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              gap: "2px",
+              overflow: "hidden",
+            }}
+          >
+            {/* Nivel 1: Fecha de emisión */}
+            <Typography
+              sx={{
+                fontSize: "0.75rem",
+                fontWeight: 500,
+                whiteSpace: "nowrap",
+              }}
+            >
+              {DateBill ? moment(DateBill).format("DD/MM/YYYY") : ""}
+            </Typography>
 
-        {/* Nivel 2: Fecha de vencimiento */}
-        <Typography
-          sx={{
-            fontSize: "0.65rem",
-            color: !hasValidExpirationDate ? "#d32f2f !important" : "#9e9e9e",
-            fontWeight: !hasValidExpirationDate ? 600 : 400,
-            whiteSpace: "nowrap",
-          }}
-        >
-          {hasValidExpirationDate
-            ? `Vence: ${moment(expirationDate).format("DD/MM/YYYY")}`
-            : "De contado"}
-        </Typography>
-      </Box>
-    );
-  },
-}
-,
+            {/* Nivel 2: Fecha de vencimiento */}
+            <Typography
+              sx={{
+                fontSize: "0.65rem",
+                color: !hasValidExpirationDate ? "#d32f2f !important" : "#9e9e9e",
+                fontWeight: !hasValidExpirationDate ? 600 : 400,
+                whiteSpace: "nowrap",
+              }}
+            >
+              {hasValidExpirationDate
+                ? `Vence: ${moment(expirationDate).format("DD/MM/YYYY")}`
+                : "De contado"}
+            </Typography>
+          </Box>
+        );
+      },
+    }
+    ,
     {
       field: "Emitter",
       headerName: "Emisor",
@@ -843,46 +983,46 @@ const handleOpenDetailBill = (id, tab = 0) => {
       },
     },
     {
-  field: "associatedOperation",
-  headerName: "OpId",
-  width: 80,
+      field: "associatedOperation",
+      headerName: "OpId",
+      width: 80,
 
-  renderCell: (params) => {
-    const hasAssociation = params.value !== null && params.value !== undefined;
+      renderCell: (params) => {
+        const hasAssociation = params.value !== null && params.value !== undefined;
 
-    const displayValue = hasAssociation ? params.value : "S/A";
-    const tooltipTitle = hasAssociation
-      ? params.value
-      : "Sin Asociación a una operación";
+        const displayValue = hasAssociation ? params.value : "S/A";
+        const tooltipTitle = hasAssociation
+          ? params.value
+          : "Sin Asociación a una operación";
 
-    return (
-      <Tooltip
-        title={tooltipTitle}
-        arrow
-        placement="bottom-start"
-        TransitionComponent={Fade}
-        PopperProps={{
-          modifiers: [
-            {
-              name: "offset",
-              options: { offset: [0, 0] },
-            },
-          ],
-        }}
-      >
-        <InputTitles
-          sx={{
-            color: hasAssociation ? "inherit" : "#9e9e9e",
-            fontStyle: hasAssociation ? "normal" : "italic",
-          }}
-        >
-          {displayValue}
-        </InputTitles>
-      </Tooltip>
-    );
-  },
-}
-,
+        return (
+          <Tooltip
+            title={tooltipTitle}
+            arrow
+            placement="bottom-start"
+            TransitionComponent={Fade}
+            PopperProps={{
+              modifiers: [
+                {
+                  name: "offset",
+                  options: { offset: [0, 0] },
+                },
+              ],
+            }}
+          >
+            <InputTitles
+              sx={{
+                color: hasAssociation ? "inherit" : "#9e9e9e",
+                fontStyle: hasAssociation ? "normal" : "italic",
+              }}
+            >
+              {displayValue}
+            </InputTitles>
+          </Tooltip>
+        );
+      },
+    }
+    ,
 
 
 
@@ -975,9 +1115,9 @@ const handleOpenDetailBill = (id, tab = 0) => {
               }}
             >
               <MenuItem
-               onClick={() => {
-                handleOpenDetailBill(selectedRow.id); // 1 = Tab de eventos
-              }}
+                onClick={() => {
+                  handleOpenDetailBill(selectedRow.id); // 1 = Tab de eventos
+                }}
               >
                 <ListItemIcon>
                   <VisibilityIcon fontSize="small" />
@@ -1125,17 +1265,7 @@ const handleOpenDetailBill = (id, tab = 0) => {
 
   console.log(data)
 
- useEffect(() => {
-  if (!data) return;
 
-  if (data?.billy_warning) {
-    const count = Array.isArray(data?.warnings) ? data.warnings.length : 0;
-
-    const msg = `Disculpe, el proveedor no responde o ha tardado más de lo esperado. Los eventos de ${count} facturas no pudieron actualizarse.`;
-
-    Toast(msg, "warning");
-  }
-}, [data]);
   useEffect(() => {
     const bill =
       data?.results?.map((bill) => ({
@@ -1148,7 +1278,7 @@ const handleOpenDetailBill = (id, tab = 0) => {
         Total: bill.subTotal,
         typeBill: bill.typeBill,
         DateBill: bill.dateBill,
-        created_at:bill.created_at,
+        created_at: bill.created_at,
         DatePayment: bill.datePayment,
         expirationDate: bill.expirationDate,
         currentBalance: bill.currentBalance,
@@ -1160,7 +1290,16 @@ const handleOpenDetailBill = (id, tab = 0) => {
           ? bill.associatedOperation?.opId
           : null,
         file: bill.file,
-        valor_a_recibir: bill.total
+        valor_a_recibir: bill.total,
+
+        // Estado de sincronización Billy (solo lectura; no dispara sincronización)
+        billySyncStatus: bill.billySyncStatus,
+        billyErrorCode: bill.billyErrorCode,
+        billyErrorDetail: bill.billyErrorDetail,
+        billyEventsConsecutiveErrors: bill.billyEventsConsecutiveErrors,
+        billyEventsLastAttemptAt: bill.billyEventsLastAttemptAt,
+        billyEventsLastSuccessAt: bill.billyEventsLastSuccessAt,
+        billyEventsNextCheckAt: bill.billyEventsNextCheckAt
       })) || [];
     setBill(bill);
   }, [data]);
@@ -1266,296 +1405,296 @@ const handleOpenDetailBill = (id, tab = 0) => {
             flexWrap: 'wrap'
           }}
         >
-        <Box
+          <Box
 
-  sx={{
-    display: 'flex',
-    alignItems: 'center',
-    gap: 1,
-     // ⬅ reduce separación con filtros
-    '@media (max-width: 1300px)': {
-      mb: 0,
-    },
-    mt:'20px'
-  }}
->
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              // ⬅ reduce separación con filtros
+              '@media (max-width: 1300px)': {
+                mb: 0,
+              },
+              mt: '20px'
+            }}
+          >
 
-<Typography
-                                  letterSpacing={0}
-                                  fontSize="1.7rem"
-                                  fontWeight="regular"
-                                  marginBottom="0.7rem"
-                                  color="#5EA3A3"
-                                >
-                                    <Breadcrumbs
-                                separator={<NavigateNextIcon fontSize="small" />}
-                                aria-label="breadcrumb"
-                                sx={{ ml: 1, mt: 1 }}
-                              >
-                                <Link href="/dashboard" underline="none">
-                          <a>
-                             <HomeIcon
-                                                    fontSize="large" 
-                                                    sx={{ 
-                                                      color: '#488b8f',
-                                                      opacity: 0.8, // Ajusta la transparencia (0.8 = 80% visible)
-                                                      strokeWidth: 1, // Grosor del contorno
-                                                    }} 
-                                                  />
-            
-                          </a>
-            
-                        </Link>
-                                <Link
-                                  underline="hover"
-                                  color="#5EA3A3"
-                                  href="/administration"
-                                  sx={{ fontSize: "1.3rem" }}
-                                >
-                             <Typography component="h1" className="view-title">
-                        
-                         Consulta de Facturas
-                                     
-                                  </Typography>
-                                 
-                                </Link>
-                        
-                           
-                              </Breadcrumbs>
-                        
-                                </Typography>
-</Box>
+            <Typography
+              letterSpacing={0}
+              fontSize="1.7rem"
+              fontWeight="regular"
+              marginBottom="0.7rem"
+              color="#5EA3A3"
+            >
+              <Breadcrumbs
+                separator={<NavigateNextIcon fontSize="small" />}
+                aria-label="breadcrumb"
+                sx={{ ml: 1, mt: 1 }}
+              >
+                <Link href="/dashboard" underline="none">
+                  <a>
+                    <HomeIcon
+                      fontSize="large"
+                      sx={{
+                        color: '#488b8f',
+                        opacity: 0.8, // Ajusta la transparencia (0.8 = 80% visible)
+                        strokeWidth: 1, // Grosor del contorno
+                      }}
+                    />
+
+                  </a>
+
+                </Link>
+                <Link
+                  underline="hover"
+                  color="#5EA3A3"
+                  href="/administration"
+                  sx={{ fontSize: "1.3rem" }}
+                >
+                  <Typography component="h1" className="view-title">
+
+                    Consulta de Facturas
+
+                  </Typography>
+
+                </Link>
+
+
+              </Breadcrumbs>
+
+            </Typography>
+          </Box>
 
           {/* Tus otros elementos aquí */}
         </Box>
-<Box sx={{ width: '100%', mt: 1 }}>
-  {/* ================= GRID PRINCIPAL ================= */}
-  <Box
-    sx={{
-      display: 'grid',
-      gridTemplateColumns: '360px 1fr auto',
-      alignItems: 'center',
-      gap: 2,
-      width: '100%',
+        <Box sx={{ width: '100%', mt: 1 }}>
+          {/* ================= GRID PRINCIPAL ================= */}
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: '360px 1fr auto',
+              alignItems: 'center',
+              gap: 2,
+              width: '100%',
 
-      /* 🔥 SOLO CUANDO YA NO CABE FÍSICAMENTE */
-      '@media (max-width: 1024px)': {
-        gridTemplateColumns: '1fr',
-        rowGap: 2,
-      },
-    }}
-  >
-    {/* ================= BUSCADOR ================= */}
-    <Box sx={{ maxWidth: 360 }}>
-      <TextField
-        fullWidth
-        size="small"
-        placeholder="Buscar por ID, Emisor, pagador u operación (OpID)..."
-        value={search}
-        onChange={handleTextFieldChange}
-        onKeyPress={(e) => {
-          if (e.key === 'Enter') {
-            updateFilters(search || '', 'multi');
-          }
-        }}
-        sx={{
-          '& .MuiOutlinedInput-root': {
-            height: 35,
-            fontSize: '14px',
-          },
-          '& .MuiInputBase-input': {
-            padding: '6px 8px',
-          },
-        }}
-        InputProps={{
-          endAdornment: search && (
-            <InputAdornment position="end">
-              <IconButton size="small" onClick={handleClearSearch}>
-                <ClearIcon sx={{ color: '#488B8F', fontSize: 18 }} />
+              /* 🔥 SOLO CUANDO YA NO CABE FÍSICAMENTE */
+              '@media (max-width: 1024px)': {
+                gridTemplateColumns: '1fr',
+                rowGap: 2,
+              },
+            }}
+          >
+            {/* ================= BUSCADOR ================= */}
+            <Box sx={{ maxWidth: 360 }}>
+              <TextField
+                fullWidth
+                size="small"
+                placeholder="Buscar por ID, Emisor, pagador u operación (OpID)..."
+                value={search}
+                onChange={handleTextFieldChange}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    updateFilters(search || '', 'multi');
+                  }
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    height: 35,
+                    fontSize: '14px',
+                  },
+                  '& .MuiInputBase-input': {
+                    padding: '6px 8px',
+                  },
+                }}
+                InputProps={{
+                  endAdornment: search && (
+                    <InputAdornment position="end">
+                      <IconButton size="small" onClick={handleClearSearch}>
+                        <ClearIcon sx={{ color: '#488B8F', fontSize: 18 }} />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Box>
+
+
+            {/* ================= FILTROS + PILLS ================= */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',     // 🔑 alinea con date picker
+                gap: 1,
+                minWidth: 0,
+              }}
+            >
+              {/* BOTÓN FILTROS */}
+              <Button
+                onClick={handleOpenFilters}
+                variant="outlined"
+                startIcon={<TuneIcon fontSize="small" />}
+                sx={{
+                  height: 35,
+                  border: '1px solid var(--primary-color)',
+                  borderRadius: '4px',
+                  color: 'var(--primary-color)',
+                  px: 1,
+                  gap: '4px',
+                  transition: 'all 0.2s ease-in-out',
+
+                  '&:hover': {
+                    color: 'var(--white-color)',
+                    backgroundColor: 'var(--secondary-color)',
+                    borderColor: 'var(--primary-color)',
+                  },
+
+                  // asegura que icono y texto cambien también
+                  '&:hover svg, &:hover p': {
+                    color: 'var(--white-color)',
+                  },
+                }}
+              >
+                Filtros
+                {(selectedOptionTypeBill || selectedOptionChannel) &&
+                  ` (${Number(!!selectedOptionTypeBill) + Number(!!selectedOptionChannel)})`}
+              </Button>
+
+              {/* COLUMNA COMPACTA DE CHIPS */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center', // 🔑 centra verticalmente
+                  gap: '2px',
+                }}
+              >
+                {selectedOptionTypeBill && (
+                  <Chip
+                    size="small"
+                    label={`Tipo: ${selectedOptionTypeBill.label}`}
+                    onDelete={handleClearTypeBill}
+                    sx={{
+                      height: 20,
+                      fontSize: '0.6rem',
+                      px: 0.5,
+                      backgroundColor: '#488B8F08',
+                      color: '#488B8F',
+                      border: '1px solid #488B8F30',
+
+                      '& .MuiChip-deleteIcon': {
+                        fontSize: '0.8rem',
+                        color: '#488B8F',
+                      },
+                    }}
+                  />
+                )}
+
+                {selectedOptionChannel && (
+                  <Chip
+                    size="small"
+                    label={`Canal: ${selectedOptionChannel.label}`}
+                    onDelete={handleClearByChannel}
+                    sx={{
+                      height: 20,
+                      fontSize: '0.6rem',
+                      px: 0.5,
+                      backgroundColor: '#488B8F08',
+                      color: '#488B8F',
+                      border: '1px solid #488B8F30',
+
+                      '& .MuiChip-deleteIcon': {
+                        fontSize: '0.8rem',
+                        color: '#488B8F',
+                      },
+                    }}
+                  />
+                )}
+              </Box>
+            </Box>
+
+
+            {/* ================= ACCIONES DERECHA ================= */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
+              }}
+            >
+              <AdvancedDateRangePicker
+                className="date-picker"
+                onApply={handleDateRangeApply}
+                onClean={handleClear}
+              />
+
+              <Tooltip title="Extraer facturas" arrow>
+                <Link href="/bills?=register" underline="none">
+                  <IconButton
+                    sx={{
+                      height: 35,
+                      border: '1px solid var(--primary-color)',
+                      borderRadius: '4px',
+                      color: 'var(--primary-color)',
+                      px: 1,
+                      gap: '4px',
+                      transition: 'all 0.2s ease-in-out',
+
+                      '&:hover': {
+                        color: 'var(--white-color)',
+                        backgroundColor: 'var(--secondary-color)',
+                        borderColor: 'var(--primary-color)',
+                      },
+
+                      // asegura que icono y texto cambien también
+                      '&:hover svg, &:hover p': {
+                        color: 'var(--white-color)',
+                      },
+                    }}
+                  >
+                    <IntegrationInstructionsIcon fontSize="small" />
+                    <Typography fontSize="0.75rem">Extraer</Typography>
+                  </IconButton>
+
+                </Link>
+              </Tooltip>
+
+              <Tooltip title="Registro manual" arrow>
+                <IconButton
+                  onClick={handleOpenRegisterOperation}
+                  sx={{
+                    height: 35,
+                    border: '1px solid var(--primary-color)',
+                    borderRadius: '4px',
+                    color: 'var(--primary-color)',
+                    px: 1,
+                    gap: '4px',
+                    transition: 'all 0.2s ease-in-out',
+
+                    '&:hover': {
+                      color: 'var(--white-color)',
+                      backgroundColor: 'var(--secondary-color)',
+                      borderColor: 'var(--primary-color)',
+                    },
+
+                    // asegura que icono y texto cambien también
+                    '&:hover svg, &:hover p': {
+                      color: 'var(--white-color)',
+                    },
+                  }}
+                >
+                  <AddBoxIcon fontSize="small" />
+                  <Typography fontSize="0.75rem">Registro</Typography>
+                </IconButton>
+              </Tooltip>
+
+              <IconButton onClick={handleMenuClickCSV}>
+                <MoreVertIcon />
               </IconButton>
-            </InputAdornment>
-          ),
-        }}
-      />
-    </Box>
-
-   
-{/* ================= FILTROS + PILLS ================= */}
-<Box
-  sx={{
-    display: 'flex',
-    alignItems: 'center',     // 🔑 alinea con date picker
-    gap: 1,
-    minWidth: 0,
-  }}
->
-  {/* BOTÓN FILTROS */}
-  <Button
-    onClick={handleOpenFilters}
-    variant="outlined"
-    startIcon={<TuneIcon fontSize="small" />}
-   sx={{
-    height: 35,
-    border: '1px solid var(--primary-color)',
-    borderRadius: '4px',
-    color: 'var(--primary-color)',
-    px: 1,
-    gap: '4px',
-    transition: 'all 0.2s ease-in-out',
-
-    '&:hover': {
-      color: 'var(--white-color)',
-      backgroundColor: 'var(--secondary-color)',
-      borderColor: 'var(--primary-color)',
-    },
-
-    // asegura que icono y texto cambien también
-    '&:hover svg, &:hover p': {
-      color: 'var(--white-color)',
-    },
-  }}
-  >
-    Filtros
-    {(selectedOptionTypeBill || selectedOptionChannel) &&
-      ` (${Number(!!selectedOptionTypeBill) + Number(!!selectedOptionChannel)})`}
-  </Button>
-
-  {/* COLUMNA COMPACTA DE CHIPS */}
-  <Box
-    sx={{
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center', // 🔑 centra verticalmente
-      gap: '2px',
-    }}
-  >
-    {selectedOptionTypeBill && (
-      <Chip
-        size="small"
-        label={`Tipo: ${selectedOptionTypeBill.label}`}
-        onDelete={handleClearTypeBill}
-        sx={{
-          height: 20,
-          fontSize: '0.6rem',
-          px: 0.5,
-          backgroundColor: '#488B8F08',
-          color: '#488B8F',
-          border: '1px solid #488B8F30',
-
-          '& .MuiChip-deleteIcon': {
-            fontSize: '0.8rem',
-            color: '#488B8F',
-          },
-        }}
-      />
-    )}
-
-    {selectedOptionChannel && (
-      <Chip
-        size="small"
-        label={`Canal: ${selectedOptionChannel.label}`}
-        onDelete={handleClearByChannel}
-        sx={{
-          height: 20,
-          fontSize: '0.6rem',
-          px: 0.5,
-          backgroundColor: '#488B8F08',
-          color: '#488B8F',
-          border: '1px solid #488B8F30',
-
-          '& .MuiChip-deleteIcon': {
-            fontSize: '0.8rem',
-            color: '#488B8F',
-          },
-        }}
-      />
-    )}
-  </Box>
-</Box>
-
-
-    {/* ================= ACCIONES DERECHA ================= */}
-    <Box
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 1,
-        whiteSpace: 'nowrap',
-        flexShrink: 0,
-      }}
-    >
-      <AdvancedDateRangePicker
-        className="date-picker"
-        onApply={handleDateRangeApply}
-        onClean={handleClear}
-      />
-
-      <Tooltip title="Extraer facturas" arrow>
-        <Link href="/bills?=register" underline="none">
-        <IconButton
-  sx={{
-    height: 35,
-    border: '1px solid var(--primary-color)',
-    borderRadius: '4px',
-    color: 'var(--primary-color)',
-    px: 1,
-    gap: '4px',
-    transition: 'all 0.2s ease-in-out',
-
-    '&:hover': {
-      color: 'var(--white-color)',
-      backgroundColor: 'var(--secondary-color)',
-      borderColor: 'var(--primary-color)',
-    },
-
-    // asegura que icono y texto cambien también
-    '&:hover svg, &:hover p': {
-      color: 'var(--white-color)',
-    },
-  }}
->
-  <IntegrationInstructionsIcon fontSize="small" />
-  <Typography fontSize="0.75rem">Extraer</Typography>
-</IconButton>
-
-        </Link>
-      </Tooltip>
-
-      <Tooltip title="Registro manual" arrow>
-        <IconButton
-          onClick={handleOpenRegisterOperation}
-          sx={{
-    height: 35,
-    border: '1px solid var(--primary-color)',
-    borderRadius: '4px',
-    color: 'var(--primary-color)',
-    px: 1,
-    gap: '4px',
-    transition: 'all 0.2s ease-in-out',
-
-    '&:hover': {
-      color: 'var(--white-color)',
-      backgroundColor: 'var(--secondary-color)',
-      borderColor: 'var(--primary-color)',
-    },
-
-    // asegura que icono y texto cambien también
-    '&:hover svg, &:hover p': {
-      color: 'var(--white-color)',
-    },
-  }}
-        >
-          <AddBoxIcon fontSize="small" />
-          <Typography fontSize="0.75rem">Registro</Typography>
-        </IconButton>
-      </Tooltip>
-
-      <IconButton onClick={handleMenuClickCSV}>
-        <MoreVertIcon />
-      </IconButton>
-    </Box>
-  </Box>
-</Box>
+            </Box>
+          </Box>
+        </Box>
 
 
 
@@ -1607,8 +1746,8 @@ const handleOpenDetailBill = (id, tab = 0) => {
                 }
               }}
             >
-              <ListItemText 
-                primary={option.label} 
+              <ListItemText
+                primary={option.label}
                 primaryTypographyProps={{ fontSize: '0.9rem' }}
               />
               {selectedOptionTypeBill?.value === option.value && (
@@ -1641,8 +1780,8 @@ const handleOpenDetailBill = (id, tab = 0) => {
               }
             }}
           >
-            <ListItemText 
-              primary={option.label} 
+            <ListItemText
+              primary={option.label}
               primaryTypographyProps={{ fontSize: '0.9rem' }}
             />
             {selectedOptionChannel?.value === option.value && (
@@ -1653,14 +1792,14 @@ const handleOpenDetailBill = (id, tab = 0) => {
 
         {/* Acciones del menú */}
         <Box sx={{ borderTop: '1px solid #eee', mt: 1, pt: 1 }}>
-          <MenuItem 
+          <MenuItem
             onClick={() => {
               handleClearTypeBill();
               handleClearByChannel();
               handleCloseFilters();
             }}
             disabled={!selectedOptionTypeBill && !selectedOptionChannel}
-            sx={{ 
+            sx={{
               justifyContent: 'center',
               fontSize: '0.85rem',
               color: (selectedOptionTypeBill || selectedOptionChannel) ? '#488B8F' : 'text.disabled'
@@ -1681,157 +1820,157 @@ const handleOpenDetailBill = (id, tab = 0) => {
         sx={{ ...tableWrapperSx }}
       >
         {loading ? (
-  <TableSkeleton rows={8} columns={columns.length} />
-) : (
-  <CustomDataGrid
-    className="main-list-data-grid bills-list-data-grid"
-    rows={bill}
-    columns={columns}
-    pageSize={15}
-    rowsPerPageOptions={[5]}
-    disableSelectionOnClick
-    disableColumnMenu
-    rowHeight={56}
-    loading={false} // ya no lo necesita
+          <TableSkeleton rows={8} columns={columns.length} />
+        ) : (
+          <CustomDataGrid
+            className="main-list-data-grid bills-list-data-grid"
+            rows={bill}
+            columns={columns}
+            pageSize={15}
+            rowsPerPageOptions={[5]}
+            disableSelectionOnClick
+            disableColumnMenu
+            rowHeight={56}
+            loading={false} // ya no lo necesita
 
 
-          sx={{
-            border: '1px solid #e0e0e0',
-            // Estilo para el texto en las celdas
+            sx={{
+              border: '1px solid #e0e0e0',
+              // Estilo para el texto en las celdas
 
-            '& .MuiDataGrid-cell': {
-              borderRight: '1px solid #f0f0f0',
-              color: '#000000ff',
-              // Gris oscuro estándar
-              '& .MuiTypography-root, & .InputTitles': { // Afecta tanto a Typography como a componentes personalizados
-                fontWeight: 400, // 400 = normal (300 es light, 500 medium, 600 semibold)
-                color: 'inherit' // Hereda el color de la celda
-              }
-            },
-            // Estilo para los encabezados de columna
-            '& .MuiDataGrid-columnHeaders': {
-              backgroundColor: '#f5f5f5',
-
-              borderBottom: '2px solid #e0e0e0',
-              '& .MuiDataGrid-columnHeaderTitle': {
-                fontWeight: 600, // Un poco más grueso que el contenido pero no bold (600+)
-                color: '#808080',
-                fontSize: '0.85rem'
-              }
-            },
-            '& .MuiDataGrid-columnHeader': {
-              borderRight: '1px solid #e0e0e0', // Bordes entre columnas
-            },
-            '& .MuiDataGrid-row': {
-              '&:nth-of-type(even)': {
-                backgroundColor: '#fafafa', // Color filas pares
+              '& .MuiDataGrid-cell': {
+                borderRight: '1px solid #f0f0f0',
+                color: '#000000ff',
+                // Gris oscuro estándar
+                '& .MuiTypography-root, & .InputTitles': { // Afecta tanto a Typography como a componentes personalizados
+                  fontWeight: 400, // 400 = normal (300 es light, 500 medium, 600 semibold)
+                  color: 'inherit' // Hereda el color de la celda
+                }
               },
-              '&:hover': {
-                backgroundColor: '#f0f0f0', // Color al pasar el mouse
+              // Estilo para los encabezados de columna
+              '& .MuiDataGrid-columnHeaders': {
+                backgroundColor: '#f5f5f5',
+
+                borderBottom: '2px solid #e0e0e0',
+                '& .MuiDataGrid-columnHeaderTitle': {
+                  fontWeight: 600, // Un poco más grueso que el contenido pero no bold (600+)
+                  color: '#808080',
+                  fontSize: '0.85rem'
+                }
               },
-            },
-            '& .MuiDataGrid-footerContainer': {
-              borderTop: '1px solid #e0e0e0', // Borde superior del footer
-            },
-            '& .MuiDataGrid-virtualScroller': {
-              overflowX: 'auto', // Oculta el scroll horizontal si no es necesario
-            },
-            filter: loading ? 'blur(2px)' : 'none', // Efecto de desenfoque
-            transition: 'filter 0.3s ease-out' // Transición suave
+              '& .MuiDataGrid-columnHeader': {
+                borderRight: '1px solid #e0e0e0', // Bordes entre columnas
+              },
+              '& .MuiDataGrid-row': {
+                '&:nth-of-type(even)': {
+                  backgroundColor: '#fafafa', // Color filas pares
+                },
+                '&:hover': {
+                  backgroundColor: '#f0f0f0', // Color al pasar el mouse
+                },
+              },
+              '& .MuiDataGrid-footerContainer': {
+                borderTop: '1px solid #e0e0e0', // Borde superior del footer
+              },
+              '& .MuiDataGrid-virtualScroller': {
+                overflowX: 'auto', // Oculta el scroll horizontal si no es necesario
+              },
+              filter: loading ? 'blur(2px)' : 'none', // Efecto de desenfoque
+              transition: 'filter 0.3s ease-out' // Transición suave
 
-          }}
-          components={{
-            ColumnSortedAscendingIcon: SortIcon,
-            ColumnSortedDescendingIcon: SortIcon,
-            NoRowsOverlay: () => (
-              <Typography
-                fontSize="0.9rem"
-                fontWeight="600 "
-                color="#488B8F"
-                height="100%"
-                display="flex"
-                alignItems="center"
-                justifyContent="center"
-                sx={{
-                  border: '1px dashed #e0e0e0', // Borde para el área vacía
-                  margin: '0 16px 16px 16px',
-                  borderRadius: '4px',
+            }}
+            components={{
+              ColumnSortedAscendingIcon: SortIcon,
+              ColumnSortedDescendingIcon: SortIcon,
+              NoRowsOverlay: () => (
+                <Typography
+                  fontSize="0.9rem"
+                  fontWeight="600 "
+                  color="#488B8F"
+                  height="100%"
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  sx={{
+                    border: '1px dashed #e0e0e0', // Borde para el área vacía
+                    margin: '0 16px 16px 16px',
+                    borderRadius: '4px',
 
-                }}
-              >
-                No hay facturas registradas
-              </Typography>
-            ),
-
-            Pagination: () => (
-              <Box
-                container
-                display="flex"
-                flexDirection="row"
-                justifyContent="space-between"
-                alignItems="center"
-              >
-                <Typography fontSize="0.8rem" fontWeight="600" color="#5EA3A3">
-                  {page * 15 - 14} - {page * 15} de {dataCount}{" "}
+                  }}
+                >
+                  No hay facturas registradas
                 </Typography>
+              ),
+
+              Pagination: () => (
                 <Box
                   container
                   display="flex"
                   flexDirection="row"
                   justifyContent="space-between"
+                  alignItems="center"
                 >
-                  <Typography
-                    fontFamily="icomoon"
-                    fontSize="1.2rem"
-                    marginRight="0.3rem"
-                    marginLeft="0.5rem"
-                    sx={{
-                      cursor: "pointer",
-                      transform: "rotate(180deg)",
-                      color: "#63595C",
-                    }}
-                    onClick={() => {
-                      if (page > 1) {
-
-                        setPage(page - 1);
-                      }
-                    }}
-                  >
-                    &#xe91f;
+                  <Typography fontSize="0.8rem" fontWeight="600" color="#5EA3A3">
+                    {page * 15 - 14} - {page * 15} de {dataCount}{" "}
                   </Typography>
-                  <Typography
-                    fontFamily="icomoon"
-                    fontSize="1.2rem"
-                    marginRight="0.3rem"
-                    marginLeft="0.5rem"
-                    sx={{
-                      cursor: "pointer",
-
-                      color: "#63595C",
-                    }}
-                    onClick={() => {
-                      if (page < dataCount / 15) {
-
-                        setPage(page + 1);
-                      }
-                    }}
+                  <Box
+                    container
+                    display="flex"
+                    flexDirection="row"
+                    justifyContent="space-between"
                   >
-                    &#xe91f;
-                  </Typography>
+                    <Typography
+                      fontFamily="icomoon"
+                      fontSize="1.2rem"
+                      marginRight="0.3rem"
+                      marginLeft="0.5rem"
+                      sx={{
+                        cursor: "pointer",
+                        transform: "rotate(180deg)",
+                        color: "#63595C",
+                      }}
+                      onClick={() => {
+                        if (page > 1) {
+
+                          setPage(page - 1);
+                        }
+                      }}
+                    >
+                      &#xe91f;
+                    </Typography>
+                    <Typography
+                      fontFamily="icomoon"
+                      fontSize="1.2rem"
+                      marginRight="0.3rem"
+                      marginLeft="0.5rem"
+                      sx={{
+                        cursor: "pointer",
+
+                        color: "#63595C",
+                      }}
+                      onClick={() => {
+                        if (page < dataCount / 15) {
+
+                          setPage(page + 1);
+                        }
+                      }}
+                    >
+                      &#xe91f;
+                    </Typography>
+                  </Box>
                 </Box>
-              </Box>
-            ),
-          }}
-          componentsProps={{
-            pagination: {
-              color: "#5EA3A3",
-            },
-          }}
-          
-        />
+              ),
+            }}
+            componentsProps={{
+              pagination: {
+                color: "#5EA3A3",
+              },
+            }}
 
-           
-)}
+          />
+
+
+        )}
       </Box>
       <ToastContainer
         position="top-right"
