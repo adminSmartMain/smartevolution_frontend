@@ -8,6 +8,8 @@ import AddBoxIcon from '@mui/icons-material/AddBox';
 import Skeleton from '@mui/material/Skeleton';
 import TuneIcon from '@mui/icons-material/Tune';
 import Chip from '@mui/material/Chip';
+import StarIcon from '@mui/icons-material/Star';
+import StarBorderIcon from '@mui/icons-material/StarBorder';
 
 import { Breadcrumbs } from "@mui/material";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
@@ -53,7 +55,7 @@ import {
   DeleteBillById,
   GetBillEvents,
   GetBillList,
-  GetBillListByQuery, getTypeBill
+  GetBillListByQuery, getTypeBill, UpdateBillWatchlist
 } from "./queries";
 
 import FileSaver, { saveAs } from "file-saver";
@@ -127,6 +129,7 @@ export const BillsComponents = () => {
   const [anchorElTypeBill, setAnchorElTypeBil] = useState(null);
   const [anchorElChannel, setAnchorElChannel] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
+  const [watchlistLoadingId, setWatchlistLoadingId] = useState(null);
   const [search, setSearch] = useState("");
   const [optionsTypeBill, setOptionsTypeBill] = useState([]); // CAMBIADO: de "" a []
   const [page, setPage] = useState(1);
@@ -445,6 +448,74 @@ export const BillsComponents = () => {
   const handleOpenEditBill = (id) => {
     handleOpenWindow(`/bills/editBill?id=${id}`);
   };
+  const handleToggleWatchlist = async (row) => {
+    if (!row?.id || watchlistLoadingId) return;
+
+    const enabled = !Boolean(row.onWatchlist);
+    setWatchlistLoadingId(row.id);
+
+    try {
+      const result = await UpdateBillWatchlist(row.id, enabled);
+      const watchlistData = result?.data || {};
+
+      setBill((currentBills) =>
+        currentBills.map((billRow) =>
+          billRow.id === row.id
+            ? {
+                ...billRow,
+                onWatchlist: watchlistData.onWatchlist ?? enabled,
+                watchlistActivatedAt:
+                  watchlistData.watchlistActivatedAt ?? null,
+                watchlistActivatedBy:
+                  watchlistData.watchlistActivatedBy ?? null,
+                billyEventsNextCheckAt:
+                  watchlistData.billyEventsNextCheckAt ??
+                  billRow.billyEventsNextCheckAt,
+              }
+            : billRow
+        )
+      );
+
+      setSelectedRow((currentRow) =>
+        currentRow?.id === row.id
+          ? {
+              ...currentRow,
+              onWatchlist: watchlistData.onWatchlist ?? enabled,
+              watchlistActivatedAt:
+                watchlistData.watchlistActivatedAt ?? null,
+              watchlistActivatedBy:
+                watchlistData.watchlistActivatedBy ?? null,
+              billyEventsNextCheckAt:
+                watchlistData.billyEventsNextCheckAt ??
+                currentRow.billyEventsNextCheckAt,
+            }
+          : currentRow
+      );
+
+      Toast(
+        enabled
+          ? "Seguimiento intensivo activado"
+          : "Seguimiento intensivo desactivado",
+        "success"
+      );
+    } catch (error) {
+      const status = error?.response?.status;
+      const message =
+        error?.response?.data?.message ||
+        "No fue posible actualizar el seguimiento de la factura";
+
+      Toast(
+        status === 409
+          ? message
+          : message,
+        status === 409 ? "warning" : "error"
+      );
+    } finally {
+      setWatchlistLoadingId(null);
+      setAnchorEl(null);
+    }
+  };
+
   const SortIcon = () => (
     <Typography fontFamily="icomoon" fontSize="0.7rem">
       &#xe908;
@@ -577,6 +648,54 @@ export const BillsComponents = () => {
         }
       }
       ,
+    },
+    {
+      field: "onWatchlist",
+      headerName: "Seguimiento",
+      width: 110,
+      sortable: false,
+      filterable: false,
+      renderCell: (params) => {
+        const active = Boolean(params.row.onWatchlist);
+        const loadingWatchlist = watchlistLoadingId === params.row.id;
+
+        return (
+          <Tooltip
+            title={
+              active
+                ? "Seguimiento intensivo activo. Clic para desactivar."
+                : "Activar seguimiento intensivo cada 15 minutos."
+            }
+            arrow
+          >
+            <span>
+              <IconButton
+                size="small"
+                disabled={loadingWatchlist}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  handleToggleWatchlist(params.row);
+                }}
+                sx={{
+                  color: active ? "#F9A825" : "#9E9E9E",
+                  "&:hover": {
+                    backgroundColor: "#B5D1C980",
+                    color: active ? "#F57F17" : "#488B8F",
+                  },
+                }}
+              >
+                {loadingWatchlist ? (
+                  <CircularProgress size={19} />
+                ) : active ? (
+                  <StarIcon fontSize="small" />
+                ) : (
+                  <StarBorderIcon fontSize="small" />
+                )}
+              </IconButton>
+            </span>
+          </Tooltip>
+        );
+      },
     },
     {
       field: "billySyncStatus",
@@ -1164,6 +1283,22 @@ export const BillsComponents = () => {
                 Ver Eventos
               </MenuItem>
               <MenuItem
+                onClick={() => handleToggleWatchlist(selectedRow)}
+                disabled={watchlistLoadingId === selectedRow?.id}
+              >
+                <ListItemIcon>
+                  {selectedRow?.onWatchlist ? (
+                    <StarIcon fontSize="small" sx={{ color: "#F9A825" }} />
+                  ) : (
+                    <StarBorderIcon fontSize="small" />
+                  )}
+                </ListItemIcon>
+                {selectedRow?.onWatchlist
+                  ? "Desactivar seguimiento"
+                  : "Seguimiento intensivo"}
+              </MenuItem>
+
+              <MenuItem
                 onClick={() => {
                   if (selectedRow.associatedOperation != null) {
                     Toast(
@@ -1299,7 +1434,12 @@ export const BillsComponents = () => {
         billyEventsConsecutiveErrors: bill.billyEventsConsecutiveErrors,
         billyEventsLastAttemptAt: bill.billyEventsLastAttemptAt,
         billyEventsLastSuccessAt: bill.billyEventsLastSuccessAt,
-        billyEventsNextCheckAt: bill.billyEventsNextCheckAt
+        billyEventsNextCheckAt: bill.billyEventsNextCheckAt,
+
+        // Seguimiento intensivo Billy
+        onWatchlist: Boolean(bill.onWatchlist),
+        watchlistActivatedAt: bill.watchlistActivatedAt,
+        watchlistActivatedBy: bill.watchlistActivatedBy
       })) || [];
     setBill(bill);
   }, [data]);
