@@ -1,7 +1,7 @@
 import Head from "next/head";
 
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import { isValid, isAfter } from 'date-fns'; // Asegúrate de importar estas funciones
 import { Toast } from "@components/toast";
@@ -22,7 +22,7 @@ import {
   
 } from "./queries";
 import BillCreationComponent from "./components";
-import { Bills, billById, payerByBill,EditBill,GetBillEvents } from "./queries";
+import { Bills, billById, payerByBill, EditBill, SyncBillNow } from "./queries";
 export default function BillDetail() {
 // States
  
@@ -43,6 +43,7 @@ export default function BillDetail() {
   const [bill,setDataBill]=useState("")
   // Router
   const router = useRouter();
+  const lastBillSyncKey = useRef(null);
   // Detect when the user is editing an operation
     useEffect(() => {
       if (router && router.query) {
@@ -92,15 +93,6 @@ export default function BillDetail() {
     error: errorPayer,
     data: dataPayer,
   } = useFetch({ service: payerByBill, init: false });
-
-  // get the bill info
-  const {
-    fetch: fetchBill,
-    loading: loadingBill,
-    error: errorBill,
-    data: dataBill,
-  } = useFetch({ service: billById, init: false });
-   
 
   const {
     fetch: getLastId,
@@ -171,25 +163,68 @@ export default function BillDetail() {
 
 
       
-      useEffect(
+      useEffect(() => {
+        if (!id) return;
 
-      ()=>{
+        const tab = router.query.tab ?? "0";
+        const syncKey = `${id}:${tab}`;
 
-        if (id){
+        // Evita repetir el refresh por re-renders de la misma vista, pero
+        // permite sincronizar de nuevo al cambiar entre Detalle y Eventos.
+        if (lastBillSyncKey.current === syncKey) return;
+        lastBillSyncKey.current = syncKey;
 
-          fetchBill(id)
-          
-        }
+        let cancelled = false;
 
-      }, [id])
+        const loadFreshBill = async () => {
+          try {
+            const syncResponse = await SyncBillNow(id);
 
-     
+            if (cancelled) return;
 
-    useEffect(() => {
-      if (dataBill) {
-          setDataBill(dataBill.data);
-      }
-    }, [dataBill]); // Espera a que los datos lleguen
+            if (!syncResponse?.sync_ok) {
+              Toast(
+                syncResponse?.warning ||
+                  "No fue posible actualizar la factura desde Billy. Se muestra la última información disponible.",
+                "warning"
+              );
+            }
+
+            if (syncResponse?.data) {
+              setDataBill(syncResponse.data);
+              return;
+            }
+          } catch (syncError) {
+            console.error("Error sincronizando factura con Billy:", syncError);
+
+            if (!cancelled) {
+              Toast(
+                "No fue posible actualizar la factura desde Billy. Se muestra la última información disponible.",
+                "warning"
+              );
+            }
+          }
+
+          // Fallback de transporte/servidor: cargar la copia local de la BD.
+          try {
+            const localResponse = await billById(id);
+            if (!cancelled && localResponse?.data) {
+              setDataBill(localResponse.data);
+            }
+          } catch (localError) {
+            console.error("Error cargando factura local:", localError);
+            if (!cancelled) {
+              Toast("No fue posible cargar la factura.", "error");
+            }
+          }
+        };
+
+        loadFreshBill();
+
+        return () => {
+          cancelled = true;
+        };
+      }, [id, router.query.tab]);
 
 
 
