@@ -56,3 +56,16 @@ export const getTypeBill = async () => {
   });
   return res.data;
 };
+
+export const UpdateBillWatchlist = async (id, enabled) => {
+  const res = await Axios.post(
+    `${API_URL}/bill/watchlist/${id}`,
+    { enabled },
+    {
+      headers: {
+        authorization: "Bearer " + localStorage.getItem("access-token"),
+      },
+    }
+  );
+  return res.data;
+};

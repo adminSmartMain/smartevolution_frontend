@@ -30,6 +30,19 @@ export const DeleteBillById = async (id) => {
   return res.data;
 };
 
+export const SyncBillNow = async (id) => {
+  const res = await Axios.post(
+    `${API_URL}/bill/sync-now/${id}`,
+    {},
+    {
+      headers: {
+        authorization: "Bearer " + localStorage.getItem("access-token"),
+      },
+    }
+  );
+  return res.data;
+};
+
 export const GetBillEvents = async (id) => {
   
 

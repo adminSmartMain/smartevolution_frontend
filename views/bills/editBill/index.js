@@ -22,7 +22,7 @@ import {
   
 } from "./queries";
 import BillCreationComponent from "./components";
-import { Bills, billById, payerByBill,EditBill } from "./queries";
+import { Bills, billById, payerByBill, EditBill, SyncBillNow } from "./queries";
 export default function BillEdition() {
 // States
   const [created, setCreated] = useState(0);
@@ -97,15 +97,6 @@ export default function BillEdition() {
     data: dataPayer,
   } = useFetch({ service: payerByBill, init: false });
 
-  // get the bill info
-  const {
-    fetch: fetchBill,
-    loading: loadingBill,
-    error: errorBill,
-    data: dataBill,
-  } = useFetch({ service: billById, init: false });
-   
-
   const {
     fetch: getLastId,
     loading: loadingGetLastId,
@@ -173,26 +164,61 @@ export default function BillEdition() {
       } =  useFetch({ service: TypeOperation, init: true });
 
 
-      useEffect(
+      useEffect(() => {
+        if (!id) return;
 
-      ()=>{
+        let cancelled = false;
 
-        if (id){
+        const loadFreshBill = async () => {
+          try {
+            const syncResponse = await SyncBillNow(id);
 
-          fetchBill(id)
-          
-        }
+            if (cancelled) return;
 
-      }, [id])
+            if (!syncResponse?.sync_ok) {
+              Toast(
+                syncResponse?.warning ||
+                  "No fue posible actualizar la factura desde Billy. Se muestra la última información disponible.",
+                "warning"
+              );
+            }
 
-      console.log(dataBill)
+            if (syncResponse?.data) {
+              setDataBill(syncResponse.data);
+              return;
+            }
+          } catch (syncError) {
+            console.error("Error sincronizando factura con Billy:", syncError);
 
-    useEffect(() => {
-      if (dataBill) {
-          setDataBill(dataBill.data);
-      }
-    }, [dataBill]); // Espera a que los datos lleguen
+            if (!cancelled) {
+              Toast(
+                "No fue posible actualizar la factura desde Billy. Se muestra la última información disponible.",
+                "warning"
+              );
+            }
+          }
 
+          // Si sync-now no está disponible por un error de red/servidor,
+          // conservamos la edición usando la copia local de la factura.
+          try {
+            const localResponse = await billById(id);
+            if (!cancelled && localResponse?.data) {
+              setDataBill(localResponse.data);
+            }
+          } catch (localError) {
+            console.error("Error cargando factura local:", localError);
+            if (!cancelled) {
+              Toast("No fue posible cargar la factura.", "error");
+            }
+          }
+        };
+
+        loadFreshBill();
+
+        return () => {
+          cancelled = true;
+        };
+      }, [id]);
 
 
     console.log(bill)
