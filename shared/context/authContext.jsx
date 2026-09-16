@@ -24,6 +24,7 @@ export const AuthProvider = (child) => {
   const [roles, setRoles] = useState([]);
   const [permissions, setPermissions] = useState([]);
   const [client, setClient] = useState(null);
+  const [accountScope, setAccountScope] = useState(null);
   const [authReady, setAuthReady] = useState(false);
 
   const clearSession = () => {
@@ -35,6 +36,7 @@ export const AuthProvider = (child) => {
     setRoles([]);
     setPermissions([]);
     setClient(null);
+    setAccountScope(null);
     setAuthReady(true);
   };
 
@@ -57,6 +59,8 @@ export const AuthProvider = (child) => {
           if (!isExcluded) router.push("/auth/login");
           return;
         }
+
+        setAccountScope(token.account_scope || "INTERNAL");
 
         if (token.account_scope === "CLIENT_PORTAL") {
           setUser({ id: token.user_id, name: token.name, profile_photo: token.profile_photo || "" });
@@ -89,6 +93,7 @@ export const AuthProvider = (child) => {
               setRoles(result.data.roles || []);
               setPermissions(result.data.permissions || []);
               setClient(result.data.client || null);
+              setAccountScope(result.data.account_scope || token.account_scope || "INTERNAL");
               setUser((current) => ({ ...current, profile_photo: result.data.profile_photo || current.profile_photo || "" }));
             }
           } else {
@@ -135,7 +140,7 @@ export const AuthProvider = (child) => {
   const can = (permission) => admin || permissions.includes(permission);
   return (
     <authContext.Provider
-      value={{ authToken, refreshToken, user, admin, roles, permissions, client, authReady, can, logout, setSessionUser }}
+      value={{ authToken, refreshToken, user, admin, roles, permissions, client, accountScope, authReady, can, logout, setSessionUser }}
     >
       {child.children}
     </authContext.Provider>
