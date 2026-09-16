@@ -52,3 +52,7 @@ export const getNotificationRuleOptions = () =>
 
 export const updateNotificationRule = (id, data) =>
   Axios.patch(`${NOTIFICATION_API}/rules/${id}/`, data, config()).then((r) => r.data.data);
+
+
+export const previewNotificationRule = (data) =>
+  Axios.post(`${NOTIFICATION_API}/rules/preview/`, data, config()).then((r) => r.data.data);

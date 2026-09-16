@@ -5,6 +5,8 @@ import {
   Box,
   Button,
   Chip,
+  CircularProgress,
+  Divider,
   Dialog,
   DialogActions,
   DialogContent,
@@ -21,8 +23,18 @@ import { DataGrid } from "@mui/x-data-grid";
 import {
   getNotificationRuleOptions,
   getNotificationRules,
+  previewNotificationRule,
   updateNotificationRule,
 } from "./queries";
+
+const draftPayload = (rule) => ({
+  enabled: !!rule.enabled,
+  permission_code: rule.permission_code || null,
+  include_entity_creator: !!rule.include_entity_creator,
+  role_ids: rule.role_ids || [],
+  include_user_ids: rule.include_user_ids || [],
+  exclude_user_ids: rule.exclude_user_ids || [],
+});
 
 const recipientSummary = (rule) => {
   const parts = [];
@@ -62,6 +74,9 @@ export default function NotificationRulesModule() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [preview, setPreview] = useState(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState("");
 
   const load = async () => {
     try {
@@ -158,18 +173,44 @@ export default function NotificationRulesModule() {
     },
   ];
 
+  useEffect(() => {
+    if (!editing) {
+      setPreview(null);
+      setPreviewError("");
+      return undefined;
+    }
+
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      try {
+        setPreviewLoading(true);
+        setPreviewError("");
+        const data = await previewNotificationRule(draftPayload(editing));
+        if (!cancelled) setPreview(data);
+      } catch (err) {
+        if (!cancelled) {
+          setPreview(null);
+          setPreviewError(
+            err.response?.data?.message ||
+              "No fue posible calcular los destinatarios."
+          );
+        }
+      } finally {
+        if (!cancelled) setPreviewLoading(false);
+      }
+    }, 350);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [editing]);
+
   const save = async () => {
     try {
       setSaving(true);
       setError("");
-      await updateNotificationRule(editing.id, {
-        enabled: editing.enabled,
-        permission_code: editing.permission_code || null,
-        include_entity_creator: editing.include_entity_creator,
-        role_ids: editing.role_ids,
-        include_user_ids: editing.include_user_ids,
-        exclude_user_ids: editing.exclude_user_ids,
-      });
+      await updateNotificationRule(editing.id, draftPayload(editing));
       setEditing(null);
       setNotice("Regla de notificación actualizada.");
       await load();
@@ -237,35 +278,42 @@ export default function NotificationRulesModule() {
                 {editing.description}
               </Typography>
 
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={!!editing.enabled}
-                    onChange={(event) =>
-                      setEditing({
-                        ...editing,
-                        enabled: event.target.checked,
-                      })
-                    }
-                  />
-                }
-                label="Evento habilitado"
-              />
+              <Typography fontWeight={700} sx={{ mb: 1 }}>
+                Regla
+              </Typography>
+              <Box sx={{ display: "flex", gap: 3, flexWrap: "wrap", mb: 2 }}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={!!editing.enabled}
+                      onChange={(event) =>
+                        setEditing({ ...editing, enabled: event.target.checked })
+                      }
+                    />
+                  }
+                  label="Evento habilitado"
+                />
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={!!editing.include_entity_creator}
+                      onChange={(event) =>
+                        setEditing({
+                          ...editing,
+                          include_entity_creator: event.target.checked,
+                        })
+                      }
+                    />
+                  }
+                  label="Incluir creador de la entidad"
+                />
+              </Box>
 
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={!!editing.include_entity_creator}
-                    onChange={(event) =>
-                      setEditing({
-                        ...editing,
-                        include_entity_creator: event.target.checked,
-                      })
-                    }
-                  />
-                }
-                label="Incluir al usuario que creó la entidad"
-              />
+              <Divider sx={{ my: 2 }} />
+              <Typography fontWeight={700}>Criterios de inclusión</Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                Un usuario entra si cumple al menos uno de estos criterios.
+              </Typography>
 
               <TextField
                 select
@@ -279,7 +327,7 @@ export default function NotificationRulesModule() {
                     permission_code: event.target.value || null,
                   })
                 }
-                helperText="Todos los usuarios internos activos que posean este permiso recibirán el evento."
+                helperText="Incluye usuarios internos activos que posean este permiso; los superusuarios también califican."
               >
                 <MenuItem value="">
                   <em>Sin permiso base</em>
@@ -294,9 +342,7 @@ export default function NotificationRulesModule() {
               <Autocomplete
                 multiple
                 options={options.roles || []}
-                getOptionLabel={(option) =>
-                  `${option.name} (${option.code})`
-                }
+                getOptionLabel={(option) => `${option.name} (${option.code})`}
                 value={(options.roles || []).filter((role) =>
                   editing.role_ids.includes(role.id)
                 )}
@@ -311,7 +357,7 @@ export default function NotificationRulesModule() {
                     {...params}
                     margin="normal"
                     label="Roles adicionales"
-                    helperText="Los miembros activos de estos roles también recibirán el evento."
+                    helperText="Los miembros activos de estos roles también califican."
                   />
                 )}
               />
@@ -319,9 +365,7 @@ export default function NotificationRulesModule() {
               <Autocomplete
                 multiple
                 options={options.users || []}
-                getOptionLabel={(option) =>
-                  `${option.name} — ${option.email}`
-                }
+                getOptionLabel={(option) => `${option.name} — ${option.email}`}
                 value={(options.users || []).filter((user) =>
                   editing.include_user_ids.includes(user.id)
                 )}
@@ -336,17 +380,17 @@ export default function NotificationRulesModule() {
                     {...params}
                     margin="normal"
                     label="Usuarios adicionales"
-                    helperText="Útil para excepciones individuales sin modificar el rol."
+                    helperText="Excepciones individuales sin modificar roles ni permisos."
                   />
                 )}
               />
 
+              <Divider sx={{ my: 2 }} />
+              <Typography fontWeight={700}>Exclusiones</Typography>
               <Autocomplete
                 multiple
                 options={options.users || []}
-                getOptionLabel={(option) =>
-                  `${option.name} — ${option.email}`
-                }
+                getOptionLabel={(option) => `${option.name} — ${option.email}`}
                 value={(options.users || []).filter((user) =>
                   editing.exclude_user_ids.includes(user.id)
                 )}
@@ -361,10 +405,102 @@ export default function NotificationRulesModule() {
                     {...params}
                     margin="normal"
                     label="Usuarios excluidos"
-                    helperText="La exclusión gana incluso si el usuario recibe por permiso, rol o creador."
+                    helperText="La exclusión tiene prioridad sobre permiso, rol, usuario adicional y creador."
                   />
                 )}
               />
+
+              <Divider sx={{ my: 2 }} />
+              <Typography fontWeight={700} sx={{ mb: 1 }}>
+                Previsualización de destinatarios
+              </Typography>
+              <Paper variant="outlined" sx={{ p: 2, bgcolor: "#fafcfc" }}>
+                {previewLoading && (
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <CircularProgress size={18} />
+                    <Typography variant="body2">Calculando destinatarios…</Typography>
+                  </Box>
+                )}
+
+                {!previewLoading && previewError && (
+                  <Alert severity="error">{previewError}</Alert>
+                )}
+
+                {!previewLoading && !previewError && preview && (
+                  <>
+                    {!editing.enabled && (
+                      <Alert severity="warning" sx={{ mb: 2 }}>
+                        La regla está desactivada: actualmente nadie recibirá este evento.
+                        Se muestran abajo los usuarios que cumplirían los criterios si se activa.
+                      </Alert>
+                    )}
+
+                    <Typography variant="body2" sx={{ mb: 1 }}>
+                      <strong>{preview.effective_count}</strong> destinatario(s) efectivo(s)
+                      {preview.excluded_count
+                        ? ` · ${preview.excluded_count} exclusión(es)`
+                        : ""}
+                    </Typography>
+
+                    {preview.entity_creator_runtime && (
+                      <Alert severity="info" sx={{ mb: 2 }}>
+                        El creador se resuelve en tiempo de ejecución para cada factura u operación,
+                        por eso no aparece como una persona fija en esta previsualización.
+                      </Alert>
+                    )}
+
+                    {(preview.recipients || []).length === 0 ? (
+                      <Typography variant="body2" color="text.secondary">
+                        Ningún usuario interno activo cumple actualmente los criterios configurados.
+                      </Typography>
+                    ) : (
+                      <Box sx={{ display: "grid", gap: 1 }}>
+                        {(preview.recipients || []).map((user) => (
+                          <Box
+                            key={user.id}
+                            sx={{ p: 1.25, border: "1px solid #e5e5e5", borderRadius: 1 }}
+                          >
+                            <Typography variant="body2" fontWeight={700}>
+                              {user.name}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {user.email}
+                            </Typography>
+                            <Box sx={{ mt: 0.5 }}>
+                              {(user.reasons || []).map((reason, index) => (
+                                <Chip
+                                  key={`${user.id}-${reason.type}-${index}`}
+                                  size="small"
+                                  label={reason.label}
+                                  sx={{ mr: 0.5, mt: 0.5 }}
+                                />
+                              ))}
+                            </Box>
+                          </Box>
+                        ))}
+                      </Box>
+                    )}
+
+                    {(preview.excluded || []).length > 0 && (
+                      <Box sx={{ mt: 2 }}>
+                        <Typography variant="body2" fontWeight={700} sx={{ mb: 1 }}>
+                          Excluidos
+                        </Typography>
+                        {(preview.excluded || []).map((user) => (
+                          <Box key={user.id} sx={{ mb: 1 }}>
+                            <Typography variant="body2">
+                              {user.name} — {user.email}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {(user.reasons || []).map((reason) => reason.label).join(" · ")}
+                            </Typography>
+                          </Box>
+                        ))}
+                      </Box>
+                    )}
+                  </>
+                )}
+              </Paper>
             </>
           )}
         </DialogContent>
