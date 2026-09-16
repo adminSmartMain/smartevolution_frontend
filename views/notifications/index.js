@@ -1,8 +1,10 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
+  Alert,
   Box,
   Button,
+  CircularProgress,
   Paper,
   Tab,
   Tabs,
@@ -14,7 +16,13 @@ import {
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import DoneAllIcon from "@mui/icons-material/DoneAll";
 
-import { mockNotifications } from "./mockData";
+import {
+  createNotificationsSocket,
+  getNotifications,
+  markAllNotificationsRead,
+  markNotificationRead,
+  notifyNotificationsChanged,
+} from "./queries";
 
 import NotificationList from "./components/NotificationList";
 import NotificationPreview from "./components/NotificationPreview";
@@ -23,14 +31,66 @@ export default function NotificationsView() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
-  const [notifications, setNotifications] =
-    useState(mockNotifications);
-
-  const [selectedId, setSelectedId] =
-    useState(null);
-
+  const [notifications, setNotifications] = useState([]);
+  const [selectedId, setSelectedId] = useState(null);
   const [tab, setTab] = useState("all");
   const [query, setQuery] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+
+  const loadNotifications = useCallback(async () => {
+    try {
+      setLoadError(false);
+
+      const data = await getNotifications({
+        page: 1,
+        pageSize: 100,
+      });
+
+      setNotifications(data.results || []);
+    } catch (error) {
+      console.error(
+        "No fue posible cargar las notificaciones",
+        error
+      );
+      setLoadError(true);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadNotifications();
+
+    const stopSocket = createNotificationsSocket({
+      onNotification: (notification) => {
+        setNotifications((current) => [
+          notification,
+          ...current.filter(
+            (item) => item.id !== notification.id
+          ),
+        ]);
+      },
+      onReconnect: loadNotifications,
+    });
+
+    const handleExternalChange = () => {
+      loadNotifications();
+    };
+
+    window.addEventListener(
+      "notifications:changed",
+      handleExternalChange
+    );
+
+    return () => {
+      stopSocket();
+      window.removeEventListener(
+        "notifications:changed",
+        handleExternalChange
+      );
+    };
+  }, [loadNotifications]);
 
   const unreadCount = notifications.filter(
     (notification) => !notification.read
@@ -51,10 +111,10 @@ export default function NotificationsView() {
       const matchesSearch =
         !search ||
         notification.title
-          .toLowerCase()
+          ?.toLowerCase()
           .includes(search) ||
         notification.message
-          .toLowerCase()
+          ?.toLowerCase()
           .includes(search) ||
         notification.entity?.label
           ?.toLowerCase()
@@ -62,11 +122,7 @@ export default function NotificationsView() {
 
       return matchesTab && matchesSearch;
     });
-  }, [
-    notifications,
-    tab,
-    query,
-  ]);
+  }, [notifications, tab, query]);
 
   const selectedNotification =
     notifications.find(
@@ -74,20 +130,28 @@ export default function NotificationsView() {
         notification.id === selectedId
     ) || null;
 
-  const handleSelect = (notification) => {
+  const handleSelect = async (notification) => {
     setSelectedId(notification.id);
 
-    if (!notification.read) {
-      setNotifications((current) =>
-        current.map((item) =>
-          item.id === notification.id
-            ? {
-                ...item,
-                read: true,
-              }
-            : item
-        )
+    if (notification.read) return;
+
+    setNotifications((current) =>
+      current.map((item) =>
+        item.id === notification.id
+          ? { ...item, read: true }
+          : item
+      )
+    );
+
+    try {
+      await markNotificationRead(notification.id);
+      notifyNotificationsChanged();
+    } catch (error) {
+      console.error(
+        "No fue posible marcar la notificación como leída",
+        error
       );
+      await loadNotifications();
     }
   };
 
@@ -95,33 +159,70 @@ export default function NotificationsView() {
     setSelectedId(null);
   };
 
-  const markAllAsRead = () => {
+  const markAllAsRead = async () => {
+    if (unreadCount === 0) return;
+
     setNotifications((current) =>
       current.map((notification) => ({
         ...notification,
         read: true,
       }))
     );
+
+    try {
+      await markAllNotificationsRead();
+      notifyNotificationsChanged();
+    } catch (error) {
+      console.error(
+        "No fue posible marcar todas las notificaciones como leídas",
+        error
+      );
+      await loadNotifications();
+    }
   };
 
   const showMobilePreview =
     isMobile && selectedNotification;
 
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          minHeight: 320,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <CircularProgress size={32} />
+      </Box>
+    );
+  }
+
   return (
-    <Box
-      sx={{
-        width: "100%",
-        minWidth: 0,
-      }}
-    >
-      {/* Barra superior del módulo */}
+    <Box sx={{ width: "100%", minWidth: 0 }}>
+      {loadError && (
+        <Alert
+          severity="error"
+          sx={{ mb: 2 }}
+          action={
+            <Button
+              color="inherit"
+              size="small"
+              onClick={loadNotifications}
+            >
+              Reintentar
+            </Button>
+          }
+        >
+          No fue posible cargar las notificaciones.
+        </Alert>
+      )}
+
       {!showMobilePreview && (
         <Box
           sx={{
-            mb: {
-              xs: 1.5,
-              md: 2,
-            },
+            mb: { xs: 1.5, md: 2 },
             display: "flex",
             justifyContent: "space-between",
             alignItems: {
@@ -132,13 +233,9 @@ export default function NotificationsView() {
               xs: "column",
               sm: "row",
             },
-            gap: {
-              xs: 1.5,
-              sm: 2,
-            },
+            gap: { xs: 1.5, sm: 2 },
           }}
         >
-
           <Button
             startIcon={<DoneAllIcon />}
             onClick={markAllAsRead}
@@ -151,10 +248,7 @@ export default function NotificationsView() {
                 xs: "flex-start",
                 sm: "auto",
               },
-              px: {
-                xs: 0,
-                sm: 1,
-              },
+              px: { xs: 0, sm: 1 },
             }}
           >
             Marcar todas como leídas
@@ -169,16 +263,12 @@ export default function NotificationsView() {
             xs: 0,
             md: "1px solid #E1E7E7",
           },
-          borderRadius: {
-            xs: 0,
-            md: 3,
-          },
+          borderRadius: { xs: 0, md: 3 },
           overflow: "hidden",
           width: "100%",
           minWidth: 0,
         }}
       >
-        {/* Tabs: ocultas mientras vemos preview en móvil */}
         {!showMobilePreview && (
           <Box
             sx={{
@@ -199,38 +289,20 @@ export default function NotificationsView() {
               }
               scrollButtons={false}
               sx={{
-                px: {
-                  xs: 0.5,
-                  sm: 1,
-                  md: 2,
-                },
-                minHeight: {
-                  xs: 44,
-                  md: 48,
-                },
-
+                px: { xs: 0.5, sm: 1, md: 2 },
+                minHeight: { xs: 44, md: 48 },
                 "& .MuiTab-root": {
                   textTransform: "none",
                   fontWeight: 600,
                   minWidth: "auto",
-                  px: {
-                    xs: 1.5,
-                    sm: 2,
-                  },
-                  fontSize: {
-                    xs: 13,
-                    md: 14,
-                  },
+                  px: { xs: 1.5, sm: 2 },
+                  fontSize: { xs: 13, md: 14 },
                 },
-
                 "& .Mui-selected": {
-                  color:
-                    "#488B8F !important",
+                  color: "#488B8F !important",
                 },
-
                 "& .MuiTabs-indicator": {
-                  backgroundColor:
-                    "#488B8F",
+                  backgroundColor: "#488B8F",
                 },
               }}
             >
@@ -238,12 +310,10 @@ export default function NotificationsView() {
                 value="all"
                 label={`Todas (${notifications.length})`}
               />
-
               <Tab
                 value="unread"
                 label={`No leídas (${unreadCount})`}
               />
-
               <Tab
                 value="read"
                 label={`Leídas (${readCount})`}
@@ -252,7 +322,6 @@ export default function NotificationsView() {
           </Box>
         )}
 
-        {/* Mobile: preview ocupa todo el ancho */}
         {showMobilePreview ? (
           <Box
             sx={{
@@ -287,18 +356,9 @@ export default function NotificationsView() {
               </Button>
             </Box>
 
-            <Box
-              sx={{
-                p: {
-                  xs: 2,
-                  sm: 3,
-                },
-              }}
-            >
+            <Box sx={{ p: { xs: 2, sm: 3 } }}>
               <NotificationPreview
-                notification={
-                  selectedNotification
-                }
+                notification={selectedNotification}
               />
             </Box>
           </Box>
@@ -315,16 +375,13 @@ export default function NotificationsView() {
             }}
           >
             <NotificationList
-              notifications={
-                filteredNotifications
-              }
+              notifications={filteredNotifications}
               selectedId={selectedId}
               query={query}
               onQueryChange={setQuery}
               onSelect={handleSelect}
             />
 
-            {/* Desktop/tablet grande */}
             <Box
               sx={{
                 display: {
@@ -333,17 +390,12 @@ export default function NotificationsView() {
                 },
                 flex: 1,
                 minWidth: 0,
-                p: {
-                  md: 3,
-                  lg: 4,
-                },
+                p: { md: 3, lg: 4 },
                 bgcolor: "#FCFDFD",
               }}
             >
               <NotificationPreview
-                notification={
-                  selectedNotification
-                }
+                notification={selectedNotification}
               />
             </Box>
           </Box>
