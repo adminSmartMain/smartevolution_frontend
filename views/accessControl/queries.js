@@ -40,3 +40,15 @@ export const getUserOperations = (id,status="pending",page=1,pageSize=5) => Axio
 ).then(r=>r.data.data);
 export const updateClientAccess = (id,data) => Axios.patch(`${API}/client-access/${id}/`,data,config());
 export const createClientAccess = (data) => Axios.post(`${API}/client-access/`,data,config());
+
+
+const NOTIFICATION_API = `${process.env.NEXT_PUBLIC_API_URL}/notifications/admin`;
+
+export const getNotificationRules = () =>
+  Axios.get(`${NOTIFICATION_API}/rules/`, config()).then((r) => r.data.data);
+
+export const getNotificationRuleOptions = () =>
+  Axios.get(`${NOTIFICATION_API}/rules/options/`, config()).then((r) => r.data.data);
+
+export const updateNotificationRule = (id, data) =>
+  Axios.patch(`${NOTIFICATION_API}/rules/${id}/`, data, config()).then((r) => r.data.data);
