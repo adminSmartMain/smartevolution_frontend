@@ -8,8 +8,6 @@ import AddBoxIcon from '@mui/icons-material/AddBox';
 import Skeleton from '@mui/material/Skeleton';
 import TuneIcon from '@mui/icons-material/Tune';
 import Chip from '@mui/material/Chip';
-import StarIcon from '@mui/icons-material/Star';
-import StarBorderIcon from '@mui/icons-material/StarBorder';
 
 import { Breadcrumbs } from "@mui/material";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
@@ -24,10 +22,12 @@ import ClearIcon from "@mui/icons-material/Clear";
 import Link from "next/link";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import { SearchOutlined } from "@mui/icons-material";
-import { Box, Button, Fade, FormControl, Grid, ListItemText, IconButton, InputLabel, Menu, MenuItem, InputAdornment, Select, TextField, Typography, CircularProgress, Tooltip } from "@mui/material";
+import { Box, Button, Fade, FormControl, Grid, ListItemText, IconButton, InputLabel, Menu, MenuItem, InputAdornment, Select, TextField, Typography, CircularProgress, Tooltip, Popover } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import CheckIcon from "@mui/icons-material/Check";
+import StarBorderIcon from "@mui/icons-material/StarBorder";
+import StarIcon from "@mui/icons-material/Star";
 import Modal from "@components/modals/modal";
 import TitleModal from "@components/modals/titleModal";
 import { Toast } from "@components/toast";
@@ -121,6 +121,118 @@ const TableSkeleton = ({ rows = 15, columns = 9 }) => {
   );
 };
 
+const formatBillyDateTime = (value) =>
+  value ? moment(value).format("DD/MM/YYYY HH:mm") : "Sin registro";
+
+const getBillySyncMeta = (row) => {
+  const errors = Number(row?.billyEventsConsecutiveErrors || 0);
+  const hasErrorCode = Boolean(row?.billyErrorCode);
+  const hasRetryScheduled = errors > 0 && Boolean(row?.billyEventsNextCheckAt);
+  const lastAttempt = row?.billyEventsLastAttemptAt
+    ? moment(row.billyEventsLastAttemptAt)
+    : null;
+  const lastSuccess = row?.billyEventsLastSuccessAt
+    ? moment(row.billyEventsLastSuccessAt)
+    : null;
+  const isProcessing = Boolean(
+    lastAttempt &&
+      errors === 0 &&
+      !hasErrorCode &&
+      (!lastSuccess || lastAttempt.isAfter(lastSuccess))
+  );
+
+  if (hasRetryScheduled) {
+    return {
+      dotColor: "#F9A825",
+      backgroundColor: "#FFF8E1",
+      textColor: "#B26A00",
+      shortMessage: "Reintento programado por error temporal",
+      errors,
+    };
+  }
+  if (hasErrorCode) {
+    return {
+      dotColor: "#D32F2F",
+      backgroundColor: "#FDECEC",
+      textColor: "#B71C1C",
+      shortMessage: "La última sincronización falló",
+      errors,
+    };
+  }
+  if (isProcessing || row?.billySyncStatus === "pending") {
+    return {
+      dotColor: "#2196F3",
+      backgroundColor: "#EAF4FF",
+      textColor: "#1565C0",
+      shortMessage: "Sincronización en proceso o pendiente",
+      errors,
+    };
+  }
+  return {
+    dotColor: "#4CAF50",
+    backgroundColor: "#EAF7EC",
+    textColor: "#2E7D32",
+    shortMessage: "Sincronización saludable",
+    errors,
+  };
+};
+
+const BillySyncDetails = ({ row }) => {
+  if (!row) return null;
+  const meta = getBillySyncMeta(row);
+  return (
+    <Box sx={{ p: 0.75, minWidth: 235, maxWidth: 320 }}>
+      <Typography sx={{ fontSize: "0.78rem", fontWeight: 700, mb: 0.75 }}>
+        Estado Billy
+      </Typography>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 0.8, mb: 0.75 }}>
+        <Box
+          sx={{
+            width: 9,
+            height: 9,
+            borderRadius: "50%",
+            backgroundColor: meta.dotColor,
+            flexShrink: 0,
+          }}
+        />
+        <Typography sx={{ fontSize: "0.72rem", fontWeight: 600 }}>
+          {meta.shortMessage}
+        </Typography>
+      </Box>
+      <Typography sx={{ fontSize: "0.69rem" }}>
+        Último intento: {formatBillyDateTime(row.billyEventsLastAttemptAt)}
+      </Typography>
+      <Typography sx={{ fontSize: "0.69rem" }}>
+        Último éxito: {formatBillyDateTime(row.billyEventsLastSuccessAt)}
+      </Typography>
+      <Typography sx={{ fontSize: "0.69rem" }}>
+        Próxima revisión: {formatBillyDateTime(row.billyEventsNextCheckAt)}
+      </Typography>
+      <Typography sx={{ fontSize: "0.69rem" }}>
+        Errores consecutivos: {meta.errors}
+      </Typography>
+      {row.billyErrorDetail && (
+        <Typography
+          sx={{
+            fontSize: "0.69rem",
+            mt: 0.65,
+            color: "inherit",
+            opacity: 0.86,
+            overflowWrap: "anywhere",
+          }}
+        >
+          {row.billyErrorDetail.length > 140
+            ? `${row.billyErrorDetail.slice(0, 140)}...`
+            : row.billyErrorDetail}
+        </Typography>
+      )}
+      <Typography sx={{ fontSize: "0.64rem", mt: 0.8, opacity: 0.7 }}>
+        En móvil, toca el punto de estado para abrir este detalle.
+      </Typography>
+    </Box>
+  );
+};
+
 //comentario de prueba
 export const BillsComponents = () => {
   const [filter, setFilter] = useState("");
@@ -129,7 +241,6 @@ export const BillsComponents = () => {
   const [anchorElTypeBill, setAnchorElTypeBil] = useState(null);
   const [anchorElChannel, setAnchorElChannel] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
-  const [watchlistLoadingId, setWatchlistLoadingId] = useState(null);
   const [search, setSearch] = useState("");
   const [optionsTypeBill, setOptionsTypeBill] = useState([]); // CAMBIADO: de "" a []
   const [page, setPage] = useState(1);
@@ -141,6 +252,8 @@ export const BillsComponents = () => {
   const openMenuCSV = Boolean(anchorElCSV);
   const numberFormat = new Intl.NumberFormat("en-US", formatOptions);
   const [openWindow, setOpenWindow] = useState(null);
+  const [syncDetailsAnchor, setSyncDetailsAnchor] = useState(null);
+  const [syncDetailsRow, setSyncDetailsRow] = useState(null);
 
   //Type bill button
   const [selectedOptionTypeBill, setSelectedOptionTypeBill] = useState(null);
@@ -448,74 +561,6 @@ export const BillsComponents = () => {
   const handleOpenEditBill = (id) => {
     handleOpenWindow(`/bills/editBill?id=${id}`);
   };
-  const handleToggleWatchlist = async (row) => {
-    if (!row?.id || watchlistLoadingId) return;
-
-    const enabled = !Boolean(row.onWatchlist);
-    setWatchlistLoadingId(row.id);
-
-    try {
-      const result = await UpdateBillWatchlist(row.id, enabled);
-      const watchlistData = result?.data || {};
-
-      setBill((currentBills) =>
-        currentBills.map((billRow) =>
-          billRow.id === row.id
-            ? {
-                ...billRow,
-                onWatchlist: watchlistData.onWatchlist ?? enabled,
-                watchlistActivatedAt:
-                  watchlistData.watchlistActivatedAt ?? null,
-                watchlistActivatedBy:
-                  watchlistData.watchlistActivatedBy ?? null,
-                billyEventsNextCheckAt:
-                  watchlistData.billyEventsNextCheckAt ??
-                  billRow.billyEventsNextCheckAt,
-              }
-            : billRow
-        )
-      );
-
-      setSelectedRow((currentRow) =>
-        currentRow?.id === row.id
-          ? {
-              ...currentRow,
-              onWatchlist: watchlistData.onWatchlist ?? enabled,
-              watchlistActivatedAt:
-                watchlistData.watchlistActivatedAt ?? null,
-              watchlistActivatedBy:
-                watchlistData.watchlistActivatedBy ?? null,
-              billyEventsNextCheckAt:
-                watchlistData.billyEventsNextCheckAt ??
-                currentRow.billyEventsNextCheckAt,
-            }
-          : currentRow
-      );
-
-      Toast(
-        enabled
-          ? "Seguimiento intensivo activado"
-          : "Seguimiento intensivo desactivado",
-        "success"
-      );
-    } catch (error) {
-      const status = error?.response?.status;
-      const message =
-        error?.response?.data?.message ||
-        "No fue posible actualizar el seguimiento de la factura";
-
-      Toast(
-        status === 409
-          ? message
-          : message,
-        status === 409 ? "warning" : "error"
-      );
-    } finally {
-      setWatchlistLoadingId(null);
-      setAnchorEl(null);
-    }
-  };
-
   const SortIcon = () => (
     <Typography fontFamily="icomoon" fontSize="0.7rem">
       &#xe908;
@@ -650,190 +695,99 @@ export const BillsComponents = () => {
       ,
     },
     {
-      field: "onWatchlist",
-      headerName: "Seguimiento",
-      width: 110,
+      field: "trackingAndSync",
+      headerName: "",
+      width: 88,
       sortable: false,
       filterable: false,
-      renderCell: (params) => {
-        const active = Boolean(params.row.onWatchlist);
-        const loadingWatchlist = watchlistLoadingId === params.row.id;
-
-        return (
-          <Tooltip
-            title={
-              active
-                ? "Seguimiento intensivo activo. Clic para desactivar."
-                : "Activar seguimiento intensivo cada 15 minutos."
-            }
-            arrow
-          >
-            <span>
-              <IconButton
-                size="small"
-                disabled={loadingWatchlist}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  handleToggleWatchlist(params.row);
-                }}
-                sx={{
-                  color: active ? "#F9A825" : "#9E9E9E",
-                  "&:hover": {
-                    backgroundColor: "#B5D1C980",
-                    color: active ? "#F57F17" : "#488B8F",
-                  },
-                }}
-              >
-                {loadingWatchlist ? (
-                  <CircularProgress size={19} />
-                ) : active ? (
-                  <StarIcon fontSize="small" />
-                ) : (
-                  <StarBorderIcon fontSize="small" />
-                )}
-              </IconButton>
-            </span>
-          </Tooltip>
-        );
-      },
-    },
-    {
-      field: "billySyncStatus",
-      headerName: "Sync",
-      width: 118,
-      sortable: false,
-      filterable: false,
+      disableColumnMenu: true,
       renderCell: (params) => {
         const row = params.row;
-        const errors = Number(row.billyEventsConsecutiveErrors || 0);
-        const hasErrorCode = Boolean(row.billyErrorCode);
-        const hasRetryScheduled = errors > 0 && Boolean(row.billyEventsNextCheckAt);
-
-        const lastAttempt = row.billyEventsLastAttemptAt
-          ? moment(row.billyEventsLastAttemptAt)
-          : null;
-        const lastSuccess = row.billyEventsLastSuccessAt
-          ? moment(row.billyEventsLastSuccessAt)
-          : null;
-
-        const isProcessing = Boolean(
-          lastAttempt &&
-          errors === 0 &&
-          !hasErrorCode &&
-          (!lastSuccess || lastAttempt.isAfter(lastSuccess))
-        );
-
-        let label = "Sincronizada";
-        let dotColor = "#4CAF50";
-        let backgroundColor = "#EAF7EC";
-        let textColor = "#2E7D32";
-        let shortMessage = "Sincronización saludable";
-
-        if (hasRetryScheduled) {
-          label = "Reintento";
-          dotColor = "#F9A825";
-          backgroundColor = "#FFF8E1";
-          textColor = "#B26A00";
-          shortMessage = "Reintento programado por error temporal";
-        } else if (hasErrorCode) {
-          label = "Error";
-          dotColor = "#D32F2F";
-          backgroundColor = "#FDECEC";
-          textColor = "#B71C1C";
-          shortMessage = "La última sincronización falló";
-        } else if (isProcessing || row.billySyncStatus === "pending") {
-          label = "En proceso";
-          dotColor = "#2196F3";
-          backgroundColor = "#EAF4FF";
-          textColor = "#1565C0";
-          shortMessage = "Sincronización en proceso o pendiente";
-        }
-
-        const formatDateTime = (value) =>
-          value ? moment(value).format("DD/MM/YYYY HH:mm") : "Sin registro";
-
-        const tooltipContent = (
-          <Box sx={{ p: 0.5, minWidth: 230, maxWidth: 310 }}>
-            <Typography sx={{ fontSize: "0.75rem", fontWeight: 700, mb: 0.5 }}>
-              Estado Billy
-            </Typography>
-
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.7, mb: 0.6 }}>
-              <Box
-                sx={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: "50%",
-                  backgroundColor: dotColor,
-                  flexShrink: 0,
+        const meta = getBillySyncMeta(row);
+        return (
+          <Box
+            sx={{
+              width: "100%",
+              height: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 0.55,
+            }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <Tooltip
+              title={row.onWatchlist ? "Quitar de seguimiento" : "Agregar a seguimiento"}
+              arrow
+            >
+              <IconButton
+                size="small"
+                aria-label={row.onWatchlist ? "Quitar de seguimiento" : "Agregar a seguimiento"}
+                onClick={async (event) => {
+                  event.stopPropagation();
+                  const nextValue = !row.onWatchlist;
+                  setBill((current) =>
+                    current.map((item) =>
+                      item.id === row.id ? { ...item, onWatchlist: nextValue } : item
+                    )
+                  );
+                  try {
+                    await UpdateBillWatchlist(row.id, nextValue);
+                  } catch (err) {
+                    setBill((current) =>
+                      current.map((item) =>
+                        item.id === row.id ? { ...item, onWatchlist: row.onWatchlist } : item
+                      )
+                    );
+                    Toast(
+                      err?.response?.data?.message || "No fue posible actualizar el seguimiento",
+                      "error"
+                    );
+                  }
                 }}
-              />
-              <Typography sx={{ fontSize: "0.7rem", fontWeight: 600 }}>
-                {shortMessage}
-              </Typography>
-            </Box>
-
-            <Typography sx={{ fontSize: "0.68rem" }}>
-              Último intento: {formatDateTime(row.billyEventsLastAttemptAt)}
-            </Typography>
-            <Typography sx={{ fontSize: "0.68rem" }}>
-              Último éxito: {formatDateTime(row.billyEventsLastSuccessAt)}
-            </Typography>
-            <Typography sx={{ fontSize: "0.68rem" }}>
-              Próxima revisión: {formatDateTime(row.billyEventsNextCheckAt)}
-            </Typography>
-            <Typography sx={{ fontSize: "0.68rem" }}>
-              Errores consecutivos: {errors}
-            </Typography>
-
-            {row.billyErrorDetail && (
-              <Typography
                 sx={{
-                  fontSize: "0.68rem",
-                  mt: 0.5,
-                  color: "#ffdddd",
-                  overflowWrap: "anywhere",
+                  p: 0.35,
+                  color: row.onWatchlist ? "#F9A825" : "#9AA0A6",
+                  "&:hover": { backgroundColor: "rgba(72,139,143,0.08)" },
                 }}
               >
-                {row.billyErrorDetail.length > 140
-                  ? `${row.billyErrorDetail.slice(0, 140)}...`
-                  : row.billyErrorDetail}
-              </Typography>
-            )}
-          </Box>
-        );
+                {row.onWatchlist ? (
+                  <StarIcon sx={{ fontSize: 23 }} />
+                ) : (
+                  <StarBorderIcon sx={{ fontSize: 23 }} />
+                )}
+              </IconButton>
+            </Tooltip>
 
-        return (
-          <Tooltip title={tooltipContent} arrow placement="bottom">
-            <Box
-              sx={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 0.6,
-                px: 0.9,
-                py: 0.35,
-                borderRadius: "12px",
-                backgroundColor,
-                color: textColor,
-                fontSize: "0.62rem",
-                fontWeight: 600,
-                cursor: "help",
-                whiteSpace: "nowrap",
-                maxWidth: "100%",
-              }}
-            >
-              <Box
-                sx={{
-                  width: 7,
-                  height: 7,
-                  borderRadius: "50%",
-                  backgroundColor: dotColor,
-                  flexShrink: 0,
+            <Tooltip title={<BillySyncDetails row={row} />} arrow placement="bottom">
+              <IconButton
+                size="small"
+                aria-label="Ver estado de sincronización Billy"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setSyncDetailsAnchor(event.currentTarget);
+                  setSyncDetailsRow(row);
                 }}
-              />
-              {label}
-            </Box>
-          </Tooltip>
+                sx={{
+                  width: 28,
+                  height: 28,
+                  p: 0,
+                  borderRadius: "50%",
+                  backgroundColor: meta.backgroundColor,
+                  "&:hover": { backgroundColor: meta.backgroundColor, opacity: 0.82 },
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 9,
+                    height: 9,
+                    borderRadius: "50%",
+                    backgroundColor: meta.dotColor,
+                  }}
+                />
+              </IconButton>
+            </Tooltip>
+          </Box>
         );
       },
     },
@@ -1283,22 +1237,6 @@ export const BillsComponents = () => {
                 Ver Eventos
               </MenuItem>
               <MenuItem
-                onClick={() => handleToggleWatchlist(selectedRow)}
-                disabled={watchlistLoadingId === selectedRow?.id}
-              >
-                <ListItemIcon>
-                  {selectedRow?.onWatchlist ? (
-                    <StarIcon fontSize="small" sx={{ color: "#F9A825" }} />
-                  ) : (
-                    <StarBorderIcon fontSize="small" />
-                  )}
-                </ListItemIcon>
-                {selectedRow?.onWatchlist
-                  ? "Desactivar seguimiento"
-                  : "Seguimiento intensivo"}
-              </MenuItem>
-
-              <MenuItem
                 onClick={() => {
                   if (selectedRow.associatedOperation != null) {
                     Toast(
@@ -1435,11 +1373,8 @@ export const BillsComponents = () => {
         billyEventsLastAttemptAt: bill.billyEventsLastAttemptAt,
         billyEventsLastSuccessAt: bill.billyEventsLastSuccessAt,
         billyEventsNextCheckAt: bill.billyEventsNextCheckAt,
-
-        // Seguimiento intensivo Billy
         onWatchlist: Boolean(bill.onWatchlist),
-        watchlistActivatedAt: bill.watchlistActivatedAt,
-        watchlistActivatedBy: bill.watchlistActivatedBy
+        watchlistActivatedAt: bill.watchlistActivatedAt
       })) || [];
     setBill(bill);
   }, [data]);
@@ -1529,6 +1464,26 @@ export const BillsComponents = () => {
   const totalWidth = columns.reduce((sum, column) => sum + (column.width || 0), 0);
   return (
     <>
+      <Popover
+        open={Boolean(syncDetailsAnchor)}
+        anchorEl={syncDetailsAnchor}
+        onClose={() => {
+          setSyncDetailsAnchor(null);
+          setSyncDetailsRow(null);
+        }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        transformOrigin={{ vertical: "top", horizontal: "center" }}
+        PaperProps={{
+          sx: {
+            mt: 0.8,
+            borderRadius: 2,
+            boxShadow: "0 8px 28px rgba(0,0,0,0.18)",
+            maxWidth: "calc(100vw - 24px)",
+          },
+        }}
+      >
+        <BillySyncDetails row={syncDetailsRow} />
+      </Popover>
 
       <Box container display="flex" flexDirection="column" mt={-3}>
         <Box
