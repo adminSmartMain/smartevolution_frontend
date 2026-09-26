@@ -8,6 +8,7 @@ const SECTION_LINKS = {
 
 const PAGE_HEADERS = {
   "/dashboard": ["Panel principal", "Consulta el estado general y los indicadores de la plataforma.", "Inicio"],
+  "/notifications": ["Notificaciones", "Revisa tus notificaciones y consulta el detalle relacionado sin salir de esta vista.","Inicio",],
   "/brochures": ["Prospectos", "Gestiona los prospectos y su información comercial.", "Prospectos"],
   "/customers/customerList": ["Clientes", "Consulta y administra los clientes registrados.", "Clientes"],
   "/customers/accountList": ["Gestión de cuentas", "Consulta y administra las cuentas asociadas a clientes.", "Clientes"],

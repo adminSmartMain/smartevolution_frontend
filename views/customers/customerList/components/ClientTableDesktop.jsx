@@ -21,7 +21,7 @@ export const ClientTableDesktop = ({
       }}
     >
       <CustomDataGrid
-        autoHeight                  // ✅ CLAVE
+        className="main-list-data-grid"
         getRowId={(row) => row.id}  // ✅ asegura detección del id
         rows={rows}
         columns={columns}
