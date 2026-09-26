@@ -20,6 +20,16 @@ export const GetClientByID = async (id) => {
   return res.data;
 };
 
+
+export const GetClienteRoles = async () => {
+  const res = await Axios.get(`${API_URL}/client/client-roles/`, {
+    headers: {
+      authorization: "Bearer " + localStorage.getItem("access-token"),
+    },
+  });
+  return res.data;
+};
+
 export const ModifyClientQuery = async (data) => {
  
   const res = await Axios.patch(`${API_URL}/client/${data.id}`, data, {
