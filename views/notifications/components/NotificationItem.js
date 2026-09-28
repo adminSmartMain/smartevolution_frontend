@@ -6,7 +6,7 @@ import {
 import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
 import SwapHorizOutlinedIcon from "@mui/icons-material/SwapHorizOutlined";
 import NotificationsNoneOutlinedIcon from "@mui/icons-material/NotificationsNoneOutlined";
-import DrawOutlinedIcon from "@mui/icons-material/DrawOutlined";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import FactCheckOutlinedIcon from "@mui/icons-material/FactCheckOutlined";
 
 const getIcon = (type) => {
@@ -18,7 +18,7 @@ const getIcon = (type) => {
       return <SwapHorizOutlinedIcon fontSize="small" />;
 
     case "electronic_signature":
-      return <DrawOutlinedIcon fontSize="small" />;
+      return <EditOutlinedIcon fontSize="small" />;
 
     case "preoperation":
       return <FactCheckOutlinedIcon fontSize="small" />;
@@ -68,8 +68,8 @@ export default function NotificationItem({
         backgroundColor: selected
           ? "rgba(72,139,143,0.10)"
           : notification.read
-          ? "#FFFFFF"
-          : "rgba(72,139,143,0.045)",
+            ? "#FFFFFF"
+            : "rgba(72,139,143,0.045)",
 
         transition:
           "background-color .15s ease, border-color .15s ease",

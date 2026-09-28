@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
-import DrawOutlinedIcon from "@mui/icons-material/DrawOutlined";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 
 import { useFetch } from "@hooks/useFetch";
 import { getElectronicSignaturePreview } from "../queries";
@@ -121,8 +121,8 @@ export default function ElectronicSignaturePreview({
   const payerNames =
     signature.payers?.length > 0
       ? signature.payers
-          .map((payer) => payer.name)
-          .join(", ")
+        .map((payer) => payer.name)
+        .join(", ")
       : "—";
 
   const isPending =
@@ -160,7 +160,7 @@ export default function ElectronicSignaturePreview({
               gap: 0.75,
             }}
           >
-            <DrawOutlinedIcon
+            <EditOutlinedIcon
               sx={{
                 fontSize: 18,
                 color: "var(--primary-color)",
@@ -319,7 +319,7 @@ export default function ElectronicSignaturePreview({
               label="Plazo promedio"
               value={
                 signature.bills?.averageTerm !==
-                undefined
+                  undefined
                   ? `${signature.bills.averageTerm} días`
                   : "—"
               }
