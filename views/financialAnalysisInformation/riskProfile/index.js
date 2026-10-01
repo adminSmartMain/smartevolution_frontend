@@ -83,7 +83,10 @@ export const RiskProfileV = ({dataClient,dataRiskProfile1, errorRiskProfileFetch
       accountType: "",
       client: "",
       id: "",
-      data_credit_score:0,
+      data_credit_score: 0,
+      score_date: "",
+      qualitative_analysis: "",
+      financial_analysis: "",
     },
     onSubmit: (values) => {
       if (values.id == "") {
@@ -103,7 +106,6 @@ export const RiskProfileV = ({dataClient,dataRiskProfile1, errorRiskProfileFetch
     }
   }, [router.query.id]);
 
-  console.log(dataClient,dataRiskProfile1)
   // set the customer data
   useEffect(() => {
     if (dataClient) {
@@ -186,6 +188,22 @@ export const RiskProfileV = ({dataClient,dataRiskProfile1, errorRiskProfileFetch
         dataRiskProfile1.data.account_type
       );
       formik.setFieldValue("bank", dataRiskProfile1.data.bank);
+      formik.setFieldValue(
+        "data_credit_score",
+        dataRiskProfile1.data.data_credit_score ?? dataRiskProfile1.data.score ?? 0
+      );
+      formik.setFieldValue(
+        "score_date",
+        dataRiskProfile1.data.score_date ?? ""
+      );
+      formik.setFieldValue(
+        "qualitative_analysis",
+        dataRiskProfile1.data.qualitative_analysis ?? ""
+      );
+      formik.setFieldValue(
+        "financial_analysis",
+        dataRiskProfile1.data.financial_analysis ?? ""
+      );
       formik.setFieldValue("id", dataRiskProfile1.data.id);
       formik.setFieldValue("client", dataRiskProfile1.data.client.id);
     }

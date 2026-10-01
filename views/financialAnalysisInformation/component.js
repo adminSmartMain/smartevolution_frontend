@@ -1,4 +1,3 @@
-import Title from '@mui/icons-material/Title';
 import {
   Tabs,
   Tab,
@@ -158,12 +157,19 @@ export const RiskBadge = ({ score = 0, level = "No aplica", title = "Contacto" }
   const Icon = cfg.Icon;
 
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: { xs: 0.8, md: 1.25 },
+        minWidth: 0,
+      }}
+    >
       {/* Icono grande */}
       <Box
         sx={{
-          width: 58,
-          height: 58,
+          width: 42,
+          height: 42,
           borderRadius: "50%",
           backgroundColor: cfg.bg,
           display: "flex",
@@ -172,7 +178,7 @@ export const RiskBadge = ({ score = 0, level = "No aplica", title = "Contacto" }
           flex: "0 0 auto",
         }}
       >
-        <Icon sx={{ fontSize: 34, color: cfg.color }} />
+        <Icon sx={{ fontSize: 25, color: cfg.color }} />
       </Box>
 
       {/* Textos */}
@@ -180,7 +186,7 @@ export const RiskBadge = ({ score = 0, level = "No aplica", title = "Contacto" }
         <InputTitles sx={{ mb: 0.25 }}>{title}</InputTitles>
 
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-          <Typography sx={{ fontSize: 13, color: "#333" }}>
+          <Typography sx={{ fontSize: 11.5, color: "#333", lineHeight: 1.3 }}>
             Puntaje:{" "}
             <Box component="span" sx={{ color: "#D93025", fontWeight: 700 }}>
               {score}
@@ -200,8 +206,9 @@ export const RiskBadge = ({ score = 0, level = "No aplica", title = "Contacto" }
                   borderRadius: "6px",
                   boxShadow: "0 10px 22px rgba(0,0,0,0.18)",
                   p: 0,
-                  minWidth: 640,
-                  maxWidth: 760,
+                  minWidth: 0,
+                  width: { xs: "min(92vw, 560px)", md: 640 },
+                  maxWidth: "min(92vw, 760px)",
                 },
               },
               arrow: { sx: { color: "#FFFFFF" } },
@@ -230,7 +237,7 @@ export const RiskBadge = ({ score = 0, level = "No aplica", title = "Contacto" }
           </Tooltip>
         </Box>
 
-        <Typography sx={{ fontSize: 13, color: "#333" }}>
+        <Typography sx={{ fontSize: 11.5, color: "#333", lineHeight: 1.3 }}>
           Nivel de Riesgo:{" "}
           <Box component="span" sx={{ color: cfg.color, fontWeight: 700 }}>
             {level}
@@ -243,90 +250,150 @@ export const RiskBadge = ({ score = 0, level = "No aplica", title = "Contacto" }
 
 
 
-export const InformationHeader = ({data}) =>{
+export const InformationHeader = ({ data }) => {
+  const iconUrl =
+    data?.data?.profile_image ??
+    "https://devsmartevolution.s3.us-east-1.amazonaws.com/clients-profiles/default-profile.svg";
 
-const iconUrl =
-       data?.data?.profile_image ??
-        "https://devsmartevolution.s3.us-east-1.amazonaws.com/clients-profiles/default-profile.svg"; // placeholder
+  const valueSx = {
+    fontSize: { xs: 11.5, md: 12 },
+    lineHeight: 1.35,
+    color: "#181b1d",
+    fontWeight: 500,
+  };
 
-    return (
+  const labelSx = {
+    fontSize: 10,
+    lineHeight: 1.15,
+    fontWeight: 700,
+    color: "#66727c",
+    textTransform: "uppercase",
+    letterSpacing: "0.02em",
+    mb: 0.35,
+  };
 
-        <>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-              <Box
-                  component="img"
-                  src={iconUrl}
-                  alt="icon"
-                  sx={{ width: 28, height: 28, objectFit: "contain" }}
-                />
-               
-                    <Box>
-                        <InputTitles>
-                            Nombre Cliente
-                        </InputTitles>
-                        <Typography>
-                              {`${data?.data?.first_name ?? ""} ${
-                    data?.data?.last_name ?? ""
-                  } ${data?.data?.social_reason ?? ""}`}
-               
-                        </Typography>
+  const cellSx = {
+    minWidth: 0,
+    alignSelf: "center",
+  };
 
-                    </Box>
-                   
-                        <Box>
+  return (
+    <>
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "34px minmax(0, 1fr)",
+            sm: "34px minmax(0, 1fr) minmax(0, 1fr)",
+            md: "34px minmax(180px, 1.35fr) minmax(90px, .55fr) minmax(150px, 1fr)",
+            lg: "34px minmax(200px, 1.35fr) minmax(90px, .55fr) minmax(160px, .95fr) minmax(160px, .95fr) auto",
+          },
+          gridTemplateAreas: {
+            xs: `
+              "avatar name"
+              "avatar nit"
+              "avatar legal"
+              "avatar contact"
+              "avatar risk"
+            `,
+            sm: `
+              "avatar name name"
+              "avatar nit legal"
+              "avatar contact risk"
+            `,
+            md: `
+              "avatar name nit legal"
+              "avatar contact contact risk"
+            `,
+            lg: `"avatar name nit legal contact risk"`,
+          },
+          columnGap: { xs: 1, sm: 1.5, lg: 2 },
+          rowGap: { xs: 0.9, sm: 1, md: 0.75 },
+          alignItems: "center",
+          py: { xs: 1, md: 1.25 },
+        }}
+      >
+        <Box
+          component="img"
+          src={iconUrl}
+          alt="Cliente"
+          sx={{
+            gridArea: "avatar",
+            width: 30,
+            height: 30,
+            objectFit: "contain",
+            borderRadius: "50%",
+            alignSelf: { xs: "start", lg: "center" },
+            mt: { xs: 0.25, lg: 0 },
+          }}
+        />
 
-                            <InputTitles>
-                                    Nit
-                            </InputTitles>
+        <Box sx={{ ...cellSx, gridArea: "name" }}>
+          <Typography sx={labelSx}>Nombre cliente</Typography>
+          <Typography
+            sx={{
+              ...valueSx,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {`${data?.data?.first_name ?? ""} ${data?.data?.last_name ?? ""} ${data?.data?.social_reason ?? ""}`.trim() || "—"}
+          </Typography>
+        </Box>
 
-                            <Typography>
-                                      {data?.data?.document_number}
-                            </Typography>
-                        </Box>
-                    
-                        <Box>
-                            <InputTitles>
-                                Representante Legal
-                            </InputTitles>
+        <Box sx={{ ...cellSx, gridArea: "nit" }}>
+          <Typography sx={labelSx}>NIT</Typography>
+          <Typography sx={valueSx}>{data?.data?.document_number || "—"}</Typography>
+        </Box>
 
-                            <Typography>
-                                    {`${
-                    data?.data?.legal_representative?.social_reason
-                      ? data?.data?.legal_representative?.social_reason
-                      : `${data?.data?.legal_representative?.first_name} 
-                        ${data?.data?.legal_representative?.last_name} `
-                  } `}
-                                </Typography>
+        <Box sx={{ ...cellSx, gridArea: "legal" }}>
+          <Typography sx={labelSx}>Representante legal</Typography>
+          <Typography
+            sx={{
+              ...valueSx,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {data?.data?.legal_representative?.social_reason
+              ? data.data.legal_representative.social_reason
+              : `${data?.data?.legal_representative?.first_name ?? ""} ${data?.data?.legal_representative?.last_name ?? ""}`.trim() || "—"}
+          </Typography>
+        </Box>
 
-                        </Box>
-                     
-                        <Box>
+        <Box sx={{ ...cellSx, gridArea: "contact" }}>
+          <Typography sx={labelSx}>Contacto</Typography>
+          <Typography
+            sx={{
+              ...valueSx,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {data?.data?.email || "—"}
+          </Typography>
+          <Typography sx={{ ...valueSx, color: "#66727c", fontWeight: 400 }}>
+            {data?.data?.phone_number || "—"}
+          </Typography>
+        </Box>
 
-                            <InputTitles>
-                                Contacto
-                            </InputTitles>
+        <Box sx={{ ...cellSx, gridArea: "risk", justifySelf: { xs: "start", lg: "end" } }}>
+          <RiskBadge
+            title="Riesgo"
+            score={data?.data_credit_score ?? 590}
+            level={data?.data?.risk_level ?? "Alto"}
+          />
+        </Box>
+      </Box>
 
-                            <Typography>
-                                    {`${data?.data?.email} `}
-                                </Typography>
-                                <Typography>
-                                    {`${data?.data?.phone_number} `}
-                                </Typography>
-                        </Box>
-                    
-                            <Box>
+      <Divider />
+    </>
+  );
+};
 
-                            <RiskBadge
-                              title="Riesgo"
-                              score={data?.data_credit_score ?? 590}
-                              level={data?.data?.risk_level ?? "Alto"}
-                            />
-                            </Box>
-                </Box>
-        <Divider sx={{ mt: 3 }} />
-                </>
-            )
-        }
 
 export const ProfileRisk = ({data}) => {
 
@@ -419,69 +486,81 @@ const mockData = {
   ],
 };
 
-const StatCard = ({ icon, value, label, delta, color }) => {
-  return (
-    <Card
+const StatCard = ({ icon, value, label, delta, color }) => (
+  <Box
+    sx={{
+      minWidth: 0,
+      minHeight: 58,
+      display: "grid",
+      gridTemplateColumns: "30px 1fr",
+      alignItems: "center",
+      columnGap: 1,
+      px: 1.15,
+      bgcolor: "#FFFFFF",
+      border: "1px solid #E1E7E9",
+      borderRadius: "8px",
+      boxShadow: "0 1px 2px rgba(25,45,50,.04)",
+    }}
+  >
+    <Avatar
       sx={{
-        p: 2,
-        borderRadius: 2,
-        minWidth: 180,
-        textAlign: "center",
-        boxShadow: "0 3px 10px rgba(0,0,0,0.12)",
+        width: 28,
+        height: 28,
+        bgcolor: "#F0F6F6",
+        color: "#2E7D7A",
+        "& .MuiSvgIcon-root": { fontSize: 17 },
       }}
     >
-      <Avatar
+      {icon}
+    </Avatar>
+
+    <Box sx={{ minWidth: 0 }}>
+      <Typography
         sx={{
-          mx: "auto",
-          mb: 1,
-          width: 34,
-          height: 34,
-          bgcolor: "#F3F7F7",
-          color: "#2E7D7A",
+          fontWeight: 700,
+          color,
+          fontSize: 11.5,
+          lineHeight: 1.15,
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          maxWidth: "100%",
         }}
       >
-        {icon}
-      </Avatar>
-
-      <Typography sx={{ fontWeight: 700, color, fontSize: 14 }}>
         {money(value)}
       </Typography>
-
-      <Typography sx={{ color: "#6B7280", fontSize: 12, mt: 0.5 }}>
-        {label}
-      </Typography>
-
-      <Typography sx={{ color, fontSize: 11, mt: 0.5 }}>
-        {delta}
-      </Typography>
-    </Card>
-  );
-};
-
-export const CardsInfo = ({ data = mockData }) => {
-  return (
-    <Box sx={{ width: "100%", display: "flex", justifyContent: "center" }}>
-      <Box
-        sx={{
-          display: "flex",
-          gap: 2,
-          pb: 1,
-          width: "fit-content",
-          maxWidth: "100%",
-          overflowX: "auto",
-          justifyContent: "center",
-          "&::-webkit-scrollbar": { height: 6 },
-        }}
-      >
-        {data.cards.map((c) => (
-          <Box key={c.key} sx={{ flex: "0 0 auto" }}>
-            <StatCard {...c} />
-          </Box>
-        ))}
+      <Box sx={{ display: "flex", gap: 0.6, alignItems: "baseline", mt: 0.25 }}>
+        <Typography sx={{ color: "#6D7A80", fontSize: 9.5, lineHeight: 1.15 }}>
+          {label}
+        </Typography>
+        <Typography sx={{ color, fontSize: 9, lineHeight: 1.15 }}>
+          {delta}
+        </Typography>
       </Box>
     </Box>
-  );
-};
+  </Box>
+);
+
+export const CardsInfo = ({ data = mockData }) => (
+  <Box
+    sx={{
+      mt: 1,
+      display: "grid",
+      gridTemplateColumns: {
+        xs: "1fr",
+        sm: "repeat(2, minmax(0, 1fr))",
+        md: "repeat(3, minmax(0, 1fr))",
+        lg: "repeat(5, minmax(0, 1fr))",
+      },
+      gap: 0.9,
+      width: "100%",
+    }}
+  >
+    {data.cards.map((c) => (
+      <StatCard key={c.key} {...c} />
+    ))}
+  </Box>
+);
 
 export const FinancialAnalysisInformationComponent = () => {
     const [activeTab, setActiveTab] = useState(0);
@@ -513,83 +592,73 @@ export const FinancialAnalysisInformationComponent = () => {
   return (
 
     <>
-    <Box sx={{ width: '100%', mb: 3 }}>
+    <Box
+      sx={{
+        width: "100%",
+        mb: 1.25,
+        fontFamily: '"Montserrat", sans-serif',
+        "& .MuiInputBase-input, & .MuiSelect-select": {
+          fontSize: "12px",
+        },
+        "& .MuiFormLabel-root, & .MuiInputLabel-root": {
+          fontSize: "11px",
+        },
+        "& .MuiFormControlLabel-label": {
+          fontSize: "12px",
+        },
+        "& .MuiButton-root": {
+          fontSize: "12px",
+        },
+        "& .MuiTableCell-root": {
+          fontSize: "12px",
+          py: 0.9,
+        },
+      }}
+    >
 
         <Box>
 
         <InformationHeader data={dataCustomer}/>
 
-          <Box sx={{ mt: 2, display: "flex", justifyContent: "center" }}>
-            <CardsInfo />
-          </Box>
+          <CardsInfo />
         </Box>
-         <Tabs 
-            value={activeTab} 
+         <Tabs
+            value={activeTab}
             onChange={(event, newValue) => setActiveTab(newValue)}
+            variant="scrollable"
+            scrollButtons="auto"
+            allowScrollButtonsMobile
             sx={{
-                '& .MuiTabs-indicator': {
-                backgroundColor: '#5EA3A3', // Color del indicador
-                },
-                '& .MuiTab-root': {
-                color: '#5EA3A3', // Color del texto cuando no está seleccionado
-                },
-                '& .Mui-selected': {
-                color: '#5EA3A3 !important', // Color del texto cuando está seleccionado
-                },
+              mt: 1,
+              minHeight: 34,
+              px: 0.5,
+              bgcolor: "#F5F8F8",
+              borderRadius: "8px",
+              border: "1px solid #E1E7E9",
+              '& .MuiTabs-indicator': { display: 'none' },
+              '& .MuiTab-root': {
+                minHeight: 32,
+                px: 1.4,
+                py: 0.5,
+                color: '#607078',
+                borderRadius: '6px',
+                fontFamily: '"Montserrat", sans-serif',
+                fontSize: '10.5px',
+                fontWeight: 600,
+                textTransform: 'none',
+                whiteSpace: 'nowrap',
+              },
+              '& .Mui-selected': {
+                color: '#2F7479 !important',
+                backgroundColor: '#FFFFFF',
+                boxShadow: '0 1px 2px rgba(0,0,0,.06)',
+              },
             }}
             >
-        <Tab 
-            label="Perfil de Riesgo" 
-            sx={{
-            fontFamily: '"Montserrat", "icomoon", sans-serif', // Ejemplo de fuente
-
-            fontSize: '1rem', // Tamaño de fuente
-            textTransform: 'none', // Evita mayúsculas
-            color: '#5EA3A3',
-            '&.Mui-selected': {
-                color: '#488B8F',
-            }
-            }}
-        />
-        <Tab 
-            label="Estado de Situacion Financiera" 
-            sx={{
-            fontFamily: '"Montserrat", "icomoon", sans-serif',
-
-            fontSize: '1rem',
-            textTransform: 'none',
-            color: '#5EA3A3',
-            '&.Mui-selected': {
-                color: '#488B8F',
-            }
-            }}
-        />
-        <Tab 
-            label="Estado de Resultados" 
-            sx={{
-            fontFamily: '"Montserrat", "icomoon", sans-serif',
-
-            fontSize: '1rem',
-            textTransform: 'none',
-            color: '#5EA3A3',
-            '&.Mui-selected': {
-                color: '#488B8F',
-            }
-            }}
-        />
-        <Tab 
-            label="Indicadores Financieros" 
-            sx={{
-            fontFamily: '"Montserrat", "icomoon", sans-serif',
-
-            fontSize: '1rem',
-            textTransform: 'none',
-            color: '#5EA3A3',
-            '&.Mui-selected': {
-                color: '#488B8F',
-            }
-            }}
-        />
+        <Tab label="Perfil de Riesgo" />
+        <Tab label="Estado de Situacion Financiera" />
+        <Tab label="Estado de Resultados" />
+        <Tab label="Indicadores Financieros" />
         </Tabs>
 
       {activeTab === 0 && (

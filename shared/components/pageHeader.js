@@ -4,18 +4,18 @@ import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 
 const PRIMARY_TEAL = "#3b828e";
 
-export default function PageHeader({ title, subtitle, breadcrumbs = [], actions = null }) {
+export default function PageHeader({ title, subtitle, breadcrumbs = [], actions = null, compact = false }) {
   return (
     <Box
       component="header"
       className="platform-page-header"
-      sx={{ width: "100%", mb: { xs: 2, md: 2.5 } }}
+      sx={{ width: "100%", mb: compact ? { xs: 1, md: 1.25 } : { xs: 2, md: 2.5 } }}
     >
       <Breadcrumbs
         separator="›"
         aria-label="Miga de pan"
         sx={{
-          mb: { xs: 1, md: 1.25 },
+          mb: compact ? 0 : { xs: 1, md: 1.25 },
           color: "#66727c",
           "& .MuiBreadcrumbs-separator": { mx: 1, color: "#78838c" },
           "& .MuiBreadcrumbs-ol": { flexWrap: "wrap", alignItems: "center" },
@@ -26,9 +26,9 @@ export default function PageHeader({ title, subtitle, breadcrumbs = [], actions 
           <Link
             underline="hover"
             color="inherit"
-            sx={{ display: "inline-flex", alignItems: "center", gap: 0.625, fontSize: { xs: 14, md: 16 } }}
+            sx={{ display: "inline-flex", alignItems: "center", gap: 0.625, fontSize: compact ? { xs: 12, md: 13 } : { xs: 14, md: 16 } }}
           >
-            <HomeOutlinedIcon sx={{ fontSize: { xs: 18, md: 20 } }} />
+            <HomeOutlinedIcon sx={{ fontSize: compact ? { xs: 15, md: 16 } : { xs: 18, md: 20 } }} />
             Inicio
           </Link>
         </NextLink>
@@ -36,7 +36,7 @@ export default function PageHeader({ title, subtitle, breadcrumbs = [], actions 
           const active = index === breadcrumbs.length - 1;
           const styles = {
             color: active ? PRIMARY_TEAL : "#66727c",
-            fontSize: { xs: 14, md: 16 },
+            fontSize: compact ? { xs: 12, md: 13 } : { xs: 14, md: 16 },
             fontWeight: active ? 700 : 400,
           };
 
@@ -52,6 +52,7 @@ export default function PageHeader({ title, subtitle, breadcrumbs = [], actions 
         })}
       </Breadcrumbs>
 
+      {!compact && (
       <Box
         sx={{
           display: "flex",
@@ -91,6 +92,7 @@ export default function PageHeader({ title, subtitle, breadcrumbs = [], actions 
         </Box>
         {actions && <Box sx={{ flexShrink: 0 }}>{actions}</Box>}
       </Box>
+      )}
     </Box>
   );
 }
