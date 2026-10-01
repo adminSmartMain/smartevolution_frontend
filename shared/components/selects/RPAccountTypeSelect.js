@@ -12,7 +12,7 @@ import InputTitles from "@styles/inputTitles";
 
 import { AccountTypes } from "./queries";
 
-export default function AccountTypeSelect({ formik, width }) {
+export default function AccountTypeSelect({ formik, width, compact = false }) {
   // Hooks
   const {
     fetch: fetch,
@@ -41,16 +41,47 @@ export default function AccountTypeSelect({ formik, width }) {
   }, [formik.values.client]);
 
   return (
-    <Box sx={{
-      ["@media (max-height: 900px)"]: {
-        width:width ? width : "17vw",
-      },
-      width: "17vw",
-    }}>
+    <Box
+      sx={{
+        width: width || "17vw",
+        ["@media (max-height: 900px)"]: {
+          width: width || "17vw",
+        },
+      }}
+    >
       <Box>
-        <InputTitles marginBottom={1}>Tipo de cuenta</InputTitles>
+        <InputTitles sx={compact ? { mb: 0.45, fontSize: "10px !important", lineHeight: 1.15, color: "#566168 !important", letterSpacing: "0.035em !important" } : { mb: 1 }}>Tipo de cuenta</InputTitles>
         <Autocomplete
           id="account_type"
+          size={compact ? "small" : "medium"}
+          sx={
+            compact
+              ? {
+                  "& .MuiAutocomplete-inputRoot": {
+                    minHeight: "34px !important",
+                    height: "32px",
+                    padding: "0 8px !important",
+                    alignItems: "center",
+                  },
+                  "& .MuiAutocomplete-input": {
+                    padding: "0 !important",
+                    fontSize: "11.5px",
+                    lineHeight: 1.2,
+                  },
+                  "& .MuiAutocomplete-endAdornment": {
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    right: "6px",
+                  },
+                  "& .MuiIconButton-root": {
+                    padding: "2px",
+                  },
+                  "& .MuiSvgIcon-root": {
+                    fontSize: "16px",
+                  },
+                }
+              : undefined
+          }
           disablePortal
           options={accountType}
           getOptionLabel={(option) => option.label}
@@ -79,17 +110,42 @@ export default function AccountTypeSelect({ formik, width }) {
               error={
                 formik.touched.account_type && Boolean(formik.errors.account_type)
               }
-              sx={
-                formik.touched.account_type && Boolean(formik.errors.account_type)
+              sx={{
+                ...(compact
+                  ? {
+                      height: 32,
+                      minHeight: 32,
+                      padding: "0 8px",
+                      borderRadius: "6px",
+                      "& .MuiInputBase-root": {
+                        height: 32,
+                        minHeight: 32,
+                        padding: "0 !important",
+                      },
+                      "& .MuiInputBase-input": {
+                        fontSize: "11.5px",
+                        padding: "0 !important",
+                      },
+                    }
+                  : {}),
+                ...(formik.touched.account_type && Boolean(formik.errors.account_type)
                   ? { border: "1.4px solid #E6643180" }
-                  : null
-              }
+                  : {}),
+              }}
               InputProps={{
                 ...params.InputProps,
                 disableUnderline: true,
-                sx: {
-                  marginTop: "-7px",
-                },
+                sx: compact
+                  ? {
+                      marginTop: 0,
+                      height: 32,
+                      minHeight: 32,
+                      fontSize: "11.5px",
+                      alignItems: "center",
+                    }
+                  : {
+                      marginTop: "-7px",
+                    },
               }}
             />
           )}

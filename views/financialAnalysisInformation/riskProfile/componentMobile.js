@@ -136,14 +136,12 @@ export const RiskProfileComponentMobile = ({
         >
           {/* Banco */}
           <Box sx={sectionCardSx}>
-            <InputTitles marginBottom={1}>Banco</InputTitles>
-            <BankSelect formik={formik} width="100%" />
+            <BankSelect formik={formik} width="100%" compact />
           </Box>
 
           {/* Tipo cuenta */}
           <Box sx={sectionCardSx}>
-            <InputTitles marginBottom={1}>Tipo de cuenta</InputTitles>
-            <AccountTypeSelect formik={formik} width="100%" />
+            <AccountTypeSelect formik={formik} width="100%" compact />
           </Box>
 
           {/* Número de cuenta */}
