@@ -33,12 +33,9 @@ import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import {
   Bar,
   CartesianGrid,
-  Cell,
   ComposedChart,
   Legend,
   Line,
-  Pie,
-  PieChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -47,7 +44,6 @@ import {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-const COLORS = ["#4F969B", "#73B1B5", "#9BCED0", "#35777D", "#C5E3E4", "#88AEB1"];
 const SURFACE_BORDER = "#E8EEEF";
 const TEXT_PRIMARY = "#4A6166";
 const TEXT_SECONDARY = "#667B80";
@@ -400,7 +396,7 @@ export const DashboardContent = () => {
       (dashboardData?.clientes?.por_rol || []).map((item) => ({
         name: item.role,
         value: item.count,
-        percentage: item.percentage,
+        percentage: item.percentage_of_clients,
       })),
     [dashboardData]
   );
@@ -625,93 +621,73 @@ export const DashboardContent = () => {
             ) : (
               <>
                 <SectionHeader
-                  title="Clientes por tipo"
-                  subtitle="Distribución actual por roles asignados"
+                  title="Clientes por rol"
+                  subtitle="Proporción de clientes activos que pertenece a cada rol"
                   icon={<GroupsIcon />}
                 />
 
                 {clientesPorRol.length > 0 ? (
-                  <>
-                    <Box sx={{ width: "100%", height: 220, position: "relative" }}>
-                      <ResponsiveContainer>
-                        <PieChart>
-                          <Pie
-                            data={clientesPorRol}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={62}
-                            outerRadius={86}
-                            paddingAngle={2}
-                            dataKey="value"
-                            nameKey="name"
-                            stroke="none"
-                          >
-                            {clientesPorRol.map((item, index) => (
-                              <Cell key={item.name} fill={COLORS[index % COLORS.length]} />
-                            ))}
-                          </Pie>
-                          <Tooltip
-                            formatter={(value, name, item) => [
-                              `${numberFormatter.format(value)} clientes · ${item?.payload?.percentage || 0}%`,
-                              name,
-                            ]}
-                            contentStyle={{
-                              border: `1px solid ${SURFACE_BORDER}`,
-                              borderRadius: 10,
-                              boxShadow: "0 6px 18px rgba(35, 58, 62, .08)",
-                            }}
-                          />
-                        </PieChart>
-                      </ResponsiveContainer>
-
-                      <Box
+                  <Stack spacing={2.1} sx={{ pt: 1 }}>
+                    <Box sx={{ display: "flex", justifyContent: "flex-end", pb: 0.4 }}>
+                      <Chip
+                        size="small"
+                        label={`${numberFormatter.format(dashboardData?.clientes?.total || 0)} clientes activos`}
                         sx={{
-                          position: "absolute",
-                          inset: 0,
-                          display: "grid",
-                          placeContent: "center",
-                          pointerEvents: "none",
-                          textAlign: "center",
+                          flexShrink: 0,
+                          height: 24,
+                          bgcolor: "#F3F7F7",
+                          color: TEXT_SECONDARY,
+                          fontSize: "0.68rem",
+                          fontWeight: 500,
+                          "& .MuiChip-label": { px: 1 },
                         }}
-                      >
-                        <Typography sx={{ color: TEXT_PRIMARY, fontSize: "1.35rem", fontWeight: 650, lineHeight: 1 }}>
-                          {numberFormatter.format(dashboardData?.clientes?.total || 0)}
-                        </Typography>
-                        <Typography sx={{ color: TEXT_MUTED, fontSize: "0.68rem", mt: 0.45 }}>
-                          clientes activos
-                        </Typography>
-                      </Box>
+                      />
                     </Box>
 
-                    <Stack spacing={0.95} sx={{ mt: 0.3 }}>
-                      {clientesPorRol.map((item, index) => (
-                        <Stack key={item.name} direction="row" justifyContent="space-between" alignItems="center" spacing={1}>
-                          <Stack direction="row" spacing={0.85} alignItems="center" sx={{ minWidth: 0, flex: 1 }}>
-                            <Box
-                              sx={{
-                                width: 8,
-                                height: 8,
-                                borderRadius: "50%",
-                                bgcolor: COLORS[index % COLORS.length],
-                                flexShrink: 0,
-                              }}
-                            />
-                            <Typography sx={{ color: TEXT_SECONDARY, fontSize: "0.78rem", fontWeight: 500 }} noWrap>
-                              {item.name}
-                            </Typography>
-                          </Stack>
-                          <Stack direction="row" spacing={0.8} alignItems="center">
-                            <Typography sx={{ color: TEXT_PRIMARY, fontSize: "0.78rem", fontWeight: 600 }}>
+                    {clientesPorRol.map((item) => (
+                      <Box key={item.name}>
+                        <Stack direction="row" justifyContent="space-between" alignItems="baseline" spacing={1.5} sx={{ mb: 0.8 }}>
+                          <Typography sx={{ color: TEXT_SECONDARY, fontSize: "0.82rem", fontWeight: 600 }}>
+                            {item.name}
+                          </Typography>
+                          <Stack direction="row" spacing={1} alignItems="baseline" sx={{ flexShrink: 0 }}>
+                            <Typography sx={{ color: TEXT_PRIMARY, fontSize: "0.86rem", fontWeight: 650 }}>
                               {numberFormatter.format(item.value)}
                             </Typography>
-                            <Typography sx={{ color: TEXT_MUTED, fontSize: "0.7rem", minWidth: 38, textAlign: "right" }}>
-                              {item.percentage}%
+                            <Typography sx={{ color: TEXT_MUTED, fontSize: "0.72rem", minWidth: 48, textAlign: "right" }}>
+                              {Number(item.percentage || 0).toLocaleString("es-CO", { maximumFractionDigits: 2 })}%
                             </Typography>
                           </Stack>
                         </Stack>
-                      ))}
-                    </Stack>
-                  </>
+
+                        <LinearProgress
+                          variant="determinate"
+                          value={Math.min(Number(item.percentage || 0), 100)}
+                          sx={{
+                            height: 7,
+                            borderRadius: 99,
+                            bgcolor: "#EEF3F3",
+                            "& .MuiLinearProgress-bar": {
+                              borderRadius: 99,
+                              bgcolor: BRAND,
+                            },
+                          }}
+                        />
+                      </Box>
+                    ))}
+
+                    <Typography
+                      sx={{
+                        color: TEXT_MUTED,
+                        fontSize: "0.64rem",
+                        lineHeight: 1.35,
+                        whiteSpace: "nowrap",
+                        pt: 0.15,
+                      }}
+                    >
+                      Un mismo cliente puede pertenecer a más de un rol.
+                    </Typography>
+                  </Stack>
                 ) : (
                   <EmptyState>No hay roles de clientes disponibles.</EmptyState>
                 )}
