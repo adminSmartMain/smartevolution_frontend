@@ -16,9 +16,6 @@ export const ClientTableDesktop = ({
     <Box
       marginTop={4}
       width="100%"
-      sx={{
-        minHeight: 500,      // ✅ le da espacio real
-      }}
     >
       <CustomDataGrid
         className="main-list-data-grid"

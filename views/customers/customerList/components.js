@@ -395,18 +395,6 @@ export const ClientListComponent = () => {
     }
   };
 
-  const showFinancialProfileOld = (e) => {
-    e?.stopPropagation?.();
-
-    const row = actionsMenu.row;
-    closeMenu(e);
-
-    if (row?.id) {
-      router.push(
-        `/financialProfile/financialStatement?id=${encodeURIComponent(row.id)}&tab=1`
-      );
-    }
-  };
 
   const showRiskProfileOld = (e) => {
     e?.stopPropagation?.();
@@ -421,6 +409,19 @@ export const ClientListComponent = () => {
     }
   };
 
+
+  const showFinancialProfileOld = (e) => {
+    e?.stopPropagation?.();
+
+    const row = actionsMenu.row;
+    closeMenu(e);
+
+    if (row?.id) {
+      router.push(
+        `/financialProfile/financialStatement?id=${encodeURIComponent(row.id)}`
+      );
+    }
+  };
 
   const [dateRange, setDateRange] = useState({
     startDate: "",
@@ -1043,16 +1044,17 @@ export const ClientListComponent = () => {
             </CustomTooltip>
 
             <Typography sx={{ fontSize: 13, fontWeight: 700, color: "#4b4b4b" }}>
-              Ver Perfil de Riesgo
+              Ver analisis financiero y perfil de riesgo
             </Typography>
           </Box>
         </MenuItem>
 
-        {/* Perfil financiero */}
-        <MenuItem sx={{ gap: 1 }} onClick={askDelete}>
+
+
+        <MenuItem sx={{ gap: 1 }} onClick={showRiskProfileOld}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <CustomTooltip
-              title="Ver perfil financiero"
+              title="Ver perfil de riesgo viejo"
               arrow
               placement="bottom-start"
               TransitionComponent={Fade}
@@ -1060,7 +1062,7 @@ export const ClientListComponent = () => {
                 modifiers: [{ name: "offset", options: { offset: [0, -15] } }],
               }}
             >
-              <Box
+             <Box
                 sx={{
                   width: 32,
                   height: 32,
@@ -1076,39 +1078,8 @@ export const ClientListComponent = () => {
                   },
                 }}
               >
-                <AccountBalanceWalletOutlinedIcon sx={{ fontSize: 23 }} />
+                <ShieldOutlinedIcon sx={{ fontSize: 23 }} />
               </Box>
-            </CustomTooltip>
-
-            <Typography sx={{ fontSize: 13, fontWeight: 700, color: "#4b4b4b" }}>
-              Ver Perfil Financiero
-            </Typography>
-          </Box>
-        </MenuItem>
-
-        <MenuItem sx={{ gap: 1 }} onClick={showRiskProfileOld}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <CustomTooltip
-              title="Eliminar"
-              arrow
-              placement="bottom-start"
-              TransitionComponent={Fade}
-              PopperProps={{
-                modifiers: [{ name: "offset", options: { offset: [0, -15] } }],
-              }}
-            >
-              <Typography
-                fontFamily="icomoon"
-                fontSize="1.9rem"
-                color="#999999"
-                borderRadius="5px"
-                sx={{
-                  "&:hover": { backgroundColor: "#B5D1C980", color: "#488B8F" },
-                  cursor: "pointer",
-                }}
-              >
-                &#xe901;
-              </Typography>
             </CustomTooltip>
 
             <Typography sx={{ fontSize: 13, fontWeight: 700, color: "#4b4b4b" }}>
@@ -1117,7 +1088,42 @@ export const ClientListComponent = () => {
           </Box>
         </MenuItem>
 
+ <MenuItem sx={{ gap: 1 }} onClick={showFinancialProfileOld}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <CustomTooltip
+              title="Ver perfil financiero viejo"
+              arrow
+              placement="bottom-start"
+              TransitionComponent={Fade}
+              PopperProps={{
+                modifiers: [{ name: "offset", options: { offset: [0, -15] } }],
+              }}
+            >
+             <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: "5px",
+                  color: "#999999",
+                  cursor: "pointer",
+                  "&:hover": {
+                    backgroundColor: "#B5D1C980",
+                    color: "#488B8F",
+                  },
+                }}
+              >
+                <ShieldOutlinedIcon sx={{ fontSize: 23 }} />
+              </Box>
+            </CustomTooltip>
 
+            <Typography sx={{ fontSize: 13, fontWeight: 700, color: "#4b4b4b" }}>
+              Ver Perfil financiero viejo
+            </Typography>
+          </Box>
+        </MenuItem>
 
 
         {/* EDITAR */}

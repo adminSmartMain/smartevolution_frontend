@@ -104,15 +104,53 @@ const switchSx = {
   "& .MuiSwitch-track": { backgroundColor: "#BDBDBD" },
 };
 
-const textareaSx = {
-  width: "100%",
-  backgroundColor: "#FFFFFF",
-  border: "1px solid #E6E6E6",
-  borderRadius: "10px",
-  padding: "10px 12px",
+const counterSx = {
+  fontSize: 11,
+  lineHeight: 1.2,
+  color: "#8A969B",
+  mt: 0.6,
+  textAlign: "right",
 };
 
-const counterSx = { fontSize: 12, color: "#6B7280", mt: 0.5 };
+
+const AnalysisTextarea = ({ value, onChange, maxLength = 2000 }) => (
+  <Box>
+    <Box
+      component="textarea"
+      value={value ?? ""}
+      maxLength={maxLength}
+      onChange={(e) => onChange(e.target.value)}
+      sx={{
+        display: "block",
+        width: "100%",
+        height: { xs: 96, sm: 108 },
+        minHeight: { xs: 96, sm: 108 },
+        maxHeight: { xs: 96, sm: 108 },
+        boxSizing: "border-box",
+        resize: "none",
+        overflowY: "auto",
+        overflowX: "hidden",
+        border: "1px solid #B9D8D9",
+        borderRadius: "8px",
+        backgroundColor: "#FFFFFF",
+        color: "#4A5B60",
+        fontFamily: "inherit",
+        fontSize: { xs: 12, sm: 13 },
+        lineHeight: 1.45,
+        padding: "10px 12px",
+        outline: "none",
+        WebkitOverflowScrolling: "touch",
+        "&:focus": {
+          borderColor: "#5EA3A3",
+          boxShadow: "0 0 0 1px rgba(94, 163, 163, 0.12)",
+        },
+      }}
+    />
+    <Typography sx={counterSx}>
+      {String(value ?? "").length}/{maxLength}
+    </Typography>
+  </Box>
+);
 
 export const RiskProfileComponentMobile = ({
   formik,
@@ -345,38 +383,24 @@ export const RiskProfileComponentMobile = ({
           </Box>
 
           {/* Textareas */}
-          <Box sx={sectionCardSx}>
+          <Box sx={{ ...sectionCardSx, overflow: "hidden" }}>
             <InputTitles marginBottom={1}>Análisis Cualitativo</InputTitles>
-            <MuiTextField
-              variant="standard"
-              fullWidth
-              multiline
-              rows={5}
-              value={formik?.values?.qualitative_analysis ?? ""}
-              onChange={(e) =>
-                formik?.setFieldValue?.("qualitative_analysis", e.target.value)
+            <AnalysisTextarea
+              value={formik?.values?.qualitative_analysis}
+              onChange={(value) =>
+                formik?.setFieldValue?.("qualitative_analysis", value)
               }
-              InputProps={{ disableUnderline: true }}
-              sx={textareaSx}
             />
-            <Typography sx={counterSx}>0/2000</Typography>
           </Box>
 
-          <Box sx={sectionCardSx}>
+          <Box sx={{ ...sectionCardSx, overflow: "hidden" }}>
             <InputTitles marginBottom={1}>Análisis Financiero</InputTitles>
-            <MuiTextField
-              variant="standard"
-              fullWidth
-              multiline
-              rows={5}
-              value={formik?.values?.financial_analysis ?? ""}
-              onChange={(e) =>
-                formik?.setFieldValue?.("financial_analysis", e.target.value)
+            <AnalysisTextarea
+              value={formik?.values?.financial_analysis}
+              onChange={(value) =>
+                formik?.setFieldValue?.("financial_analysis", value)
               }
-              InputProps={{ disableUnderline: true }}
-              sx={textareaSx}
             />
-            <Typography sx={counterSx}>0/2000</Typography>
           </Box>
 
           {/* Entidad financiera (ornamental) */}
@@ -448,14 +472,6 @@ export const RiskProfileComponentMobile = ({
             </Button>
           </Box>
 
-          {/* Debug */}
-          {process.env.NODE_ENV === "development" && (
-            <Box sx={{ mt: 2 }}>
-              <Typography sx={{ fontWeight: 700, mb: 1 }}>Errores:</Typography>
-              <pre style={{ margin: 0 }}>{JSON.stringify(formik.errors, null, 2)}</pre>
-              <pre style={{ margin: 0 }}>{JSON.stringify(formik.values, null, 2)}</pre>
-            </Box>
-          )}
         </Box>
 
         <ToastContainer

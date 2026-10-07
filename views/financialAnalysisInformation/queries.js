@@ -41,3 +41,13 @@ export const updateRiskProfile = async (data) => {
   });
   return res.data;
 }
+
+// Get Financial Profile by client ID
+export const GetFinancialProfileById = async (id) => {
+  const res = await Axios.get(`${API_URL}/financialProfile/${id}/3`, {
+    headers: {
+      authorization: "Bearer " + localStorage.getItem("access-token"),
+    },
+  });
+  return res.data;
+};

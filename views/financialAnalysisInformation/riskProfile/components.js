@@ -6,7 +6,7 @@ import { RiskProfileComponentMobile } from "./componentMobile";
 
 export const RiskProfileC = ({ formik, ToastContainer, loading, data }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   return (
     <Box
