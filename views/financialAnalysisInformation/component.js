@@ -23,6 +23,7 @@ import {
   getRiskProfile,
   saveRiskProfile,
   updateRiskProfile,
+  GetFinancialProfileById,
 } from "./queries";
 import { useFetch } from "@hooks/useFetch";
 import AddReactionIcon from '@mui/icons-material/AddReaction';
@@ -89,11 +90,12 @@ const riskLegend = [
 // ✅ Tooltip tipo tabla (rectangular, compacto)
 const RiskLegendTooltip = () => {
   return (
-    <Box sx={{ px: 1.25, py: 1, width: "100%" }}>
+    <Box sx={{ px: 1.25, py: 1, width: "100%", overflowX: "auto" }}>
       {/* header */}
       <Box
         sx={{
           display: "grid",
+          minWidth: 520,
           gridTemplateColumns: "44px 120px 95px 1fr",
           columnGap: 1.5,
           alignItems: "center",
@@ -122,6 +124,7 @@ const RiskLegendTooltip = () => {
               key={row.level}
               sx={{
                 display: "grid",
+                minWidth: 520,
                 gridTemplateColumns: "44px 120px 95px 1fr",
                 columnGap: 1.5,
                 alignItems: "start",
@@ -437,130 +440,174 @@ export const StatusResults = () => {
 
 
 const money = (n) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
-    Number(n || 0)
-  );
+  new Intl.NumberFormat("es-CO", {
+    style: "currency",
+    currency: "COP",
+    maximumFractionDigits: 0,
+  }).format(Number(n || 0));
 
-const mockData = {
-  cards: [
+const variation = (current, previous) => {
+  const curr = Number(current || 0);
+  const prev = Number(previous || 0);
+  if (!prev) return null;
+  return ((curr - prev) / Math.abs(prev)) * 100;
+};
+
+const getIncome = (profile) => {
+  const result = profile?.stateOfResult || {};
+  return (
+    Number(result.net_sales || 0) +
+    Number(result.financial_income || 0) +
+    Number(result.other_incomes || 0)
+  );
+};
+
+const getExpenses = (profile) => {
+  const result = profile?.stateOfResult || {};
+  return (
+    Number(result.cost_of_sales || 0) +
+    Number(result.administrative_expenses_sales || 0) +
+    Number(result.dep_amortization || 0) +
+    Number(result.financial_expenses || 0) +
+    Number(result.other_expenditures || 0) +
+    Number(result.provision_for_taxes || 0)
+  );
+};
+
+const StatCard = ({ icon, value, label, delta }) => {
+  const hasDelta = delta !== null && delta !== undefined && Number.isFinite(Number(delta));
+  const deltaValue = hasDelta ? Number(delta) : null;
+  const deltaColor = !hasDelta ? "#9AA7AA" : deltaValue >= 0 ? "#4E8A72" : "#C46C6C";
+
+  return (
+    <Box
+      sx={{
+        minWidth: 0,
+        minHeight: 58,
+        display: "grid",
+        gridTemplateColumns: "30px 1fr",
+        alignItems: "center",
+        columnGap: 1,
+        px: 1.15,
+        bgcolor: "#FFFFFF",
+        border: "1px solid #E1E7E9",
+        borderRadius: "8px",
+        boxShadow: "0 1px 2px rgba(25,45,50,.04)",
+      }}
+    >
+      <Avatar
+        sx={{
+          width: 28,
+          height: 28,
+          bgcolor: "#F0F6F6",
+          color: "#2E7D7A",
+          "& .MuiSvgIcon-root": { fontSize: 17 },
+        }}
+      >
+        {icon}
+      </Avatar>
+
+      <Box sx={{ minWidth: 0 }}>
+        <Typography
+          sx={{
+            fontWeight: 700,
+            color: "#506368",
+            fontSize: 11.5,
+            lineHeight: 1.15,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            maxWidth: "100%",
+          }}
+        >
+          {value == null ? "—" : money(value)}
+        </Typography>
+        <Box sx={{ display: "flex", gap: 0.6, alignItems: "baseline", mt: 0.25 }}>
+          <Typography sx={{ color: "#7C8A8E", fontSize: 9.5, lineHeight: 1.15 }}>
+            {label}
+          </Typography>
+          {hasDelta ? (
+            <Typography sx={{ color: deltaColor, fontSize: 9, lineHeight: 1.15 }}>
+              {deltaValue >= 0 ? "+" : ""}
+              {deltaValue.toLocaleString("es-CO", { maximumFractionDigits: 1 })}%
+            </Typography>
+          ) : null}
+        </Box>
+      </Box>
+    </Box>
+  );
+};
+
+export const CardsInfo = ({ financialProfileData }) => {
+  const profiles = financialProfileData?.data?.financialProfiles;
+  const current = Array.isArray(profiles) ? profiles[0] : null;
+  const previous = Array.isArray(profiles) ? profiles[1] : null;
+
+  const metrics = [
     {
       key: "assets",
       label: "Total Activos",
-      value: 344956067,
-      delta: "-19%",
-      color: "#D32F2F",
       icon: <AccountBalanceOutlinedIcon />,
+      current: current?.assets?.total_assets,
+      previous: previous?.assets?.total_assets,
     },
     {
       key: "liabilities",
       label: "Total Pasivos",
-      value: 344956067,
-      delta: "-1468%",
-      color: "#D32F2F",
       icon: <CreditCardOutlinedIcon />,
+      current: current?.passives?.total_passives,
+      previous: previous?.passives?.total_passives,
     },
     {
       key: "equity",
       label: "Total Patrimonio",
-      value: 3277327248,
-      delta: "+4578%",
-      color: "#2E7D32",
       icon: <PaidOutlinedIcon />,
+      current: current?.patrimony?.total_patrimony,
+      previous: previous?.patrimony?.total_patrimony,
     },
     {
       key: "income",
       label: "Total Ingresos",
-      value: 303003,
-      delta: "+??%",
-      color: "#2E7D32",
       icon: <AttachMoneyOutlinedIcon />,
+      current: current ? getIncome(current) : null,
+      previous: previous ? getIncome(previous) : null,
     },
     {
       key: "expenses",
       label: "Total Egresos",
-      value: 939393,
-      delta: "+??%",
-      color: "#2E7D32",
       icon: <MoneyOffCsredOutlinedIcon />,
+      current: current ? getExpenses(current) : null,
+      previous: previous ? getExpenses(previous) : null,
     },
-  ],
-};
+  ];
 
-const StatCard = ({ icon, value, label, delta, color }) => (
-  <Box
-    sx={{
-      minWidth: 0,
-      minHeight: 58,
-      display: "grid",
-      gridTemplateColumns: "30px 1fr",
-      alignItems: "center",
-      columnGap: 1,
-      px: 1.15,
-      bgcolor: "#FFFFFF",
-      border: "1px solid #E1E7E9",
-      borderRadius: "8px",
-      boxShadow: "0 1px 2px rgba(25,45,50,.04)",
-    }}
-  >
-    <Avatar
+  return (
+    <Box
       sx={{
-        width: 28,
-        height: 28,
-        bgcolor: "#F0F6F6",
-        color: "#2E7D7A",
-        "& .MuiSvgIcon-root": { fontSize: 17 },
+        mt: 1,
+        display: "grid",
+        gridTemplateColumns: {
+          xs: "1fr",
+          sm: "repeat(2, minmax(0, 1fr))",
+          md: "repeat(3, minmax(0, 1fr))",
+          lg: "repeat(5, minmax(0, 1fr))",
+        },
+        gap: 0.9,
+        width: "100%",
       }}
     >
-      {icon}
-    </Avatar>
-
-    <Box sx={{ minWidth: 0 }}>
-      <Typography
-        sx={{
-          fontWeight: 700,
-          color,
-          fontSize: 11.5,
-          lineHeight: 1.15,
-          whiteSpace: "nowrap",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          maxWidth: "100%",
-        }}
-      >
-        {money(value)}
-      </Typography>
-      <Box sx={{ display: "flex", gap: 0.6, alignItems: "baseline", mt: 0.25 }}>
-        <Typography sx={{ color: "#6D7A80", fontSize: 9.5, lineHeight: 1.15 }}>
-          {label}
-        </Typography>
-        <Typography sx={{ color, fontSize: 9, lineHeight: 1.15 }}>
-          {delta}
-        </Typography>
-      </Box>
+      {metrics.map((metric) => (
+        <StatCard
+          key={metric.key}
+          icon={metric.icon}
+          label={metric.label}
+          value={metric.current}
+          delta={variation(metric.current, metric.previous)}
+        />
+      ))}
     </Box>
-  </Box>
-);
-
-export const CardsInfo = ({ data = mockData }) => (
-  <Box
-    sx={{
-      mt: 1,
-      display: "grid",
-      gridTemplateColumns: {
-        xs: "1fr",
-        sm: "repeat(2, minmax(0, 1fr))",
-        md: "repeat(3, minmax(0, 1fr))",
-        lg: "repeat(5, minmax(0, 1fr))",
-      },
-      gap: 0.9,
-      width: "100%",
-    }}
-  >
-    {data.cards.map((c) => (
-      <StatCard key={c.key} {...c} />
-    ))}
-  </Box>
-);
+  );
+};
 
 export const FinancialAnalysisInformationComponent = () => {
     const [activeTab, setActiveTab] = useState(0);
@@ -579,14 +626,32 @@ export const FinancialAnalysisInformationComponent = () => {
       loading: loadingRiskProfileFetch,
       error: errorRiskProfileFetch,
       data: dataRiskProfileFetch,
-    } = useFetch({ service: getRiskProfile, init: true });
+    } = useFetch({ service: getRiskProfile, init: false });
+
+  const {
+    fetch: getFinancialProfile,
+    loading: loadingFinancialProfile,
+    data: dataFinancialProfile,
+  } = useFetch({ service: GetFinancialProfileById, init: false });
     // Get customer data
   useEffect(() => {
-    if (router.query.id != undefined) {
-      getCustomer(router.query.id);
-      getRiskProfileFetch(router.query.id);
+    if (!router.isReady) return;
+
+    const clientId = router.query.id;
+    if (!clientId || Array.isArray(clientId)) return;
+
+    getCustomer(clientId);
+    getRiskProfileFetch(clientId);
+    getFinancialProfile(clientId);
+  }, [router.isReady, router.query.id]);
+
+  useEffect(() => {
+    if (!router.isReady) return;
+    const tab = Number(router.query.tab);
+    if (Number.isInteger(tab) && tab >= 0 && tab <= 3) {
+      setActiveTab(tab);
     }
-  }, [router.query.id]);
+  }, [router.isReady, router.query.tab]);
 
   console.log(dataCustomer)
   return (
@@ -595,6 +660,9 @@ export const FinancialAnalysisInformationComponent = () => {
     <Box
       sx={{
         width: "100%",
+        minWidth: 0,
+        maxWidth: "100%",
+        overflowX: "hidden",
         mb: 1.25,
         fontFamily: '"Montserrat", sans-serif',
         "& .MuiInputBase-input, & .MuiSelect-select": {
@@ -620,7 +688,7 @@ export const FinancialAnalysisInformationComponent = () => {
 
         <InformationHeader data={dataCustomer}/>
 
-          <CardsInfo />
+          <CardsInfo financialProfileData={dataFinancialProfile} />
         </Box>
          <Tabs
             value={activeTab}
@@ -664,20 +732,20 @@ export const FinancialAnalysisInformationComponent = () => {
       {activeTab === 0 && (
 
         <>
-        <RiskProfileV dataClient={dataCustomer} dataRiskProfile1={dataRiskProfileFetch} errorRiskProfileFetch1={errorRiskProfileFetch} loadingRiskProfileFetch1={loadingRiskProfileFetch}/>
+        <RiskProfileV dataClient={dataCustomer} dataRiskProfile1={dataRiskProfileFetch} dataFinancialProfile={dataFinancialProfile} errorRiskProfileFetch1={errorRiskProfileFetch} loadingRiskProfileFetch1={loadingRiskProfileFetch}/>
         </>
       )}
       {activeTab === 1 && (
 
         <>
         
-        <FinancialSituationStatus/>
+        <FinancialSituationIndex financialProfileData={dataFinancialProfile} loading={loadingFinancialProfile} />
         </>
       )}
       {activeTab === 2 && (
 
         <>
-        <StateResultsIndex/>
+        <StateResultsIndex financialProfileData={dataFinancialProfile} loading={loadingFinancialProfile} />
         </>
       )}
       {activeTab === 3 && (

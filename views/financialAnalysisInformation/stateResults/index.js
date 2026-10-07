@@ -1,15 +1,10 @@
-import { StateResultsComponent } from "./components"
+import { StateResultsComponent } from "./components";
 
-
-
-export const StateResultsIndex = () =>{
-
-
-    return (
-
-        <>
-        <StateResultsComponent/>
-        
-        </>
-    )
-}
+export const StateResultsIndex = ({ financialProfileData, loading }) => {
+  return (
+    <StateResultsComponent
+      financialProfileData={financialProfileData}
+      loading={loading}
+    />
+  );
+};

@@ -527,14 +527,17 @@ export const RiskProfileComponentDesktop = ({
           width: "100%",
           bgcolor: "#F6F8F9",
           borderRadius: "10px",
-          p: "12px",
+          p: { md: "10px", lg: "12px" },
           boxSizing: "border-box",
         }}
       >
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: "minmax(0, 2.2fr) minmax(250px, .8fr)",
+            gridTemplateColumns: {
+              md: "minmax(0, 1fr)",
+              lg: "minmax(0, 2.2fr) minmax(240px, .8fr)",
+            },
             gap: "12px",
             alignItems: "stretch",
           }}
@@ -545,7 +548,10 @@ export const RiskProfileComponentDesktop = ({
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+                gridTemplateColumns: {
+                  md: "repeat(2, minmax(0, 1fr))",
+                  lg: "repeat(4, minmax(0, 1fr))",
+                },
                 columnGap: "12px",
                 rowGap: "12px",
                 alignItems: "end",
@@ -709,7 +715,10 @@ export const RiskProfileComponentDesktop = ({
           sx={{
             mt: "12px",
             display: "grid",
-            gridTemplateColumns: "1fr 1fr",
+            gridTemplateColumns: {
+              md: "minmax(0, 1fr)",
+              lg: "repeat(2, minmax(0, 1fr))",
+            },
             gap: "12px",
           }}
         >
@@ -741,7 +750,9 @@ export const RiskProfileComponentDesktop = ({
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              px: "14px",
+              flexWrap: "wrap",
+              gap: "6px",
+              px: { md: "10px", lg: "14px" },
               borderBottom: `1px solid ${BORDER}`,
             }}
           >
@@ -770,7 +781,10 @@ export const RiskProfileComponentDesktop = ({
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: "2fr 1fr .75fr auto",
+              gridTemplateColumns: {
+                md: "repeat(2, minmax(0, 1fr))",
+                lg: "2fr 1fr .75fr auto",
+              },
               gap: "10px",
               alignItems: "end",
               p: "12px 14px",
@@ -822,6 +836,7 @@ export const RiskProfileComponentDesktop = ({
               sx={{
                 height: H,
                 minWidth: 0,
+                width: { md: "100%", lg: "auto" },
                 px: "10px",
                 color: TEAL,
                 fontSize: 11,

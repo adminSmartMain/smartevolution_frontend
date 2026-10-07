@@ -48,7 +48,7 @@ export const RiskProfileV = () => {
     loading: loadingRiskProfileFetch,
     error: errorRiskProfileFetch,
     data: dataRiskProfileFetch,
-  } = useFetch({ service: getRiskProfile, init: true });
+  } = useFetch({ service: getRiskProfile, init: false });
 
   // save the risk profile
   const {
@@ -96,11 +96,14 @@ export const RiskProfileV = () => {
 
   // Get customer data
   useEffect(() => {
-    if (router.query.id != undefined) {
-      getCustomer(router.query.id);
-      getRiskProfileFetch(router.query.id);
-    }
-  }, [router.query.id]);
+    if (!router.isReady) return;
+
+    const clientId = router.query.id;
+    if (!clientId || Array.isArray(clientId)) return;
+
+    getCustomer(clientId);
+    getRiskProfileFetch(clientId);
+  }, [router.isReady, router.query.id]);
 
   // set the customer data
   useEffect(() => {

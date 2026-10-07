@@ -19,12 +19,19 @@ import {
   getRiskProfile,
   saveRiskProfile,
   updateRiskProfile,
+  updateFinancialOverview,
 } from "./queries";
 
 // Hooks
 import { useFormik } from "formik";
 
-export const RiskProfileV = ({dataClient,dataRiskProfile1, errorRiskProfileFetch1,loadingRiskProfileFetch1}) => {
+export const RiskProfileV = ({
+  dataClient,
+  dataRiskProfile1,
+  dataFinancialProfile,
+  errorRiskProfileFetch1,
+  loadingRiskProfileFetch1,
+}) => {
   // router
   const router = useRouter();
 
@@ -48,7 +55,7 @@ export const RiskProfileV = ({dataClient,dataRiskProfile1, errorRiskProfileFetch
     loading: loadingRiskProfileFetch,
     error: errorRiskProfileFetch,
     data: dataRiskProfileFetch,
-  } = useFetch({ service: getRiskProfile, init: true });
+  } = useFetch({ service: getRiskProfile, init: false });
 
   // save the risk profile
   const {
@@ -66,6 +73,11 @@ export const RiskProfileV = ({dataClient,dataRiskProfile1, errorRiskProfileFetch
     error: errorUpdateRiskProfile,
     data: dataUpdateRiskProfile,
   } = useFetch({ service: updateRiskProfile, init: false });
+
+  // The two analysis texts belong to FinancialProfile -> Overview, not RiskProfile.
+  const {
+    fetch: updateFinancialOverviewFetch,
+  } = useFetch({ service: updateFinancialOverview, init: false });
 
   // Formik
   const formik = useFormik({
@@ -88,11 +100,29 @@ export const RiskProfileV = ({dataClient,dataRiskProfile1, errorRiskProfileFetch
       qualitative_analysis: "",
       financial_analysis: "",
     },
-    onSubmit: (values) => {
+    onSubmit: async (values) => {
+      const clientId =
+        dataClient?.data?.id ||
+        (Array.isArray(router.query.id) ? router.query.id[0] : router.query.id);
+
+      // These fields already existed in the legacy Financial Central view and
+      // are persisted in Overview through /financialProfile/:clientId.
+      if (clientId) {
+        await updateFinancialOverviewFetch(
+          clientId,
+          values.qualitative_analysis,
+          values.financial_analysis
+        );
+      }
+
+      // Keep the existing RiskProfile persistence unchanged. The analysis
+      // fields are deliberately removed because they are not RiskProfile fields.
+      const { qualitative_analysis, financial_analysis, ...riskProfileValues } = values;
+
       if (values.id == "") {
-        riskProfile(values);
+        riskProfile(riskProfileValues);
       } else {
-        updateRiskProfileFetch(values);
+        updateRiskProfileFetch(riskProfileValues);
       }
     },
   });
@@ -100,11 +130,14 @@ export const RiskProfileV = ({dataClient,dataRiskProfile1, errorRiskProfileFetch
 
   // Get customer data
   useEffect(() => {
-    if (router.query.id != undefined) {
-      getCustomer(router.query.id);
-      getRiskProfileFetch(router.query.id);
-    }
-  }, [router.query.id]);
+    if (!router.isReady) return;
+
+    const clientId = router.query.id;
+    if (!clientId || Array.isArray(clientId)) return;
+
+    getCustomer(clientId);
+    getRiskProfileFetch(clientId);
+  }, [router.isReady, router.query.id]);
 
   // set the customer data
   useEffect(() => {
@@ -196,18 +229,31 @@ export const RiskProfileV = ({dataClient,dataRiskProfile1, errorRiskProfileFetch
         "score_date",
         dataRiskProfile1.data.score_date ?? ""
       );
-      formik.setFieldValue(
-        "qualitative_analysis",
-        dataRiskProfile1.data.qualitative_analysis ?? ""
-      );
-      formik.setFieldValue(
-        "financial_analysis",
-        dataRiskProfile1.data.financial_analysis ?? ""
-      );
       formik.setFieldValue("id", dataRiskProfile1.data.id);
-      formik.setFieldValue("client", dataRiskProfile1.data.client.id);
+      formik.setFieldValue(
+        "client",
+        dataClient?.data?.id ||
+          (Array.isArray(router.query.id) ? router.query.id[0] : router.query.id) ||
+          ""
+      );
     }
   }, [dataRiskProfile1, errorRiskProfileFetch1, loadingRiskProfileFetch1]);
+
+  // Load the legacy Overview fields used by the old "Centrales Financieras" view.
+  useEffect(() => {
+    const overview = dataFinancialProfile?.data?.overview;
+    if (!overview || Array.isArray(overview)) return;
+
+    formik.setFieldValue(
+      "qualitative_analysis",
+      overview.qualitativeOverview ?? ""
+    );
+    formik.setFieldValue(
+      "financial_analysis",
+      overview.financialAnalisis ?? ""
+    );
+  }, [dataFinancialProfile]);
+
   return (
     <>
       <Head>
