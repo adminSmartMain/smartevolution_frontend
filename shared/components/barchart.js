@@ -8,46 +8,39 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { Box, Typography } from "@mui/material";
+import InsertChartOutlinedIcon from "@mui/icons-material/InsertChartOutlined";
 
 function intToString(value) {
-  // Verificar que el valor sea un número válido
-  if (typeof value !== "number" || !isFinite(value)) {
-    return "Invalid input"; // Manejo de errores para valores no válidos
-  }
+  if (typeof value !== "number" || !isFinite(value)) return "—";
 
   const suffixes = ["", "K", "M", "B", "T"];
   const absValue = Math.abs(value);
 
-  if (absValue < 1000) {
-    // Si el valor es menor que 1000, no usar sufijo
-    return value.toString();
-  }
+  if (absValue < 1000) return value.toString();
 
-  const suffixIndex = Math.floor(Math.log10(absValue) / 3); // Determinar el índice del sufijo
+  const suffixIndex = Math.min(
+    suffixes.length - 1,
+    Math.floor(Math.log10(absValue) / 3)
+  );
   const shortValue = value / Math.pow(1000, suffixIndex);
 
-  return `${shortValue.toFixed(shortValue >= 10 ? 0 : 1)}${suffixes[suffixIndex]}`;
+  return `${shortValue.toFixed(Math.abs(shortValue) >= 10 ? 0 : 1)}${suffixes[suffixIndex]}`;
 }
 
-
-
 function intToStringTooltip(value) {
-  //const suffixes = ["", "K", "M", "B", "T"];
-  const suffixNum = Math.floor(("" + Math.abs(value)).length / 3);
-  //const shortValue = parseFloat(
-   // (suffixNum !== 0 ? value / Math.pow(1000, suffixNum) : value).toPrecision(2)
- // );
   return `${value}`;
 }
 
 const renderCustomBarLabel = ({ x, y, width, value }) => {
-  const labelColor = value >= 0 ? "#2ECC71" : "#E74C3C"; // Positivo: verde, Negativo: rojo
-  const labelYOffset = value >= 0 ? -10 : 15; // Positivo encima, negativo debajo
+  const labelColor = value >= 0 ? "#4E8A72" : "#C46C6C";
+  const labelYOffset = value >= 0 ? -8 : 14;
+
   return (
     <text
       style={{
-        fontSize: "0.85vw",
-        fontWeight: "bold",
+        fontSize: "11px",
+        fontWeight: 600,
         fill: labelColor,
         textAnchor: "middle",
         fontFamily: "Montserrat",
@@ -60,40 +53,72 @@ const renderCustomBarLabel = ({ x, y, width, value }) => {
   );
 };
 
-export default function BarChartComponent({ data }) {
+const EmptyChart = () => (
+  <Box
+    sx={{
+      height: "100%",
+      minHeight: 210,
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 0.75,
+      px: 2,
+      textAlign: "center",
+      border: "1px dashed #D9E2E4",
+      borderRadius: 1.5,
+      bgcolor: "#FCFDFD",
+    }}
+  >
+    <InsertChartOutlinedIcon sx={{ fontSize: 30, color: "#AAB7BA" }} />
+    <Typography sx={{ fontSize: 12, fontWeight: 600, color: "#708186" }}>
+      Sin datos para graficar
+    </Typography>
+    <Typography sx={{ fontSize: 10.5, color: "#9AA7AA", maxWidth: 220 }}>
+      Los comparativos aparecerán cuando existan periodos financieros con información.
+    </Typography>
+  </Box>
+);
 
-   // Asegurar que `data` tenga valores válidos
-   const validData =
-   Array.isArray(data) && data.length > 0
-     ? data.map((d) => ({
-         name: d.name || "N/A",
-         value: typeof d.value === "number" && isFinite(d.value) ? d.value : 0,
-       }))
-     : [{ name: "No Data", value: 0 }];
-  const maxVal = Math.max(...data.map((d) => d.value));
-  const minVal = Math.min(...data.map((d) => d.value));
+export default function BarChartComponent({ data }) {
+  const source = Array.isArray(data) ? data : [];
+  const validData = source
+    .filter((item) => item && item.name !== undefined && item.name !== null && item.name !== "")
+    .map((item) => ({
+      name: item.name,
+      value: Number.isFinite(Number(item.value)) ? Number(item.value) : 0,
+    }));
+
+  const hasMeaningfulPeriod = validData.some((item) => {
+    const name = String(item.name || "").trim().toLowerCase();
+    return name && name !== "n/a" && name !== "no data" && name !== "undefined";
+  });
+
+  if (!validData.length || !hasMeaningfulPeriod) {
+    return <EmptyChart />;
+  }
+
+  const maxVal = Math.max(...validData.map((item) => item.value));
+  const minVal = Math.min(...validData.map((item) => item.value));
 
   return (
-    <ResponsiveContainer width="100%" height="70%">
+    <ResponsiveContainer width="100%" height="100%">
       <BarChart
         data={validData}
-        margin={{ top: 20, left: 20, right: 20, bottom: 20 }}
+        margin={{ top: 24, left: 4, right: 10, bottom: 12 }}
       >
-        <CartesianGrid
-          strokeDasharray="3 3"
-          stroke="#E0E0E0"
-          vertical={false}
-        />
+        <CartesianGrid strokeDasharray="3 3" stroke="#E7ECEE" vertical={false} />
         <YAxis
           axisLine={false}
           tickLine={false}
-          tickFormatter={(value) => intToString(value)}
+          tickFormatter={intToString}
           domain={["auto", "auto"]}
+          width={38}
           tick={{
-            fontSize: "0.85vw",
+            fontSize: 10.5,
             fontFamily: "Montserrat",
-            fontWeight: "bold",
-            fill: "#7C828A",
+            fontWeight: 600,
+            fill: "#7C8A8E",
           }}
         />
         <XAxis
@@ -101,56 +126,49 @@ export default function BarChartComponent({ data }) {
           axisLine={false}
           tickLine={false}
           tick={{
-            fontSize: "0.85vw",
+            fontSize: 10.5,
             fontFamily: "Montserrat",
-            fontWeight: "bold",
-            fill: "#4A4546",
+            fontWeight: 600,
+            fill: "#4A5B60",
           }}
         />
         <Tooltip
-          formatter={(value) =>  intToStringTooltip(value)}
-          cursor={{ fill: "rgba(200, 200, 200, 0.3)" }}
+          formatter={intToStringTooltip}
+          cursor={{ fill: "rgba(72, 139, 143, 0.06)" }}
           contentStyle={{
             fontFamily: "Montserrat",
-            fontSize: "0.85vw",
+            fontSize: 11,
             backgroundColor: "#FFFFFF",
-            border: "1px solid #DDDDDD",
+            border: "1px solid #DDE5E6",
+            borderRadius: 8,
+            boxShadow: "0 6px 16px rgba(34, 61, 66, .08)",
           }}
         />
-        <Bar
-  dataKey="value"
-  radius={[6, 6, 0, 0]}
-  label={renderCustomBarLabel}
->
-  {validData.map((entry) => {
-    // Aseguramos valores de maxVal y minVal
-    const adjustedMaxVal = maxVal > 0 ? maxVal : 1; // Evitar divisiones por 0 o valores negativos
-    const adjustedMinVal = minVal < 0 ? minVal : -1;
+        <Bar dataKey="value" radius={[5, 5, 0, 0]} label={renderCustomBarLabel}>
+          {validData.map((entry) => {
+            const adjustedMaxVal = maxVal > 0 ? maxVal : 1;
+            const adjustedMinVal = minVal < 0 ? minVal : -1;
 
-    // Calcula la opacidad para valores positivos y negativos
-    const positiveOpacity = entry.value >= 0 
-      ? 0.6 + (entry.value / adjustedMaxVal) * 0.4
-      : 0;
-    const negativeOpacity = entry.value < 0
-      ? 0.6 + (Math.abs(entry.value) / Math.abs(adjustedMinVal)) * 0.4
-      : 0;
+            const positiveOpacity = entry.value >= 0
+              ? 0.6 + (entry.value / adjustedMaxVal) * 0.4
+              : 0;
+            const negativeOpacity = entry.value < 0
+              ? 0.6 + (Math.abs(entry.value) / Math.abs(adjustedMinVal)) * 0.4
+              : 0;
 
-    // Garantizar que la opacidad siempre esté en el rango 0.6 - 1
-    const finalPositiveOpacity = Math.min(1, Math.max(0.6, positiveOpacity));
-    const finalNegativeOpacity = Math.min(1, Math.max(0.6, negativeOpacity));
+            const finalPositiveOpacity = Math.min(1, Math.max(0.6, positiveOpacity));
+            const finalNegativeOpacity = Math.min(1, Math.max(0.6, negativeOpacity));
 
-    // Asigna colores claros por defecto si los valores son demasiado pequeños
-    const fillColor =
-      entry.value > 0
-        ? `rgba(72, 139, 143, ${finalPositiveOpacity})` // Verde para valores positivos
-        : entry.value < 0
-        ? `rgba(218, 68, 83, ${finalNegativeOpacity})` // Rojo para valores negativos
-        : "rgba(200, 200, 200, 0.8)"; // Gris claro para valores exactamente 0
+            const fillColor =
+              entry.value > 0
+                ? `rgba(72, 139, 143, ${finalPositiveOpacity})`
+                : entry.value < 0
+                ? `rgba(196, 108, 108, ${finalNegativeOpacity})`
+                : "rgba(188, 202, 205, 0.75)";
 
-    return <Cell key={`cell-${entry.name}`} fill={fillColor} />;
-  })}
-</Bar>
-
+            return <Cell key={`cell-${entry.name}`} fill={fillColor} />;
+          })}
+        </Bar>
       </BarChart>
     </ResponsiveContainer>
   );

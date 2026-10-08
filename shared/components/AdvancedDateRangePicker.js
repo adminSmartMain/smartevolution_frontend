@@ -123,7 +123,7 @@ function AdvancedDateRangePicker({ onApply,onClean }) {
 
   
   return (
-    <div>
+    <Box sx={{ width: "100%", minWidth: 0 }}>
       {/* Botón para abrir el rango de fechas */}
       <Button
         onClick={handleOpen}
@@ -132,14 +132,16 @@ function AdvancedDateRangePicker({ onApply,onClean }) {
         fullWidth
         sx={{
           textTransform: "none",
-          height:'2.2rem',
-          width: { xs: "span 2", sm: "17rem" },
+          height: 40,
+          width: "100%",
+          minWidth: 0,
+          borderRadius: "8px",
           borderColor: "var(--primary-color)",
           color: "var(--primary-color)",
           "&:hover": {
-            color: "var(--white-color)",
-            backgroundColor: "var(--secondary-color)",
-            borderColor: "var(--primary-color)",
+            color: "#FFFFFF",
+            backgroundColor: "#488B8F",
+            borderColor: "#488B8F",
           },
         }}
       >
@@ -244,7 +246,7 @@ function AdvancedDateRangePicker({ onApply,onClean }) {
           </Box>
         </Box>
       </Popover>
-    </div>
+    </Box>
   );
 }
 

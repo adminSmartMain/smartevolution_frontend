@@ -457,14 +457,14 @@ export const RiskProfileComponentMobile = ({
               disabled={Boolean(loading)}
               onClick={formik.handleSubmit}
               sx={{
-                backgroundColor: "#9CA3AF",
+                backgroundColor: "#488B8F",
                 borderRadius: "10px",
                 color: "#FFFFFF",
                 height: "2.9rem",
                 width: "100%",
                 fontSize: "0.9rem",
                 fontWeight: "bold",
-                "&:hover": { backgroundColor: "#6B7280" },
+                "&:hover": { backgroundColor: "#347B80", boxShadow: "none" },
                 textTransform: "none",
               }}
             >
