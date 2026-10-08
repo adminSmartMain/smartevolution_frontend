@@ -21,9 +21,6 @@ export default function Layout({ children }) {
   const headerHeight = 72;
   const pageHeader = getPageHeader(router.pathname);
   const hasLocalPageHeader = ROUTES_WITH_LOCAL_PAGE_HEADER.has(router.pathname);
-  const fillsAvailableHeight = ["/bills/billList", "/operations"].includes(
-    router.pathname
-  );
 
   // USAR useRef PARA EVITAR RE-RENDERS
   const routerPathnameRef = useRef(router.pathname);
@@ -57,15 +54,17 @@ export default function Layout({ children }) {
     flex: "1 1 auto",
     display: "flex",
     flexDirection: "column",
-    padding: 3,
-    paddingBottom: fillsAvailableHeight ? 1 : 3,
+    padding: 0,
+    px: { xs: 1.25, sm: 1.75, md: 2, xl: 2.5 },
+    pt: { xs: 1.5, md: 1.75 },
+    pb: { xs: 1, md: 1.25 },
     marginLeft: isDesktop ? (isSidebarExpanded ? "280px" : "80px") : 0,
     width: isDesktop ? (isSidebarExpanded ? "calc(100% - 280px)" : "calc(100% - 80px)") : "100%",
     maxWidth: isDesktop ? (isSidebarExpanded ? "calc(100% - 280px)" : "calc(100% - 80px)") : "100%",
     minWidth: 0,
     boxSizing: "border-box",
     overflowX: "hidden",
-    minHeight: fillsAvailableHeight ? 0 : `calc(100vh - ${headerHeight}px)`,
+    minHeight: 0,
     // ELIMINAR TRANSICIONES DURANTE CARGA DE DATOS
    transition: "none",
   };
@@ -75,7 +74,7 @@ export default function Layout({ children }) {
     backgroundColor: "background.paper",
     position: "relative",
     zIndex: 1,
-    marginTop: 2,
+    marginTop: { xs: 0.75, md: 1 },
     marginLeft: isDesktop ? (isSidebarExpanded ? "280px" : "80px") : 0,
     width: isDesktop ? (isSidebarExpanded ? "calc(100% - 280px)" : "calc(100% - 80px)") : "100%",
     maxWidth: isDesktop ? (isSidebarExpanded ? "calc(100% - 280px)" : "calc(100% - 80px)") : "100%",
@@ -86,7 +85,7 @@ export default function Layout({ children }) {
   };
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh", maxWidth: "100vw", overflowX: "hidden", backgroundColor: 'white' }}>
+    <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100dvh", maxWidth: "100vw", overflowX: "hidden", backgroundColor: 'white' }}>
       {/* Header fijo y simple */}
       <Box sx={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1300 }}>
         <Header 
@@ -128,12 +127,7 @@ export default function Layout({ children }) {
           {!hasLocalPageHeader && <PageHeader {...pageHeader} />}
           <Box
             className={hasLocalPageHeader ? undefined : "platform-page-content"}
-            sx={fillsAvailableHeight ? {
-              flex: "1 1 auto",
-              display: "flex",
-              flexDirection: "column",
-              minHeight: 0,
-            } : undefined}
+            sx={{ minWidth: 0, width: "100%", flex: "1 1 auto", display: "flex", flexDirection: "column" }}
           >
           {children}
           </Box>
@@ -142,7 +136,7 @@ export default function Layout({ children }) {
 
       {/* Footer simple */}
       <Box component="footer" sx={footerStyles}>
-        <Box sx={{ padding: 2 }}>
+        <Box sx={{ px: { xs: 1.25, sm: 1.75, md: 2, xl: 2.5 }, pt: 0, pb: 1 }}>
           <Footer />
         </Box>
       </Box>

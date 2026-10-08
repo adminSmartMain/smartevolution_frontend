@@ -7,7 +7,8 @@ import {
   Divider,
   Card,
   Grid,
-  Avatar
+  Avatar,
+  Skeleton
 } from '@mui/material';
 import InputTitles from '@styles/inputTitles';
 import { useEffect, useState, useContext, useMemo } from "react";
@@ -609,10 +610,49 @@ export const CardsInfo = ({ financialProfileData }) => {
   );
 };
 
+const InformationHeaderSkeleton = () => (
+  <Box
+    sx={{
+      display: "grid",
+      gridTemplateColumns: { xs: "1fr", md: "repeat(4, minmax(0, 1fr)) auto" },
+      gap: 1.5,
+      alignItems: "center",
+      py: 1.25,
+    }}
+  >
+    {Array.from({ length: 4 }).map((_, index) => (
+      <Box key={index}>
+        <Skeleton width="42%" height={14} />
+        <Skeleton width="72%" height={20} />
+      </Box>
+    ))}
+    <Skeleton variant="rounded" width={118} height={46} />
+  </Box>
+);
+
+const CardsSkeleton = () => (
+  <Box
+    sx={{
+      mt: 1,
+      display: "grid",
+      gridTemplateColumns: {
+        xs: "1fr",
+        sm: "repeat(2, minmax(0, 1fr))",
+        md: "repeat(3, minmax(0, 1fr))",
+        lg: "repeat(5, minmax(0, 1fr))",
+      },
+      gap: 0.9,
+    }}
+  >
+    {Array.from({ length: 5 }).map((_, index) => (
+      <Skeleton key={index} variant="rounded" height={58} />
+    ))}
+  </Box>
+);
+
 export const FinancialAnalysisInformationComponent = () => {
     const [activeTab, setActiveTab] = useState(0);
     const router = useRouter();
-    console.log(router.query.id)
 
   // Get customer data
   const {
@@ -653,7 +693,6 @@ export const FinancialAnalysisInformationComponent = () => {
     }
   }, [router.isReady, router.query.tab]);
 
-  console.log(dataCustomer)
   return (
 
     <>
@@ -686,9 +725,17 @@ export const FinancialAnalysisInformationComponent = () => {
 
         <Box>
 
-        <InformationHeader data={dataCustomer}/>
+        {loadingGetCustomer && !dataCustomer ? (
+          <InformationHeaderSkeleton />
+        ) : (
+          <InformationHeader data={dataCustomer} />
+        )}
 
+        {loadingFinancialProfile && !dataFinancialProfile ? (
+          <CardsSkeleton />
+        ) : (
           <CardsInfo financialProfileData={dataFinancialProfile} />
+        )}
         </Box>
          <Tabs
             value={activeTab}
@@ -699,7 +746,8 @@ export const FinancialAnalysisInformationComponent = () => {
             sx={{
               mt: 1,
               minHeight: 34,
-              px: 0.5,
+              px: { xs: 0.25, sm: 0.5 },
+              width: "100%",
               bgcolor: "#F5F8F8",
               borderRadius: "8px",
               border: "1px solid #E1E7E9",

@@ -548,7 +548,8 @@ export const ClientListComponent = () => {
     {
       field: "nitNombre",
       headerName: "NIT / Nombre",
-      width: 260,
+      minWidth: 220,
+      flex: 1.45,
       sortable: true,
       renderCell: (params) => {
         // Ajusta a tu data real:
@@ -593,7 +594,8 @@ export const ClientListComponent = () => {
     // Registrado / Ultima op.
     {
       field: "registered",
-      width: 130,
+      minWidth: 118,
+      flex: 0.8,
       renderHeader: () => <ColumnHeader2 top="Registrado" bottom="Ultima op." />,
       renderCell: (params) => {
         const reg = moment(params.row?.created_at).format("DD/MM/YYYY") ?? "12/01/2026";
@@ -619,7 +621,8 @@ export const ClientListComponent = () => {
     {
       field: "roles",
       headerName: "Rol(es)",
-      width: 150,
+      minWidth: 120,
+      flex: 0.8,
       renderCell: (params) => {
         const raw = params.row?.Roles ?? ""; // ej: "Emisor, Inversionista, Pagador"
         const roles = raw
@@ -728,7 +731,7 @@ export const ClientListComponent = () => {
     {
       field: "risk",
       headerName: "Riesgo",
-      width: 80,
+      width: 72,
       align: "center",
       headerAlign: "center",
       sortable: false,
@@ -792,7 +795,7 @@ export const ClientListComponent = () => {
     {
       field: "Perfil Financiero Cliente",
       headerName: "",
-      width: 20,
+      width: 46,
       sortable: false,
       filterable: false,
       renderCell: (params) => {
@@ -821,7 +824,8 @@ export const ClientListComponent = () => {
     {
       field: "contact",
       headerName: "Contacto",
-      width: 220,
+      minWidth: 180,
+      flex: 1.2,
       sortable: false,
       renderCell: (params) => {
         const email = params.row?.Email ?? "correoprincipal@usuario.com";
@@ -856,7 +860,8 @@ export const ClientListComponent = () => {
     {
       field: "SaldoCuenta",
       headerName: "Saldo cuenta",
-      width: 130,
+      minWidth: 112,
+      flex: 0.75,
       renderCell: (params) => {
         const isInvestor = params.row?.IsInvestor;
         const v = params.row?.SaldoCuenta;
@@ -874,7 +879,8 @@ export const ClientListComponent = () => {
     {
       field: "invoices",
       headerName: "Facturas",
-      width: 90,
+      minWidth: 82,
+      flex: 0.55,
       renderCell: (params) => {
         const total = params.row?.InvoicesTotal ?? 0;
         const pending = params.row?.InvoicesPending ?? 0;
@@ -891,7 +897,8 @@ export const ClientListComponent = () => {
     {
       field: "TotalPortafolio",
       headerName: "Total Portafolio",
-      width: 170,
+      minWidth: 132,
+      flex: 0.9,
       renderCell: (params) => {
         const v = params.row?.TotalPortafolio;
         return (
@@ -905,7 +912,7 @@ export const ClientListComponent = () => {
     {
       field: "actions",
       headerName: "Acciones",
-      width: 90,
+      width: 72,
       align: "center",
       headerAlign: "center",
       sortable: false,

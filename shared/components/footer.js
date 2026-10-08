@@ -2,12 +2,12 @@ import { Divider, Typography, Box } from "@mui/material";
 
 export default function Footer() {
   return (
-    <Box component="footer" sx={{ width: '100%', py: 2 }}>
+    <Box component="footer" sx={{ width: '100%', py: 1 }}>
       <Divider
         sx={{
           borderBottomWidth: 2,
           borderColor: '#488B8F',
-          mb: 1,
+          mb: 0.75,
           width: '100%',
         }}
       />
