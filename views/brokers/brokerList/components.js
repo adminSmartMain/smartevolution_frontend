@@ -80,7 +80,8 @@ export const BrokerListComponent = () => {
     {
       field: "Broker",
       headerName: "CORREDOR",
-      width: 160,
+      minWidth: 160,
+      flex: 1.45,
       renderCell: (params) => {
         return (
           <CustomTooltip
@@ -107,7 +108,8 @@ export const BrokerListComponent = () => {
     {
       field: "Status",
       headerName: "ESTADO",
-      width: 160,
+      minWidth: 160,
+      flex: 1.45,
       renderCell: (params) => {
         return params.value ? (
           <>
@@ -149,7 +151,8 @@ export const BrokerListComponent = () => {
     {
       field: "DateCreated",
       headerName: "FECHA",
-      width: 100,
+      minWidth: 100,
+      flex: 0.91,
       renderCell: (params) => {
         return <InputTitles>{params.value}</InputTitles>;
       },
@@ -159,7 +162,8 @@ export const BrokerListComponent = () => {
     {
       field: "Ver corredor",
       headerName: "",
-      width: 50,
+      minWidth: 50,
+      flex: 0.45,
       sortable: false,
       filterable: false,
       renderCell: (params) => {
@@ -204,7 +208,8 @@ export const BrokerListComponent = () => {
     {
       field: "Editar corredor",
       headerName: "",
-      width: 50,
+      minWidth: 50,
+      flex: 0.45,
       sortable: false,
       filterable: false,
       renderCell: (params) => {
@@ -249,7 +254,8 @@ export const BrokerListComponent = () => {
     {
       field: "Eliminar",
       headerName: "",
-      width: 50,
+      minWidth: 50,
+      flex: 0.45,
       sortable: false,
       filterable: false,
       renderCell: (params) => {

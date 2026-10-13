@@ -186,7 +186,8 @@ export const SignatureListC = () => {
     {
       field: "NoOP",
       headerName: "NO OPERACION",
-      width: 120,
+      minWidth: 120,
+      flex: 1.09,
       renderCell: (params) => {
         return (
           <CustomTooltip
@@ -213,7 +214,8 @@ export const SignatureListC = () => {
     {
       field: "DateBill",
       headerName: "FECHA",
-      width: 150,
+      minWidth: 150,
+      flex: 1.36,
       valueGetter: (params) => {
         return params.row.DateBill;
       },
@@ -228,7 +230,8 @@ export const SignatureListC = () => {
     {
       field: "Investor",
       headerName: "INVERSIONISTA",
-      width: 170,
+      minWidth: 170,
+      flex: 1.55,
       renderCell: (params) => {
         return (
           <CustomTooltip
@@ -255,7 +258,8 @@ export const SignatureListC = () => {
     {
       field: "Emitter",
       headerName: "EMISOR",
-      width: 170,
+      minWidth: 170,
+      flex: 1.55,
       renderCell: (params) => {
         return (
           <CustomTooltip
@@ -282,7 +286,8 @@ export const SignatureListC = () => {
     {
       field: "billCount",
       headerName: "CANTIDAD DE FACTURAS",
-      width: 200,
+      minWidth: 200,
+      flex: 1.82,
       renderCell: (params) => {
         return <InputTitles>{params.value}</InputTitles>;
       },
@@ -290,7 +295,8 @@ export const SignatureListC = () => {
     {
       field: "promDays",
       headerName: "DIAS PROM",
-      width: 150,
+      minWidth: 150,
+      flex: 1.36,
       renderCell: (params) => {
         return (
           <InputTitles>
@@ -302,7 +308,8 @@ export const SignatureListC = () => {
     {
       field: "investorTax",
       headerName: "TASA INVERSIONISTA",
-      width: 200,
+      minWidth: 200,
+      flex: 1.82,
       renderCell: (params) => {
         return <InputTitles>{params.value} %</InputTitles>;
       },
@@ -310,7 +317,8 @@ export const SignatureListC = () => {
     {
       field: "presentValueInvestor",
       headerName: "VALOR PRESENTE INVERSIONISTA",
-      width: 250,
+      minWidth: 250,
+      flex: 2.27,
       renderCell: (params) => {
         return (
           <InputTitles>
@@ -322,7 +330,8 @@ export const SignatureListC = () => {
     {
       field: "payedAmount",
       headerName: "VALOR NOMINAL OP",
-      width: 200,
+      minWidth: 200,
+      flex: 1.82,
       renderCell: (params) => {
         return (
           <InputTitles>
@@ -334,7 +343,8 @@ export const SignatureListC = () => {
     {
       field: "Orden de compra",
       headerName: "",
-      width: 50,
+      minWidth: 50,
+      flex: 0.45,
       sortable: false,
       filterable: false,
       renderCell: (params) => {

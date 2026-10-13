@@ -854,7 +854,8 @@ const columns = [
   {
     field: "status",
     headerName: "Estado",
-    width: 100,
+    minWidth: 100,
+    flex: 0.91,
     renderCell: (params) => {
       let statusText = "";
       let badgeClass = "";
@@ -896,7 +897,8 @@ const columns = [
   { 
     field: "opId", 
     headerName: "ID", 
-    width: 55,
+    minWidth: 55,
+    flex: 0.5,
     renderCell: (params) => (
       <Tooltip title={params.value || ''} arrow>
         <span>{params.value}</span>
@@ -907,7 +909,8 @@ const columns = [
   { 
     field: "opDate", 
     headerName: "Fecha Op", 
-    width: 100,
+    minWidth: 100,
+    flex: 0.91,
     valueFormatter: (params) => {
       if (!params.value) return '';
       const [year, month, day] = params.value.split('T')[0].split('-');
@@ -934,7 +937,8 @@ const columns = [
   { 
     field: "billData", 
     headerName: "# Factura", 
-    width: 100,
+    minWidth: 100,
+    flex: 0.91,
     renderCell: (params) => (
       <Tooltip title={params.value || ''} arrow>
         <span>{params.value}</span>
@@ -945,7 +949,8 @@ const columns = [
   { 
     field: "emitterName", 
     headerName: "Emisor", 
-    width: 230,
+    minWidth: 230,
+    flex: 2.09,
     renderCell: (params) => (
       <Tooltip title={params.value || ''} arrow>
         <span style={{ 
@@ -963,7 +968,8 @@ const columns = [
   { 
     field: "investorName", 
     headerName: "Inversionista", 
-    width: 200,
+    minWidth: 200,
+    flex: 1.82,
     renderCell: (params) => (
       <Tooltip title={params.value || ''} arrow>
         <span style={{ 
@@ -981,7 +987,8 @@ const columns = [
   { 
     field: "payerName", 
     headerName: "Pagador", 
-    width: 150,
+    minWidth: 150,
+    flex: 1.36,
     renderCell: (params) => (
       <Tooltip title={params.value || ''} arrow>
         <span style={{ 
@@ -999,7 +1006,8 @@ const columns = [
   { 
     field: "discountTax", 
     headerName: "Tasa Desc", 
-    width: 60,
+    minWidth: 60,
+    flex: 0.55,
     renderCell: (params) => (
       <Tooltip title={params.value || ''} arrow>
         <span>{params.value}</span>
@@ -1032,7 +1040,8 @@ const columns = [
   { 
     field: "payedAmount", 
     headerName: "Valor Nominal", 
-    width: 110,
+    minWidth: 110,
+    flex: 1,
     valueFormatter: ({ value }) => {
       if (value == null) return "$0.00";
       return new Intl.NumberFormat("es-CO", {
@@ -1050,7 +1059,8 @@ const columns = [
   { 
     field: "presentValueInvestor", 
     headerName: "Valor Inversionista", 
-    width: 110,
+    minWidth: 110,
+    flex: 1,
     valueFormatter: ({ value }) => {
       if (value == null) return "$0.00";
       return new Intl.NumberFormat("es-CO", {
@@ -1068,7 +1078,8 @@ const columns = [
   { 
     field: "probableDate", 
     headerName: "Fecha Probable", 
-    width: 93,
+    minWidth: 93,
+    flex: 0.85,
     valueFormatter: (params) => {
       if (!params.value) return '';
       const [year, month, day] = params.value.split('T')[0].split('-');
@@ -1084,7 +1095,8 @@ const columns = [
   { 
     field: "opExpiration", 
     headerName: "Fecha Fin", 
-    width: 94,
+    minWidth: 94,
+    flex: 0.85,
     valueFormatter: (params) => {
       if (!params.value) return '';
       const [year, month, day] = params.value.split('T')[0].split('-');
@@ -1100,7 +1112,8 @@ const columns = [
     {
       field: "Acciones",
       headerName: "Acciones",
-      width: 90,
+      minWidth: 100,
+      flex: 0.91,
       renderCell: (params) => {
         const isOperationApproved = params.row.estado === "Aprobado";
        const hasSummary = haveNegotiationSummary[params.row.opId];

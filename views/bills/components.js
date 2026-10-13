@@ -645,7 +645,8 @@ const normalizeTypeBill = (value) => {
     {
       field: "billId",
       headerName: "ID",
-      width: 70,
+      minWidth: 70,
+      flex: 0.64,
       renderCell: (params) => (
         <CustomTooltip
           title={params.value}
@@ -670,7 +671,8 @@ const normalizeTypeBill = (value) => {
     {
       field: "typeBill",
       headerName: "TIPO DE FACTURA",
-      width: 130,
+      minWidth: 130,
+      flex: 1.18,
       renderCell: (params) => {
         return (
           <Typography
@@ -715,7 +717,8 @@ const normalizeTypeBill = (value) => {
     {
       field: "emitterName",
       headerName: "NOMBRE EMISOR",
-      width: 160,
+      minWidth: 160,
+      flex: 1.45,
       renderCell: (params) => (
         <CustomTooltip
           title={params.value}
@@ -744,7 +747,8 @@ const normalizeTypeBill = (value) => {
     {
       field: "emitterId",
       headerName: "NIT EMISOR",
-      width: 100,
+      minWidth: 100,
+      flex: 0.91,
       renderCell: (params) => (
         <CustomTooltip
           title={params.value}
@@ -769,7 +773,8 @@ const normalizeTypeBill = (value) => {
     {
       field: "currentOwner",
       headerName: "NOMBRE TENEDOR ACTUAL",
-      width: 200,
+      minWidth: 200,
+      flex: 1.82,
       renderCell: (params) => (
         <CustomTooltip
           title={params.value}
@@ -796,7 +801,8 @@ const normalizeTypeBill = (value) => {
     {
       field: "payerName",
       headerName: "NOMBRE PAGADOR",
-      width: 160,
+      minWidth: 160,
+      flex: 1.45,
       renderCell: (params) => (
         <CustomTooltip
           title={params.value}
@@ -825,7 +831,8 @@ const normalizeTypeBill = (value) => {
     {
       field: "payerId",
       headerName: "NIT PAGADOR",
-      width: 110,
+      minWidth: 110,
+      flex: 1,
       renderCell: (params) => (
         <CustomTooltip
           title={params.value}
@@ -851,7 +858,8 @@ const normalizeTypeBill = (value) => {
     {
       field: "dateBill",
       headerName: "FECHA EMISIÓN",
-      width: 120,
+      minWidth: 120,
+      flex: 1.09,
       renderCell: (params) => {
         return (
           <InputTitles>
@@ -863,7 +871,8 @@ const normalizeTypeBill = (value) => {
 {
   field: "datePayment",
   headerName: "FECHA DE PAGO",
-  width: 150,
+  minWidth: 150,
+  flex: 1.36,
   editable: true,
 
   // Cómo se muestra en la tabla: DD/MM/YYYY con estilo
@@ -933,7 +942,8 @@ const normalizeTypeBill = (value) => {
     {
       field: "expirationDate",
       headerName: "FECHA VENCIMIENTO",
-      width: 150,
+      minWidth: 150,
+      flex: 1.36,
       renderCell: (params) => {
         return (
           <InputTitles>
@@ -945,7 +955,8 @@ const normalizeTypeBill = (value) => {
     {
       field: "billValue",
       headerName: "VALOR FACTURA",
-      width: 120,
+      minWidth: 120,
+      flex: 1.09,
       renderCell: (params) => {
         return (
           <InputTitles>
@@ -957,7 +968,8 @@ const normalizeTypeBill = (value) => {
     {
       field: "iva",
       headerName: "IVA",
-      width: 100,
+      minWidth: 100,
+      flex: 0.91,
       renderCell: (params) => {
         return (
           <InputTitles>
@@ -968,7 +980,8 @@ const normalizeTypeBill = (value) => {
     },
     {
       headerName: "Aplicar RET. IVA",
-      width: 120,
+      minWidth: 120,
+      flex: 1.09,
       sortable: false,
       disableExport: true,
       renderCell: (params) => (
@@ -1020,7 +1033,8 @@ const normalizeTypeBill = (value) => {
     {
       field: "ret_iva",
       headerName: "RET. IVA",
-      width: 120,
+      minWidth: 120,
+      flex: 1.09,
       sortable: false,
       renderCell: (params) => {
         return (
@@ -1040,7 +1054,8 @@ const normalizeTypeBill = (value) => {
     {
       field: "creditNotes",
       headerName: "NOTA CRÉDITO",
-      width: 110,
+      minWidth: 110,
+      flex: 1,
       renderCell: (params) => {
         return (
           <InputTitles>
@@ -1067,7 +1082,8 @@ const normalizeTypeBill = (value) => {
     {
       field: "subTotal",
       headerName: "SUBTOTAL",
-      width: 100,
+      minWidth: 100,
+      flex: 0.91,
       renderCell: (params) => {
         return (
           <InputTitles>
@@ -1080,7 +1096,8 @@ const normalizeTypeBill = (value) => {
     {
       field: "ret_ica",
       headerName: "RET. ICA",
-      width: 120,
+      minWidth: 120,
+      flex: 1.09,
       sortable: false,
       renderCell: (params) => {
         return (
@@ -1097,7 +1114,8 @@ const normalizeTypeBill = (value) => {
     {
       field: "ret_fte",
       headerName: "RET. FTE",
-      width: 120,
+      minWidth: 120,
+      flex: 1.09,
       sortable: false,
       renderCell: (params) => {
         return (
@@ -1114,7 +1132,8 @@ const normalizeTypeBill = (value) => {
     {
       field: "other_retentions",
       headerName: "OTRAS RET.",
-      width: 110,
+      minWidth: 110,
+      flex: 1,
       editable: true,
       renderCell: (params) => {
         return (
@@ -1142,7 +1161,8 @@ const normalizeTypeBill = (value) => {
     {
       field: "total",
       headerName: "VALOR A RECIBIR",
-      width: 140,
+      minWidth: 140,
+      flex: 1.27,
       renderCell: (params) => {
         return (
           <InputTitles>
