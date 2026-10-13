@@ -98,7 +98,8 @@ export const RefundListC = () => {
     {
       field: "date",
       headerName: "FECHA",
-      width: 120,
+      minWidth: 120,
+      flex: 1.09,
       renderCell: (params) => (
         <CustomTooltip
           title={params.value}
@@ -122,13 +123,15 @@ export const RefundListC = () => {
     {
       field: "rId",
       headerName: "ID",
-      width: 50,
+      minWidth: 50,
+      flex: 0.45,
       renderCell: (params) => <InputTitles>{params.value}</InputTitles>,
     },
     {
       field: "client",
       headerName: "INVERSIONISTA",
-      width: 155,
+      minWidth: 155,
+      flex: 1.41,
       renderCell: (params) => (
         <CustomTooltip
           title={params.value}
@@ -152,7 +155,8 @@ export const RefundListC = () => {
     {
       field: "amount",
       headerName: "MONTO",
-      width: 120,
+      minWidth: 120,
+      flex: 1.09,
       renderCell: (params) => (
         <CustomTooltip
           title={params.value}
@@ -178,7 +182,8 @@ export const RefundListC = () => {
     {
       field: "Imprimir resumen",
       headerName: "",
-      width: 50,
+      minWidth: 50,
+      flex: 0.45,
       sortable: false,
       filterable: false,
       renderCell: (params) => {
@@ -222,7 +227,8 @@ export const RefundListC = () => {
     {
       field: "Ver reintegro",
       headerName: "",
-      width: 50,
+      minWidth: 50,
+      flex: 0.45,
       sortable: false,
       filterable: false,
       renderCell: (params) => {
@@ -268,7 +274,8 @@ export const RefundListC = () => {
     {
       field: "Editar reintegro",
       headerName: "",
-      width: 50,
+      minWidth: 50,
+      flex: 0.45,
       sortable: false,
       filterable: false,
       renderCell: (params) => {
@@ -314,7 +321,8 @@ export const RefundListC = () => {
     {
       field: "Eliminar",
       headerName: "",
-      width: 50,
+      minWidth: 50,
+      flex: 0.45,
       sortable: false,
       filterable: false,
       renderCell: (params) => {

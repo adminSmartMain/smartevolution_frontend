@@ -141,7 +141,8 @@ export const SummaryListComponent = () => {
     {
       field: "NoOP",
       headerName: "NO. OP",
-      width: 100,
+      minWidth: 100,
+      flex: 0.91,
       renderCell: (params) => {
         return <InputTitles>{params.value}</InputTitles>;
       },
@@ -149,7 +150,8 @@ export const SummaryListComponent = () => {
     {
       field: "date",
       headerName: "FECHA",
-      width: 130,
+      minWidth: 130,
+      flex: 1.18,
       renderCell: (params) => {
         return (
           <InputTitles>
@@ -161,7 +163,8 @@ export const SummaryListComponent = () => {
     {
       field: "emitter",
       headerName: "NOMBRE EMISOR",
-      width: 280,
+      minWidth: 280,
+      flex: 2.4,
       renderCell: (params) => {
         return (
           <CustomTooltip
@@ -188,7 +191,8 @@ export const SummaryListComponent = () => {
     {
       field: "payer",
       headerName: "NOMBRE PAGADOR",
-      width: 280,
+      minWidth: 280,
+      flex: 2.4,
       renderCell: (params) => {
         return (
           <CustomTooltip
@@ -216,7 +220,8 @@ export const SummaryListComponent = () => {
     {
       field: "total",
       headerName: "DESEMBOLSOS",
-      width: 170,
+      minWidth: 170,
+      flex: 1.55,
       renderCell: (params) => {
         return (
           <InputTitles>
@@ -228,7 +233,8 @@ export const SummaryListComponent = () => {
     {
       field: "totalDeposits",
       headerName: "TOTAL CONSIGNACIONES",
-      width: 170,
+      minWidth: 170,
+      flex: 1.55,
       renderCell: (params) => {
         return (
           <InputTitles>
@@ -240,7 +246,8 @@ export const SummaryListComponent = () => {
     {
       field: "pendingToDeposit",
       headerName: "PENDIENTE DESEMBOLSO",
-      width: 190,
+      minWidth: 190,
+      flex: 1.73,
       renderCell: (params) => {
         return (
           <InputTitles>
@@ -254,7 +261,8 @@ export const SummaryListComponent = () => {
     {
       field: "Editar resumen",
       headerName: "",
-      width: 50,
+      minWidth: 50,
+      flex: 0.45,
       sortable: false,
       filterable: false,
       renderCell: (params) => {
@@ -301,7 +309,8 @@ export const SummaryListComponent = () => {
     {
       field: "Imprimir resumen",
       headerName: "",
-      width: 50,
+      minWidth: 50,
+      flex: 0.45,
       sortable: false,
       filterable: false,
       renderCell: (params) => {

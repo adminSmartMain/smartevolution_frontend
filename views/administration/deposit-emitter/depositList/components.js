@@ -117,7 +117,8 @@ export const DepositListComponent = () => {
     {
       field: "date",
       headerName: "FECHA",
-      width: 150,
+      minWidth: 150,
+      flex: 1.36,
       renderCell: (params) => {
         return (
           <InputTitles>
@@ -129,7 +130,8 @@ export const DepositListComponent = () => {
     {
       field: "edId",
       headerName: "ID",
-      width: 100,
+      minWidth: 100,
+      flex: 0.91,
       renderCell: (params) => (
         <CustomTooltip
           title={params.value}
@@ -153,7 +155,8 @@ export const DepositListComponent = () => {
     {
       field: "client",
       headerName: "EMISOR",
-      width: 200,
+      minWidth: 200,
+      flex: 1.82,
       renderCell: (params) => {
         return (
           <CustomTooltip
@@ -181,7 +184,8 @@ export const DepositListComponent = () => {
     {
       field: "amount",
       headerName: "MONTO",
-      width: 150,
+      minWidth: 150,
+      flex: 1.36,
       renderCell: (params) => {
         return (
           <InputTitles>
@@ -196,7 +200,8 @@ export const DepositListComponent = () => {
     {
       field: "Ver giro",
       headerName: "",
-      width: 50,
+      minWidth: 50,
+      flex: 0.45,
       sortable: false,
       filterable: false,
       renderCell: (params) => {
@@ -243,7 +248,8 @@ export const DepositListComponent = () => {
     {
       field: "Editar giro",
       headerName: "",
-      width: 50,
+      minWidth: 50,
+      flex: 0.45,
       sortable: false,
       filterable: false,
       renderCell: (params) => {
@@ -290,7 +296,8 @@ export const DepositListComponent = () => {
     {
       field: "Eliminar",
       headerName: "",
-      width: 50,
+      minWidth: 50,
+      flex: 0.45,
       sortable: false,
       filterable: false,
       renderCell: (params) => {
