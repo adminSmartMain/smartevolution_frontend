@@ -15,6 +15,8 @@ import theme from "../styles/themes";
 import SecurityDialog from "@components/modals/infoModal";
 import { AuthProvider } from "@context/authContext";
 import RouteGuard from "@components/routeGuard";
+import WorkspaceWindowLayer from "@components/workspace/WorkspaceWindowLayer";
+import { WorkspaceWindowProvider } from "@context/workspaceWindowContext";
 import { getPageHeader } from "../shared/config/pageHeaders";
 
 const pathsWithoutDefaultLayout = [
@@ -65,6 +67,7 @@ function MyApp({ Component, pageProps }) {
       <ThemeProvider theme={theme}>
         <AuthProvider>
           <SidebarProvider>
+            <WorkspaceWindowProvider>
 <>      
 <SecurityDialog />
             <Head>
@@ -94,8 +97,9 @@ function MyApp({ Component, pageProps }) {
             ) : (
               <Component {...pageProps} />
             )}</RouteGuard>
+            <WorkspaceWindowLayer />
           </>
-
+            </WorkspaceWindowProvider>
           </SidebarProvider>
           
         </AuthProvider>

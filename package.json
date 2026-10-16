@@ -45,7 +45,8 @@
     "react-toastify": "^9.0.8",
     "recharts": "^2.1.16",
     "simplebar-react": "^2.4.1",
-    "zustand": "^4.5.2"
+    "zustand": "^4.5.2",
+    "react-draggable": "^4.4.6"
   },
   "devDependencies": {
     "@trivago/prettier-plugin-sort-imports": "^3.4.0",
