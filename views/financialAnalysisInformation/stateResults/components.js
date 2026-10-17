@@ -1,412 +1,206 @@
-import React, { useMemo, useState } from "react";
-import { Box, Tabs, Tab, Typography, Divider } from "@mui/material";
+import React, { useMemo } from "react";
+import { Box, Typography, Divider, Skeleton } from "@mui/material";
 
-// Si ya tienes estos estilos en tu proyecto, usa los tuyos:
-import InputTitles from "@styles/inputTitles";
 import scrollSx from "@styles/scroll";
+import { groups } from "@views/financialProfile/newFinancialStatement/libs/groups";
 
-/**
- * ========= Helpers de formato =========
- */
-const currency = new Intl.NumberFormat("en-EN", {
+const money = new Intl.NumberFormat("es-CO", {
   style: "currency",
-  currency: "USD",
-  minimumFractionDigits: 2,
-});
-
-const percent0 = new Intl.NumberFormat("en-EN", {
-  style: "percent",
-  minimumFractionDigits: 0,
+  currency: "COP",
   maximumFractionDigits: 0,
 });
 
-const fmtMoney = (n) => currency.format(Number(n || 0));
-const fmtPart = (n) => percent0.format(Number(n || 0) / 100);
+const fmtMoney = (value) => money.format(Number(value || 0));
+const fmtPercent = (value) =>
+  Number.isFinite(value) ? `${value.toLocaleString("es-CO", { maximumFractionDigits: 1 })}%` : "—";
 
-/**
- * Var (%) = (nuevo - viejo) / viejo
- * Si viejo == 0 => si nuevo==0 => 0, si no => 1 (100%) (o maneja como quieras)
- */
-const calcVar = (current, prev) => {
-  const c = Number(current || 0);
-  const p = Number(prev || 0);
-  if (p === 0) return c === 0 ? 0 : 1;
-  return (c - p) / p;
+const variation = (current, previous) => {
+  const curr = Number(current || 0);
+  const prev = Number(previous || 0);
+  if (!prev) return curr === 0 ? 0 : null;
+  return ((curr - prev) / Math.abs(prev)) * 100;
 };
 
-const fmtVar = (v) => percent0.format(v);
+const participation = (profile, value) => {
+  const grossSales = Number(profile?.stateOfResult?.gross_sale || 0);
+  if (!grossSales) return null;
+  return (Number(value || 0) / Math.abs(grossSales)) * 100;
+};
 
-/**
- * ========= Componente: Tabla por bloque =========
- * Layout:
- *  - Col 1: Nombre
- *  - Año 2022: Valor + Part
- *  - Año 2023: Valor + Part + Var (la var va alineada al grupo 2023 en el screenshot)
- *  - Año 2024: Valor + Part + Var (si quieres otro var también, pero aquí lo dejamos solo a la derecha)
- *
- * Para que se parezca al screenshot, hacemos:
- *  - 2022: Valor + Part
- *  - 2023: Valor + Part + Var (Var comparando 2023 vs 2022)
- *  - 2024: Valor + Part + Var (Var comparando 2024 vs 2023)
- *
- * Si tú solo quieres Var 2024 vs 2023, deja el de 2023 vacío.
- */
-function BlockTable({ title, rows, y2022, y2023, y2024 }) {
-  const headerCellSx = {
-    fontSize: "0.75vw",
-    fontWeight: 700,
-    color: "#666",
-    textAlign: "right",
-    whiteSpace: "nowrap",
-  };
+const stateGroups = groups.stateOfResult.subgroups;
 
-  const nameSx = {
-    fontSize: "0.8vw",
-    fontWeight: 500,
-    color: "#333",
-  };
+const buildRows = (subgroups) =>
+  subgroups.flatMap((subgroup) => [
+    ...(subgroup.keys || []).map((item) => ({ ...item, isTotal: false })),
+    ...(subgroup.total || []).map((item) => ({ ...item, isTotal: true })),
+  ]);
 
-  const valueSx = {
-    fontSize: "0.8vw",
-    fontWeight: 400,
-    color: "#333",
-    textAlign: "right",
-    whiteSpace: "nowrap",
-  };
+const sections = [
+  { title: "Ventas", rows: buildRows(stateGroups.slice(0, 2)) },
+  { title: "Gastos", rows: buildRows(stateGroups.slice(2, 3)) },
+  { title: "Ingresos y resultado", rows: buildRows(stateGroups.slice(3)) },
+];
 
-  const partSx = (color) => ({
-    fontSize: "0.75vw",
-    fontWeight: 600,
-    color: color,
-    textAlign: "right",
-    whiteSpace: "nowrap",
-  });
-
-  const varSx = (v) => ({
-    fontSize: "0.75vw",
-    fontWeight: 700,
-    textAlign: "right",
-    whiteSpace: "nowrap",
-    color: v >= 0 ? "#1B8E4B" : "#D14343", // verde/rojo
-  });
-
+function EmptyState() {
   return (
-    <Box sx={{ backgroundColor: "#fff", borderRadius: "8px", p: 2, mb: 2 }}>
-      {/* Título del bloque (Ventas/Gastos/Ingresos) */}
-      <Typography
-        sx={{
-          fontSize: "0.95vw",
-          fontWeight: 700,
-          color: "#0E7C7B",
-          mb: 1,
-        }}
-      >
-        {title}
+    <Box sx={{ p: 3, border: "1px dashed #D7E0E2", borderRadius: 2, bgcolor: "#fff" }}>
+      <Typography sx={{ fontSize: 13, fontWeight: 600, color: "#53686D" }}>
+        No hay estados financieros registrados para este cliente.
       </Typography>
-
-      {/* Header de columnas */}
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: "260px 1fr 90px 1fr 90px 90px 1fr 90px 90px",
-          columnGap: 2,
-          alignItems: "center",
-          px: 1,
-        }}
-      >
-        <Box /> {/* nombre */}
-        <Typography sx={headerCellSx}>{y2022}</Typography>
-        <Typography sx={headerCellSx}>Part</Typography>
-
-        <Typography sx={headerCellSx}>{y2023}</Typography>
-        <Typography sx={headerCellSx}>Part</Typography>
-        <Typography sx={headerCellSx}>Var</Typography>
-
-        <Typography sx={headerCellSx}>{y2024}</Typography>
-        <Typography sx={headerCellSx}>Part</Typography>
-        <Typography sx={headerCellSx}>Var</Typography>
-      </Box>
-
-      <Divider sx={{ my: 1, opacity: 0.7 }} />
-
-      {/* Filas */}
-      {rows.map((r, idx) => {
-        const v22 = r.values?.[y2022]?.value ?? 0;
-        const p22 = r.values?.[y2022]?.part ?? 0;
-
-        const v23 = r.values?.[y2023]?.value ?? 0;
-        const p23 = r.values?.[y2023]?.part ?? 0;
-
-        const v24 = r.values?.[y2024]?.value ?? 0;
-        const p24 = r.values?.[y2024]?.part ?? 0;
-
-        const var23 = calcVar(v23, v22);
-        const var24 = calcVar(v24, v23);
-
-        // líneas separadoras como el screenshot (más marcadas en totales)
-        const isTotal = Boolean(r.isTotal);
-
-        return (
-          <Box key={`${r.name}-${idx}`}>
-            <Box
-              sx={{
-                display: "grid",
-                gridTemplateColumns:
-                  "260px 1fr 90px 1fr 90px 90px 1fr 90px 90px",
-                columnGap: 2,
-                alignItems: "center",
-                px: 1,
-                py: 0.8,
-              }}
-            >
-              <Typography sx={{ ...nameSx, fontWeight: isTotal ? 800 : 500 }}>
-                {r.name}
-              </Typography>
-
-              {/* 2022 */}
-              <Typography sx={{ ...valueSx, fontWeight: isTotal ? 800 : 400 }}>
-                {fmtMoney(v22)}
-              </Typography>
-              <Typography sx={partSx("#1B8E4B")}>{fmtPart(p22)}</Typography>
-
-              {/* 2023 */}
-              <Typography sx={{ ...valueSx, fontWeight: isTotal ? 800 : 400 }}>
-                {fmtMoney(v23)}
-              </Typography>
-              <Typography sx={partSx("#1B8E4B")}>{fmtPart(p23)}</Typography>
-              <Typography sx={varSx(var23)}>{fmtVar(var23)}</Typography>
-
-              {/* 2024 */}
-              <Typography sx={{ ...valueSx, fontWeight: isTotal ? 800 : 400 }}>
-                {fmtMoney(v24)}
-              </Typography>
-              <Typography sx={partSx("#1B8E4B")}>{fmtPart(p24)}</Typography>
-              <Typography sx={varSx(var24)}>{fmtVar(var24)}</Typography>
-            </Box>
-
-            {isTotal ? (
-              <Divider sx={{ my: 1, opacity: 0.9 }} />
-            ) : (
-              <Divider sx={{ opacity: 0.25 }} />
-            )}
-          </Box>
-        );
-      })}
     </Box>
   );
 }
 
-/**
- * ========= Componente principal =========
- */
-export const StateResultsComponent = () => {
-  // Tabs (maqueta)
-  const tabs = useMemo(
-    () => [
-      { label: "Ene – Dic 2022", key: "2022" },
-      { label: "Ene – Dic 2023", key: "2023" },
-      { label: "Ene – Dic 2024", key: "2024" },
-    ],
-    []
+function BlockTable({ title, rows, profiles }) {
+  const periodWidth = 330;
+  const gridTemplateColumns = `250px ${profiles
+    .map(() => `${periodWidth - 180}px 82px 82px`)
+    .join(" ")}`;
+
+  const headerSx = {
+    fontSize: 11,
+    fontWeight: 600,
+    color: "#73858A",
+    textAlign: "right",
+    whiteSpace: "nowrap",
+  };
+
+  const cellSx = {
+    px: 1,
+    py: 0.85,
+    fontSize: 11.5,
+    color: "#536268",
+    textAlign: "right",
+    whiteSpace: "nowrap",
+  };
+
+  return (
+    <Box sx={{ bgcolor: "#fff", border: "1px solid #E6ECEE", borderRadius: 2, mb: 2, overflow: "hidden" }}>
+      <Typography sx={{ px: 1.5, pt: 1.3, pb: 0.8, fontSize: 13, fontWeight: 650, color: "#3F777B" }}>
+        {title}
+      </Typography>
+
+      <Box sx={{ overflowX: "auto", WebkitOverflowScrolling: "touch", maxWidth: "100%" }}>
+        <Box sx={{ minWidth: 250 + profiles.length * periodWidth }}>
+          <Box sx={{ display: "grid", gridTemplateColumns, columnGap: 1, px: 1, alignItems: "end" }}>
+            <Box />
+            {profiles.map((profile) => (
+              <React.Fragment key={`header-${profile.id}`}>
+                <Typography sx={{ ...headerSx, color: "#4C686D", fontWeight: 700 }}>
+                  {profile.dateRanges || profile.period || "Periodo"}
+                </Typography>
+                <Typography sx={headerSx}>Part.</Typography>
+                <Typography sx={headerSx}>Var.</Typography>
+              </React.Fragment>
+            ))}
+          </Box>
+          <Divider sx={{ mt: 0.8 }} />
+
+          {rows.map((row) => (
+            <Box key={row.key}>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns,
+                  columnGap: 1,
+                  alignItems: "center",
+                  px: 1,
+                  bgcolor: row.isTotal ? "#FAFCFC" : "#fff",
+                }}
+              >
+                <Typography
+                  sx={{
+                    px: 1,
+                    py: 0.85,
+                    fontSize: 11.5,
+                    fontWeight: row.isTotal ? 700 : 500,
+                    color: row.isTotal ? "#405D62" : "#5C6D72",
+                  }}
+                >
+                  {row.title}
+                </Typography>
+
+                {profiles.map((profile, index) => {
+                  const value = Number(profile?.stateOfResult?.[row.key] || 0);
+                  const previous = profiles[index + 1];
+                  const previousValue = Number(previous?.stateOfResult?.[row.key] || 0);
+                  const part = participation(profile, value);
+                  const varValue = previous ? variation(value, previousValue) : null;
+
+                  return (
+                    <React.Fragment key={`${profile.id}-${row.key}`}>
+                      <Typography sx={{ ...cellSx, fontWeight: row.isTotal ? 700 : 500 }}>
+                        {fmtMoney(value)}
+                      </Typography>
+                      <Typography sx={{ ...cellSx, color: "#468E92" }}>{fmtPercent(part)}</Typography>
+                      <Typography
+                        sx={{
+                          ...cellSx,
+                          color:
+                            varValue == null
+                              ? "#9AA8AB"
+                              : varValue >= 0
+                              ? "#4E8A72"
+                              : "#C46C6C",
+                        }}
+                      >
+                        {fmtPercent(varValue)}
+                      </Typography>
+                    </React.Fragment>
+                  );
+                })}
+              </Box>
+              <Divider sx={{ opacity: row.isTotal ? 0.8 : 0.35 }} />
+            </Box>
+          ))}
+        </Box>
+      </Box>
+    </Box>
   );
+}
 
-  const [tab, setTab] = useState(2); // por defecto 2024
+export const StateResultsComponent = ({ financialProfileData, loading = false }) => {
+  const profiles = useMemo(() => {
+    const rows = financialProfileData?.data?.financialProfiles;
+    return Array.isArray(rows) ? rows : [];
+  }, [financialProfileData]);
 
-  // Años que pintamos en columnas (siempre 2022-2024 como screenshot)
-  const y2022 = "2022";
-  const y2023 = "2023";
-  const y2024 = "2024";
+  if (loading) {
+    return (
+      <Box sx={{ p: 2 }}>
+        <Skeleton height={36} width="30%" />
+        <Skeleton variant="rounded" height={340} />
+      </Box>
+    );
+  }
 
-  // ======= DATA FALSA (solo maqueta) =======
-  const fake = useMemo(() => {
-    return {
-      ventas: [
-        {
-          name: "Ventas Brutas",
-          values: {
-            2022: { value: 10000, part: 10 },
-            2023: { value: 50000000, part: 50 },
-            2024: { value: 5000, part: 0 },
-          },
-        },
-        {
-          name: "Dtos y Devoluciones",
-          values: {
-            2022: { value: 10000, part: 10 },
-            2023: { value: 35000000, part: 35 },
-            2024: { value: 30000, part: 0 },
-          },
-        },
-        {
-          name: "Otras cuentas por cobrar",
-          values: {
-            2022: { value: 10000, part: 10 },
-            2023: { value: 4000000, part: 4 },
-            2024: { value: 20000, part: 0 },
-          },
-        },
-        {
-          name: "Ventas Netas",
-          isTotal: true,
-          values: {
-            2022: { value: 30000, part: 30 },
-            2023: { value: 51000000, part: 50 },
-            2024: { value: 51999, part: 0 },
-          },
-        },
-        {
-          name: "Costos de Ventas",
-          values: {
-            2022: { value: 10000, part: 10 },
-            2023: { value: 4500000, part: 0 },
-            2024: { value: 4500000, part: 1 },
-          },
-        },
-        {
-          name: "Utilidad Bruta",
-          isTotal: true,
-          values: {
-            2022: { value: 10000, part: 10 },
-            2023: { value: 101007500, part: 100 },
-            2024: { value: 344956067, part: 100 },
-          },
-        },
-      ],
-      gastos: [
-        {
-          name: "Gastos administración y ventas",
-          values: {
-            2022: { value: 10000, part: 10 },
-            2023: { value: 40000, part: 0 },
-            2024: { value: 5000, part: 0 },
-          },
-        },
-        {
-          name: "Dep y Amortización",
-          values: {
-            2022: { value: 10000, part: 10 },
-            2023: { value: 400000, part: 0 },
-            2024: { value: 30000, part: 0 },
-          },
-        },
-        {
-          name: "Total Utilidad Operativa",
-          isTotal: true,
-          values: {
-            2022: { value: 80000, part: 80 },
-            2023: { value: 722500, part: 100 },
-            2024: { value: 344956067, part: 100 },
-          },
-        },
-      ],
-      ingresos: [
-        {
-          name: "Ingresos Financieros",
-          values: {
-            2022: { value: 10000, part: 10 },
-            2023: { value: 40000, part: 0 },
-            2024: { value: 5000, part: 0 },
-          },
-        },
-        {
-          name: "Otros Ingresos",
-          values: {
-            2022: { value: 10000, part: 10 },
-            2023: { value: 400000, part: 0 },
-            2024: { value: 30000, part: 0 },
-          },
-        },
-        {
-          name: "Gastos Financieros",
-          values: {
-            2022: { value: 10000, part: 10 },
-            2023: { value: 120000, part: 0 },
-            2024: { value: 1999, part: 0 },
-          },
-        },
-        {
-          name: "Otros Egresos",
-          values: {
-            2022: { value: 10000, part: 10 },
-            2023: { value: 4000000, part: 0 },
-            2024: { value: 20000, part: 0 },
-          },
-        },
-        {
-          name: "Utilidad Neta antes de Imp.",
-          isTotal: true,
-          values: {
-            2022: { value: 40000, part: 40 },
-            2023: { value: 0, part: 0 },
-            2024: { value: 0, part: 0 },
-          },
-        },
-      ],
-    };
-  }, []);
-
-  // Nota: tab solo es visual por ahora (maqueta). Si quieres, filtramos/ocultamos columnas según tab.
   return (
     <Box
       sx={{
         ...scrollSx,
         width: "100%",
-        backgroundColor: "#F3F3F5",
-        borderRadius: "8px",
-        padding: "14px 16px 22px 16px",
-        paddingRight: "42px",
+        bgcolor: "#F7F9F9",
+        borderRadius: 2,
+        p: { xs: 1.25, md: 1.75 },
         boxSizing: "border-box",
       }}
     >
-      {/* Header */}
-      <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-        <Typography
-          sx={{
-            fontSize: "1.2vw",
-            fontWeight: 800,
-            color: "#0E7C7B",
-            flex: 1,
-          }}
-        >
-          Resultados
+      <Box sx={{ mb: 1.5 }}>
+        <Typography sx={{ fontSize: 14, fontWeight: 650, color: "#3F777B" }}>
+          Estado de resultados
         </Typography>
-
-        {/* Tabs tipo “chips” como la foto */}
-        <Tabs
-          value={tab}
-          onChange={(_, v) => setTab(v)}
-          sx={{
-            minHeight: "auto",
-            "& .MuiTabs-indicator": { display: "none" },
-          }}
-        >
-          {tabs.map((t) => (
-            <Tab
-              key={t.key}
-              label={t.label}
-              sx={{
-                textTransform: "none",
-                minHeight: "auto",
-                px: 2,
-                py: 0.8,
-                borderRadius: "6px",
-                mx: 0.5,
-                fontSize: "0.8vw",
-                fontWeight: 700,
-                color: tab === tabs.findIndex((x) => x.key === t.key) ? "#fff" : "#0E7C7B",
-                backgroundColor:
-                  tab === tabs.findIndex((x) => x.key === t.key) ? "#0E7C7B" : "transparent",
-                border: "1px solid #0E7C7B",
-              }}
-            />
-          ))}
-        </Tabs>
+        <Typography sx={{ fontSize: 11, color: "#8A999D", mt: 0.2 }}>
+          Valores, participación sobre ventas brutas y variación frente al periodo anterior.
+        </Typography>
       </Box>
 
-      {/* Bloques */}
-      <BlockTable title="Ventas" rows={fake.ventas} y2022={y2022} y2023={y2023} y2024={y2024} />
-      <BlockTable title="Gastos" rows={fake.gastos} y2022={y2022} y2023={y2023} y2024={y2024} />
-      <BlockTable title="Ingresos" rows={fake.ingresos} y2022={y2022} y2023={y2023} y2024={y2024} />
+      {!profiles.length ? (
+        <EmptyState />
+      ) : (
+        sections.map((section) => (
+          <BlockTable key={section.title} title={section.title} rows={section.rows} profiles={profiles} />
+        ))
+      )}
     </Box>
   );
 };

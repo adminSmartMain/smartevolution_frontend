@@ -14,7 +14,6 @@ import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import {
   Box,
   Button,
-  CircularProgress,
   Fade,
   Grid,
   Popover,
@@ -25,7 +24,6 @@ import {
 } from "@mui/material";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subWeeks, subMonths } from "date-fns";
 import styled from "@emotion/styled";
-import TitleModal from "@components/modals/titleModal";
 
 import DateFormat from "@formats/DateFormat";
 import ValueFormat from "@formats/ValueFormat";
@@ -36,13 +34,13 @@ import BackButton from "@styles/buttons/BackButton";
 import CustomTooltip from "@styles/customTooltip";
 import BaseField from "@styles/fields/BaseField";
 import InputTitles from "@styles/inputTitles";
-import scrollSx from "@styles/scroll";
 import CustomDataGrid from "@styles/tables";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from 'dayjs';
-import { GetNegotiationSummaryPDF, GetSummaryList } from "./queries";
+import { GetSummaryList } from "./queries";
+import { useWorkspaceWindows } from "@context/workspaceWindowContext";
 import ClearIcon from '@mui/icons-material/Clear';
 
 import moment from "moment";
@@ -141,7 +139,8 @@ export const SummaryListComponent = () => {
     {
       field: "NoOP",
       headerName: "NO. OP",
-      width: 100,
+      minWidth: 100,
+      flex: 0.91,
       renderCell: (params) => {
         return <InputTitles>{params.value}</InputTitles>;
       },
@@ -149,7 +148,8 @@ export const SummaryListComponent = () => {
     {
       field: "date",
       headerName: "FECHA",
-      width: 130,
+      minWidth: 130,
+      flex: 1.18,
       renderCell: (params) => {
         return (
           <InputTitles>
@@ -161,7 +161,8 @@ export const SummaryListComponent = () => {
     {
       field: "emitter",
       headerName: "NOMBRE EMISOR",
-      width: 280,
+      minWidth: 280,
+      flex: 2.4,
       renderCell: (params) => {
         return (
           <CustomTooltip
@@ -188,7 +189,8 @@ export const SummaryListComponent = () => {
     {
       field: "payer",
       headerName: "NOMBRE PAGADOR",
-      width: 280,
+      minWidth: 280,
+      flex: 2.4,
       renderCell: (params) => {
         return (
           <CustomTooltip
@@ -216,7 +218,8 @@ export const SummaryListComponent = () => {
     {
       field: "total",
       headerName: "DESEMBOLSOS",
-      width: 170,
+      minWidth: 170,
+      flex: 1.55,
       renderCell: (params) => {
         return (
           <InputTitles>
@@ -228,7 +231,8 @@ export const SummaryListComponent = () => {
     {
       field: "totalDeposits",
       headerName: "TOTAL CONSIGNACIONES",
-      width: 170,
+      minWidth: 170,
+      flex: 1.55,
       renderCell: (params) => {
         return (
           <InputTitles>
@@ -240,7 +244,8 @@ export const SummaryListComponent = () => {
     {
       field: "pendingToDeposit",
       headerName: "PENDIENTE DESEMBOLSO",
-      width: 190,
+      minWidth: 190,
+      flex: 1.73,
       renderCell: (params) => {
         return (
           <InputTitles>
@@ -254,7 +259,8 @@ export const SummaryListComponent = () => {
     {
       field: "Editar resumen",
       headerName: "",
-      width: 50,
+      minWidth: 50,
+      flex: 0.45,
       sortable: false,
       filterable: false,
       renderCell: (params) => {
@@ -301,7 +307,8 @@ export const SummaryListComponent = () => {
     {
       field: "Imprimir resumen",
       headerName: "",
-      width: 50,
+      minWidth: 50,
+      flex: 0.45,
       sortable: false,
       filterable: false,
       renderCell: (params) => {
@@ -354,7 +361,6 @@ export const SummaryListComponent = () => {
   const [dataFilteredByDate,setDataFilteredByDate]=useState(null)
   const [isDateFilter,setIsDateFilter] = useState(false)
   const [page, setPage] = useState(1);
-  const [open, setOpen] = useState(false);
   const [isFirstLoad, setIsFirstLoad] = useState(true); // Controla si es la primera carga o un cambio de página
   const [isFilterApplied, setIsFilterApplied] = useState(false); // Controla si el filtro está aplicado
   const [pageFiltered,setPageFiltered]=useState(1)
@@ -388,13 +394,6 @@ export const SummaryListComponent = () => {
     init: true,
   });
   let dataCount = 0;
-
-    const {
-    fetch: fetchNegotiationSummmary,
-    loading: loadingNegotiationSummary,
-    error: errorNegotiationSummary,
-    data: dataNegotiationSummary,
-  } = useFetch({ service: GetNegotiationSummaryPDF, init: false });
 
 
   if (Array.isArray(dataFiltered?.results)) {
@@ -451,17 +450,16 @@ export const SummaryListComponent = () => {
   
 
 
-  const handleOpen = () => {
-    setOpen(true);
-  };
-  const handleClose = () => {
-    setOpen(false);
-  };
-
+  const { openWindow } = useWorkspaceWindows();
 
   const handleNegotiationSummaryClick = (id) => {
-    fetchNegotiationSummmary(id);
-    handleOpen();
+    openWindow({
+      id: `negotiation-summary-pdf-${id}`,
+      type: "negotiation-summary-pdf",
+      title: `Resumen de negociación (PDF) · OP ${id}`,
+      taskbarTitle: `Resumen negociación · OP ${id}`,
+      payload: { opId: id },
+    });
   };
 
 // Leer parámetros iniciales de la URL
@@ -1407,35 +1405,7 @@ const setQuickFilter = (type) => {
         />
 
         
-        <TitleModal
-          open={open}
-          handleClose={handleClose}
-          containerSx={{
-            width: "70%",
-            height: "60%",
-          }}
-          title={"Resumen de negociación (PDF)"}
-        >
-          <Box
-            display="flex"
-            flexDirection="column"
-            mt={5}
-            sx={{ ...scrollSx }}
-            height="50vh"
-            alignItems="center"
-          >
-            {loadingNegotiationSummary && (
-              <CircularProgress style={{ color: "#488B8F" }} />
-            )}
-            {dataNegotiationSummary && dataNegotiationSummary?.pdf && (
-              <iframe
-                src={`data:application/pdf;base64,${dataNegotiationSummary?.pdf}`}
-                width="100%"
-                height="100%"
-              />
-            )}
-          </Box>
-        </TitleModal>
+
       </Box>
        )}
     </>

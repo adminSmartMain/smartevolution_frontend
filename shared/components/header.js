@@ -12,6 +12,7 @@ import {
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import authContext from "@context/authContext";
+import NotificationBell from "./notifications/notificationBell";
 
 const getNavSpacingSx = {
   backgroundColor: "#EBEBEB",
@@ -129,7 +130,7 @@ export default function Header({
           </IconButton>
         </Box>
 
-        {/* DERECHA: Avatar */}
+        {/* DERECHA: Notificaciones + Avatar */}
         <Box
           sx={{
             display: "flex",
@@ -138,6 +139,8 @@ export default function Header({
             pr: { xs: 2, sm: 3, md: 4 },
           }}
         >
+          <NotificationBell />
+
           <Avatar
             onClick={handleClick}
             src={user?.profile_photo || ""}

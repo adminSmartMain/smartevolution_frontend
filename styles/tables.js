@@ -8,14 +8,20 @@ const CustomDataGrid = styled(DataGrid)({
 
   "&.main-list-data-grid": {
     width: "100%",
-    height: "clamp(420px, calc(100vh - 430px), 620px) !important",
+    height: "max(420px, calc(100dvh - 350px)) !important",
     minHeight: "420px !important",
-    maxHeight: "620px !important",
+    maxHeight: "none !important",
   },
 
   "&.main-list-data-grid.bills-list-data-grid, &.main-list-data-grid.operations-list-data-grid": {
-    height: "100% !important",
+    height: "max(420px, calc(100dvh - 315px)) !important",
     minHeight: "420px !important",
+    maxHeight: "none !important",
+  },
+
+  "&.main-list-data-grid.customer-list-data-grid": {
+    height: "max(430px, calc(100dvh - 285px)) !important",
+    minHeight: "430px !important",
     maxHeight: "none !important",
   },
 

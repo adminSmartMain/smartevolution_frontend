@@ -6,7 +6,7 @@ import { RiskProfileComponentMobile } from "./componentMobile";
 
 export const RiskProfileC = ({ formik, ToastContainer, loading, data }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   return (
     <Box
@@ -16,9 +16,8 @@ export const RiskProfileC = ({ formik, ToastContainer, loading, data }) => {
         m: 0,
         p: 0,
         overflowX: "hidden",
-
-        // ✅ en mobile NO metas margen superior (se ve ese “aire”)
-        mt: { xs: 0, sm: 4 },
+        boxSizing: "border-box",
+        mt: { xs: 0, sm: 1 },
       }}
     >
       {isMobile ? (

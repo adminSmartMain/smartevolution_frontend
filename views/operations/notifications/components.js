@@ -108,7 +108,8 @@ export const NotificationListC = () => {
     {
       field: "NoOP",
       headerName: "NO OPERACION",
-      width: 120,
+      minWidth: 120,
+      flex: 1.09,
       renderCell: (params) => {
         return (
           <CustomTooltip
@@ -135,7 +136,8 @@ export const NotificationListC = () => {
     {
       field: "DateBill",
       headerName: "FECHA",
-      width: 150,
+      minWidth: 150,
+      flex: 1.36,
       valueGetter: (params) => {
         return params.row.DateBill;
       },
@@ -150,7 +152,8 @@ export const NotificationListC = () => {
     {
       field: "Investor",
       headerName: "INVERSIONISTA",
-      width: 170,
+      minWidth: 170,
+      flex: 1.55,
       renderCell: (params) => {
         return (
           <CustomTooltip
@@ -177,7 +180,8 @@ export const NotificationListC = () => {
     {
       field: "Emitter",
       headerName: "EMISOR",
-      width: 170,
+      minWidth: 170,
+      flex: 1.55,
       renderCell: (params) => {
         return (
           <CustomTooltip
@@ -204,7 +208,8 @@ export const NotificationListC = () => {
     {
       field: "billCount",
       headerName: "CANTIDAD DE FACTURAS",
-      width: 200,
+      minWidth: 200,
+      flex: 1.82,
       renderCell: (params) => {
         return <InputTitles>{params.value}</InputTitles>;
       },
@@ -212,7 +217,8 @@ export const NotificationListC = () => {
     {
       field: "investorTax",
       headerName: "TASA INVERSIONISTA",
-      width: 200,
+      minWidth: 200,
+      flex: 1.82,
       renderCell: (params) => {
         return <InputTitles>{params.value} %</InputTitles>;
       },
@@ -220,7 +226,8 @@ export const NotificationListC = () => {
     {
       field: "presentValueInvestor",
       headerName: "VALOR PRESENTE INVERSIONISTA",
-      width: 250,
+      minWidth: 250,
+      flex: 2.27,
       renderCell: (params) => {
         return (
           <InputTitles>
@@ -232,7 +239,8 @@ export const NotificationListC = () => {
     {
       field: "payedAmount",
       headerName: "VALOR NOMINAL",
-      width: 200,
+      minWidth: 200,
+      flex: 1.82,
       renderCell: (params) => {
         return (
           <InputTitles>
@@ -245,7 +253,8 @@ export const NotificationListC = () => {
     {
       field: "buyOrderSentDate",
       headerName: "FECHA DEL ENVIO (FIRMA)",
-      width: 220,
+      minWidth: 220,
+      flex: 2,
       renderCell: (params) => {
         return (
           <InputTitles>
@@ -257,7 +266,8 @@ export const NotificationListC = () => {
     {
       field: "isSignatureSent",
       headerName: "ESTATUS DE FIRMA",
-      width: 150,
+      minWidth: 150,
+      flex: 1.36,
       renderCell: (params) => {
         return (
           <>
@@ -282,7 +292,8 @@ export const NotificationListC = () => {
     {
       field: "signStatusDate",
       headerName: "FECHA DE LA FIRMA",
-      width: 200,
+      minWidth: 200,
+      flex: 1.82,
       renderCell: (params) => {
         return (
           <InputTitles>
@@ -350,7 +361,8 @@ export const NotificationListC = () => {
     {
       field: "Orden de compra",
       headerName: "",
-      width: 50,
+      minWidth: 50,
+      flex: 0.45,
       sortable: false,
       filterable: false,
       renderCell: (params) => {

@@ -14,14 +14,11 @@ export const ClientTableDesktop = ({
 }) => {
   return (
     <Box
-      marginTop={4}
       width="100%"
-      sx={{
-        minHeight: 500,      // ✅ le da espacio real
-      }}
+      minWidth={0}
     >
       <CustomDataGrid
-        autoHeight                  // ✅ CLAVE
+        className="main-list-data-grid customer-list-data-grid"
         getRowId={(row) => row.id}  // ✅ asegura detección del id
         rows={rows}
         columns={columns}

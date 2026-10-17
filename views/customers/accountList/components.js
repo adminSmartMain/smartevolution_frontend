@@ -171,7 +171,8 @@ export const AccountListComponent = () => {
     {
       field: "AccountType",
       headerName: "TIPO DE CUENTA",
-      width: 140,
+      minWidth: 140,
+      flex: 1.27,
       renderCell: (params) => {
         return (
           <Typography
@@ -194,7 +195,8 @@ export const AccountListComponent = () => {
     {
       field: "AccountNumber",
       headerName: "# CUENTA",
-      width: 130,
+      minWidth: 130,
+      flex: 1.18,
       renderCell: (params) => {
         return <InputTitles>{params.value}</InputTitles>;
       },

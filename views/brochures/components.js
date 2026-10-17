@@ -179,7 +179,8 @@ export const BrochureListComponent = () => {
     {
       field: "NoID",
       headerName: "# ID",
-      width: 110,
+      minWidth: 110,
+      flex: 1,
       renderCell: (params) => {
         return (
           <CustomTooltip
@@ -206,7 +207,8 @@ export const BrochureListComponent = () => {
     {
       field: "Customer",
       headerName: "CLIENTE",
-      width: 200,
+      minWidth: 200,
+      flex: 1.82,
       renderCell: (params) => {
         return (
           <CustomTooltip
@@ -233,7 +235,8 @@ export const BrochureListComponent = () => {
     {
       field: "Status",
       headerName: "ESTADO",
-      width: 130,
+      minWidth: 130,
+      flex: 1.18,
       renderCell: (params) => {
         return (
           <>
@@ -278,7 +281,8 @@ export const BrochureListComponent = () => {
     {
       field: "DateCreated",
       headerName: "FECHA SOLICITUD",
-      width: 150,
+      minWidth: 150,
+      flex: 1.36,
       renderCell: (params) => {
         return (
           <InputTitles>
@@ -292,7 +296,8 @@ export const BrochureListComponent = () => {
     {
       field: "Exp",
       headerName: "EXP. CONSOLIDADO",
-      width: 160,
+      minWidth: 160,
+      flex: 1.45,
 
       renderCell: (params) => {
         return (
@@ -341,7 +346,8 @@ export const BrochureListComponent = () => {
     {
       field: "Comite",
       headerName: "RESULTADO COMITE DE RIESGO",
-      width: 260,
+      minWidth: 260,
+      flex: 2.36,
 
       renderCell: (params) => {
         return (
@@ -490,7 +496,8 @@ export const BrochureListComponent = () => {
     {
       field: "Firma electrónica",
       headerName: "",
-      width: 50,
+      minWidth: 50,
+      flex: 0.45,
       sortable: false,
       filterable: false,
       renderCell: (params) => {
@@ -535,7 +542,8 @@ export const BrochureListComponent = () => {
     {
       field: "Ficha de cliente",
       headerName: "",
-      width: 50,
+      minWidth: 50,
+      flex: 0.45,
       sortable: false,
       filterable: false,
       renderCell: (params) => {
@@ -578,7 +586,8 @@ export const BrochureListComponent = () => {
     {
       field: "Eliminar",
       headerName: "",
-      width: 50,
+      minWidth: 50,
+      flex: 0.45,
       sortable: false,
       filterable: false,
       renderCell: (params) => {

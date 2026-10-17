@@ -16,7 +16,7 @@ export const ClientTableComponent = ({
   const isMobile = useMediaQuery("(max-width:899px)", { noSsr: true });
 
   return (
-    <Box width="100%" mt={4}>
+    <Box width="100%" minWidth={0} mt={{ xs: 1.25, md: 1.5 }}>
       {isMobile ? (
         <ClientTableMobile rows={rows} />
       ) : (

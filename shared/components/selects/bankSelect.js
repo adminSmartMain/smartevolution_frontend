@@ -12,7 +12,7 @@ import InputTitles from "@styles/inputTitles";
 
 import { Banks } from "./queries";
 
-export default function BankSelect({ formik, width, disabled }) {
+export default function BankSelect({ formik, width, disabled, compact = false }) {
   // Hooks
   const {
     fetch: fetch,
@@ -22,9 +22,7 @@ export default function BankSelect({ formik, width, disabled }) {
   } = useFetch({ service: Banks, init: true });
 
   const [bank, setBank] = useState([]);
-  console.log(formik.values)
-
-  useEffect(() => {
+useEffect(() => {
     if (data) {
       var banks = [];
       data.data.map((bank) => {
@@ -40,32 +38,49 @@ export default function BankSelect({ formik, width, disabled }) {
   useEffect(() => {
     fetch({ client: formik.values.client });
   }, [formik.values.client]);
-
-  console.log("Bank Options:", bank);
-  console.log("Formik Value:", formik.values.bank);
-  console.log(
-    "Matched Option:",
-    bank.find((option) => option.value === formik.values.bank)
-  );
-
-  console.log(bank)
-
-  return (
+return (
    
       <>
-      <InputTitles marginBottom={1}>Banco</InputTitles>
+      <InputTitles sx={compact ? { mb: 0.45, fontSize: "10px !important", lineHeight: 1.15, color: "#566168 !important", letterSpacing: "0.035em !important" } : { mb: 1 }}>Banco</InputTitles>
         <Autocomplete
           id="bank"
+          size={compact ? "small" : "medium"}
+          sx={
+            compact
+              ? {
+                  "& .MuiAutocomplete-inputRoot": {
+                    minHeight: "34px !important",
+                    height: "32px",
+                    padding: "0 8px !important",
+                    alignItems: "center",
+                  },
+                  "& .MuiAutocomplete-input": {
+                    padding: "0 !important",
+                    fontSize: "11.5px",
+                    lineHeight: 1.2,
+                  },
+                  "& .MuiAutocomplete-endAdornment": {
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    right: "6px",
+                  },
+                  "& .MuiIconButton-root": {
+                    padding: "2px",
+                  },
+                  "& .MuiSvgIcon-root": {
+                    fontSize: "16px",
+                  },
+                }
+              : undefined
+          }
           disablePortal
           disabled={disabled}
           options={bank}
           getOptionLabel={(option) => option.label}
           onChange={(e, value) => {
             if (value !== null) {
-              console.log('aaa')
               formik.setFieldValue("bank", value.value);
             } else {
-              console.log('bbbb')
               formik.setFieldValue("bank", null);
             }
           }}
@@ -82,17 +97,42 @@ export default function BankSelect({ formik, width, disabled }) {
               placeholder="Banco"
               value={formik.values.bank}
               error={formik.touched.bank && Boolean(formik.errors.bank)}
-              sx={
-                formik.touched.bank && Boolean(formik.errors.bank)
+              sx={{
+                ...(compact
+                  ? {
+                      height: 32,
+                      minHeight: 32,
+                      padding: "0 8px",
+                      borderRadius: "6px",
+                      "& .MuiInputBase-root": {
+                        height: 32,
+                        minHeight: 32,
+                        padding: "0 !important",
+                      },
+                      "& .MuiInputBase-input": {
+                        fontSize: "11.5px",
+                        padding: "0 !important",
+                      },
+                    }
+                  : {}),
+                ...(formik.touched.bank && Boolean(formik.errors.bank)
                   ? { border: "1.4px solid #E6643180" }
-                  : null
-              }
+                  : {}),
+              }}
               InputProps={{
                 ...params.InputProps,
                 disableUnderline: true,
-                sx: {
-                  marginTop: "-7px",
-                },
+                sx: compact
+                  ? {
+                      marginTop: 0,
+                      height: 32,
+                      minHeight: 32,
+                      fontSize: "11.5px",
+                      alignItems: "center",
+                    }
+                  : {
+                      marginTop: "-7px",
+                    },
               }}
             />
           )}

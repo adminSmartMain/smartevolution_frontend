@@ -1,4 +1,3 @@
-import Title from '@mui/icons-material/Title';
 import {
   Tabs,
   Tab,
@@ -8,7 +7,8 @@ import {
   Divider,
   Card,
   Grid,
-  Avatar
+  Avatar,
+  Skeleton
 } from '@mui/material';
 import InputTitles from '@styles/inputTitles';
 import { useEffect, useState, useContext, useMemo } from "react";
@@ -24,6 +24,7 @@ import {
   getRiskProfile,
   saveRiskProfile,
   updateRiskProfile,
+  GetFinancialProfileById,
 } from "./queries";
 import { useFetch } from "@hooks/useFetch";
 import AddReactionIcon from '@mui/icons-material/AddReaction';
@@ -90,11 +91,12 @@ const riskLegend = [
 // ✅ Tooltip tipo tabla (rectangular, compacto)
 const RiskLegendTooltip = () => {
   return (
-    <Box sx={{ px: 1.25, py: 1, width: "100%" }}>
+    <Box sx={{ px: 1.25, py: 1, width: "100%", overflowX: "auto" }}>
       {/* header */}
       <Box
         sx={{
           display: "grid",
+          minWidth: 520,
           gridTemplateColumns: "44px 120px 95px 1fr",
           columnGap: 1.5,
           alignItems: "center",
@@ -123,6 +125,7 @@ const RiskLegendTooltip = () => {
               key={row.level}
               sx={{
                 display: "grid",
+                minWidth: 520,
                 gridTemplateColumns: "44px 120px 95px 1fr",
                 columnGap: 1.5,
                 alignItems: "start",
@@ -158,12 +161,19 @@ export const RiskBadge = ({ score = 0, level = "No aplica", title = "Contacto" }
   const Icon = cfg.Icon;
 
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: { xs: 0.8, md: 1.25 },
+        minWidth: 0,
+      }}
+    >
       {/* Icono grande */}
       <Box
         sx={{
-          width: 58,
-          height: 58,
+          width: 42,
+          height: 42,
           borderRadius: "50%",
           backgroundColor: cfg.bg,
           display: "flex",
@@ -172,7 +182,7 @@ export const RiskBadge = ({ score = 0, level = "No aplica", title = "Contacto" }
           flex: "0 0 auto",
         }}
       >
-        <Icon sx={{ fontSize: 34, color: cfg.color }} />
+        <Icon sx={{ fontSize: 25, color: cfg.color }} />
       </Box>
 
       {/* Textos */}
@@ -180,7 +190,7 @@ export const RiskBadge = ({ score = 0, level = "No aplica", title = "Contacto" }
         <InputTitles sx={{ mb: 0.25 }}>{title}</InputTitles>
 
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-          <Typography sx={{ fontSize: 13, color: "#333" }}>
+          <Typography sx={{ fontSize: 11.5, color: "#333", lineHeight: 1.3 }}>
             Puntaje:{" "}
             <Box component="span" sx={{ color: "#D93025", fontWeight: 700 }}>
               {score}
@@ -200,8 +210,9 @@ export const RiskBadge = ({ score = 0, level = "No aplica", title = "Contacto" }
                   borderRadius: "6px",
                   boxShadow: "0 10px 22px rgba(0,0,0,0.18)",
                   p: 0,
-                  minWidth: 640,
-                  maxWidth: 760,
+                  minWidth: 0,
+                  width: { xs: "min(92vw, 560px)", md: 640 },
+                  maxWidth: "min(92vw, 760px)",
                 },
               },
               arrow: { sx: { color: "#FFFFFF" } },
@@ -230,7 +241,7 @@ export const RiskBadge = ({ score = 0, level = "No aplica", title = "Contacto" }
           </Tooltip>
         </Box>
 
-        <Typography sx={{ fontSize: 13, color: "#333" }}>
+        <Typography sx={{ fontSize: 11.5, color: "#333", lineHeight: 1.3 }}>
           Nivel de Riesgo:{" "}
           <Box component="span" sx={{ color: cfg.color, fontWeight: 700 }}>
             {level}
@@ -243,90 +254,150 @@ export const RiskBadge = ({ score = 0, level = "No aplica", title = "Contacto" }
 
 
 
-export const InformationHeader = ({data}) =>{
+export const InformationHeader = ({ data }) => {
+  const iconUrl =
+    data?.data?.profile_image ??
+    "https://devsmartevolution.s3.us-east-1.amazonaws.com/clients-profiles/default-profile.svg";
 
-const iconUrl =
-       data?.data?.profile_image ??
-        "https://devsmartevolution.s3.us-east-1.amazonaws.com/clients-profiles/default-profile.svg"; // placeholder
+  const valueSx = {
+    fontSize: { xs: 11.5, md: 12 },
+    lineHeight: 1.35,
+    color: "#181b1d",
+    fontWeight: 500,
+  };
 
-    return (
+  const labelSx = {
+    fontSize: 10,
+    lineHeight: 1.15,
+    fontWeight: 700,
+    color: "#66727c",
+    textTransform: "uppercase",
+    letterSpacing: "0.02em",
+    mb: 0.35,
+  };
 
-        <>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-              <Box
-                  component="img"
-                  src={iconUrl}
-                  alt="icon"
-                  sx={{ width: 28, height: 28, objectFit: "contain" }}
-                />
-               
-                    <Box>
-                        <InputTitles>
-                            Nombre Cliente
-                        </InputTitles>
-                        <Typography>
-                              {`${data?.data?.first_name ?? ""} ${
-                    data?.data?.last_name ?? ""
-                  } ${data?.data?.social_reason ?? ""}`}
-               
-                        </Typography>
+  const cellSx = {
+    minWidth: 0,
+    alignSelf: "center",
+  };
 
-                    </Box>
-                   
-                        <Box>
+  return (
+    <>
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "34px minmax(0, 1fr)",
+            sm: "34px minmax(0, 1fr) minmax(0, 1fr)",
+            md: "34px minmax(180px, 1.35fr) minmax(90px, .55fr) minmax(150px, 1fr)",
+            lg: "34px minmax(200px, 1.35fr) minmax(90px, .55fr) minmax(160px, .95fr) minmax(160px, .95fr) auto",
+          },
+          gridTemplateAreas: {
+            xs: `
+              "avatar name"
+              "avatar nit"
+              "avatar legal"
+              "avatar contact"
+              "avatar risk"
+            `,
+            sm: `
+              "avatar name name"
+              "avatar nit legal"
+              "avatar contact risk"
+            `,
+            md: `
+              "avatar name nit legal"
+              "avatar contact contact risk"
+            `,
+            lg: `"avatar name nit legal contact risk"`,
+          },
+          columnGap: { xs: 1, sm: 1.5, lg: 2 },
+          rowGap: { xs: 0.9, sm: 1, md: 0.75 },
+          alignItems: "center",
+          py: { xs: 1, md: 1.25 },
+        }}
+      >
+        <Box
+          component="img"
+          src={iconUrl}
+          alt="Cliente"
+          sx={{
+            gridArea: "avatar",
+            width: 30,
+            height: 30,
+            objectFit: "contain",
+            borderRadius: "50%",
+            alignSelf: { xs: "start", lg: "center" },
+            mt: { xs: 0.25, lg: 0 },
+          }}
+        />
 
-                            <InputTitles>
-                                    Nit
-                            </InputTitles>
+        <Box sx={{ ...cellSx, gridArea: "name" }}>
+          <Typography sx={labelSx}>Nombre cliente</Typography>
+          <Typography
+            sx={{
+              ...valueSx,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {`${data?.data?.first_name ?? ""} ${data?.data?.last_name ?? ""} ${data?.data?.social_reason ?? ""}`.trim() || "—"}
+          </Typography>
+        </Box>
 
-                            <Typography>
-                                      {data?.data?.document_number}
-                            </Typography>
-                        </Box>
-                    
-                        <Box>
-                            <InputTitles>
-                                Representante Legal
-                            </InputTitles>
+        <Box sx={{ ...cellSx, gridArea: "nit" }}>
+          <Typography sx={labelSx}>NIT</Typography>
+          <Typography sx={valueSx}>{data?.data?.document_number || "—"}</Typography>
+        </Box>
 
-                            <Typography>
-                                    {`${
-                    data?.data?.legal_representative?.social_reason
-                      ? data?.data?.legal_representative?.social_reason
-                      : `${data?.data?.legal_representative?.first_name} 
-                        ${data?.data?.legal_representative?.last_name} `
-                  } `}
-                                </Typography>
+        <Box sx={{ ...cellSx, gridArea: "legal" }}>
+          <Typography sx={labelSx}>Representante legal</Typography>
+          <Typography
+            sx={{
+              ...valueSx,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {data?.data?.legal_representative?.social_reason
+              ? data.data.legal_representative.social_reason
+              : `${data?.data?.legal_representative?.first_name ?? ""} ${data?.data?.legal_representative?.last_name ?? ""}`.trim() || "—"}
+          </Typography>
+        </Box>
 
-                        </Box>
-                     
-                        <Box>
+        <Box sx={{ ...cellSx, gridArea: "contact" }}>
+          <Typography sx={labelSx}>Contacto</Typography>
+          <Typography
+            sx={{
+              ...valueSx,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {data?.data?.email || "—"}
+          </Typography>
+          <Typography sx={{ ...valueSx, color: "#66727c", fontWeight: 400 }}>
+            {data?.data?.phone_number || "—"}
+          </Typography>
+        </Box>
 
-                            <InputTitles>
-                                Contacto
-                            </InputTitles>
+        <Box sx={{ ...cellSx, gridArea: "risk", justifySelf: { xs: "start", lg: "end" } }}>
+          <RiskBadge
+            title="Riesgo"
+            score={data?.data_credit_score ?? 590}
+            level={data?.data?.risk_level ?? "Alto"}
+          />
+        </Box>
+      </Box>
 
-                            <Typography>
-                                    {`${data?.data?.email} `}
-                                </Typography>
-                                <Typography>
-                                    {`${data?.data?.phone_number} `}
-                                </Typography>
-                        </Box>
-                    
-                            <Box>
+      <Divider />
+    </>
+  );
+};
 
-                            <RiskBadge
-                              title="Riesgo"
-                              score={data?.data_credit_score ?? 590}
-                              level={data?.data?.risk_level ?? "Alto"}
-                            />
-                            </Box>
-                </Box>
-        <Divider sx={{ mt: 3 }} />
-                </>
-            )
-        }
 
 export const ProfileRisk = ({data}) => {
 
@@ -370,123 +441,218 @@ export const StatusResults = () => {
 
 
 const money = (n) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
-    Number(n || 0)
-  );
+  new Intl.NumberFormat("es-CO", {
+    style: "currency",
+    currency: "COP",
+    maximumFractionDigits: 0,
+  }).format(Number(n || 0));
 
-const mockData = {
-  cards: [
-    {
-      key: "assets",
-      label: "Total Activos",
-      value: 344956067,
-      delta: "-19%",
-      color: "#D32F2F",
-      icon: <AccountBalanceOutlinedIcon />,
-    },
-    {
-      key: "liabilities",
-      label: "Total Pasivos",
-      value: 344956067,
-      delta: "-1468%",
-      color: "#D32F2F",
-      icon: <CreditCardOutlinedIcon />,
-    },
-    {
-      key: "equity",
-      label: "Total Patrimonio",
-      value: 3277327248,
-      delta: "+4578%",
-      color: "#2E7D32",
-      icon: <PaidOutlinedIcon />,
-    },
-    {
-      key: "income",
-      label: "Total Ingresos",
-      value: 303003,
-      delta: "+??%",
-      color: "#2E7D32",
-      icon: <AttachMoneyOutlinedIcon />,
-    },
-    {
-      key: "expenses",
-      label: "Total Egresos",
-      value: 939393,
-      delta: "+??%",
-      color: "#2E7D32",
-      icon: <MoneyOffCsredOutlinedIcon />,
-    },
-  ],
+const variation = (current, previous) => {
+  const curr = Number(current || 0);
+  const prev = Number(previous || 0);
+  if (!prev) return null;
+  return ((curr - prev) / Math.abs(prev)) * 100;
 };
 
-const StatCard = ({ icon, value, label, delta, color }) => {
+const getIncome = (profile) => {
+  const result = profile?.stateOfResult || {};
   return (
-    <Card
+    Number(result.net_sales || 0) +
+    Number(result.financial_income || 0) +
+    Number(result.other_incomes || 0)
+  );
+};
+
+const getExpenses = (profile) => {
+  const result = profile?.stateOfResult || {};
+  return (
+    Number(result.cost_of_sales || 0) +
+    Number(result.administrative_expenses_sales || 0) +
+    Number(result.dep_amortization || 0) +
+    Number(result.financial_expenses || 0) +
+    Number(result.other_expenditures || 0) +
+    Number(result.provision_for_taxes || 0)
+  );
+};
+
+const StatCard = ({ icon, value, label, delta }) => {
+  const hasDelta = delta !== null && delta !== undefined && Number.isFinite(Number(delta));
+  const deltaValue = hasDelta ? Number(delta) : null;
+  const deltaColor = !hasDelta ? "#9AA7AA" : deltaValue >= 0 ? "#4E8A72" : "#C46C6C";
+
+  return (
+    <Box
       sx={{
-        p: 2,
-        borderRadius: 2,
-        minWidth: 180,
-        textAlign: "center",
-        boxShadow: "0 3px 10px rgba(0,0,0,0.12)",
+        minWidth: 0,
+        minHeight: 58,
+        display: "grid",
+        gridTemplateColumns: "30px 1fr",
+        alignItems: "center",
+        columnGap: 1,
+        px: 1.15,
+        bgcolor: "#FFFFFF",
+        border: "1px solid #E1E7E9",
+        borderRadius: "8px",
+        boxShadow: "0 1px 2px rgba(25,45,50,.04)",
       }}
     >
       <Avatar
         sx={{
-          mx: "auto",
-          mb: 1,
-          width: 34,
-          height: 34,
-          bgcolor: "#F3F7F7",
+          width: 28,
+          height: 28,
+          bgcolor: "#F0F6F6",
           color: "#2E7D7A",
+          "& .MuiSvgIcon-root": { fontSize: 17 },
         }}
       >
         {icon}
       </Avatar>
 
-      <Typography sx={{ fontWeight: 700, color, fontSize: 14 }}>
-        {money(value)}
-      </Typography>
-
-      <Typography sx={{ color: "#6B7280", fontSize: 12, mt: 0.5 }}>
-        {label}
-      </Typography>
-
-      <Typography sx={{ color, fontSize: 11, mt: 0.5 }}>
-        {delta}
-      </Typography>
-    </Card>
-  );
-};
-
-export const CardsInfo = ({ data = mockData }) => {
-  return (
-    <Box sx={{ width: "100%", display: "flex", justifyContent: "center" }}>
-      <Box
-        sx={{
-          display: "flex",
-          gap: 2,
-          pb: 1,
-          width: "fit-content",
-          maxWidth: "100%",
-          overflowX: "auto",
-          justifyContent: "center",
-          "&::-webkit-scrollbar": { height: 6 },
-        }}
-      >
-        {data.cards.map((c) => (
-          <Box key={c.key} sx={{ flex: "0 0 auto" }}>
-            <StatCard {...c} />
-          </Box>
-        ))}
+      <Box sx={{ minWidth: 0 }}>
+        <Typography
+          sx={{
+            fontWeight: 700,
+            color: "#506368",
+            fontSize: 11.5,
+            lineHeight: 1.15,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            maxWidth: "100%",
+          }}
+        >
+          {value == null ? "—" : money(value)}
+        </Typography>
+        <Box sx={{ display: "flex", gap: 0.6, alignItems: "baseline", mt: 0.25 }}>
+          <Typography sx={{ color: "#7C8A8E", fontSize: 9.5, lineHeight: 1.15 }}>
+            {label}
+          </Typography>
+          {hasDelta ? (
+            <Typography sx={{ color: deltaColor, fontSize: 9, lineHeight: 1.15 }}>
+              {deltaValue >= 0 ? "+" : ""}
+              {deltaValue.toLocaleString("es-CO", { maximumFractionDigits: 1 })}%
+            </Typography>
+          ) : null}
+        </Box>
       </Box>
     </Box>
   );
 };
 
+export const CardsInfo = ({ financialProfileData }) => {
+  const profiles = financialProfileData?.data?.financialProfiles;
+  const current = Array.isArray(profiles) ? profiles[0] : null;
+  const previous = Array.isArray(profiles) ? profiles[1] : null;
+
+  const metrics = [
+    {
+      key: "assets",
+      label: "Total Activos",
+      icon: <AccountBalanceOutlinedIcon />,
+      current: current?.assets?.total_assets,
+      previous: previous?.assets?.total_assets,
+    },
+    {
+      key: "liabilities",
+      label: "Total Pasivos",
+      icon: <CreditCardOutlinedIcon />,
+      current: current?.passives?.total_passives,
+      previous: previous?.passives?.total_passives,
+    },
+    {
+      key: "equity",
+      label: "Total Patrimonio",
+      icon: <PaidOutlinedIcon />,
+      current: current?.patrimony?.total_patrimony,
+      previous: previous?.patrimony?.total_patrimony,
+    },
+    {
+      key: "income",
+      label: "Total Ingresos",
+      icon: <AttachMoneyOutlinedIcon />,
+      current: current ? getIncome(current) : null,
+      previous: previous ? getIncome(previous) : null,
+    },
+    {
+      key: "expenses",
+      label: "Total Egresos",
+      icon: <MoneyOffCsredOutlinedIcon />,
+      current: current ? getExpenses(current) : null,
+      previous: previous ? getExpenses(previous) : null,
+    },
+  ];
+
+  return (
+    <Box
+      sx={{
+        mt: 1,
+        display: "grid",
+        gridTemplateColumns: {
+          xs: "1fr",
+          sm: "repeat(2, minmax(0, 1fr))",
+          md: "repeat(3, minmax(0, 1fr))",
+          lg: "repeat(5, minmax(0, 1fr))",
+        },
+        gap: 0.9,
+        width: "100%",
+      }}
+    >
+      {metrics.map((metric) => (
+        <StatCard
+          key={metric.key}
+          icon={metric.icon}
+          label={metric.label}
+          value={metric.current}
+          delta={variation(metric.current, metric.previous)}
+        />
+      ))}
+    </Box>
+  );
+};
+
+const InformationHeaderSkeleton = () => (
+  <Box
+    sx={{
+      display: "grid",
+      gridTemplateColumns: { xs: "1fr", md: "repeat(4, minmax(0, 1fr)) auto" },
+      gap: 1.5,
+      alignItems: "center",
+      py: 1.25,
+    }}
+  >
+    {Array.from({ length: 4 }).map((_, index) => (
+      <Box key={index}>
+        <Skeleton width="42%" height={14} />
+        <Skeleton width="72%" height={20} />
+      </Box>
+    ))}
+    <Skeleton variant="rounded" width={118} height={46} />
+  </Box>
+);
+
+const CardsSkeleton = () => (
+  <Box
+    sx={{
+      mt: 1,
+      display: "grid",
+      gridTemplateColumns: {
+        xs: "1fr",
+        sm: "repeat(2, minmax(0, 1fr))",
+        md: "repeat(3, minmax(0, 1fr))",
+        lg: "repeat(5, minmax(0, 1fr))",
+      },
+      gap: 0.9,
+    }}
+  >
+    {Array.from({ length: 5 }).map((_, index) => (
+      <Skeleton key={index} variant="rounded" height={58} />
+    ))}
+  </Box>
+);
+
 export const FinancialAnalysisInformationComponent = () => {
     const [activeTab, setActiveTab] = useState(0);
     const router = useRouter();
-    console.log(router.query.id)
 
   // Get customer data
   const {
@@ -500,115 +666,134 @@ export const FinancialAnalysisInformationComponent = () => {
       loading: loadingRiskProfileFetch,
       error: errorRiskProfileFetch,
       data: dataRiskProfileFetch,
-    } = useFetch({ service: getRiskProfile, init: true });
+    } = useFetch({ service: getRiskProfile, init: false });
+
+  const {
+    fetch: getFinancialProfile,
+    loading: loadingFinancialProfile,
+    data: dataFinancialProfile,
+  } = useFetch({ service: GetFinancialProfileById, init: false });
     // Get customer data
   useEffect(() => {
-    if (router.query.id != undefined) {
-      getCustomer(router.query.id);
-      getRiskProfileFetch(router.query.id);
-    }
-  }, [router.query.id]);
+    if (!router.isReady) return;
 
-  console.log(dataCustomer)
+    const clientId = router.query.id;
+    if (!clientId || Array.isArray(clientId)) return;
+
+    getCustomer(clientId);
+    getRiskProfileFetch(clientId);
+    getFinancialProfile(clientId);
+  }, [router.isReady, router.query.id]);
+
+  useEffect(() => {
+    if (!router.isReady) return;
+    const tab = Number(router.query.tab);
+    if (Number.isInteger(tab) && tab >= 0 && tab <= 3) {
+      setActiveTab(tab);
+    }
+  }, [router.isReady, router.query.tab]);
+
   return (
 
     <>
-    <Box sx={{ width: '100%', mb: 3 }}>
+    <Box
+      sx={{
+        width: "100%",
+        minWidth: 0,
+        maxWidth: "100%",
+        overflowX: "hidden",
+        mb: 1.25,
+        fontFamily: '"Montserrat", sans-serif',
+        "& .MuiInputBase-input, & .MuiSelect-select": {
+          fontSize: "12px",
+        },
+        "& .MuiFormLabel-root, & .MuiInputLabel-root": {
+          fontSize: "11px",
+        },
+        "& .MuiFormControlLabel-label": {
+          fontSize: "12px",
+        },
+        "& .MuiButton-root": {
+          fontSize: "12px",
+        },
+        "& .MuiTableCell-root": {
+          fontSize: "12px",
+          py: 0.9,
+        },
+      }}
+    >
 
         <Box>
 
-        <InformationHeader data={dataCustomer}/>
+        {loadingGetCustomer && !dataCustomer ? (
+          <InformationHeaderSkeleton />
+        ) : (
+          <InformationHeader data={dataCustomer} />
+        )}
 
-          <Box sx={{ mt: 2, display: "flex", justifyContent: "center" }}>
-            <CardsInfo />
-          </Box>
+        {loadingFinancialProfile && !dataFinancialProfile ? (
+          <CardsSkeleton />
+        ) : (
+          <CardsInfo financialProfileData={dataFinancialProfile} />
+        )}
         </Box>
-         <Tabs 
-            value={activeTab} 
+         <Tabs
+            value={activeTab}
             onChange={(event, newValue) => setActiveTab(newValue)}
+            variant="scrollable"
+            scrollButtons="auto"
+            allowScrollButtonsMobile
             sx={{
-                '& .MuiTabs-indicator': {
-                backgroundColor: '#5EA3A3', // Color del indicador
-                },
-                '& .MuiTab-root': {
-                color: '#5EA3A3', // Color del texto cuando no está seleccionado
-                },
-                '& .Mui-selected': {
-                color: '#5EA3A3 !important', // Color del texto cuando está seleccionado
-                },
+              mt: 1,
+              minHeight: 34,
+              px: { xs: 0.25, sm: 0.5 },
+              width: "100%",
+              bgcolor: "#F5F8F8",
+              borderRadius: "8px",
+              border: "1px solid #E1E7E9",
+              '& .MuiTabs-indicator': { display: 'none' },
+              '& .MuiTab-root': {
+                minHeight: 32,
+                px: 1.4,
+                py: 0.5,
+                color: '#607078',
+                borderRadius: '6px',
+                fontFamily: '"Montserrat", sans-serif',
+                fontSize: '10.5px',
+                fontWeight: 600,
+                textTransform: 'none',
+                whiteSpace: 'nowrap',
+              },
+              '& .Mui-selected': {
+                color: '#2F7479 !important',
+                backgroundColor: '#FFFFFF',
+                boxShadow: '0 1px 2px rgba(0,0,0,.06)',
+              },
             }}
             >
-        <Tab 
-            label="Perfil de Riesgo" 
-            sx={{
-            fontFamily: '"Montserrat", "icomoon", sans-serif', // Ejemplo de fuente
-
-            fontSize: '1rem', // Tamaño de fuente
-            textTransform: 'none', // Evita mayúsculas
-            color: '#5EA3A3',
-            '&.Mui-selected': {
-                color: '#488B8F',
-            }
-            }}
-        />
-        <Tab 
-            label="Estado de Situacion Financiera" 
-            sx={{
-            fontFamily: '"Montserrat", "icomoon", sans-serif',
-
-            fontSize: '1rem',
-            textTransform: 'none',
-            color: '#5EA3A3',
-            '&.Mui-selected': {
-                color: '#488B8F',
-            }
-            }}
-        />
-        <Tab 
-            label="Estado de Resultados" 
-            sx={{
-            fontFamily: '"Montserrat", "icomoon", sans-serif',
-
-            fontSize: '1rem',
-            textTransform: 'none',
-            color: '#5EA3A3',
-            '&.Mui-selected': {
-                color: '#488B8F',
-            }
-            }}
-        />
-        <Tab 
-            label="Indicadores Financieros" 
-            sx={{
-            fontFamily: '"Montserrat", "icomoon", sans-serif',
-
-            fontSize: '1rem',
-            textTransform: 'none',
-            color: '#5EA3A3',
-            '&.Mui-selected': {
-                color: '#488B8F',
-            }
-            }}
-        />
+        <Tab label="Perfil de Riesgo" />
+        <Tab label="Estado de Situacion Financiera" />
+        <Tab label="Estado de Resultados" />
+        <Tab label="Indicadores Financieros" />
         </Tabs>
 
       {activeTab === 0 && (
 
         <>
-        <RiskProfileV dataClient={dataCustomer} dataRiskProfile1={dataRiskProfileFetch} errorRiskProfileFetch1={errorRiskProfileFetch} loadingRiskProfileFetch1={loadingRiskProfileFetch}/>
+        <RiskProfileV dataClient={dataCustomer} dataRiskProfile1={dataRiskProfileFetch} dataFinancialProfile={dataFinancialProfile} errorRiskProfileFetch1={errorRiskProfileFetch} loadingRiskProfileFetch1={loadingRiskProfileFetch}/>
         </>
       )}
       {activeTab === 1 && (
 
         <>
         
-        <FinancialSituationStatus/>
+        <FinancialSituationIndex financialProfileData={dataFinancialProfile} loading={loadingFinancialProfile} />
         </>
       )}
       {activeTab === 2 && (
 
         <>
-        <StateResultsIndex/>
+        <StateResultsIndex financialProfileData={dataFinancialProfile} loading={loadingFinancialProfile} />
         </>
       )}
       {activeTab === 3 && (

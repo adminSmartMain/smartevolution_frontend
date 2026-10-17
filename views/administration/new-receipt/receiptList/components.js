@@ -650,7 +650,8 @@ export const ReceiptListComponent = () => {
     {
       field: "operation",
       headerName: "opID",
-      width: 110,
+      minWidth: 110,
+      flex: 1,
       renderCell: (params) => {
         // Verificación de que los parámetros existan
         if (!params || !params.row || !params.row.operation) {
@@ -729,7 +730,8 @@ export const ReceiptListComponent = () => {
     {
       field: "billId",
       headerName: "Factura",
-      width: 130,
+      minWidth: 130,
+      flex: 1.18,
 
       renderCell: (params) => {
         return (
@@ -767,7 +769,8 @@ export const ReceiptListComponent = () => {
     {
       field: "typeReceipt",
       headerName: "Estado / Tipo ",
-      width: 190,
+      minWidth: 190,
+      flex: 1.73,
       renderCell: (params) => {
         const type = params.row.typeReceipt || '';
         const status = params.row.statusReceipt || '';
@@ -807,7 +810,8 @@ export const ReceiptListComponent = () => {
     {
       field: "date",
       headerName: "Aplicado",
-      width: 130,
+      minWidth: 130,
+      flex: 1.18,
       renderCell: (params) => {
         return (
           <InputTitles>
@@ -821,7 +825,8 @@ export const ReceiptListComponent = () => {
     {
       field: "payedAmount",
       headerName: "Monto Aplicado",
-      width: 190,
+      minWidth: 190,
+      flex: 1.73,
       renderCell: (params) => {
         return (
           <Box
@@ -858,7 +863,8 @@ export const ReceiptListComponent = () => {
     {
       field: "operation2",
       headerName: "Inversionista/Valor Presente",
-      width: 260,
+      minWidth: 260,
+      flex: 2.36,
       renderCell: (params) => {
 
         const Inversionista = params.row?.operation2?.investor?.social_reason ||
@@ -895,7 +901,8 @@ export const ReceiptListComponent = () => {
     {
       field: "realDays",
       headerName: "Dias R.",
-      width: 95,
+      minWidth: 95,
+      flex: 0.86,
       renderCell: (params) => {
         return (
           <CustomTooltip
@@ -922,7 +929,8 @@ export const ReceiptListComponent = () => {
     {
       field: "additionalDays",
       headerName: "Días +",
-      width: 95,
+      minWidth: 95,
+      flex: 0.86,
       renderCell: (params) => {
         return (
           <CustomTooltip
@@ -950,7 +958,8 @@ export const ReceiptListComponent = () => {
     {
       field: "additionalInterests",
       headerName: "Intereses +",
-      width: 150,
+      minWidth: 150,
+      flex: 1.36,
       renderCell: (params) => {
         return (
           <CustomTooltip

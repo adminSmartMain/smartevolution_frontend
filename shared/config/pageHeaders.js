@@ -8,11 +8,12 @@ const SECTION_LINKS = {
 
 const PAGE_HEADERS = {
   "/dashboard": ["Panel principal", "Consulta el estado general y los indicadores de la plataforma.", "Inicio"],
+  "/notifications": ["Notificaciones", "Revisa tus notificaciones y consulta el detalle relacionado sin salir de esta vista.","Inicio",],
   "/brochures": ["Prospectos", "Gestiona los prospectos y su información comercial.", "Prospectos"],
   "/customers/customerList": ["Clientes", "Consulta y administra los clientes registrados.", "Clientes"],
   "/customers/accountList": ["Gestión de cuentas", "Consulta y administra las cuentas asociadas a clientes.", "Clientes"],
   "/customers/account": ["Cuenta de cliente", "Gestiona la información de la cuenta seleccionada.", "Clientes"],
-  "/customers/financialAnalysisInformation": ["Análisis financiero", "Consulta la información financiera del cliente.", "Clientes"],
+  "/customers/financialAnalysisInformation": ["Análisis financiero", "Consulta la información financiera del cliente.", "Clientes", { compact: true }],
   "/financialProfile": ["Perfil financiero", "Consulta y administra la información financiera.", "Clientes"],
   "/financialProfile/financialStatement": ["Estados financieros", "Consulta y administra los estados financieros del cliente.", "Clientes"],
   "/financialProfile/indicators": ["Indicadores financieros", "Consulta los indicadores financieros calculados.", "Clientes"],
@@ -68,14 +69,14 @@ const labelFromSegment = (segment) => segment
 export function getPageHeader(pathname) {
   const configured = PAGE_HEADERS[pathname];
   if (configured) {
-    const [title, subtitle, section] = configured;
+    const [title, subtitle, section, options = {}] = configured;
     const breadcrumbs = section === "Inicio"
       ? [{ label: title }]
       : [
           { label: section, href: SECTION_LINKS[section] },
           ...(section === title ? [] : [{ label: title }]),
         ];
-    return { title, subtitle, breadcrumbs };
+    return { title, subtitle, breadcrumbs, ...options };
   }
 
   const segments = pathname.split("/").filter(Boolean);

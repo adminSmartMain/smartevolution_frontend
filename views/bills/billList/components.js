@@ -636,7 +636,8 @@ export const BillsComponents = () => {
     {
       field: "typeBill",
       headerName: "Tipo",
-      width: 80,
+      minWidth: 80,
+      flex: 0.73,
       // Desactiva el crecimiento flexible
       renderCell: (params) => {
         return (
@@ -697,7 +698,8 @@ export const BillsComponents = () => {
     {
       field: "trackingAndSync",
       headerName: "",
-      width: 88,
+      minWidth: 88,
+      flex: 0.8,
       sortable: false,
       filterable: false,
       disableColumnMenu: true,
@@ -1058,7 +1060,8 @@ export const BillsComponents = () => {
     {
       field: "associatedOperation",
       headerName: "OpId",
-      width: 80,
+      minWidth: 80,
+      flex: 0.73,
 
       renderCell: (params) => {
         const hasAssociation = params.value !== null && params.value !== undefined;

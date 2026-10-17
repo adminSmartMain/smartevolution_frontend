@@ -11,6 +11,7 @@ import {
   Button,
   
   Grid,
+  Skeleton,
   TextField,
   Typography,
 } from "@mui/material";
@@ -34,6 +35,78 @@ import {
 } from "./queries";
 
 import { saveAs } from "file-saver";
+
+const SECTION_HEADING_SX = {
+  mb: 1.5,
+  color: "#3B555A",
+  fontSize: { xs: 13, md: 14 },
+  fontWeight: 650,
+  lineHeight: 1.25,
+  letterSpacing: 0,
+};
+
+const IndicatorsSkeleton = () => (
+  <Box
+    sx={{
+      width: "100%",
+      bgcolor: "#F6F8F9",
+      borderRadius: 2,
+      p: { xs: 1.25, md: 1.75 },
+      boxSizing: "border-box",
+    }}
+  >
+    <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1.25 }}>
+      <Skeleton variant="rounded" width={42} height={40} />
+    </Box>
+    <Box sx={{ bgcolor: "#fff", borderRadius: 2, p: { xs: 1.25, md: 1.75 } }}>
+      <Skeleton width={150} height={22} sx={{ mb: 1.5 }} />
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", lg: "minmax(260px, 30%) minmax(0, 1fr)" },
+          gap: 2,
+        }}
+      >
+        <Box sx={{ display: "grid", gap: 1 }}>
+          {Array.from({ length: 7 }).map((_, index) => (
+            <Skeleton key={index} variant="rounded" height={28} />
+          ))}
+        </Box>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))", xl: "repeat(3, minmax(0, 1fr))" },
+            gap: 1.5,
+          }}
+        >
+          {Array.from({ length: 3 }).map((_, index) => (
+            <Skeleton key={index} variant="rounded" height={280} />
+          ))}
+        </Box>
+      </Box>
+    </Box>
+  </Box>
+);
+
+const IndicatorsErrorState = () => (
+  <Box
+    sx={{
+      p: 3,
+      bgcolor: "#fff",
+      border: "1px dashed #D5E0E2",
+      borderRadius: 2,
+      textAlign: "center",
+    }}
+  >
+    <Typography sx={{ fontSize: 13, fontWeight: 650, color: "#53686D" }}>
+      No fue posible cargar los indicadores financieros.
+    </Typography>
+    <Typography sx={{ mt: 0.4, fontSize: 11.5, color: "#8A999D" }}>
+      Vuelve a intentar cuando la información financiera esté disponible.
+    </Typography>
+  </Box>
+);
+
 
 export const FinancialInd = () => {
   // Obtener ID de la URL
@@ -77,22 +150,21 @@ export const FinancialInd = () => {
   }, [id]);
 
   const getData = (dataKey, dataKey2) => {
-    let dataObject = [];
-    if (dataIndicators) {
-      console.log(dataIndicators);
-      Object.keys(dataIndicators.data[dataKey]).forEach((period) => {
-        dataObject.push({
-          name: dataIndicators.data[dataKey][period].period,
-          value: dataIndicators.data[dataKey][period][dataKey2],
-        });
-      });
-    }
-    return dataObject.reverse();
+    const source = dataIndicators?.data?.[dataKey];
+    if (!source || typeof source !== "object") return [];
+
+    return Object.keys(source)
+      .map((period) => ({
+        name: source?.[period]?.period,
+        value: source?.[period]?.[dataKey2],
+      }))
+      .filter((item) => item.name !== undefined && item.name !== null && item.name !== "")
+      .reverse();
   };
 
   const sxNumbers = {
     letterSpacing: 0,
-    fontSize: "0.9vw",
+    fontSize: "clamp(11px, 0.82vw, 13px)",
     fontWeight: "medium",
     color: "#333333",
     height: "5.5vh",
@@ -157,6 +229,14 @@ export const FinancialInd = () => {
     }
   }, [dataPDF]);
 
+  if (loadingIndicators && !dataIndicators) {
+    return <IndicatorsSkeleton />;
+  }
+
+  if (errorIndicators && !dataIndicators) {
+    return <IndicatorsErrorState />;
+  }
+
   return (
     <>
 
@@ -166,8 +246,7 @@ export const FinancialInd = () => {
             width: "100%",
             backgroundColor: "#F3F3F5",
             borderRadius: "8px",
-            padding: "14px 16px 22px 16px",
-            paddingRight: "42px",
+            padding: { xs: "10px", sm: "12px", md: "14px" },
             boxSizing: "border-box",
           }}
         >
@@ -175,7 +254,8 @@ export const FinancialInd = () => {
         container
         direction="column"
         sx={{
-          height: "100vh",
+          minHeight: 0,
+          height: "auto",
         }}
       >
         
@@ -198,12 +278,16 @@ export const FinancialInd = () => {
               size="large"
               onClick={handlePrint}
               sx={{
-                height: "2.6rem",
+                height: 40,
+                minWidth: 42,
                 backgroundColor: "#488B8F",
-                border: "1.4px solid #5EA3A3",
-                borderRadius: "4px",
+                border: "1px solid #488B8F",
+                borderRadius: "8px",
+                boxShadow: "none",
                 "&:hover": {
-                  backgroundColor: "#5EA3A3",
+                  backgroundColor: "#347B80",
+                  borderColor: "#347B80",
+                  boxShadow: "none",
                 },
               }}
             >
@@ -212,7 +296,7 @@ export const FinancialInd = () => {
               <i
                 style={{
                   color: "#FFFFFF",
-                  marginLeft: "0.7rem",
+                  marginLeft: 0,
                 }}
                 className="fa-regular fa-download"
               ></i>
@@ -228,11 +312,9 @@ export const FinancialInd = () => {
             id="print"
             sx={{
               
-              height: "65vh",
+              minHeight: 0,
+              height: "auto",
               width: "100%",
-              ["@media (max-height: 850px)"]: {
-                height: "56vh",
-              },
               "@media all and (display-mode: fullscreen)": {
                 border: "none",
                 margin: "0px",
@@ -242,7 +324,7 @@ export const FinancialInd = () => {
             }}
           >
           {/* ====== Actividad / Eficiencia ====== */}
-<Box display="flex" flexDirection="column" width="100%" mt="1%">
+<Box display="flex" flexDirection="column" width="100%" mt={0.5}>
   {/* Card blanco (columna) */}
   <Box
     sx={{
@@ -251,21 +333,12 @@ export const FinancialInd = () => {
       backgroundColor: "white",
       borderRadius: "8px",
       padding: "14px 16px 22px 16px",
-      paddingRight: "42px",
+      paddingRight: { xs: "12px", sm: "16px", lg: "24px" },
       boxSizing: "border-box",
     }}
   >
     {/* ✅ TITULO ARRIBA */}
-    <Typography
-      letterSpacing={0}
-      fontSize="1.6vw"
-      fontWeight="500"
-      color="#333333"
-      sx={{
-        mb: 2,
-        whiteSpace: "nowrap",
-      }}
-    >
+    <Typography sx={SECTION_HEADING_SX}>
       Actividad / Eficiencia
     </Typography>
 
@@ -273,31 +346,32 @@ export const FinancialInd = () => {
     <Box
       sx={{
         display: "flex",
-        flexDirection: "row",
-        alignItems: "flex-start",
+        flexDirection: { xs: "column", lg: "row" },
+        alignItems: "stretch",
         gap: 2,
         width: "100%",
+        minWidth: 0,
       }}
     >
       {/* ================= TABLA (35%) ================= */}
-      <Box display="flex" flexDirection="column" sx={{ width: "35%", minWidth: 360 }}>
+      <Box display="flex" flexDirection="column" sx={{ width: { xs: "100%", lg: "30%" }, minWidth: 0, overflowX: "auto" }}>
         {/* Header años */}
         <Box display="flex" flexDirection="row">
           <Box width="40%"></Box>
           <Box width="60%">
             <Box display="flex" flexDirection="row" sx={{ gap: 1 }}>
               <Box sx={{ flex: 1 }}>
-                <InputTitles sx={{ fontSize: "1vw", height: "6vh" }}>
+                <InputTitles sx={{ fontSize: "clamp(10.5px, 0.82vw, 12px)", minHeight: 32 }}>
                   {dataIndicators?.data?.results?.period_3?.period}
                 </InputTitles>
               </Box>
               <Box sx={{ flex: 1 }}>
-                <InputTitles sx={{ fontSize: "1vw" }}>
+                <InputTitles sx={{ fontSize: "clamp(10.5px, 0.82vw, 12px)" }}>
                   {dataIndicators?.data?.results?.period_2?.period}
                 </InputTitles>
               </Box>
               <Box sx={{ flex: 1 }}>
-                <InputTitles sx={{ fontSize: "1vw" }}>
+                <InputTitles sx={{ fontSize: "clamp(10.5px, 0.82vw, 12px)" }}>
                   {dataIndicators?.data?.results?.period_1?.period}
                 </InputTitles>
               </Box>
@@ -308,7 +382,7 @@ export const FinancialInd = () => {
         {/* FILAS */}
         <Box display="flex" flexDirection="row">
           <Box width="40%">
-            <InputTitles sx={{ fontSize: "0.7vw" }}>ROTACIÓN CARTERA</InputTitles>
+            <InputTitles sx={{ fontSize: "clamp(9.5px, 0.7vw, 11px)" }}>ROTACIÓN CARTERA</InputTitles>
           </Box>
           <Box width="60%">
             <Box display="flex" flexDirection="row" sx={{ gap: 1 }}>
@@ -327,7 +401,7 @@ export const FinancialInd = () => {
 
         <Box display="flex" flexDirection="row">
           <Box width="40%">
-            <InputTitles sx={{ fontSize: "0.7vw" }}>ROTACIÓN INVENTARIOS</InputTitles>
+            <InputTitles sx={{ fontSize: "clamp(9.5px, 0.7vw, 11px)" }}>ROTACIÓN INVENTARIOS</InputTitles>
           </Box>
           <Box width="60%">
             <Box display="flex" flexDirection="row" sx={{ gap: 1 }}>
@@ -346,7 +420,7 @@ export const FinancialInd = () => {
 
         <Box display="flex" flexDirection="row">
           <Box width="40%">
-            <InputTitles sx={{ fontSize: "0.7vw" }}>CICLO OPERACIONAL</InputTitles>
+            <InputTitles sx={{ fontSize: "clamp(9.5px, 0.7vw, 11px)" }}>CICLO OPERACIONAL</InputTitles>
           </Box>
           <Box width="60%">
             <Box display="flex" flexDirection="row" sx={{ gap: 1 }}>
@@ -365,7 +439,7 @@ export const FinancialInd = () => {
 
         <Box display="flex" flexDirection="row">
           <Box width="40%">
-            <InputTitles sx={{ fontSize: "0.7vw" }}>ROTACIÓN PROVEEDORES</InputTitles>
+            <InputTitles sx={{ fontSize: "clamp(9.5px, 0.7vw, 11px)" }}>ROTACIÓN PROVEEDORES</InputTitles>
           </Box>
           <Box width="60%">
             <Box display="flex" flexDirection="row" sx={{ gap: 1 }}>
@@ -384,7 +458,7 @@ export const FinancialInd = () => {
 
         <Box display="flex" flexDirection="row">
           <Box width="40%">
-            <InputTitles sx={{ fontSize: "0.7vw" }}>ROTACIÓN GASTOS ACUMULADOS</InputTitles>
+            <InputTitles sx={{ fontSize: "clamp(9.5px, 0.7vw, 11px)" }}>ROTACIÓN GASTOS ACUMULADOS</InputTitles>
           </Box>
           <Box width="60%">
             <Box display="flex" flexDirection="row" sx={{ gap: 1 }}>
@@ -403,7 +477,7 @@ export const FinancialInd = () => {
 
         <Box display="flex" flexDirection="row">
           <Box width="40%">
-            <InputTitles sx={{ fontSize: "0.7vw" }}>CICLO CONVERSIÓN EFECTIVO</InputTitles>
+            <InputTitles sx={{ fontSize: "clamp(9.5px, 0.7vw, 11px)" }}>CICLO CONVERSIÓN EFECTIVO</InputTitles>
           </Box>
           <Box width="60%">
             <Box display="flex" flexDirection="row" sx={{ gap: 1 }}>
@@ -422,7 +496,7 @@ export const FinancialInd = () => {
 
         <Box display="flex" flexDirection="row">
           <Box width="40%">
-            <InputTitles sx={{ fontSize: "0.7vw" }}>ROTACIÓN DE ACTIVOS</InputTitles>
+            <InputTitles sx={{ fontSize: "clamp(9.5px, 0.7vw, 11px)" }}>ROTACIÓN DE ACTIVOS</InputTitles>
           </Box>
           <Box width="60%">
             <Box display="flex" flexDirection="row" sx={{ gap: 1 }}>
@@ -443,20 +517,24 @@ export const FinancialInd = () => {
       {/* ================= GRAFICAS (65%) ================= */}
       <Box
         sx={{
-          width: "65%",
-          display: "flex",
-          flexDirection: "row",
+          width: { xs: "100%", lg: "70%" },
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "minmax(0, 1fr)",
+            sm: "repeat(2, minmax(0, 1fr))",
+            xl: "repeat(3, minmax(0, 1fr))",
+          },
           gap: 2,
-          height: "42vh",
-          minHeight: 320,
+          height: "auto",
+          minHeight: 0,
         }}
       >
         {/* Card 1 */}
-        <Box sx={{ flex: 1, bgcolor: "#fff", borderRadius: "4px", display: "flex", flexDirection: "column" }}>
-          <Typography sx={{ fontSize: "0.7vw", fontWeight: 600, color: "#8C7E82", ml: "4%", mt: "8px" }}>
+        <Box sx={{ flex: 1, minWidth: 0, minHeight: { xs: 260, md: 300 }, bgcolor: "#fff", borderRadius: "4px", display: "flex", flexDirection: "column" }}>
+          <Typography sx={{ fontSize: "clamp(9.5px, 0.7vw, 11px)", fontWeight: 600, color: "#8C7E82", ml: "4%", mt: "8px" }}>
             Comparativo
           </Typography>
-          <Typography sx={{ fontSize: "1.042vw", fontWeight: 500, color: "#333333", ml: "4%", mb: "8px" }}>
+          <Typography sx={{ fontSize: "clamp(11px, 0.86vw, 13px)", fontWeight: 500, color: "#333333", ml: "4%", mb: "8px" }}>
             Rotación de Cartera
           </Typography>
           <Box sx={{ flex: 1, px: 1 }}>
@@ -465,11 +543,11 @@ export const FinancialInd = () => {
         </Box>
 
         {/* Card 2 */}
-        <Box sx={{ flex: 1, bgcolor: "#fff", borderRadius: "4px", display: "flex", flexDirection: "column" }}>
-          <Typography sx={{ fontSize: "0.7vw", fontWeight: 600, color: "#8C7E82", ml: "4%", mt: "8px" }}>
+        <Box sx={{ flex: 1, minWidth: 0, minHeight: { xs: 260, md: 300 }, bgcolor: "#fff", borderRadius: "4px", display: "flex", flexDirection: "column" }}>
+          <Typography sx={{ fontSize: "clamp(9.5px, 0.7vw, 11px)", fontWeight: 600, color: "#8C7E82", ml: "4%", mt: "8px" }}>
             Comparativo
           </Typography>
-          <Typography sx={{ fontSize: "1.042vw", fontWeight: 500, color: "#333333", ml: "4%", mb: "8px" }}>
+          <Typography sx={{ fontSize: "clamp(11px, 0.86vw, 13px)", fontWeight: 500, color: "#333333", ml: "4%", mb: "8px" }}>
             Rotación de Inventarios
           </Typography>
           <Box sx={{ flex: 1, px: 1 }}>
@@ -478,11 +556,11 @@ export const FinancialInd = () => {
         </Box>
 
         {/* Card 3 */}
-        <Box sx={{ flex: 1, bgcolor: "#fff", borderRadius: "4px", display: "flex", flexDirection: "column" }}>
-          <Typography sx={{ fontSize: "0.7vw", fontWeight: 600, color: "#8C7E82", ml: "4%", mt: "8px" }}>
+        <Box sx={{ flex: 1, minWidth: 0, minHeight: { xs: 260, md: 300 }, bgcolor: "#fff", borderRadius: "4px", display: "flex", flexDirection: "column" }}>
+          <Typography sx={{ fontSize: "clamp(9.5px, 0.7vw, 11px)", fontWeight: 600, color: "#8C7E82", ml: "4%", mt: "8px" }}>
             Comparativo
           </Typography>
-          <Typography sx={{ fontSize: "1.042vw", fontWeight: 500, color: "#333333", ml: "4%", mb: "8px" }}>
+          <Typography sx={{ fontSize: "clamp(11px, 0.86vw, 13px)", fontWeight: 500, color: "#333333", ml: "4%", mb: "8px" }}>
             Rotación de Proveedores
           </Typography>
           <Box sx={{ flex: 1, px: 1 }}>
@@ -498,7 +576,7 @@ export const FinancialInd = () => {
        
 
           {/* ====== Rentabilidad ====== */}
-<Box display="flex" flexDirection="column" width="100%" mt="2%">
+<Box display="flex" flexDirection="column" width="100%" mt={1.5}>
   <Box
     sx={{
       ...scrollSx,
@@ -506,18 +584,12 @@ export const FinancialInd = () => {
       backgroundColor: "white",
       borderRadius: "8px",
       padding: "14px 16px 22px 16px",
-      paddingRight: "42px",
+      paddingRight: { xs: "12px", sm: "16px", lg: "24px" },
       boxSizing: "border-box",
     }}
   >
     {/* ✅ TÍTULO ARRIBA */}
-    <Typography
-      letterSpacing={0}
-      fontSize="1.6vw"
-      fontWeight="500"
-      color="#333333"
-      sx={{ mb: 2, whiteSpace: "nowrap" }}
-    >
+    <Typography sx={SECTION_HEADING_SX}>
       Rentabilidad
     </Typography>
 
@@ -525,31 +597,32 @@ export const FinancialInd = () => {
     <Box
       sx={{
         display: "flex",
-        flexDirection: "row",
-        alignItems: "flex-start",
+        flexDirection: { xs: "column", lg: "row" },
+        alignItems: "stretch",
         gap: 2,
         width: "100%",
+        minWidth: 0,
       }}
     >
       {/* ================= TABLA (35%) ================= */}
-      <Box display="flex" flexDirection="column" sx={{ width: "35%", minWidth: 360 }}>
+      <Box display="flex" flexDirection="column" sx={{ width: { xs: "100%", lg: "30%" }, minWidth: 0, overflowX: "auto" }}>
         {/* Header años */}
         <Box display="flex" flexDirection="row">
           <Box width="40%"></Box>
           <Box width="60%">
             <Box display="flex" flexDirection="row" sx={{ gap: 1 }}>
               <Box sx={{ flex: 1 }}>
-                <InputTitles sx={{ fontSize: "1vw", height: "6vh" }}>
+                <InputTitles sx={{ fontSize: "clamp(10.5px, 0.82vw, 12px)", minHeight: 32 }}>
                   {dataIndicators?.data?.results?.period_3?.period}
                 </InputTitles>
               </Box>
               <Box sx={{ flex: 1 }}>
-                <InputTitles sx={{ fontSize: "1vw" }}>
+                <InputTitles sx={{ fontSize: "clamp(10.5px, 0.82vw, 12px)" }}>
                   {dataIndicators?.data?.results?.period_2?.period}
                 </InputTitles>
               </Box>
               <Box sx={{ flex: 1 }}>
-                <InputTitles sx={{ fontSize: "1vw" }}>
+                <InputTitles sx={{ fontSize: "clamp(10.5px, 0.82vw, 12px)" }}>
                   {dataIndicators?.data?.results?.period_1?.period}
                 </InputTitles>
               </Box>
@@ -604,7 +677,7 @@ export const FinancialInd = () => {
         ].map((row) => (
           <Box key={row.label} display="flex" flexDirection="row" sx={{ mt: 1 }}>
             <Box width="40%">
-              <InputTitles sx={{ fontSize: "0.7vw" }}>{row.label}</InputTitles>
+              <InputTitles sx={{ fontSize: "clamp(9.5px, 0.7vw, 11px)" }}>{row.label}</InputTitles>
             </Box>
             <Box width="60%">
               <Box display="flex" flexDirection="row" sx={{ gap: 1 }}>
@@ -626,20 +699,24 @@ export const FinancialInd = () => {
       {/* ================= GRÁFICAS (65%) ================= */}
       <Box
         sx={{
-          width: "65%",
-          display: "flex",
-          flexDirection: "row",
+          width: { xs: "100%", lg: "70%" },
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "minmax(0, 1fr)",
+            sm: "repeat(2, minmax(0, 1fr))",
+            xl: "repeat(3, minmax(0, 1fr))",
+          },
           gap: 2,
-          height: "42vh",
-          minHeight: 320,
+          height: "auto",
+          minHeight: 0,
         }}
       >
         {/* Card 1 */}
-        <Box sx={{ flex: 1, bgcolor: "#fff", borderRadius: "4px", display: "flex", flexDirection: "column" }}>
-          <Typography sx={{ fontSize: "0.7vw", fontWeight: 600, color: "#8C7E82", ml: "4%", mt: "8px" }}>
+        <Box sx={{ flex: 1, minWidth: 0, minHeight: { xs: 260, md: 300 }, bgcolor: "#fff", borderRadius: "4px", display: "flex", flexDirection: "column" }}>
+          <Typography sx={{ fontSize: "clamp(9.5px, 0.7vw, 11px)", fontWeight: 600, color: "#8C7E82", ml: "4%", mt: "8px" }}>
             Comparativo
           </Typography>
-          <Typography sx={{ fontSize: "1.042vw", fontWeight: 500, color: "#333333", ml: "4%", mb: "8px" }}>
+          <Typography sx={{ fontSize: "clamp(11px, 0.86vw, 13px)", fontWeight: 500, color: "#333333", ml: "4%", mb: "8px" }}>
             Margen bruto
           </Typography>
           <Box sx={{ flex: 1, px: 1 }}>
@@ -648,11 +725,11 @@ export const FinancialInd = () => {
         </Box>
 
         {/* Card 2 */}
-        <Box sx={{ flex: 1, bgcolor: "#fff", borderRadius: "4px", display: "flex", flexDirection: "column" }}>
-          <Typography sx={{ fontSize: "0.7vw", fontWeight: 600, color: "#8C7E82", ml: "4%", mt: "8px" }}>
+        <Box sx={{ flex: 1, minWidth: 0, minHeight: { xs: 260, md: 300 }, bgcolor: "#fff", borderRadius: "4px", display: "flex", flexDirection: "column" }}>
+          <Typography sx={{ fontSize: "clamp(9.5px, 0.7vw, 11px)", fontWeight: 600, color: "#8C7E82", ml: "4%", mt: "8px" }}>
             Comparativo
           </Typography>
-          <Typography sx={{ fontSize: "1.042vw", fontWeight: 500, color: "#333333", ml: "4%", mb: "8px" }}>
+          <Typography sx={{ fontSize: "clamp(11px, 0.86vw, 13px)", fontWeight: 500, color: "#333333", ml: "4%", mb: "8px" }}>
             EBITDA
           </Typography>
           <Box sx={{ flex: 1, px: 1 }}>
@@ -661,11 +738,11 @@ export const FinancialInd = () => {
         </Box>
 
         {/* Card 3 */}
-        <Box sx={{ flex: 1, bgcolor: "#fff", borderRadius: "4px", display: "flex", flexDirection: "column" }}>
-          <Typography sx={{ fontSize: "0.7vw", fontWeight: 600, color: "#8C7E82", ml: "4%", mt: "8px" }}>
+        <Box sx={{ flex: 1, minWidth: 0, minHeight: { xs: 260, md: 300 }, bgcolor: "#fff", borderRadius: "4px", display: "flex", flexDirection: "column" }}>
+          <Typography sx={{ fontSize: "clamp(9.5px, 0.7vw, 11px)", fontWeight: 600, color: "#8C7E82", ml: "4%", mt: "8px" }}>
             Comparativo
           </Typography>
-          <Typography sx={{ fontSize: "1.042vw", fontWeight: 500, color: "#333333", ml: "4%", mb: "8px" }}>
+          <Typography sx={{ fontSize: "clamp(11px, 0.86vw, 13px)", fontWeight: 500, color: "#333333", ml: "4%", mb: "8px" }}>
             Margen neto
           </Typography>
           <Box sx={{ flex: 1, px: 1 }}>
@@ -679,7 +756,7 @@ export const FinancialInd = () => {
 {/* ====== Fin Rentabilidad ====== */}
 
          {/* ====== Riesgo financiero ====== */}
-<Box display="flex" flexDirection="column" width="100%" mt="2%">
+<Box display="flex" flexDirection="column" width="100%" mt={1.5}>
   <Box
     sx={{
       ...scrollSx,
@@ -687,18 +764,12 @@ export const FinancialInd = () => {
       backgroundColor: "white",
       borderRadius: "8px",
       padding: "14px 16px 22px 16px",
-      paddingRight: "42px",
+      paddingRight: { xs: "12px", sm: "16px", lg: "24px" },
       boxSizing: "border-box",
     }}
   >
     {/* ✅ TÍTULO ARRIBA */}
-    <Typography
-      letterSpacing={0}
-      fontSize="1.6vw"
-      fontWeight="500"
-      color="#333333"
-      sx={{ mb: 2, whiteSpace: "nowrap" }}
-    >
+    <Typography sx={SECTION_HEADING_SX}>
       Riesgo financiero
     </Typography>
 
@@ -706,31 +777,32 @@ export const FinancialInd = () => {
     <Box
       sx={{
         display: "flex",
-        flexDirection: "row",
-        alignItems: "flex-start",
+        flexDirection: { xs: "column", lg: "row" },
+        alignItems: "stretch",
         gap: 2,
         width: "100%",
+        minWidth: 0,
       }}
     >
       {/* ================= TABLA (35%) ================= */}
-      <Box display="flex" flexDirection="column" sx={{ width: "35%", minWidth: 360 }}>
+      <Box display="flex" flexDirection="column" sx={{ width: { xs: "100%", lg: "30%" }, minWidth: 0, overflowX: "auto" }}>
         {/* Header años */}
         <Box display="flex" flexDirection="row">
           <Box width="40%"></Box>
           <Box width="60%">
             <Box display="flex" flexDirection="row" sx={{ gap: 1 }}>
               <Box sx={{ flex: 1 }}>
-                <InputTitles sx={{ fontSize: "1vw", height: "6vh" }}>
+                <InputTitles sx={{ fontSize: "clamp(10.5px, 0.82vw, 12px)", minHeight: 32 }}>
                   {dataIndicators?.data?.results?.period_3?.period}
                 </InputTitles>
               </Box>
               <Box sx={{ flex: 1 }}>
-                <InputTitles sx={{ fontSize: "1vw" }}>
+                <InputTitles sx={{ fontSize: "clamp(10.5px, 0.82vw, 12px)" }}>
                   {dataIndicators?.data?.results?.period_2?.period}
                 </InputTitles>
               </Box>
               <Box sx={{ flex: 1 }}>
-                <InputTitles sx={{ fontSize: "1vw" }}>
+                <InputTitles sx={{ fontSize: "clamp(10.5px, 0.82vw, 12px)" }}>
                   {dataIndicators?.data?.results?.period_1?.period}
                 </InputTitles>
               </Box>
@@ -791,7 +863,7 @@ export const FinancialInd = () => {
         ].map((row) => (
           <Box key={row.label} display="flex" flexDirection="row" sx={{ mt: 1 }}>
             <Box width="40%">
-              <InputTitles sx={{ fontSize: "0.7vw" }}>{row.label}</InputTitles>
+              <InputTitles sx={{ fontSize: "clamp(9.5px, 0.7vw, 11px)" }}>{row.label}</InputTitles>
             </Box>
             <Box width="60%">
               <Box display="flex" flexDirection="row" sx={{ gap: 1 }}>
@@ -813,20 +885,24 @@ export const FinancialInd = () => {
       {/* ================= GRÁFICAS (65%) ================= */}
       <Box
         sx={{
-          width: "65%",
-          display: "flex",
-          flexDirection: "row",
+          width: { xs: "100%", lg: "70%" },
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "minmax(0, 1fr)",
+            sm: "repeat(2, minmax(0, 1fr))",
+            xl: "repeat(3, minmax(0, 1fr))",
+          },
           gap: 2,
-          height: "42vh",
-          minHeight: 320,
+          height: "auto",
+          minHeight: 0,
         }}
       >
         {/* Card 1 */}
-        <Box sx={{ flex: 1, bgcolor: "#fff", borderRadius: "4px", display: "flex", flexDirection: "column" }}>
-          <Typography sx={{ fontSize: "0.7vw", fontWeight: 600, color: "#8C7E82", ml: "4%", mt: "8px" }}>
+        <Box sx={{ flex: 1, minWidth: 0, minHeight: { xs: 260, md: 300 }, bgcolor: "#fff", borderRadius: "4px", display: "flex", flexDirection: "column" }}>
+          <Typography sx={{ fontSize: "clamp(9.5px, 0.7vw, 11px)", fontWeight: 600, color: "#8C7E82", ml: "4%", mt: "8px" }}>
             Comparativo
           </Typography>
-          <Typography sx={{ fontSize: "1.042vw", fontWeight: 500, color: "#333333", ml: "4%", mb: "8px" }}>
+          <Typography sx={{ fontSize: "clamp(11px, 0.86vw, 13px)", fontWeight: 500, color: "#333333", ml: "4%", mb: "8px" }}>
             Endeudamiento
           </Typography>
           <Box sx={{ flex: 1, px: 1 }}>
@@ -835,11 +911,11 @@ export const FinancialInd = () => {
         </Box>
 
         {/* Card 2 */}
-        <Box sx={{ flex: 1, bgcolor: "#fff", borderRadius: "4px", display: "flex", flexDirection: "column" }}>
-          <Typography sx={{ fontSize: "0.7vw", fontWeight: 600, color: "#8C7E82", ml: "4%", mt: "8px" }}>
+        <Box sx={{ flex: 1, minWidth: 0, minHeight: { xs: 260, md: 300 }, bgcolor: "#fff", borderRadius: "4px", display: "flex", flexDirection: "column" }}>
+          <Typography sx={{ fontSize: "clamp(9.5px, 0.7vw, 11px)", fontWeight: 600, color: "#8C7E82", ml: "4%", mt: "8px" }}>
             Comparativo
           </Typography>
-          <Typography sx={{ fontSize: "1.042vw", fontWeight: 500, color: "#333333", ml: "4%", mb: "8px" }}>
+          <Typography sx={{ fontSize: "clamp(11px, 0.86vw, 13px)", fontWeight: 500, color: "#333333", ml: "4%", mb: "8px" }}>
             EBITDA / Gastos financieros
           </Typography>
           <Box sx={{ flex: 1, px: 1 }}>
@@ -848,11 +924,11 @@ export const FinancialInd = () => {
         </Box>
 
         {/* Card 3 */}
-        <Box sx={{ flex: 1, bgcolor: "#fff", borderRadius: "4px", display: "flex", flexDirection: "column" }}>
-          <Typography sx={{ fontSize: "0.7vw", fontWeight: 600, color: "#8C7E82", ml: "4%", mt: "8px" }}>
+        <Box sx={{ flex: 1, minWidth: 0, minHeight: { xs: 260, md: 300 }, bgcolor: "#fff", borderRadius: "4px", display: "flex", flexDirection: "column" }}>
+          <Typography sx={{ fontSize: "clamp(9.5px, 0.7vw, 11px)", fontWeight: 600, color: "#8C7E82", ml: "4%", mt: "8px" }}>
             Comparativo
           </Typography>
-          <Typography sx={{ fontSize: "1.042vw", fontWeight: 500, color: "#333333", ml: "4%", mb: "8px" }}>
+          <Typography sx={{ fontSize: "clamp(11px, 0.86vw, 13px)", fontWeight: 500, color: "#333333", ml: "4%", mb: "8px" }}>
             Capital de trabajo
           </Typography>
           <Box sx={{ flex: 1, px: 1 }}>
@@ -867,7 +943,7 @@ export const FinancialInd = () => {
          
 
            {/* ====== Resultados ====== */}
-<Box display="flex" flexDirection="column" width="100%" mt="2%">
+<Box display="flex" flexDirection="column" width="100%" mt={1.5}>
   <Box
     sx={{
       ...scrollSx,
@@ -875,18 +951,12 @@ export const FinancialInd = () => {
       backgroundColor: "white",
       borderRadius: "8px",
       padding: "14px 16px 22px 16px",
-      paddingRight: "42px",
+      paddingRight: { xs: "12px", sm: "16px", lg: "24px" },
       boxSizing: "border-box",
     }}
   >
     {/* ✅ TÍTULO ARRIBA */}
-    <Typography
-      letterSpacing={0}
-      fontSize="1.6vw"
-      fontWeight="500"
-      color="#333333"
-      sx={{ mb: 2, whiteSpace: "nowrap" }}
-    >
+    <Typography sx={SECTION_HEADING_SX}>
       Resultados
     </Typography>
 
@@ -894,31 +964,32 @@ export const FinancialInd = () => {
     <Box
       sx={{
         display: "flex",
-        flexDirection: "row",
-        alignItems: "flex-start",
+        flexDirection: { xs: "column", lg: "row" },
+        alignItems: "stretch",
         gap: 2,
         width: "100%",
+        minWidth: 0,
       }}
     >
       {/* ================= TABLA (35%) ================= */}
-      <Box display="flex" flexDirection="column" sx={{ width: "35%", minWidth: 360 }}>
+      <Box display="flex" flexDirection="column" sx={{ width: { xs: "100%", lg: "30%" }, minWidth: 0, overflowX: "auto" }}>
         {/* Header años */}
         <Box display="flex" flexDirection="row">
           <Box width="40%"></Box>
           <Box width="60%">
             <Box display="flex" flexDirection="row" sx={{ gap: 1 }}>
               <Box sx={{ flex: 1 }}>
-                <InputTitles sx={{ fontSize: "1vw", height: "6vh" }}>
+                <InputTitles sx={{ fontSize: "clamp(10.5px, 0.82vw, 12px)", minHeight: 32 }}>
                   {dataIndicators?.data?.results?.period_3?.period}
                 </InputTitles>
               </Box>
               <Box sx={{ flex: 1 }}>
-                <InputTitles sx={{ fontSize: "1vw" }}>
+                <InputTitles sx={{ fontSize: "clamp(10.5px, 0.82vw, 12px)" }}>
                   {dataIndicators?.data?.results?.period_2?.period}
                 </InputTitles>
               </Box>
               <Box sx={{ flex: 1 }}>
-                <InputTitles sx={{ fontSize: "1vw" }}>
+                <InputTitles sx={{ fontSize: "clamp(10.5px, 0.82vw, 12px)" }}>
                   {dataIndicators?.data?.results?.period_1?.period}
                 </InputTitles>
               </Box>
@@ -950,7 +1021,7 @@ export const FinancialInd = () => {
             <Box width="40%">
               <InputTitles
                 sx={{
-                  fontSize: "0.7vw",
+                  fontSize: "clamp(9.5px, 0.7vw, 11px)",
                   // ✅ si el label es largo, que rompa en 2 líneas sin desalinear columnas
                   whiteSpace: "normal",
                   lineHeight: 1.2,
@@ -980,26 +1051,28 @@ export const FinancialInd = () => {
       {/* ================= GRÁFICA (65%) ================= */}
       <Box
         sx={{
-          width: "65%",
-          display: "flex",
-          flexDirection: "row",
-          height: "42vh",
-          minHeight: 320,
+          width: { xs: "100%", lg: "70%" },
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1fr)",
+          height: "auto",
+          minHeight: 0,
         }}
       >
         <Box
           sx={{
             flex: 1,
+            minWidth: 0,
+            minHeight: { xs: 260, md: 300 },
             bgcolor: "#fff",
             borderRadius: "4px",
             display: "flex",
             flexDirection: "column",
           }}
         >
-          <Typography sx={{ fontSize: "0.7vw", fontWeight: 600, color: "#8C7E82", ml: "4%", mt: "8px" }}>
+          <Typography sx={{ fontSize: "clamp(9.5px, 0.7vw, 11px)", fontWeight: 600, color: "#8C7E82", ml: "4%", mt: "8px" }}>
             Comparativo
           </Typography>
-          <Typography sx={{ fontSize: "1.042vw", fontWeight: 500, color: "#333333", ml: "4%", mb: "8px" }}>
+          <Typography sx={{ fontSize: "clamp(11px, 0.86vw, 13px)", fontWeight: 500, color: "#333333", ml: "4%", mb: "8px" }}>
             Ventas
           </Typography>
 

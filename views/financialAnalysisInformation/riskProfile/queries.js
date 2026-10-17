@@ -41,3 +41,29 @@ export const updateRiskProfile = async (data) => {
   });
   return res.data;
 }
+
+// Update the qualitative/financial overview using the existing financialProfile contract.
+export const updateFinancialOverview = async (
+  clientId,
+  qualitativeOverview,
+  financialAnalisis
+) => {
+  const res = await Axios.patch(
+    `${API_URL}/financialProfile/${clientId}`,
+    {
+      clientId,
+      analisis: {
+        client: clientId,
+        qualitativeOverview: qualitativeOverview ?? "",
+        financialAnalisis: financialAnalisis ?? "",
+      },
+    },
+    {
+      headers: {
+        authorization: "Bearer " + localStorage.getItem("access-token"),
+      },
+    }
+  );
+
+  return res.data;
+};
