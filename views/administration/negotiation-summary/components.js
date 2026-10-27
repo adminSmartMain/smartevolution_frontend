@@ -317,24 +317,10 @@ useEffect(() => {
       ...data?.data?.operation,
       billId: getFullBillId(),
       date: today,
-      totalDiscounts: PendingAccounts.reduce((a, b) => a + b.amount, 0),
-      total:
-        data?.data?.operation?.valueToDiscount -
-        data?.data?.operation?.investorDiscount -
-        data?.data?.operation?.billValue -
-        PendingAccounts.reduce((a, b) => a + b.amount, 0),
-      pendingToDeposit:
-        data?.data?.operation?.valueToDiscount -
-        data?.data?.operation?.investorDiscount -
-        data?.data?.operation?.billValue -
-        PendingAccounts.reduce((a, b) => a + b.amount, 0) -
-        (manualAdjustment || 0)
-        -depositData.map(deposit => deposit.amount).reduce((a, b) => a + b, 0),
-      
+      manualAdjustment,
       pendingAccounts: PendingAccounts,
       
       observations: observations, // Usar el estado actual de observations
-      totalDeposits: depositData.map(deposit => deposit.amount).reduce((a, b) => a + b, 0),
     });
   }
 
@@ -2341,7 +2327,7 @@ const handleButtonGoToSummaryClick = () => {
                   isMasked
                   thousandSeparator="."
                   decimalSeparator=","
-                  decimalScale={2}
+                  decimalScale={0}
                   allowNegative={true}
                   value={manualAdjustment}
                   onChangeMasked={(values) => {
