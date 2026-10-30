@@ -5,11 +5,12 @@
 /.pnp
 .pnp.js
 yarn.lock
-package-lock.json
 
 
 # testing
 /coverage
+/test-results
+/playwright-report
 # next.js
 /.next/
 /out/
