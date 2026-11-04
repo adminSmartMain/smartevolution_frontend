@@ -1,8 +1,5 @@
 import Axios from "axios";
 
-import { toast } from 'react-toastify'; // Asegúrate de tener instalada la librería
-
-
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // Get last operation Id
@@ -34,15 +31,13 @@ export const CreateOperation = async (values, op) => {
     return res.data;
 
   } catch (error) {
-    // Manejo de errores con toast de error
     const errorMessage = error.response?.data?.message 
       || error.message 
       || 'Error al crear la operación';
-    
-    toast.error(errorMessage);
-    
-    // Opcional: puedes lanzar el error nuevamente si necesitas manejarlo en el componente
-    throw error;
+
+    // The view owns user feedback; keeping this layer side-effect free means
+    // callers can reliably display the API's actual validation message.
+    throw new Error(errorMessage);
   }
 };
 

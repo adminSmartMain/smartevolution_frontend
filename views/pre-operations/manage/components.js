@@ -1,5 +1,5 @@
 // components/RegisterOperationForm.js
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useMemo, useState, useContext } from "react";
 import { debounce, set } from 'lodash';
 import { Dialog,
   DialogTitle,
@@ -60,6 +60,7 @@ import EndDateSelector from "@components/selects/preOperationCreate/EndDateSelec
 import ProbableDateSelector from "@components/selects/preOperationCreate/ProbableDateSelector";
 import TypeBillSelector from "@components/selects/preOperationCreate/TypeBillSelector";
 import fileToBase64 from "@lib/fileToBase64";
+import { calculateOperation } from "@lib/preOperationCalculations";
 
 const FilePreviewModal = ({ open, onClose, file, fileUrl }) => {
   const renderPreviewContent = () => {
@@ -191,6 +192,7 @@ export const ManageOperationC = ({
   isFinished,
   success,
   isModalOpen,
+  setIsModalOpen,
   validationSchema,
   showConfirmationModal,
   handleConfirm,
@@ -205,7 +207,6 @@ export const ManageOperationC = ({
   const [clientPagador, setClientPagador] = useState(null);
   const [clientBrokerEmitter, setClientBrokerEmitter] = useState(null);
   const [clientInvestor, setClientInvestor] = useState(null);
-  const [AccountFromClient, setAccountFromClient] = useState()
   const [openEmitterBrokerModal, setOpenEmitterBrokerModal] = useState(false)
   const { user, logout } = useContext(authContext);
  const [pendingClear, setPendingClear] = useState(false);
@@ -221,11 +222,9 @@ export const ManageOperationC = ({
   const [isIntegrationCode,setIsIntegrationCode]=useState(false)
 // Estado inicial para manejar múltiples archivos
 const [files, setFiles] = useState([]);
-const [filePreviews, setFilePreviews] = useState([]);
 const [fileUrls, setFileUrls] = useState([]);
 const [openPreview, setOpenPreview] = useState(false);
 const [previewIndex, setPreviewIndex] = useState(null);
-const [isUploading, setIsUploading] = useState(false);
 const [isFilterIntegrationActive, setIsFilterIntegrationActive] = useState(false);
 const [hasShownIntegrationModal, setHasShownIntegrationModal] = useState(false);
 
@@ -240,21 +239,12 @@ const [hasShownIntegrationModal, setHasShownIntegrationModal] = useState(false);
   } = useFetch({ service: Bills, init: false });
   const {
     fetch: fetchBrokerByClient,
-    loading: loadingBrokerByClient,
-    error: errorBrokerByClient,
-    data: dataBrokerByClient,
   } = useFetch({ service: BrokerByClient, init: false });
   const {
     fetch: fetchBrokerByClientInvestor,
-    loading: loadingBrokerByClientInvestor,
-    error: errorBrokerByClientInvestor,
-    data: dataBrokerByClientInvestor,
   } = useFetch({ service: BrokerByClient, init: false });
   const {
     fetch: fetchAccountFromClient,
-    loading: loadingAccountFromClient,
-    error: errorAccountFromClient,
-    data: dataAccountFromClient,
   } = useFetch({ service: AccountsFromClient, init: false });
   const {
     fetch: riskProfileFetch,
@@ -296,10 +286,6 @@ const [hasShownIntegrationModal, setHasShownIntegrationModal] = useState(false);
     return '$' + ' ' + value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   };
 
-
-  const [] = useState([
-    { id: 1, titulo: "Factura 1", contenido: "Detalles de Factura 1" }
-  ]);
   const [expanded, setExpanded] = useState(0); // Primer acordeón abierto por defecto
 
 
@@ -340,16 +326,6 @@ const handleFileChange = (event, setFieldValue, index) => {
       // Actualizamos Formik con el formato que espera el backend
       setFieldValue(`facturas[${index}].file`, e.target.result.split(',')[1]); // Solo el string base64 sin prefijo
       
-      // Actualizamos las vistas previas
-      setFilePreviews(prev => {
-        const newPreviews = [...prev];
-        if (selectedFile.type.includes('image')) {
-          newPreviews[index] = e.target.result; // Aquí usamos el resultado completo con prefijo
-        } else {
-          newPreviews[index] = null;
-        }
-        return newPreviews;
-      });
     };
     
     reader.onerror = (error) => {
@@ -435,7 +411,6 @@ const handleFileChange = (event, setFieldValue, index) => {
       },
     ],
   };
-  const [facturasFiltradas, setFacturasFiltradas] = useState([]); // Facturas filtradas por emisor
 
   // Función para cargar cuentas cuando se selecciona un inversionista
   const cargarCuentas = async (inversionista) => {
@@ -485,7 +460,6 @@ const handleFileChange = (event, setFieldValue, index) => {
   };
   const cargarFacturas = async (emisor, pagadorId = null) => {
     if (!emisor) {
-      setFacturasFiltradas([]);
       return [];
     }
 
@@ -493,30 +467,6 @@ const handleFileChange = (event, setFieldValue, index) => {
     //S setFacturasFiltradas(filtradas);
     return facturas; // Retorna directamente el array filtrado
   };
-  useEffect(() => {
-
-  }, [facturasFiltradas]); // Se ejecuta cuando cambia el estado
-  const [brokerByClient, setBrokerByClient] = useState()
-  useEffect(() => {
-    if (dataBrokerByClient) {
-
-      setBrokerByClient(dataBrokerByClient);
-    }
-  }, [dataBrokerByClient, brokerByClient]);
-
-  const [brokerByClientInvestor, setBrokerByClientInvestor] = useState()
-  useEffect(() => {
-    if (dataBrokerByClientInvestor) {
-
-      setBrokerByClientInvestor(dataBrokerByClientInvestor);
-    }
-  }, [dataBrokerByClientInvestor, brokerByClientInvestor]);
-
-
-  useEffect(() => {
-
-    setAccountFromClient(dataAccountFromClient)
-  }, [dataAccountFromClient]); // Se ejecuta cuando cambia el estado
   // Función para calcular el porcentaje de descuento basado en el valor futuro y el valor nominal
   const calcularPorcentajeDescuento = (valorFuturo, valorNominal) => {
     if (valorFuturo === 0) return 0;
@@ -562,7 +512,7 @@ const handleFileChange = (event, setFieldValue, index) => {
     </Box>
   );
   // Fuera del componente, o usando useMemo para optimizar
-  const debouncedCheckBill = debounce(async (billNumber, callback) => {
+  const debouncedCheckBill = useMemo(() => debounce(async (billNumber, callback) => {
     try {
       const response = await Axios.get(
         `${process.env.NEXT_PUBLIC_API_URL}/bill/${billNumber}`,
@@ -580,7 +530,9 @@ const handleFileChange = (event, setFieldValue, index) => {
       }
       callback(false);
     }
-  }, 500); // Espera 500ms después de la última escritura
+  }, 500), []); // Espera 500ms después de la última escritura
+
+  useEffect(() => () => debouncedCheckBill.cancel(), [debouncedCheckBill]);
   // Dentro de tu componente
   const [billExists, setBillExists] = useState(false);
   const [isCreatingOp, setIsCreatingOp] = useState(false);
@@ -598,11 +550,7 @@ const handleFileChange = (event, setFieldValue, index) => {
     }
   }, [isCreatingOp]);
 
-  function handleOnChange(event) {
-    const data = new FormData(event.currentTarget)
-    const values = Array.from(data.values())
-    const changedFields = values.filter(value => value.length);
-
+  function handleOnChange() {
     setIsCreatingOp(true)
   }
 
@@ -709,8 +657,7 @@ const renderPreviewContent = () => {
           
         >
           {/* {({ values, setFieldValue, touched, errors, handleBlur }) => ( */}
-          {({ values, setFieldValue, touched, errors, handleBlur, setTouched, setFieldTouched, setFieldError, formikBag, dirty, isSubmitting }) => {
-            setIsCreatingOp(true)
+          {({ values, setFieldValue, setValues, touched, errors, handleBlur, setTouched, setFieldTouched, setFieldError, formikBag, dirty, isSubmitting }) => {
             // Efecto para cargar datos iniciales       
             return (
               <Form translate="no" onChange={handleOnChange}>
@@ -747,37 +694,14 @@ const renderPreviewContent = () => {
                       onChange={(newValue) => {
                         const parsedDate = newValue ? new Date(newValue) : null;
                         if (!parsedDate) return;
-                        setFieldValue('opDate', parsedDate);
-                        values.facturas.forEach((factura, index) => {
-                          if (!factura.fechaFin) return;
-                          // 1. Calcula operationDays (como ya lo hacías)
-                          const operationDays = Math.max(0, differenceInDays(
-                            startOfDay(parseDateToLocal(factura.fechaFin)),
-                            startOfDay(parsedDate)
-                          ));
-                          setFieldValue(`facturas[${index}].operationDays`, operationDays);
-                          setFieldValue(`facturas[${index}].opDate`, parsedDate);
-                          // 2. Recalcula los valores presentes y comisiones SOLO si hay días y valor futuro
-                          if (operationDays > 0 && factura.valorFuturo > 0) {
-                            const presentValueInvestor = Math.round(
-                              PV(factura.investorTax / 100, operationDays / 365, 0, factura.valorFuturo, 0) * -1
-                            );
-                            const presentValueSF = Math.round(
-                              PV(values.discountTax / 100, operationDays / 365, 0, factura.valorFuturo, 0) * -1
-                            );
-
-                            setFieldValue(`facturas[${index}].presentValueInvestor`, presentValueInvestor || 0);
-                            setFieldValue(`facturas[${index}].presentValueSF`, presentValueSF || 0);
-                            setFieldValue(`facturas[${index}].comisionSF`, presentValueInvestor - presentValueSF || 0);
-                            setFieldValue(`facturas[${index}].investorProfit`,factura.valorNominal- presentValueInvestor  || 0);
-                          } else {
-                            // Resetea a valores por defecto si no hay días o valor futuro
-                            setFieldValue(`facturas[${index}].presentValueInvestor`, factura.currentBalance || 0);
-                            setFieldValue(`facturas[${index}].presentValueSF`, factura.currentBalance || 0);
-                            setFieldValue(`facturas[${index}].comisionSF`, 0);
-                            setFieldValue(`facturas[${index}].investorProfit`, 0);
-                          }
-                        });
+                        setValues({
+                          ...values,
+                          opDate: parsedDate,
+                          facturas: calculateOperation(values.facturas, {
+                            opDate: parsedDate,
+                            discountTax: values.discountTax,
+                          }),
+                        }, false);
                       }}
                       
                       
@@ -974,6 +898,7 @@ const renderPreviewContent = () => {
                                     }
                                   }}
                                   expanded={expanded === index}
+                                  TransitionProps={{ unmountOnExit: true }}
                                   onChange={handleChange(index)}>
                                   <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                                     <Grid container alignItems="center" spacing={1} style={{ width: '100%' }}>
@@ -1306,6 +1231,7 @@ const renderPreviewContent = () => {
                                               errors={errors}
                                               touched={touched}
                                               setFieldValue={setFieldValue}
+                                              setValues={setValues}
                                               values={values}
                                               setClientInvestor={setClientInvestor}
                                               index={index}
@@ -1344,6 +1270,7 @@ const renderPreviewContent = () => {
                                               factura={factura}
                                               values={values}
                                               setFieldValue={setFieldValue}
+                                              setValues={setValues}
                                               parseFloat={parseFloat}
                                               touched={touched}
                                               errors={errors}
@@ -1372,6 +1299,7 @@ const renderPreviewContent = () => {
                                                 dataBills={dataBills}
                                                 values={values}
                                                 setFieldValue={setFieldValue}
+                                                setValues={setValues}
                                                 errors={errors}
                                                 touched={touched}
                                                 index={index}
@@ -1420,6 +1348,7 @@ const renderPreviewContent = () => {
                                             <PorcentajeDescuentoSelector
                                             values={values}
                                             setFieldValue={setFieldValue}
+                                            setValues={setValues}
                                             errors={errors}
                                             touched={touched}
                                             factura={factura}
@@ -1433,6 +1362,7 @@ const renderPreviewContent = () => {
                                             <TasaDescuentoSelector
                                             values={values}
                                             setFieldValue = {setFieldValue}
+                                            setValues={setValues}
                                             setFieldError = {setFieldError}
                                             errors  = {errors}
                                             factura  = {factura}
@@ -1447,6 +1377,7 @@ const renderPreviewContent = () => {
                                             factura={factura}
                                             index={index}
                                             setFieldValue={setFieldValue}
+                                            setValues={setValues}
                                             values={values}
                                             errors={errors}
                                             touched={touched}
@@ -1458,6 +1389,7 @@ const renderPreviewContent = () => {
                                           <TasaInversionistaSelector
                                             values={values}
                                             setFieldValue = {setFieldValue}
+                                            setValues={setValues}
                                             setFieldError = {setFieldError}
                                             errors  = {errors}
                                             factura  = {factura}
@@ -1470,6 +1402,7 @@ const renderPreviewContent = () => {
                                        <EndDateSelector
                                        
                                        setFieldValue={setFieldValue}
+                                       setValues={setValues}
                                        values={values}
                                         factura={factura}
                                         errors={errors}
@@ -1593,6 +1526,7 @@ const renderPreviewContent = () => {
                                           <GastoMantenimiento
                                             factura={factura}
                                             setFieldValue={setFieldValue}
+                                            setValues={setValues}
                                             formatCurrency={formatCurrency}
                                             parseFloat={parseFloat}
                                             index={index}
@@ -1745,7 +1679,7 @@ const renderPreviewContent = () => {
                     <Button 
                     disabled={ isFinished? true: false}
                     type="submit" variant="contained" color="primary">
-                      Registrar Operación
+                      {isFinished ? "Registrando operación..." : "Registrar Operación"}
                     </Button>
                   </Grid>
                 </Grid>
@@ -1761,7 +1695,9 @@ const renderPreviewContent = () => {
 
                
                 <ProcessModal
+                  open={isModalOpen}
                   success={success}
+                  onClose={() => setIsModalOpen(false)}
                 />
                 <EmitterBrokerModal
                   openEmitterBrokerModal={openEmitterBrokerModal}
