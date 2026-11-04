@@ -1,662 +1,275 @@
-// components/RegisterOperationForm.js
-import React, { useState, useEffect } from "react";
-import { TextField, Autocomplete } from '@mui/material';
+import React, { useState } from "react";
+import { Autocomplete, TextField } from "@mui/material";
 import { toast } from "react-toastify";
-import { PV } from "@formulajs/formulajs";
-import { parseISO, isValid } from "date-fns";
-import { differenceInDays } from "date-fns";
 import ModalIntegrationCode from "@components/modals/modalIntegrationCode";
-import ErrorIcon from '@mui/icons-material/Error';
+import { calculateOperation, toNumber } from "@lib/preOperationCalculations";
 
-export default function BillSelector({values, setFieldValue, errors, touched, index, factura, dataBills, setFieldTouched, setFieldError, cargarFraccionFactura, hasShownModal,       // Recibido del padre
-  setHasShownModal}) {
-    const [showConfirmationModal, setShowConfirmationModal] = useState(false);
-    const [selectedFacturaWithCode, setSelectedFacturaWithCode] = useState(null);
-    const [pendingSelection, setPendingSelection] = useState(null);
-const validarIntegracionFacturas = (facturas, facturaActual, index) => {
-    // 1. Si la factura actual no tiene billId (no está seleccionada todavía) → permitir
-    if (!facturaActual.billId?.trim()) {
-        return { valido: true };
-    }
+const hasIntegrationCode = (invoice) => Boolean(invoice?.integrationCode?.trim())
+  && invoice.integrationCode !== "no-code";
 
-    // 2. Filtrar solo facturas que ya están seleccionadas (tienen billId)
-    const facturasSeleccionadas = facturas.filter(
-        f => f.billId?.trim() && f !== facturaActual
-    );
+const buildBillOptions = (bills) => (Array.isArray(bills) ? bills : [])
+  .filter((bill) => toNumber(bill.currentBalance) > 0)
+  .map((bill) => ({
+    label: `${String(bill.billId)}${bill.integrationCode ? `-${String(bill.integrationCode)}` : ""}`,
+    value: String(bill.billId),
+    id: String(bill.id),
+    integrationCode: bill.integrationCode || "",
+  }));
 
-    // 3. Verificar si hay facturas seleccionadas sin código
-    const hayFacturasSinCodigo = facturasSeleccionadas.some(
-        f => !f.integrationCode?.trim()
-    );
+const recalculateBillAvailability = (invoices, billId, originalBalance) => {
+  if (!billId) return invoices;
+  const used = invoices
+    .filter((invoice) => String(invoice.billId) === String(billId))
+    .reduce((total, invoice) => total + toNumber(invoice.valorFuturo), 0);
+  const available = Math.max(0, toNumber(originalBalance) - used);
 
-    // 4. Verificar si la factura actual tiene código
-    const facturaActualTieneCodigo = facturaActual.integrationCode?.trim();
-
-    // Caso 1: Si hay facturas sin código y la actual tiene código → NO PERMITIDO
-    if (hayFacturasSinCodigo && facturaActualTieneCodigo) {
-        return {
-            valido: false,
-            mensaje: "No se puede agregar factura con código cuando hay facturas sin código"
-        };
-    }
-
-    // Caso 2: Si hay facturas con código, verificar que coincidan
-    const facturasConCodigo = facturasSeleccionadas.filter(
-        f => f.integrationCode?.trim()
-    );
-
-    if (facturasConCodigo.length > 0 && facturaActualTieneCodigo) {
-        const primerCodigo = facturasConCodigo[0].integrationCode;
-        if (facturaActual.integrationCode !== primerCodigo) {
-            return {
-                valido: false,
-                mensaje: `El código debe coincidir con "${primerCodigo}"`
-            };
-        }
-    }
-
-    // Todos los casos válidos
-    return { valido: true };
+  return invoices.map((invoice) => (
+    String(invoice.billId) === String(billId)
+      ? { ...invoice, saldoDisponible: available, saldoDisponibleInfo: toNumber(originalBalance) }
+      : invoice
+  ));
 };
-    const handleConfirmIntegrationCode = () => {
-        setShowConfirmationModal(false);
-        setHasShownModal(true);
-        // Filtrar facturas con el mismo integrationCode de dataBills.data
-        const filteredIntegrationCodeBills = dataBills?.data.filter(
-            (f) => f.integrationCode === selectedFacturaWithCode.integrationCode
-        );
-        
-        // Actualizar las opciones disponibles en el selector
-        setFieldValue('takedBillsBeforeFilterIntegration', values.takedBills);
-        setFieldValue('takedBills', filteredIntegrationCodeBills);
-        
-        // Procesar la selección pendiente
-        if (pendingSelection) {
-            processBillSelection(pendingSelection);
-        }
-    };
 
-    const handleCancelIntegrationCode = () => {
-        setShowConfirmationModal(false);
-        setPendingSelection(null);
-        setSelectedFacturaWithCode(null);
-        setFieldValue(`facturas[${index}].factura`, null);
-    };
+export default function BillSelector({
+  values,
+  setFieldValue,
+  errors,
+  touched,
+  index,
+  factura,
+  dataBills,
+  setFieldTouched,
+  setFieldError,
+  cargarFraccionFactura,
+  hasShownModal,
+  setHasShownModal,
+}) {
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+  const [selectedFacturaWithCode, setSelectedFacturaWithCode] = useState(null);
+  const [pendingSelection, setPendingSelection] = useState(null);
 
-    const processBillSelection = async (newValue) => {
-        const selectedFactura = dataBills?.data.find(f => f.billId === newValue.value);
-        if (!selectedFactura) return;
-   // Validación antes de cualquier modificación
-    const validacion = validarIntegracionFacturas(
-        values.facturas, 
-        selectedFactura, 
-        index
+  const billOptions = buildBillOptions(values?.takedBills);
+  const selectedBillOption = billOptions.find(
+    (option) => option.value === String(factura.billId || "")
+  ) || null;
+
+  const validateIntegrationCode = (selectedBill) => {
+    const otherInvoices = (values.facturas || []).filter(
+      (current, currentIndex) => currentIndex !== index && current.billId
     );
+    const selectedHasCode = hasIntegrationCode(selectedBill);
+    const invoicesWithCode = otherInvoices.filter(hasIntegrationCode);
+    const invoicesWithoutCode = otherInvoices.filter((invoice) => !hasIntegrationCode(invoice));
 
-    if (!validacion.valido) {
-        toast.error(validacion.mensaje);
-        setFieldValue(`facturas[${index}].factura`, null);
-        return;
+    if (selectedHasCode && invoicesWithoutCode.length) {
+      return "No se puede agregar factura con código cuando hay facturas sin código";
+    }
+    if (!selectedHasCode && invoicesWithCode.length) {
+      return "No se permiten facturas sin código cuando otras lo tienen";
+    }
+    if (selectedHasCode && invoicesWithCode.some(
+      (invoice) => invoice.integrationCode !== selectedBill.integrationCode
+    )) {
+      return `El código debe coincidir con "${invoicesWithCode[0].integrationCode}"`;
+    }
+    return null;
+  };
+
+  const validateInvestorForBill = (billId) => {
+    if (!factura.nombreInversionista) return false;
+    return (values.facturas || []).some((current, currentIndex) => (
+      currentIndex !== index
+      && String(current.billId || "") === String(billId)
+      && current.nombreInversionista === factura.nombreInversionista
+    ));
+  };
+
+  const updateInvoices = (invoices) => {
+    setFieldValue("facturas", calculateOperation(invoices, values));
+  };
+
+  const processBillSelection = async (option) => {
+    const selectedBill = (dataBills?.data || []).find(
+      (bill) => String(bill.billId) === String(option.value)
+    );
+    if (!selectedBill) return;
+
+    const integrationError = validateIntegrationCode(selectedBill);
+    if (integrationError) {
+      toast.error(integrationError);
+      return;
+    }
+    if (validateInvestorForBill(selectedBill.billId)) {
+      const message = "No puede asignar el mismo inversionista a facturas agrupadas";
+      setFieldTouched(`facturas[${index}].nombreInversionista`, true, false);
+      setFieldError(`facturas[${index}].nombreInversionista`, message);
+      toast.error(message);
+      return;
     }
 
-       
-        function encontrarFacturasDuplicadas(facturas, billId, inversionistaId, currentIndex) {
-            if (!Array.isArray(facturas)) return [];
-            if (!billId || !inversionistaId) return [];
+    let fraction = 1;
+    try {
+      const response = await cargarFraccionFactura(selectedBill.id);
+      fraction = toNumber(response?.data?.fraction) || 1;
+    } catch (error) {
+      console.error("No se pudo consultar la fracción de la factura", error);
+    }
 
-            return facturas.filter((factura, index) => {
-                if (index === currentIndex) return false;
-                if (!factura.billId || !factura.nombreInversionista) return false;
-                const mismoBillId = factura.billId === billId;
-                const mismoInversionista = factura.nombreInversionista === inversionistaId;
-                return mismoBillId && mismoInversionista;
-            });
-        }
-
-        const inversionistaSeleccionado = factura.nombreInversionista;
-        const facturasDuplicadas = encontrarFacturasDuplicadas(
-            values.facturas, 
-            newValue.id,
-            inversionistaSeleccionado,
-            index
-        );
-
-        if(facturasDuplicadas?.length >= 1) {
-            setFieldTouched(`facturas[${index}].nombreInversionista`, true, false);
-            setFieldError(
-                `facturas[${index}].nombreInversionista`,
-                "No puede asignar inversionista a facturas con mismo Bill ID"
-            );
-
-            toast(<div style={{ display: 'flex', alignItems: 'center' }}>
-                <ErrorIcon style={{ marginRight: '10px', color: '#d32f2f' }} />
-                <span>No puede asignar el mismo inversionista a facturas agrupadas</span>
-            </div>, {
-                position: "top-right",
-                autoClose: 5000,
-                hideProgressBar: false,
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true
-            });
-            return;
-        }
-
-        try {
-            // 1. Buscar TODAS las facturas con integrationCode válido
-            const facturasConCodigo = values.facturas.filter(f => 
-                f.integrationCode?.trim() && f.integrationCode !== "no-code"
-            );
-
-            // 2. Validación principal
-            if (
-                (selectedFactura.integrationCode?.trim() && 
-                 selectedFactura.integrationCode !== "no-code" &&
-                 facturasConCodigo.length > 0 &&
-                 !facturasConCodigo.every(f => f.integrationCode === selectedFactura.integrationCode))
-                ||
-                (!selectedFactura.integrationCode?.trim() && 
-                 facturasConCodigo.length > 0)
-            ) {
-                toast.error(facturasConCodigo.length > 0 
-                    ? `El código debe coincidir con "${facturasConCodigo[0].integrationCode}"`
-                    : "No se permiten facturas sin código cuando otras lo tienen"
-                );
-                setFieldValue(`facturas[${index}].factura`, null);
-                return;
-            } 
-            else {
-                console.log('b')
-                const facturaActual2 = values?.facturas[index];
-                const billIdAnterior = facturaActual2?.billId;
-                const valorFuturoAnterior = facturaActual2?.valorFuturo || 0;
-                const nombreInversionistaAnterior = facturaActual2?.nombreInversionista;
-
-                if(billIdAnterior && newValue.label != billIdAnterior) {
-                    const facturasTemporales = values.facturas.map((f, i) => 
-                        i === index ? {
-                            ...f,
-                            billId: factura.billId,
-                            saldoDisponible: factura.saldoDisponible,
-                            presentValueInvestor: presentValueInvestor,
-                            montoDisponibleInfo: factura.montoDisponibleInfo
-                        } : f
-                    );
-
-                    const presentValueInvestorFacturaAnterior = facturaActual2?.presentValueInvestor;
-                    const montoDisponibleFacturaAnterior = facturaActual2?.montoDisponibleCuenta;
-                    const saldoDisponibleFacturaAnterior = facturaActual2?.saldoDisponible;
-
-                    const saldoDisponibleNuevo = saldoDisponibleFacturaAnterior + valorFuturoAnterior;
-                    const montoDisponibleNuevo = montoDisponibleFacturaAnterior + presentValueInvestorFacturaAnterior;
-
-                    values.facturas.forEach((f, i) => {
-                        if (f.billId === billIdAnterior && i !== index) {
-                            setFieldValue(`facturas[${i}].saldoDisponible`, saldoDisponibleNuevo);
-                            setFieldValue(`facturas[${i}].montoDisponibleCuenta`, montoDisponibleNuevo);
-                        }
-                    });
-
-                    setFieldValue(`facturas[${index}]`, {
-                        billId: selectedFactura.billId,
-                        idCuentaInversionista: factura.idCuentaInversionista,
-                        factura: newValue.id,
-                        fechaEmision: selectedFactura.dateBill,
-                        probableDate: factura.probableDate,
-                        amount: selectedFactura.currentBalance,
-                        payedAmount: selectedFactura.currentBalance,
-                        numbercuentaInversionista: factura.numbercuentaInversionista,
-                        cuentaInversionista: factura.cuentaInversionista,
-                        nombreInversionista: factura.nombreInversionista,
-                        investorBroker: factura.investorBroker,
-                        investorBrokerName: factura.investorBrokerName,
-                        saldoDisponible: saldoDisponibleA,
-                        saldoDisponibleInfo: selectedFactura.currentBalance,
-                        montoDisponibleCuenta: montoDisponibleFinal,
-                        fraccion: fraccion,
-                        fechaFin: factura.fechaFin,
-                        valorNominal: valorNominalFactura || 0,
-                        porcentajeDescuento: Math.round((selectedFactura.currentBalance * 100) / selectedFactura.currentBalance) || 0,
-                        expirationDate: selectedFactura.expirationDate,
-                        valorFuturo: valorFuturoCalculado || 0,
-                        presentValueInvestor: valorFuturoCalculado,
-                        presentValueSF: valorFuturoCalculado || 0,
-                        comisionSF,
-                        investorProfit: investorProfit,
-                        integrationCode: selectedFactura?.integrationCode ? selectedFactura?.integrationCode : "",
-                        isReBuy: selectedFactura?.reBuyAvailable ?? 0,
-                        gastoMantenimiento: factura.applyGm ? valorFuturoCalculado*0.002 : 0,
-                        diasOperaciones: 1,
-                        operationDays: 1,
-                        investorTax: values.investorTax,
-                        montoDisponibleInfo: factura.montoDisponibleInfo,
-                        cuentasDelInversionistaSelected: factura.cuentasDelInversionistaSelected,
-                        applyGm: factura.applyGm,
-                    });
-                } 
-
-                const fractionBill = await cargarFraccionFactura(selectedFactura.id);
-
-                // [MANTENIDO] Cálculo de fechas
-                const fechaOperacion = new Date(values?.opDate);
-                const expirationDate = new Date(parseISO(selectedFactura.expirationDate));
-
-                let substractDays = 0;
-                if (isValid(fechaOperacion) && isValid(expirationDate)) {
-                    substractDays = differenceInDays(expirationDate, fechaOperacion);
-                } else {
-                    console.error("Error: Una de las fechas no es válida.");
-                }
-
-                // [MANTENIDO] Lógica de fracciones
-                const facturaActual = newValue.id;
-                let fraccion = fractionBill?.data?.fraction || 1;
-                const facturasAnteriores = values.facturas.slice(0, index).filter((f) => f.factura === facturaActual);
-
-                if (facturasAnteriores.length > 0) {
-                    const fraccionMasAlta = Math.max(...facturasAnteriores.map((f) => f.fraccion || 1));
-                    fraccion = fraccionMasAlta + 1;
-                }
-
-                // [MANTENIDO] Cálculo de saldo disponible
-                let saldoDisponible = selectedFactura.currentBalance || 0;
-                const valorFuturoAnteriores = facturasAnteriores.reduce((sum, f) => sum + (f.valorFuturo || 0), selectedFactura.currentBalance);
-                saldoDisponible -= valorFuturoAnteriores;
-
-                // [MANTENIDO] Determinar valor futuro
-                let valorFuturoCalculado;
-                if (facturasAnteriores.length > 0 && saldoDisponible <= 0) {
-                    valorFuturoCalculado = 0;
-                    saldoDisponible = 0;
-                } else {
-                    valorFuturoCalculado = selectedFactura.currentBalance;
-                }
-
-                // [MANTENIDO] Saldo disponible anterior
-                const saldoDisponibleAnterior = facturasAnteriores.find(
-                    (f) => f.billId === selectedFactura.billId
-                )?.saldoDisponible || 0;
-
-                const saldoDisponibleA = saldoDisponibleAnterior;
-
-                // [MANTENIDO] Cálculo de valores presentes
-                const presentValueInvestor = factura.operationDays > 0 && factura.valorFuturo > 0
-                    ? Math.round(PV(factura.investorTax / 100, factura.operationDays / 365, 0, factura.valorFuturo, 0) * -1)
-                    : selectedFactura.currentBalance;
-
-                const presentValueSF = factura.operationDays > 0 && factura.valorFuturo > 0
-                    ? Math.round(PV(values.discountTax / 100, factura.operationDays / 365, 0, factura.valorFuturo, 0) * -1)
-                    : selectedFactura.currentBalance;
-
-                // [MANTENIDO] Cálculo de comisiones
-                const comisionSF = presentValueInvestor && presentValueSF
-                    ? presentValueInvestor - presentValueSF
-                    : 0;
-
-                const investorProfit = presentValueInvestor ?? selectedFactura.currentBalance
-                    ? presentValueInvestor - selectedFactura.currentBalance : 0;
-
-                // [MANTENIDO] Cálculo de valor nominal
-                let valorNominalFactura;
-                if (facturasAnteriores.length > 0 && saldoDisponible <= 0) {
-                    valorNominalFactura = 0;
-                } else {
-                    valorNominalFactura = selectedFactura.currentBalance * Math.round((selectedFactura.currentBalance * 100) / selectedFactura.currentBalance) / 100;
-                }
-
-                // [SOLUCIÓN] Cálculo del monto disponible CONSISTENTE entre facturas con mismo inversionista
-                let montoDisponibleFinal = 0;
-                if (factura.idCuentaInversionista) {
-                    // 2. Filtrar facturas con mismo inversionista (incluyendo la actual modificada)
-                    const facturasMismoInversionista = values?.facturas.filter(
-                        f => f.idCuentaInversionista === factura.idCuentaInversionista
-                    );
-
-                    if(facturasMismoInversionista.length > 1) {
-                        // 3. Calcular total de presentValueInvestor
-                        const totalPresentValue = facturasMismoInversionista.reduce((sum, f) => {
-                            const pv = f.presentValueInvestor;
-                            return sum + pv;
-                        }, 0);
-
-                        const totalGm = facturasMismoInversionista.reduce((sum, f) => {
-                            return sum + (f.gastoMantenimiento);
-                        }, 0);
-
-                        // 4. Calcular monto disponible común
-                        montoDisponibleFinal = factura.montoDisponibleInfo - totalPresentValue - totalGm - presentValueInvestor;
-
-                        // 5. Actualizar TODAS las facturas con mismo inversionista
-                        values.facturas.forEach((f, i) => {
-                            if (f.idCuentaInversionista === factura.idCuentaInversionista) {
-                                setFieldValue(`facturas[${i}].montoDisponibleCuenta`, montoDisponibleFinal);
-                            }
-                        });
-
-                        setFieldValue(`facturas[${index}]`, {
-                            billId: selectedFactura.billId,
-                            idCuentaInversionista: factura.idCuentaInversionista,
-                            factura: newValue.id,
-                            fechaEmision: selectedFactura.dateBill,
-                            probableDate: factura.probableDate,
-                            amount: selectedFactura.currentBalance,
-                            payedAmount: selectedFactura.currentBalance,
-                            numbercuentaInversionista: factura.numbercuentaInversionista,
-                            cuentaInversionista: factura.cuentaInversionista,
-                            nombreInversionista: factura.nombreInversionista,
-                            investorBroker: factura.investorBroker,
-                            investorBrokerName: factura.investorBrokerName,
-                            saldoDisponible: Math.round(saldoDisponibleA),
-                            saldoDisponibleInfo: Math.round(selectedFactura.currentBalance),
-                            montoDisponibleCuenta: montoDisponibleFinal,
-                            fraccion: fraccion,
-                            fechaFin: factura.fechaFin,
-                            valorNominal: Math.round(valorNominalFactura) || 0,
-                            porcentajeDescuento: Math.round((selectedFactura.currentBalance * 100) / selectedFactura.currentBalance) || 0,
-                            expirationDate: selectedFactura.expirationDate,
-                            valorFuturo: Math.round(valorFuturoCalculado) || 0,
-                            presentValueInvestor: Math.round(valorFuturoCalculado) || 0,
-                            presentValueSF: Math.round(valorFuturoCalculado || 0),
-                            comisionSF,
-                            investorProfit: investorProfit,
-                            integrationCode: selectedFactura?.integrationCode ? selectedFactura?.integrationCode : "",
-                            isReBuy: selectedFactura?.reBuyAvailable ?? 0,
-                            gastoMantenimiento: factura.applyGm ? valorFuturoCalculado*0.002 : 0,
-                            diasOperaciones: 1,
-                            operationDays: 1,
-                            investorTax: values.investorTax,
-                            montoDisponibleInfo: factura.montoDisponibleInfo,
-                            cuentasDelInversionistaSelected: factura.cuentasDelInversionistaSelected,
-                        });
-                    } else {
-                        // Caso sin inversionista: cálculo individual
-                        const montoDisponibleFinal = factura.montoDisponibleInfo - presentValueInvestor;
-                        // [MANTENIDO] Asignación final de valores
-                        setFieldValue(`facturas[${index}]`, {
-                            billId: selectedFactura.billId,
-                            idCuentaInversionista: factura.idCuentaInversionista,
-                            factura: newValue.id,
-                            fechaEmision: selectedFactura.dateBill,
-                            probableDate: factura.probableDate,
-                            amount: selectedFactura.currentBalance,
-                            payedAmount: selectedFactura.currentBalance,
-                            numbercuentaInversionista: factura.numbercuentaInversionista,
-                            cuentaInversionista: factura.cuentaInversionista,
-                            nombreInversionista: factura.nombreInversionista,
-                            investorBroker: factura.investorBroker,
-                            investorBrokerName: factura.investorBrokerName,
-                            saldoDisponible: Math.round(saldoDisponibleA),
-                            saldoDisponibleInfo: Math.round(selectedFactura.currentBalance),
-                            montoDisponibleCuenta: montoDisponibleFinal,
-                            fraccion: fraccion,
-                            fechaFin: factura.fechaFin,
-                            valorNominal: Math.round(valorNominalFactura) || 0,
-                            porcentajeDescuento: Math.round((selectedFactura.currentBalance * 100) / selectedFactura.currentBalance) || 0,
-                            expirationDate: selectedFactura.expirationDate,
-                            valorFuturo: Math.round(valorFuturoCalculado),
-                            presentValueInvestor: Math.round(valorFuturoCalculado),
-                            presentValueSF: Math.round(valorFuturoCalculado || 0),
-                            comisionSF,
-                            investorProfit: investorProfit,
-                            integrationCode: selectedFactura?.integrationCode ? selectedFactura?.integrationCode : "",
-                            isReBuy: selectedFactura?.reBuyAvailable ?? 0,
-                            gastoMantenimiento: factura.applyGm ? valorFuturoCalculado*0.002 : 0,
-                            diasOperaciones: 1,
-                            operationDays: 1,
-                            investorTax: values.investorTax,
-                            montoDisponibleInfo: factura.montoDisponibleInfo,
-                            cuentasDelInversionistaSelected: factura.cuentasDelInversionistaSelected,
-                            applyGm: factura.applyGm,
-                        });
-                    }
-                } else {
-                    // Caso sin inversionista: cálculo individual
-                    const montoDisponibleFinal = factura.montoDisponibleInfo - presentValueInvestor;
-                    // [MANTENIDO] Asignación final de valores
-                    setFieldValue(`facturas[${index}]`, {
-                        billId: selectedFactura.billId,
-                        idCuentaInversionista: factura.idCuentaInversionista,
-                        factura: newValue.id,
-                        fechaEmision: selectedFactura.dateBill,
-                        probableDate: factura.probableDate,
-                        amount: selectedFactura.currentBalance,
-                        payedAmount: selectedFactura.currentBalance,
-                        numbercuentaInversionista: factura.numbercuentaInversionista,
-                        cuentaInversionista: factura.cuentaInversionista,
-                        nombreInversionista: factura.nombreInversionista,
-                        investorBroker: factura.investorBroker,
-                        investorBrokerName: factura.investorBrokerName,
-                        saldoDisponible: Math.round(saldoDisponibleA),
-                        saldoDisponibleInfo: Math.round(selectedFactura.currentBalance),
-                        montoDisponibleCuenta: montoDisponibleFinal,
-                        fraccion: fraccion,
-                        fechaFin: factura.fechaFin,
-                        valorNominal: Math.round(valorNominalFactura) || 0,
-                        porcentajeDescuento: Math.round((selectedFactura.currentBalance * 100) / selectedFactura.currentBalance),
-                        expirationDate: selectedFactura.expirationDate,
-                        valorFuturo: Math.round(valorFuturoCalculado),
-                        presentValueInvestor: Math.round(valorFuturoCalculado),
-                        presentValueSF: Math.round(valorFuturoCalculado || 0),
-                        comisionSF,
-                        investorProfit: investorProfit,
-                        integrationCode: selectedFactura?.integrationCode ? selectedFactura?.integrationCode : "",
-                        isReBuy: selectedFactura?.reBuyAvailable ?? 0,
-                        gastoMantenimiento: factura.applyGm ? valorFuturoCalculado*0.002 : 0,
-                        diasOperaciones: 1,
-                        operationDays: 1,
-                        investorTax: values.investorTax,
-                        montoDisponibleInfo: factura.montoDisponibleInfo,
-                        cuentasDelInversionistaSelected: factura.cuentasDelInversionistaSelected,
-                        applyGm: factura.applyGm,
-                    });
-                }
-            }
-            
-console.log(selectedFactura?.reBuyAvailable )
-        } catch (error) {
-            console.error("Error al cargar los datos:", error);
-        }
-    };
-
-
-   
-    return (
-        <>
-            <Autocomplete
-                id="bill-name"
-                data-testid="campo-factura"
-                options={(values?.takedBills || [])
-                    .filter((factura) => factura.currentBalance > 0)
-                    .map((factura) => ({
-                        label: `${String(factura.billId)}${factura.integrationCode ? `-${String(factura.integrationCode)}` : ''}`,
-                        value: String(factura.billId),
-                        id: String(factura.id),
-                        integrationCode: factura.integrationCode || "",
-                    }))
-                }
-                value={values.facturas[index]?.factura ? String(factura.billId) : null}
-                isOptionEqualToValue={(option, value) => option.value === value}
-                onChange={async (event, newValue) => {
-                    if (!newValue) {
-                        // 1. Obtener el billId de la factura que se está deseleccionando
-                        const billIdDeseleccionada = factura.billId;
-
-                        // 2. Calcular el valorFuturo que se está liberando
-                        const valorFuturoLiberado = factura.valorFuturo || 0;
-                        if(values.facturas[index].is_creada === true) {
-                            return;
-                        } else {
-                            setFieldValue(`facturas[${index}].is_creada`, false);
-                        }
-
-                        // 4. Buscar todas las facturas que comparten el mismo billId (incluyendo la actual)
-                        const facturasCompartidas = values.facturas.filter(
-                            f => f.billId === billIdDeseleccionada
-                        );
-
-                        // 5. Calcular el saldoDisponible original de la factura
-                        const facturaOriginal = dataBills?.data.find(f => f.billId === billIdDeseleccionada);
-                        const saldoOriginal = facturaOriginal?.currentBalance || 0;
-
-                        // 6. Calcular el valorFuturo total actual de todas las facturas compartidas (excluyendo la que se deselecciona)
-                        const valorFuturoActual = facturasCompartidas
-                            .filter((f, i) => i !== index)
-                            .reduce((sum, f) => sum + (f.valorFuturo), 0);
-
-                        // 7. Calcular el nuevo saldoDisponible global para esta factura
-                        const nuevoSaldoGlobal = saldoOriginal - valorFuturoActual;
-
-                        // 8. Actualizar el saldoDisponible en TODAS las facturas compartidas
-                        values.facturas.forEach((f, i) => {
-                            if (f.billId === billIdDeseleccionada) {
-                                setFieldValue(`facturas[${i}].saldoDisponible`, nuevoSaldoGlobal);
-                                setFieldValue(`facturas[${i}].saldoDisponibleInfo`, saldoOriginal);
-                            }
-                        });
-
-                        // 9. Recalcular los montos disponibles para el inversionista (si aplica)
-                        if (factura.idCuentaInversionista) {
-                            const presentValueTotal = values.facturas
-                                .filter(f => f.idCuentaInversionista === factura.idCuentaInversionista)
-                                .reduce((sum, f) => sum + f.presentValueInvestor, 0);
-
-                            const montoDisponibleActualizado = factura.montoDisponibleCuenta + factura.presentValueInvestor + factura.gastoMantenimiento;
-
-                            values.facturas.forEach((f, i) => {
-                                if (f.idCuentaInversionista === factura.idCuentaInversionista) {
-                                    setFieldValue(`facturas[${i}].montoDisponibleCuenta`, montoDisponibleActualizado);
-                                }
-                            });
-
-                            setFieldValue(`facturas[${index}].montoDisponibleCuenta`, montoDisponibleActualizado);
-                        }
-                        
-                        setFieldValue(`facturas[${index}].saldoDisponible`, 0);
-
-                        const algunaFacturaSinIntegrationCode = values.facturas.some(factura => 
-                            !factura.integrationCode || factura.integrationCode.trim() === ""
-                        );
-
-                        console.log("¿Alguna factura no tiene integrationCode?", algunaFacturaSinIntegrationCode);
-
-                        if(algunaFacturaSinIntegrationCode){
-                            setFieldValue('takedBills', values.takedBillsBeforeFilterIntegration);
-                        }
-
-                        // 3. Limpiar los valores de esta factura (manteniendo los datos del inversionista)
-                        setFieldValue('discountTax', 0);
-                        setFieldValue(`facturas[${index}]`, {
-                            billId: '',
-                            factura: '',
-                            fechaEmision: '',
-                            valorNominal: 0,
-                            saldoDisponible: 0,
-                            valorFuturo: 0,
-                            amount: 0,
-                            payedAmount: 0,
-                            fraccion: 1,
-                            porcentajeDescuento: 0,
-                            nombrePagador: '',
-                            presentValueInvestor: 0,
-                            probableDate: factura.probableDate,
-                            presentValueSF: 0,
-                            investorProfit: 0,
-                            comisionSF: 0,
-                            fechaFin: factura.fechaFin,
-                            idCuentaInversionista: factura.idCuentaInversionista,
-                            numbercuentaInversionista: factura.numbercuentaInversionista,
-                            cuentaInversionista: factura.cuentaInversionista,
-                            nombreInversionista: factura.nombreInversionista,
-                            cuentasDelInversionistaSelected: factura.cuentasDelInversionistaSelected,
-                            investorBroker: factura.investorBroker,
-                            investorBrokerName: factura.investorBrokerName,
-                            montoDisponibleCuenta: factura.montoDisponibleCuenta + factura.presentValueInvestor + factura.gastoMantenimiento,
-                            montoDisponibleInfo: factura.montoDisponibleInfo,
-                            gastoMantenimiento: 0,
-                            diasOperaciones: 1,
-                            operationDays: 1,
-                            expirationDate: "",
-                        });
-
-        // Validación después de deseleccionar
-        const facturasRestantes = values.facturas.filter((_, i) => i !== index);
-        const facturasConCodigo = facturasRestantes.filter(
-            f => f.integrationCode?.trim() && f.integrationCode !== "no-code"
-        );
-        const facturasSinCodigo = facturasRestantes.filter(
-            f => !f.integrationCode?.trim() || f.integrationCode === "no-code"
-        );
-
-        if (facturasConCodigo.length > 0 && facturasSinCodigo.length > 0) {
-            toast.error("No se permiten mezclar facturas con y sin código de integración");
-            // Opción: Forzar a que todas queden sin código
-            facturasRestantes.forEach((f, i) => {
-                if (i !== index) {
-                    setFieldValue(`facturas[${i}].integrationCode`, "");
-                }
-            });
-        }
-                        return;
-
-
-
-                    }
-
-                    const selectedFactura = dataBills?.data.find(f => f.billId === newValue.value);
-                    if (!selectedFactura) return;
-
-                      // Validación ANTES de mostrar el modal
-                    if (selectedFactura?.integrationCode?.trim() && 
-                        selectedFactura.integrationCode !== "") {
-                        
-                        const validacion = validarIntegracionFacturas(
-                            values.facturas,
-                            selectedFactura,
-                            index
-                        );
-                        console.log(validacion, "validacion");
-
-                        if (!validacion.valido) {
-                            toast.error(validacion.mensaje);
-                            setFieldValue(`facturas[${index}].factura`, null);
-                            return;
-                        }
-
-                        if (!hasShownModal) {
-                            setSelectedFacturaWithCode(selectedFactura);
-                            setPendingSelection(newValue);
-                            setShowConfirmationModal(true);
-                            return;
-                        }
-                    }
-                                                    
-            
-                    
-                    // Si no tiene integrationCode o ya mostramos el modal, procesar normalmente
-                    await processBillSelection(newValue);
-                }}
-                renderInput={(params) => (
-                    <TextField
-                        {...params}
-                        label="Número de Factura *"
-                        fullWidth
-                        name="billId"
-                        error={touched.facturas?.[index]?.billId && Boolean(errors?.facturas?.[index]?.billId)}
-                        helperText={` ${factura.isReBuy ? "Disponible Recompra" : "No disponible Recompra"}`}
-                    />
-                )}
-            />
-
-            <ModalIntegrationCode 
-                values={values}
-                showConfirmationModal={showConfirmationModal}
-                setIsIntegrationCode={setShowConfirmationModal}
-                integrationCode={selectedFacturaWithCode?.integrationCode}
-                setIsFilterIntegrationActive={() => {}}
-                selectedFactura={selectedFacturaWithCode}
-                onConfirm={handleConfirmIntegrationCode}
-                onCancel={handleCancelIntegrationCode}
-            />
-        </>
+    const sameBillBeforeCurrent = (values.facturas || []).filter((current, currentIndex) => (
+      currentIndex !== index && String(current.billId || "") === String(selectedBill.billId)
+    ));
+    const usedBalance = sameBillBeforeCurrent.reduce(
+      (total, current) => total + toNumber(current.valorFuturo),
+      0
     );
+    const remainingBalance = Math.max(0, toNumber(selectedBill.currentBalance) - usedBalance);
+    const initialFutureValue = sameBillBeforeCurrent.length ? 0 : remainingBalance;
+    const nextFraction = sameBillBeforeCurrent.length
+      ? Math.max(...sameBillBeforeCurrent.map((current) => toNumber(current.fraccion) || 1)) + 1
+      : fraction;
+
+    const replacement = {
+      ...factura,
+      billId: selectedBill.billId,
+      factura: String(selectedBill.id),
+      fechaEmision: selectedBill.dateBill || null,
+      expirationDate: selectedBill.expirationDate || "",
+      amount: toNumber(selectedBill.currentBalance),
+      payedAmount: initialFutureValue,
+      fraccion: nextFraction,
+      saldoDisponibleInfo: toNumber(selectedBill.currentBalance),
+      saldoDisponible: remainingBalance,
+      valorFuturo: initialFutureValue,
+      valorNominal: initialFutureValue,
+      porcentajeDescuento: initialFutureValue ? 100 : 0,
+      presentValueInvestor: initialFutureValue,
+      presentValueSF: initialFutureValue,
+      integrationCode: selectedBill.integrationCode || "",
+      isReBuy: selectedBill.reBuyAvailable ?? 0,
+      is_creada: false,
+    };
+    let nextInvoices = (values.facturas || []).map((current, currentIndex) => (
+      currentIndex === index ? replacement : current
+    ));
+    nextInvoices = recalculateBillAvailability(
+      nextInvoices,
+      selectedBill.billId,
+      selectedBill.currentBalance
+    );
+    updateInvoices(nextInvoices);
+  };
+
+  const clearBill = () => {
+    if (factura.is_creada) return;
+    const previousBillId = factura.billId;
+    const previousBill = (dataBills?.data || []).find(
+      (bill) => String(bill.billId) === String(previousBillId)
+    );
+    const clearedInvoice = {
+      ...factura,
+      billId: "",
+      factura: "",
+      fechaEmision: "",
+      expirationDate: "",
+      amount: 0,
+      payedAmount: 0,
+      fraccion: 1,
+      valorNominal: 0,
+      valorFuturo: 0,
+      porcentajeDescuento: 0,
+      saldoDisponible: 0,
+      saldoDisponibleInfo: 0,
+      presentValueInvestor: 0,
+      presentValueSF: 0,
+      investorProfit: 0,
+      comisionSF: 0,
+      gastoMantenimiento: 0,
+      integrationCode: "",
+      isReBuy: 0,
+      is_creada: false,
+    };
+    let nextInvoices = (values.facturas || []).map((current, currentIndex) => (
+      currentIndex === index ? clearedInvoice : current
+    ));
+    nextInvoices = recalculateBillAvailability(
+      nextInvoices,
+      previousBillId,
+      previousBill?.currentBalance
+    );
+    updateInvoices(nextInvoices);
+
+    if (!nextInvoices.some(hasIntegrationCode) && Array.isArray(values.takedBillsBeforeFilterIntegration)) {
+      setFieldValue("takedBills", values.takedBillsBeforeFilterIntegration);
+    }
+  };
+
+  const handleConfirmIntegrationCode = async () => {
+    setShowConfirmationModal(false);
+    setHasShownModal(true);
+    const matchingBills = (values.takedBills || []).filter(
+      (bill) => bill.integrationCode === selectedFacturaWithCode?.integrationCode
+    );
+    if (matchingBills.length) {
+      setFieldValue("takedBillsBeforeFilterIntegration", values.takedBills);
+      setFieldValue("takedBills", matchingBills);
+    }
+    if (pendingSelection) await processBillSelection(pendingSelection);
+    setPendingSelection(null);
+  };
+
+  const handleCancelIntegrationCode = () => {
+    setShowConfirmationModal(false);
+    setPendingSelection(null);
+    setSelectedFacturaWithCode(null);
+  };
+
+  const handleChange = async (_event, option) => {
+    if (!option) {
+      clearBill();
+      return;
+    }
+    const selectedBill = (dataBills?.data || []).find(
+      (bill) => String(bill.billId) === String(option.value)
+    );
+    if (hasIntegrationCode(selectedBill) && !hasShownModal) {
+      setSelectedFacturaWithCode(selectedBill);
+      setPendingSelection(option);
+      setShowConfirmationModal(true);
+      return;
+    }
+    await processBillSelection(option);
+  };
+
+  return (
+    <>
+      <Autocomplete
+        id="bill-name"
+        data-testid="campo-factura"
+        options={billOptions}
+        value={selectedBillOption}
+        isOptionEqualToValue={(option, value) => option.value === value?.value}
+        onChange={handleChange}
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            label="Número de Factura *"
+            fullWidth
+            name="billId"
+            error={touched.facturas?.[index]?.billId && Boolean(errors?.facturas?.[index]?.billId)}
+            helperText={` ${factura.isReBuy ? "Disponible Recompra" : "No disponible Recompra"}`}
+          />
+        )}
+      />
+      <ModalIntegrationCode
+        values={values}
+        showConfirmationModal={showConfirmationModal}
+        setIsIntegrationCode={setShowConfirmationModal}
+        integrationCode={selectedFacturaWithCode?.integrationCode}
+        setIsFilterIntegrationActive={() => {}}
+        selectedFactura={selectedFacturaWithCode}
+        onConfirm={handleConfirmIntegrationCode}
+        onCancel={handleCancelIntegrationCode}
+      />
+    </>
+  );
 }

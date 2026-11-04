@@ -1,8 +1,6 @@
 // Hooks
 import { useEffect, useState } from "react";
-import { useBeforeunload } from "react-beforeunload";
 // Alerts
-import { ToastContainer,toast  } from "react-toastify";
 import * as Yup from 'yup';
 import { useRouter } from "next/router";
 
@@ -15,43 +13,18 @@ import Axios from "axios";
 // Components
 import { ManageOperationC } from "./components";
 // Queries
-import {
-  CreateOperation,
-  DeleteOperation,
-  TypeOperation,
-  GetBillFraction,
-  GetLastOperationId,
-  GetOperationById,
-  GetRiskProfile,
-  UpdateOperation,
-  Clients,
-  getOperationsVersionTwo,
-} from "./queries";
-import { Bills, billById, payerByBill } from "./queries";
+import { CreateOperation, TypeOperation, GetLastOperationId, Clients } from "./queries";
 // Utils
-import { PV } from "@formulajs/formulajs";
-import { addDays, differenceInDays, format, subDays } from "date-fns";
-import { useFormik } from "formik";
 
 
 
 export const ManageOperationV = () => {
   // States
-  const [created, setCreated] = useState(0);
-  const [updated, setUpdated] = useState(0);
   const [opId, setOpId] = useState(null);
-  const [id, setId] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const [operations, setOperations] = useState([]);
-  const [isAddingBill, setIsAddingBill] = useState(false);
   const [isCreatingBill, setIsCreatingBill] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [success, setSuccess] = useState(null);
-  const [loading2, setLoading] = useState(false);
-  
-  const [pendingSubmit, setPendingSubmit] = useState(false);
-  const [submitValues, setSubmitValues] = useState(null);
-  const [isFinished,setIsFinished] =useState(null)
+  const [isSubmittingOperation, setIsSubmittingOperation] = useState(false);
   // Router
   const router = useRouter();
 
@@ -67,87 +40,11 @@ export const ManageOperationV = () => {
   } = useFetch({ service: Clients, init: true });
 
   const {
-      fetch: fetchBills,
-      loading: loadingBills,
-      error: errorBills,
-      data: dataBills,
-    } = useFetch({ service: Bills, init: false });
-
-  // get the payer of the bill
-  const {
-    fetch: fetchPayer,
-    loading: loadingPayer,
-    error: errorPayer,
-    data: dataPayer,
-  } = useFetch({ service: payerByBill, init: false });
-
-  // get the bill info
-  const {
-    fetch: fetchBill,
-    loading: loadingBill,
-    error: errorBill,
-    data: dataBill,
-  } = useFetch({ service: billById, init: false });
-   
-
-  const {
     fetch: getLastId,
     loading: loadingGetLastId,
     error: errorGetLastId,
     data: dataGetLastId,
   } = useFetch({ service: GetLastOperationId, init: true });
-
-  const {
-    fetch: getOperationByIdFetch,
-    loading: loadingGetOperationById,
-    error: errorGetOperationById,
-    data: dataGetOperationById,
-  } = useFetch({ service: GetOperationById, init: false });
-
-  const {
-    fetch: createOperationFetch,
-    loading: loadingCreateOperation,
-    error: errorCreateOperation,
-    data: dataCreateOperation,
-  } = useFetch({ service: CreateOperation, init: false });
-
-  const {
-    fetch: getBillFractionFetch,
-    loading: loadingGetBillFraction,
-    error: errorGetBillFraction,
-    data: dataGetBillFraction,
-  } = useFetch({ service: GetBillFraction, init: false });
-
-  const {
-    fetch: deleteOperationFetch,
-    loading: loadingDeleteOperation,
-    error: errorDeleteOperation,
-    data: dataDeleteOperation,
-  } = useFetch({ service: DeleteOperation, init: false });
-
-  const {
-    fetch: riskProfileFetch,
-    loading: loadingRiskProfile,
-    error: errorRiskProfile,
-    data: dataRiskProfile,
-  } = useFetch({ service: GetRiskProfile, init: false });
-
-  const {
-    fetch: updateOperationFetch,
-    loading: loadingUpdateOperation,
-    error: errorUpdateOperation,
-    data: dataUpdateOperation,
-  } = useFetch({ service: UpdateOperation, init: false });
-
-  const {
-    fetch: getOperationsFetch,
-    loading: loadingGetOperations,
-    error: errorGetOperations,
-    data: dataGetOperations,
-  } = useFetch({
-    service: () => getOperationsVersionTwo({ ...filters, page }),
-    init: true,
-  });
 
     // Hooks
     const {
@@ -240,7 +137,7 @@ const validationSchema = Yup.object({
     .typeError('Debe ser un número válido'), // Validación para campo numérico
   opDate: Yup.date().required('Este campo es obligatorio'),
   opType: Yup.string().required('Este campo es obligatorio'),
-  emitter: Yup.string().required('Este campo es obligatorio'),
+  emitter: Yup.object().nullable().required('Este campo es obligatorio'),
   corredorEmisor: Yup.string().required('El corredor emisor es requerido'),
   investorTax: Yup.number().required('Este campo es obligatorio'),
  discountTax: Yup.number()
@@ -327,9 +224,30 @@ const validationSchema = Yup.object({
       gastoMantenimiento: Yup.number().required('Este campo es obligatorio'),
       investorBrokerName:Yup.string().required('Este campo es obligatorio'),
     })
+  ).test(
+    'unique-investor-per-bill',
+    'Una factura no puede asignarse dos veces al mismo inversionista',
+    (facturas = []) => {
+      const assignments = new Set();
+      return facturas.every((factura) => {
+        if (!factura?.billId || !factura?.nombreInversionista) return true;
+        const assignment = `${String(factura.billId)}:${String(factura.nombreInversionista)}`;
+        if (assignments.has(assignment)) return false;
+        assignments.add(assignment);
+        return true;
+      });
+    }
   ),
 });
 
+
+const toIsoDate = (value, fallback = new Date()) => {
+  const date = value ? new Date(value) : fallback;
+  if (Number.isNaN(date.getTime())) {
+    return fallback.toISOString().substring(0, 10);
+  }
+  return date.toISOString().substring(0, 10);
+};
 
 const transformData = (data) => {
   const usedBillCodes = {};
@@ -348,8 +266,8 @@ const transformData = (data) => {
         client: factura.nombreInversionista,
         clientAccount: factura.idCuentaInversionista|| '',
         commissionSF: factura.comisionSF,
-        DateBill: factura.fechaEmision || new Date().toISOString().substring(0, 10),
-        DateExpiration: new Date(factura.expirationDate).toISOString().substring(0, 10) || new Date().toISOString().substring(0, 10),
+        DateBill: toIsoDate(factura.fechaEmision),
+        DateExpiration: toIsoDate(factura.expirationDate),
         discountTax: data.discountTax,
         emitter: data.emitter.value,
         emitterDocument: data.emitter.data.document_number,
@@ -360,9 +278,9 @@ const transformData = (data) => {
         investorBroker: factura.investorBroker,
         investorProfit: factura.investorProfit,
         investorTax: factura.investorTax,
-        opDate: new Date(data.opDate).toISOString().substring(0, 10),
+        opDate: toIsoDate(data.opDate),
         operationDays: factura.operationDays,
-        opExpiration: new Date(factura.fechaFin).toISOString().substring(0, 10) || new Date().toISOString().substring(0, 10),
+        opExpiration: toIsoDate(factura.fechaFin),
         opId: data.opId,
         opType: data.opType,
         payedAmount: factura.payedAmount,
@@ -370,7 +288,7 @@ const transformData = (data) => {
         payer: data.nombrePagador,
         presentValueInvestor: factura.presentValueInvestor,
         presentValueSF: factura.presentValueSF,
-        probableDate: new Date(factura.probableDate).toISOString().substring(0, 10),
+        probableDate: toIsoDate(factura.probableDate),
         status: 0,
         isRebuy: factura.isReBuy,
         massive: false,
@@ -409,24 +327,10 @@ const transformData = (data) => {
     return baseStructure;
   });
 };
-// Efecto para manejar la alerta de saldo insuficiente
-useEffect(() => {
-  if (dataCreateOperation?.data?.insufficientAccountBalance) {
-    Toast(
-      "El monto de la operación es mayor al saldo disponible en la cuenta del cliente",
-      "warning"
-    );
-  }
-}, [dataCreateOperation]); // Se ejecutará cada vez que dataCreateOperation cambie
-
-
-
-
-
-
 const onSubmit = async (values, { setSubmitting }) => {
   setIsModalOpen(true);
-  setLoading(true);
+  setSuccess(null);
+  setIsSubmittingOperation(true);
   setSubmitting(true);
 
   try {
@@ -450,18 +354,9 @@ const onSubmit = async (values, { setSubmitting }) => {
       console.warn("⚠️ Advertencia: Algunas facturas creadas no tienen billCode o están duplicados");
     }
 
-    const billIds = [...new Set(facturasTransformadas.map(op => op.billId))];
-   
-    
-    const saldoValido = await verificarSaldosFacturas(billIds, facturasTransformadas);
-
-    
-    if (!saldoValido.todasValidas) {
-      console.error('❌ Error de validación de saldos:', saldoValido.mensajeError);
-      throw new Error(saldoValido.mensajeError || "Una o más facturas no cumplen con las reglas de saldo");
-    }
-    
-    // Ejecución de operaciones
+    // El servidor bloquea la factura, valida el saldo y persiste el lote en una
+    // única transacción. Evitamos una ronda N+1 de consultas que no podía dar
+    // garantías frente a operaciones concurrentes.
 
     const { success, successfulOperations, failedOperations } = await executeAtomicOperations(facturasTransformadas);
     
@@ -489,13 +384,7 @@ const onSubmit = async (values, { setSubmitting }) => {
       </div>,'success'
     );
  
-    await new Promise(resolve => setTimeout(resolve, 5000));
-    setIsModalOpen(false);
-
-    setTimeout(() => {
-     
-      window.close();
-    }, 1500);
+    router.push('/pre-operations');
     
   } catch (error) {
     // Manejo de errores
@@ -518,7 +407,7 @@ const onSubmit = async (values, { setSubmitting }) => {
       window.navigator.vibrate([200, 100, 200]);
     }
   } finally {
-    setLoading(false);
+    setIsSubmittingOperation(false);
     setSubmitting(false);
 
   }
@@ -896,11 +785,9 @@ const executeAtomicOperations = async (operations) => {
         operations.findIndex(o => o.billId === op.billId) === index
     }));
 
-    await createOperationFetch(payload, payload[0]?.opId);
-
-    // 👇 AQUÍ está la respuesta REAL
-    const failed = dataCreateOperation?.data?.failed || [];
-    const successful = dataCreateOperation?.data?.successful || [];
+    const response = await CreateOperation(payload, payload[0]?.opId);
+    const failed = response?.failed || response?.details || [];
+    const successful = response?.successful || (response?.data ? [response.data] : []);
 
     return {
       success: failed.length === 0,
@@ -943,9 +830,10 @@ return (
               payers={payer}
               typeOperation={dataTypeIdSelect}
               onFormSubmit={onSubmit}
-              loading={loading}
+              loading={isSubmittingOperation}
               success={success}
               isModalOpen={isModalOpen}
+              setIsModalOpen={setIsModalOpen}
               validationSchema={validationSchema}
               showConfirmationModal={showConfirmationModal}
               handleConfirm={handleConfirm}
@@ -953,8 +841,7 @@ return (
               isCreatingBill={isCreatingBill}
               setShowConfirmationModal={setShowConfirmationModal}
               actionsFormik={actions}
-              operations={operations}
-              isFinished={isFinished}
+              isFinished={isSubmittingOperation}
                />}
 
   </>

@@ -1,323 +1,190 @@
-// components/RegisterOperationForm.js
-import React from "react";
-
-import { TextField, Autocomplete} from '@mui/material';
+import React, { useEffect, useRef, useState } from "react";
+import { Autocomplete, TextField } from "@mui/material";
 import { Toast } from "@components/toast";
-import { toast } from "react-toastify";
-import { differenceInDays, startOfDay, addDays } from "date-fns";
-import ErrorIcon from '@mui/icons-material/Error';
+import { calculateOperation, toNumber } from "@lib/preOperationCalculations";
 
-export default function InvestorSelector({setFieldTouched,setFieldError,errors, touched, setFieldValue, values, index, factura, investors, cargarCuentas, cargarTasaDescuento, cargarBrokerFromInvestor, setClientInvestor}) {
+const investorLabel = (investor) => {
+  if (!investor?.data) return "";
+  const { first_name: firstName, last_name: lastName, social_reason: socialReason, document_number: document } = investor.data;
+  const name = firstName ? `${firstName} ${lastName || ""}`.trim() : socialReason;
+  return document ? `${name} - ${document}` : name || "";
+};
 
-    return (
+const brokerName = (broker) => {
+  if (!broker?.data) return "";
+  return broker.data.first_name
+    ? `${broker.data.first_name} ${broker.data.last_name || ""}`.trim()
+    : broker.data.social_reason || "";
+};
 
-                    <Autocomplete
-                    id="investor-name" // Para CSS/JS si es necesario
-                    data-testid="campo-inversor"
-                    options={investors || []} // Usamos investors.data en vez de investors directamente
-                    getOptionLabel={(option) => 
-                        option?.data?.first_name && option?.data?.last_name 
-                        ? `${option.data.first_name} ${option.data.last_name}` 
-                        : option?.data?.social_reason || "Desconocido"
-                    }
-                    isOptionEqualToValue={(option, value) => {
+export default function InvestorSelector({
+  setFieldTouched,
+  setFieldError,
+  errors,
+  touched,
+  setValues,
+  values,
+  index,
+  factura,
+  investors,
+  cargarCuentas,
+  cargarTasaDescuento,
+  cargarBrokerFromInvestor,
+  setClientInvestor,
+}) {
+  const selectionRequestId = useRef(0);
+  const selectedInvestor = (investors || []).find(
+    (investor) => investor?.data?.id === factura.nombreInversionista
+  ) || null;
+  const selectedInvestorLabel = investorLabel(selectedInvestor);
+  const [inputValue, setInputValue] = useState(selectedInvestorLabel);
 
-                        return option?.account_number === value?.account_number;
-                    }} // Para evitar warnings de MUI
+  // MUI preserves its search text after an onChange rejection. Keep the text
+  // controlled so an invalid duplicate never looks as though it was assigned.
+  useEffect(() => {
+    setInputValue(selectedInvestorLabel);
+  }, [selectedInvestorLabel]);
 
-                    onChange={async (event, newValue) => {
+  const clearInvestor = () => {
+    selectionRequestId.current += 1;
+    setInputValue("");
+    const facturas = values.facturas.map((current, currentIndex) => (
+      currentIndex === index
+        ? {
+          ...current,
+          nombreInversionista: "",
+          idCuentaInversionista: "",
+          numbercuentaInversionista: "",
+          cuentaInversionista: "",
+          cuentasDelInversionistaSelected: [],
+          montoDisponibleInfo: 0,
+          montoDisponibleCuenta: 0,
+          investorBroker: "",
+          investorBrokerName: "",
+          investorTax: 0,
+          tasaInversionistaPR: 0,
+          tasaDescuentoPR: 0,
+        }
+        : current
+    ));
 
-                        
+    setClientInvestor(null);
+    setFieldError(`facturas[${index}].nombreInversionista`, undefined);
+    setValues({
+      ...values,
+      facturas: calculateOperation(facturas, { opDate: values.opDate, discountTax: values.discountTax }),
+    }, false);
+  };
 
-                        if (!newValue) {
+  const selectInvestor = async (investor) => {
+    const investorId = investor?.data?.id;
+    if (!investorId) {
+      clearInvestor();
+      return;
+    }
 
-                        if(values.facturas[index].is_creada===true){
-                            return
+    // An investor may participate in different invoices. The restriction only
+    // applies to fractions/rows of the *same* invoice number.
+    const isAlreadyAssigned = values.facturas.some(
+      (current, currentIndex) => (
+        currentIndex !== index
+        && String(current.billId || "") === String(factura.billId || "")
+        && current.nombreInversionista === investorId
+      )
+    );
+    if (isAlreadyAssigned) {
+      setInputValue(selectedInvestorLabel);
+      setFieldTouched(`facturas[${index}].nombreInversionista`, true, false);
+      setFieldError(
+        `facturas[${index}].nombreInversionista`,
+        "No puede asignar el mismo inversionista a la misma factura"
+      );
+      Toast("No puede asignar el mismo inversionista a facturas con el mismo número", "error");
+      return;
+    }
 
-                        }else {
-                            setFieldValue(`facturas[${index}].is_creada`,false)
-                        }                                   // 1. Obtener el accountId de la factura que se está deseleccionando
-                            const cuentaIdDeseleccionada = factura.idCuentaInversionista;
-                            
-                            // 2. Calcular el valor que se está liberando (PV + GM)
-                            const valorLiberado = (factura.presentValueInvestor || 0) + (factura.gastoMantenimiento || 0);
-                            
-                            
-                            // 4. Buscar facturas con el mismo inversionista
-                            const facturasMismoInversionista = values.facturas.filter(
-                            f => f.idCuentaInversionista === cuentaIdDeseleccionada
-                            );
-                        
-                            // 5. Distribuir el valor liberado a las otras facturas del mismo inversionista
-                            facturasMismoInversionista.forEach((f, i) => {
-                            if (factura.idCuentaInversionista === cuentaIdDeseleccionada) {
-                                // Calcular nuevo monto disponible sumando el valor liberado
-                            
-                                const nuevoMontoDisponible = (f.montoDisponibleCuenta || 0) + valorLiberado;
-                                
-                                setFieldValue(`facturas[${i}].montoDisponibleCuenta`, nuevoMontoDisponible);
-                            }
-                            });
+    const requestId = ++selectionRequestId.current;
+    try {
+      const [accountsResponse, riskProfileResponse, brokerResponse] = await Promise.all([
+        cargarCuentas(investorId),
+        cargarTasaDescuento(investorId),
+        cargarBrokerFromInvestor(investorId),
+      ]);
+      // Ignore an earlier request after the user selected/cleared another row.
+      if (requestId !== selectionRequestId.current) return;
+      const accounts = Array.isArray(accountsResponse?.data) ? accountsResponse.data : [];
 
-                        // 3. Limpiar los valores de esta factura (manteniendo los datos del inversionista)
-                        setFieldValue(`facturas[${index}]`, {
-                            billId:  factura.billId,
-                            factura:  factura.factura,
-                            fechaEmision:  factura.fechaEmision,
-                            valorNominal: factura.valorNominal,
-                            saldoDisponible: factura.saldoDisponible,
-                            valorFuturo:  factura.valorFuturo,
-                            amount:  factura.amount,
-                            payedAmount: factura.payedAmount,
-                            fraccion: factura.fraccion,
-                            porcentajeDescuento: factura.porcentajeDescuento,
-                            nombrePagador:  values.nombrePagador,
-                            presentValueInvestor: factura.presentValueInvestor,
-                            presentValueSF:  factura.presentValueSF,
-                             probableDate:  factura.probableDate,
-                            investorProfit: factura.investorProfit || 0,
-                            comisionSF:  factura.comisionSF  || 0,
-                            
-                            fechaFin:`${addDays(new Date(),1)}`,
-                            numbercuentaInversionista: '',
-                            cuentaInversionista:[],
-                            cuentasDelInversionistaSelected:[],
-                            nombreInversionista: '',
-                            investorBroker: '',
-                            expirationDate: factura.expirationDate,
-                            investorBrokerName: '',
-                            montoDisponibleCuenta: -factura.presentValueInvestor-factura.gastoMantenimiento || 0, // Restablecer al máximo
-                            montoDisponibleInfo: 0,
-                            gastoMantenimiento: 0,
-                            operationDays: factura.operationDays,
-                            saldoDisponibleInfo: factura.saldoDisponibleInfo,
-                            tasaInversionistaPR: 0,
-                        });
+      if (!accounts.length) {
+        Toast("El inversionista seleccionado no tiene cuentas disponibles", "warning");
+        clearInvestor();
+        return;
+      }
 
-                        
+      const investorTax = toNumber(riskProfileResponse?.data?.discount_rate_investor);
+      const defaultAccount = accounts.length === 1 ? accounts[0] : null;
+      const facturas = values.facturas.map((current, currentIndex) => (
+        currentIndex === index
+          ? {
+            ...current,
+            nombreInversionista: investorId,
+            cuentasDelInversionistaSelected: accounts,
+            idCuentaInversionista: defaultAccount?.id || "",
+            numbercuentaInversionista: defaultAccount?.account_number || defaultAccount?.number || "",
+            cuentaInversionista: defaultAccount?.account_number || defaultAccount?.number || "",
+            montoDisponibleInfo: toNumber(defaultAccount?.balance),
+            investorBroker: brokerResponse?.data?.id || "",
+            investorBrokerName: brokerName(brokerResponse),
+            investorTax,
+            tasaInversionistaPR: investorTax,
+            tasaDescuentoPR: toNumber(riskProfileResponse?.data?.discount_rate),
+            applyGm: Boolean(riskProfileResponse?.data?.gmf),
+          }
+          : current
+      ));
 
-                    }
-                        if (newValue) {
-                        
-                    try {
-                        // Cargar cuentas del inversionista
-                        const cuentas = await cargarCuentas(newValue?.data.id);
-                        
-                        if (!cuentas?.data?.length) {
-                        throw new Error('No hay cuentas disponibles');
-                        }
-                        
-                        // Actualizar valores...
-                            // Cargar cuentas y broker del inversionista seleccionado
-                        // const cuentas = await cargarCuentas(newValue?.data.id);
-                        
-                        setClientInvestor(newValue?.data.id)
-                        
-                        const tasaDescuento = await cargarTasaDescuento(newValue?.data.id);
+      setClientInvestor(investorId);
+      setInputValue(investorLabel(investor));
+      setFieldError(`facturas[${index}].nombreInversionista`, undefined);
+      setValues({
+        ...values,
+        investorTax,
+        facturas: calculateOperation(facturas, { opDate: values.opDate, discountTax: values.discountTax }),
+      }, false);
 
+      if (!riskProfileResponse) {
+        Toast("El inversionista no tiene perfil de riesgo; revise la tasa antes de registrar", "warning");
+      }
+      if (!brokerResponse?.data) {
+        Toast("El inversionista no tiene corredor configurado", "warning");
+      }
+    } catch (error) {
+      if (requestId !== selectionRequestId.current) return;
+      clearInvestor();
+      Toast("No fue posible cargar las cuentas del inversionista", "error");
+    }
+  };
 
-                        // Verificar si tasaDescuento es undefined
-                        if (!tasaDescuento) {
-                            // Mostrar el mensaje de error usando Toast
-                         Toast("Disculpe, el cliente seleccionado no tiene perfil de riesgo configurado. Por favor, agrege el perfil en el módulo de clientes", "warning");
-                            return; // Detener la ejecución si tasaDescuento es undefined
-                         }
-
-                         console.log(tasaDescuento)
-
-                        const brokerFromInvestor = await cargarBrokerFromInvestor(newValue?.data.id);
-
-                         const valorGm = factura.presentValueInvestor * 0.002;
-                         
-                        setFieldValue(`facturas[${index}].applyGm`, tasaDescuento?.data?.gmf|| false);
-                         setFieldValue(`facturas[${index}].gastoMantenimiento`,  tasaDescuento?.data?.gmf ? (valorGm).toFixed(0) : 0);
-                        const todasFacturasInversionista = values.facturas
-                        .map((f, i) => {
-                            // Asignación segura del nuevo valor
-                            const nuevoInversionista = newValue?.data?.id || null;
-                            return i === index ? {...f, nombreInversionista: nuevoInversionista} : f;
-                        })
-                        .filter(f => {
-                            const inversionistaActual = newValue?.data?.id;
-                            return (
-                            inversionistaActual && // Tiene valor truthy
-                            f.nombreInversionista && // Factura tiene inversionista
-                            f.nombreInversionista === inversionistaActual // Coincidencia exacta
-                            );
-                        });
-                        const facturasMismoBillId = values.facturas.filter(item => 
-                            item.billId && // Verifica que billId no sea null, undefined o vacío
-                            factura.billId && // Verifica que factura.billId no sea null, undefined o vacío
-                            item.billId === factura.billId // Comparación estricta
-                        );
-                            
-
-                        function encontrarFacturasDuplicadas(facturas, facturaActual, inversionistaId) {
-                            // Validaciones iniciales
-                            if (!Array.isArray(facturas)) return [];
-                            if (!facturaActual?.billId || !inversionistaId) return [];
-                            
-                            return facturas.filter(factura => {
-                            // Verificar que la factura tenga los campos necesarios
-                            if (!factura.billId || !factura.nombreInversionista) return false;
-                            
-                            // Comparar billId con la factura actual
-                            const mismoBillId = factura.billId === facturaActual.billId;
-                            
-                            
-                            // Comparar inversionista con el seleccionado
-                            const mismoInversionista = factura.nombreInversionista === inversionistaId;
-                            
-                            return mismoBillId && mismoInversionista;
-                            });
-                        }
-                        
-                        // Uso:
-                            const inversionistaSeleccionado = newValue?.data?.id; // ID del inversionista seleccionado
-                        
-                            const facturasDuplicadas = encontrarFacturasDuplicadas(
-                            values.facturas, 
-                            factura, // la factura que estás procesando actualmente
-                            inversionistaSeleccionado
-                            );
-
-                            if(todasFacturasInversionista.length===1){
-                            if(facturasMismoBillId.length>1 ){
-                               
-                                
-                               // setFieldValue(`facturas[${index}].cuentaInversionista`, cuentas?.data || []);
-                                setFieldValue(`facturas[${index}].cuentasDelInversionistaSelected`, cuentas?.data || []);
-                                
-                                setFieldValue(`facturas[${index}].nombreInversionista`, newValue?.data.id || "");
-                                setFieldValue(`facturas[${index}].investorBroker`, brokerFromInvestor?.data.id || "");
-                                setFieldValue( `facturas[${index}].tasaInversionistaPR`,tasaDescuento?.data?.discount_rate_investor
-                                    ||0)
-                                
-                                setFieldValue(
-                                    `facturas[${index}].investorBrokerName`,
-                                    brokerFromInvestor?.data?.first_name && brokerFromInvestor?.data?.last_name
-                                    ? `${brokerFromInvestor.data.first_name} ${brokerFromInvestor.data.last_name}`
-                                    : brokerFromInvestor?.data?.social_reason || ""
-                                );
-
-                            }else if (facturasMismoBillId.length===1 ){
-                                
-                              //  setFieldValue(`facturas[${index}].cuentaInversionista`, cuentas?.data || []);
-                                setFieldValue(`facturas[${index}].cuentasDelInversionistaSelected`, cuentas?.data || []);
-                                setFieldValue(`facturas[${index}].nombreInversionista`, newValue?.data.id || "");
-                                setFieldValue(`facturas[${index}].investorBroker`, brokerFromInvestor?.data.id || "");
-                                setFieldValue( `facturas[${index}].tasaInversionistaPR`,tasaDescuento?.data?.discount_rate_investor
-                                    ||0)
-                                
-                                setFieldValue(
-                                    `facturas[${index}].investorBrokerName`,
-                                    brokerFromInvestor?.data?.first_name && brokerFromInvestor?.data?.last_name
-                                    ? `${brokerFromInvestor.data.first_name} ${brokerFromInvestor.data.last_name}`
-                                    : brokerFromInvestor?.data?.social_reason || ""
-                                );
-
-                            }
-                            }else if(todasFacturasInversionista.length>1){
-                        
-                            if(facturasDuplicadas.length>=1 ){
-
-                                // Mostrar error en el campo
-                                setFieldTouched(`facturas[${index}].nombreInversionista`, true, false);
-                                setFieldError(
-                                `facturas[${index}].nombreInversionista`,
-                                "No puede asignar inversionista a facturas con mismo Bill ID"
-                                );
-                                
-                                // Mostrar toast/notificación
-                                toast(<div style={{ display: 'flex', alignItems: 'center' }}>
-                                <ErrorIcon style={{ marginRight: '10px', color: '#d32f2f' }} />
-                                <span>No puede asignar el mismo inversionista a facturas agrupadas</span>
-                                </div>, {
-                                position: "bottom-right",
-                                autoClose: 5000,
-                                hideProgressBar: false,
-                                closeOnClick: true,
-                                pauseOnHover: true,
-                                draggable: true
-                                });
-                        
-                                // Revertir cualquier cambio
-                                setFieldValue(`facturas[${index}].nombreInversionista`, '');
-                                return;
-
-
-                            }else if (facturasDuplicadas.length===0 ){
-                            
-                           // setFieldValue(`facturas[${index}].cuentaInversionista`, cuentas?.data || []);
-                            setFieldValue(`facturas[${index}].cuentasDelInversionistaSelected`, cuentas?.data || []);
-                            setFieldValue(`facturas[${index}].nombreInversionista`, newValue?.data.id || "");
-                            setFieldValue(`facturas[${index}].investorBroker`, brokerFromInvestor?.data.id || "");
-                            setFieldValue( `facturas[${index}].tasaInversionistaPR`,tasaDescuento?.data?.discount_rate_investor
-                                ||0)
-                            setFieldValue( `facturas[${index}].tasaDescuentoPR`,tasaDescuento?.data?.discount_rate  ||0)
-                            setFieldValue(
-                                `facturas[${index}].investorBrokerName`,
-                                brokerFromInvestor?.data?.first_name && brokerFromInvestor?.data?.last_name
-                                ? `${brokerFromInvestor.data.first_name} ${brokerFromInvestor.data.last_name}`
-                                : brokerFromInvestor?.data?.social_reason || ""
-                            );
-
-                            }
-
-                            }else if (facturasDuplicadas.length===0 ){
-                            
-                           // setFieldValue(`facturas[${index}].cuentaInversionista`, cuentas?.data || []);
-                            setFieldValue(`facturas[${index}].cuentasDelInversionistaSelected`, cuentas?.data || []);
-                            setFieldValue(`facturas[${index}].nombreInversionista`, newValue?.data.id || "");
-                            setFieldValue(`facturas[${index}].investorBroker`, brokerFromInvestor?.data.id || "");
-                            setFieldValue( `facturas[${index}].tasaInversionistaPR`,tasaDescuento?.data?.discount_rate_investor
-                            ||0)
-                            setFieldValue( `facturas[${index}].tasaDescuentoPR`,tasaDescuento?.data?.discount_rate  ||0)
-                            setFieldValue(
-                            `facturas[${index}].investorBrokerName`,
-                            brokerFromInvestor?.data?.first_name && brokerFromInvestor?.data?.last_name
-                                ? `${brokerFromInvestor.data.first_name} ${brokerFromInvestor.data.last_name}`
-                                : brokerFromInvestor?.data?.social_reason || ""
-                            );
-
-                            } else  { 
-                        }
-                        
-                        
-                           // setFieldValue(`facturas[${index}].cuentaInversionista`, cuentas?.data || []);
-                            setFieldValue(`facturas[${index}].cuentasDelInversionistaSelected`, cuentas?.data || []);
-                            setFieldValue(`facturas[${index}].nombreInversionista`, newValue?.data.id || "");
-                            setFieldValue(`facturas[${index}].investorBroker`, brokerFromInvestor?.data.id || "");
-                            setFieldValue( `facturas[${index}].tasaInversionistaPR`,tasaDescuento?.data?.discount_rate_investor
-                            ||0)
-                            setFieldValue( `facturas[${index}].tasaDescuentoPR`,tasaDescuento?.data?.discount_rate  ||0)
-                            setFieldValue(
-                            `facturas[${index}].investorBrokerName`,
-                            brokerFromInvestor?.data?.first_name && brokerFromInvestor?.data?.last_name
-                                ? `${brokerFromInvestor.data.first_name} ${brokerFromInvestor.data.last_name}`
-                                : brokerFromInvestor?.data?.social_reason || ""
-                            );
-                    } catch (error) {
-                        console.error('Error al cargar cuentas:', error);
-                       Toast('No se encontraron cuentas disponibles para este inversionista','warning');
-                        
-
-                    }
-                        
-                        }
-                    }}
-
-
-                    renderInput={(params) => (
-                        <TextField
-                        {...params}
-                        label="Nombre Inversionista / ID *"
-                        fullWidth
-                        name="nombreInversionista" 
-                        helperText={touched.facturas?.[index]?.nombreInversionista && errors.facturas?.[index]?.nombreInversionista} // Ayuda para mostrar errores
-                        error={touched.facturas?.[index]?.nombreInversionista && Boolean(errors.facturas?.[index]?.nombreInversionista)}
-                        />
-                    )}
-                    />
-    )
+  return (
+    <Autocomplete
+      id={`investor-name-${index}`}
+      data-testid="campo-inversor"
+      options={investors || []}
+      value={selectedInvestor}
+      inputValue={inputValue}
+      getOptionLabel={investorLabel}
+      isOptionEqualToValue={(option, value) => option?.data?.id === value?.data?.id}
+      onChange={(_event, investor) => selectInvestor(investor)}
+      onInputChange={(_event, nextInputValue) => setInputValue(nextInputValue)}
+      renderInput={(params) => (
+        <TextField
+          {...params}
+          label="Nombre Inversionista / ID *"
+          fullWidth
+          name={`facturas[${index}].nombreInversionista`}
+          helperText={touched.facturas?.[index]?.nombreInversionista && errors.facturas?.[index]?.nombreInversionista}
+          error={touched.facturas?.[index]?.nombreInversionista && Boolean(errors.facturas?.[index]?.nombreInversionista)}
+        />
+      )}
+    />
+  );
 }

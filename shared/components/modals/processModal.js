@@ -2,20 +2,24 @@
 // components/RegisterOperationForm.js
 import React from "react";
 
-import {  Typography } from '@mui/material';
+import { Button, Typography } from '@mui/material';
 
-import { Dialog,DialogContent,CircularProgress} from "@mui/material";
+import { Dialog, DialogActions, DialogContent, CircularProgress } from "@mui/material";
 import { CheckCircle, Error } from "@mui/icons-material";
 
 
-export default function ProcessModal({  success }) {
+export default function ProcessModal({ open, success, onClose }) {
 
     return (
 
     <>
 
             {/* MODAL DE PROCESO */}
-            <Dialog  open={false} PaperProps={{ sx: { borderRadius: "10px", textAlign: "center", p: 3 } }}>
+            <Dialog
+                open={open}
+                onClose={success === null ? undefined : onClose}
+                PaperProps={{ sx: { borderRadius: "10px", textAlign: "center", p: 3 } }}
+            >
                 <DialogContent>
                 {success === null ? (
                     <>
@@ -34,6 +38,11 @@ export default function ProcessModal({  success }) {
                     </>
                 )}
                 </DialogContent>
+                {success === false && (
+                    <DialogActions>
+                        <Button onClick={onClose}>Cerrar</Button>
+                    </DialogActions>
+                )}
             </Dialog>
     </>
     )

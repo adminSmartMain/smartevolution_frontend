@@ -72,8 +72,8 @@ export default function EmitterSelector({setClientPagador, orchestDisabled, setI
               const createdInvoices = values.facturas.filter(factura => factura.is_creada === true);
 
               if (createdInvoices.length > 0) {
-                // Case 1: There are created invoices - do nothing (return)
-                setFieldValue(`facturas[${idx}].is_creada`, false);
+                // Las facturas creadas deben conservarse cuando se limpia el emisor.
+                // Antes se usaba un `idx` inexistente y el flujo terminaba en ReferenceError.
               } else {
                 // Case 2: No created invoices - set is_creada to false for all invoices
                 values.facturas.forEach((_, idx) => {
