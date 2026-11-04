@@ -854,7 +854,7 @@ const renderPreviewContent = () => {
                     </div>
                   </Grid>
                   {/*Selector de Corredor Emisor */}
-                  <Grid item xs={12} md={5.8}>
+                  <Grid item xs={12} md={6}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                       <div style={{ flex: 1 }}> {/* Este div ocupa el espacio restante */}
                         <TextField
@@ -1155,7 +1155,7 @@ const renderPreviewContent = () => {
                                           </Grid> */}
                                         
                                           {/* Fracción */}
-                                          <Grid item xs={12} md={0.6}>
+                                          <Grid item xs={4} sm={2} md={1}>
                                             <TextField
                                               id="Fraction-name" // Para CSS/JS si es necesario
                                               data-testid="campo-fraccion"
@@ -1192,7 +1192,7 @@ const renderPreviewContent = () => {
                                             />
                                           </Grid>
                                           {/* Saldo Disponible de la factura */}
-                                          <Grid item xs={12} md={2}>
+                                          <Grid item xs={8} sm={4} md={2}>
 
                                             <SaldoDisponibleSelector
                                             values={values}
@@ -1205,7 +1205,7 @@ const renderPreviewContent = () => {
                                             />
                                           </Grid>
                                           {/* Fecha Probable*/}
-                                          <Grid item xs={12} md={1.8}>
+                                          <Grid item xs={12} sm={6} md={2}>
                                             <ProbableDateSelector
                                             factura={factura}
                                             touched={ touched}
@@ -1226,7 +1226,7 @@ const renderPreviewContent = () => {
                                                 /> */}
                                           {/* </Grid> */}
                                           {/* Nombre de Inversionista */}
-                                          <Grid item xs={12} md={5.5}>
+                                          <Grid item xs={12} sm={6} md={5}>
                                             <InvestorSelector
                                               errors={errors}
                                               touched={touched}
@@ -1264,7 +1264,7 @@ const renderPreviewContent = () => {
                                         </Grid>
                                         <Grid container spacing={2} sx={{ margin: 0, width: '100%' }}>
                                           {/* Campo de monto disponible */}
-                                          <Grid item xs={12} sm={5} md={3.8}>
+                                          <Grid item xs={12} sm={6} md={3}>
                                             <CuentaInversionistaSelector
                                               index={index}
                                               factura={factura}
@@ -1277,7 +1277,7 @@ const renderPreviewContent = () => {
                                             />
                                           </Grid>
                                           {/*Monto disponible en cuenta inversionista */}
-                                          <Grid item xs={12} md={3}>
+                                          <Grid item xs={12} sm={6} md={3}>
                                             <TextField
                                               id="investorBalancename" // Para CSS/JS si es necesario
                                               data-testid="campo-investorBalance"
@@ -1291,7 +1291,7 @@ const renderPreviewContent = () => {
                                             />
                                           </Grid>
                                           {/* Valor Futuro */}
-                                          <Grid item xs={5} md={3} >
+                                          <Grid item xs={12} sm={6} md={3} >
                                             <Box sx={{ position: 'relative' }}>
                                               <ValorFuturoSelector
                                                factura={factura}
@@ -1343,7 +1343,7 @@ const renderPreviewContent = () => {
 
                                           </Grid>
                                           {/* Campo de porcentaje de descuento */}
-                                          <Grid item xs={12} md={1} >
+                                          <Grid item xs={6} sm={3} md={1.5} >
                                             <Box sx={{ position: 'relative' }}>
                                             <PorcentajeDescuentoSelector
                                             values={values}
@@ -1358,7 +1358,7 @@ const renderPreviewContent = () => {
                                             </Box>
                                           </Grid>
                                           {/*Tasa Descuento */}
-                                          <Grid item xs={12} md="auto" sx={{ width: { md: '9%' } }}>
+                                          <Grid item xs={6} sm={3} md={1.5}>
                                             <TasaDescuentoSelector
                                             values={values}
                                             setFieldValue = {setFieldValue}
@@ -1372,7 +1372,7 @@ const renderPreviewContent = () => {
                                           </Grid>
                                         </Grid>
                                         {/* Campo de valor nominal */}
-                                        <Grid item xs={12} md={3}>
+                                        <Grid item xs={12} sm={6} md={3}>
                                           <ValorNominalSelector
                                             factura={factura}
                                             index={index}
@@ -1385,7 +1385,7 @@ const renderPreviewContent = () => {
                                             calcularPorcentajeDescuento={calcularPorcentajeDescuento}
                                           />
                                         </Grid>
-                                        <Grid item xs={12} md={1.5}>
+                                        <Grid item xs={6} sm={3} md={1.5}>
                                           <TasaInversionistaSelector
                                             values={values}
                                             setFieldValue = {setFieldValue}
@@ -1398,7 +1398,7 @@ const renderPreviewContent = () => {
                                             />
                                           
                                         </Grid>
-                                     <Grid item xs={12} md={2}>
+                                     <Grid item xs={6} sm={3} md={2}>
                                        <EndDateSelector
                                        
                                        setFieldValue={setFieldValue}
@@ -1415,7 +1415,7 @@ const renderPreviewContent = () => {
                                      </Grid>
                                       
                                           
-                                        <Grid item xs={12} md={2}>
+                                        <Grid item xs={6} sm={3} md={2}>
                                           <TextField
                                             id="operationDays" // Para CSS/JS si es necesario
                                             data-testid="campo-DIas operacion"
@@ -1443,7 +1443,7 @@ const renderPreviewContent = () => {
                                           />
                                         </Grid>
                                         {/* Campo Utilidad Inversión*/}
-                                        <Grid item xs={12} md={3.4}>
+                                        <Grid item xs={12} sm={6} md={3.5}>
                                           <TextField
                                             id="InvestorProfitname" // Para CSS/JS si es necesario
                                             data-testid="campo-InvestorProfit"
@@ -1487,7 +1487,7 @@ const renderPreviewContent = () => {
                                           />
                                         </Grid>
                                         {/* Comisión SF*/}
-                                        <Grid item xs={12} md={3.9}>
+                                        <Grid item xs={12} md={4}>
                                           <TextField
                                             id="comisionSFname" // Para CSS/JS si es necesario
                                             data-testid="campo-comisionSF"

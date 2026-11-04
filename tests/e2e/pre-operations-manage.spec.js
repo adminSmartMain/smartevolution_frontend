@@ -96,6 +96,17 @@ async function addInvoice(page) {
 }
 
 test.describe("pre-operaciones: administrar", () => {
+  test("mantiene los nombres históricos y no genera desborde horizontal en tablet", async ({ page }) => {
+    await page.setViewportSize({ width: 768, height: 1000 });
+    await prepareManagePage(page);
+    await selectBill(page, 0, "1001");
+
+    await expect(page.getByLabel("% Descuento")).toBeVisible();
+    await expect.poll(() => page.evaluate(() => (
+      document.documentElement.scrollWidth <= window.innerWidth
+    ))).toBeTruthy();
+  });
+
   test("al limpiar una factura el catálogo sigue disponible para escoger otra", async ({ page }) => {
     await prepareManagePage(page);
     await selectBill(page, 0, "1001");

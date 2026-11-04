@@ -33,7 +33,7 @@ export default function PorcentajeDescuentoSelector({ values, setValues, errors,
     <TextField
       id="payedPercentname"
       data-testid="campo-payedPercent"
-      label="% Pagado"
+      label="% Descuento"
       fullWidth
       type="number"
       name="porcentajeDescuento"
