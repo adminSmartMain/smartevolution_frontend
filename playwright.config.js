@@ -8,6 +8,11 @@ module.exports = defineConfig({
   use: {
     baseURL,
     trace: "on-first-retry",
+    screenshot: "only-on-failure",
+    launchOptions: {
+      // Useful for local visual QA. CI keeps the default of zero milliseconds.
+      slowMo: Number(process.env.PLAYWRIGHT_SLOW_MO || 0),
+    },
   },
   webServer: {
     command: `npm run start -- -p ${port}`,

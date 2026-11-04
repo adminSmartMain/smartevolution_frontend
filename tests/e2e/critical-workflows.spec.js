@@ -17,6 +17,16 @@ async function prepareAuthorizedPage(page, permissions) {
   await page.route("**/api/access-control/me/", (route) =>
     route.fulfill({ contentType: "application/json", body: JSON.stringify({ data: { permissions } }) })
   );
+  // Customer wizard selectors expect these response shapes even when empty.
+  await page.route("**/api/department", (route) =>
+    route.fulfill({ contentType: "application/json", body: JSON.stringify({ data: [] }) })
+  );
+  await page.route("**/api/country/", (route) =>
+    route.fulfill({ contentType: "application/json", body: JSON.stringify({ data: [] }) })
+  );
+  await page.route("**/api/broker/", (route) =>
+    route.fulfill({ contentType: "application/json", body: JSON.stringify({ brokers: [] }) })
+  );
 }
 
 test("cliente: la ruta autorizada carga el formulario de registro", async ({ page }) => {
@@ -25,6 +35,15 @@ test("cliente: la ruta autorizada carga el formulario de registro", async ({ pag
 
   await expect(page.getByText("Registrar Nuevo Cliente")).toBeVisible();
   await expect(page.locator('input[name="document_number"]')).toBeVisible();
+});
+
+test("cliente: el asistente marca pasos incompletos y no registra datos vacíos", async ({ page }) => {
+  await prepareAuthorizedPage(page, ["clients.create"]);
+  await page.goto("/customers?register");
+
+  await page.getByRole("button", { name: "SIGUIENTE" }).click();
+  await expect(page.getByText("Información de contacto")).toBeVisible();
+  await expect(page.getByText("Incompleto").first()).toBeVisible();
 });
 
 test("factura: la ruta autorizada carga el formulario y separa adjuntos de la extracción XML", async ({ page }) => {

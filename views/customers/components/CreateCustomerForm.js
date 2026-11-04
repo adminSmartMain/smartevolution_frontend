@@ -800,13 +800,13 @@ const setTouchedByPaths = (paths = []) => {
 const STEP_FIELDS = {
   0: [
     "type_client",
-    "type_id",
+    "type_identity",
     "document_number",
     // "first_name", "last_name" (natural)
     // "razon_social" (juridica)
-    "birth_or_constitution_date",
+    "birth_date",
   ],
-  1: ["citizenship", "department", "city", "address", "phone", "email", "broker_id"],
+  1: ["citizenship", "department", "city", "address", "phone_number", "email", "broker"],
   2: ["rol_client"],
 
   // solo jurídica
