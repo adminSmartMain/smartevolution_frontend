@@ -16,5 +16,17 @@ npm run test:e2e
 ```
 
 En PowerShell, usar `$env:NEXT_PUBLIC_API_URL = '/api'` en lugar de `set`.
-La prueba actual no envía credenciales: verifica que la página de login y sus
-controles críticos se puedan servir correctamente.
+Si ya tienes una aplicación corriendo en el puerto 3000, usa un servidor de
+pruebas aislado para no reutilizar una compilación anterior:
+
+```powershell
+$env:PLAYWRIGHT_PORT = '3100'
+npm run build
+npm run test:e2e
+Remove-Item Env:PLAYWRIGHT_PORT
+```
+
+Las pruebas usan respuestas HTTP simuladas para los flujos de autenticación;
+no envían contraseñas ni escriben en la base de datos. Cubren login, errores de
+credenciales, recuperación/restablecimiento de contraseña, protección de rutas,
+permisos de facturas y el filtro XML del cargador de extracción.

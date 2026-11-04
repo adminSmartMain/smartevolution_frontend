@@ -1447,6 +1447,7 @@ return (
           ref={billFile}
           id="extractBill"
           type="file"
+          accept=".xml,text/xml,application/xml"
           multiple
           style={{ display: "none" }}
           onChange={onChangeFilesExtractBill}
