@@ -225,7 +225,11 @@ useEffect(() => {
     loadingReadBills,
     dataReadBills,
     errorReadBills,
-    (loading, data, error) => data?.bills.length > 0,
+    // Una factura puede haberse extraído localmente pero quedar pendiente en
+    // Billy. No la presentamos como una carga completa.
+    (loading, data, error) => data?.bills?.some(
+      (bill) => bill.billySyncStatus !== "pending"
+    ),
     "Facturas cargadas",
     errorReadBills?.message
   );
@@ -261,7 +265,28 @@ Toast( `${dataReadBills?.failedBills?.length} facturas no pudieron ser procesada
 
 useEffect(() => {
   if (dataReadBills?.pendingBillyBills?.length > 0) {
-    Toast(`${dataReadBills.pendingBillyBills.length} facturas fueron extraídas y quedaron pendientes en Billy`, "warning");
+    const pending = dataReadBills.pendingBillyBills;
+    const authRejected = pending.find(
+      (bill) => bill.code === "authentication_rejected"
+    );
+    const authGuardrail = pending.find(
+      (bill) => bill.code === "authentication_guardrail_active"
+    );
+
+    if (authRejected) {
+      Toast(
+        "Billy rechazó las credenciales. Las facturas quedaron guardadas y pendientes de sincronización.",
+        "error"
+      );
+    } else if (authGuardrail) {
+      const retryAfter = authGuardrail.retry_after;
+      Toast(
+        `Billy está temporalmente bloqueado por autenticación. ${pending.length} facturas quedaron pendientes${retryAfter ? `; reintento disponible en ${retryAfter} s` : ""}.`,
+        "warning"
+      );
+    } else {
+      Toast(`${pending.length} facturas fueron extraídas y quedaron pendientes en Billy`, "warning");
+    }
   }
 }, [dataReadBills?.pendingBillyBills?.length])
 
