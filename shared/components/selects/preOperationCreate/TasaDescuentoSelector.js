@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { InputAdornment, TextField, Tooltip, IconButton } from "@mui/material";
 import ErrorIcon from "@mui/icons-material/Error";
 import InfoIcon from "@mui/icons-material/Info";
@@ -8,8 +8,19 @@ const normalize = (value) => String(value ?? "").replace(",", ".");
 
 export default function TasaDescuentoSelector({ values, setValues, setFieldError, errors }) {
   const error = errors?.discountTax;
+  const isEditing = useRef(false);
+  const formatRate = (value) => String(value ?? 0).replace(".", ",");
+  const [draftValue, setDraftValue] = useState(formatRate(values.discountTax));
+
+  // Keep the unfinished decimal separator (for example "26,") in local UI
+  // state. Formik stores the numeric value used by the calculators, but must
+  // not rewrite the text while the user is still composing it.
+  useEffect(() => {
+    if (!isEditing.current) setDraftValue(formatRate(values.discountTax));
+  }, [values.discountTax]);
 
   const updateRate = (rawValue) => {
+    setDraftValue(rawValue);
     if (rawValue === "") {
       setValues({ ...values, discountTax: "" }, false);
       return;
@@ -32,6 +43,7 @@ export default function TasaDescuentoSelector({ values, setValues, setFieldError
       discountTax,
       facturas: calculateOperation(values.facturas, { opDate: values.opDate, discountTax }),
     }, false);
+    setDraftValue(formatRate(discountTax));
   };
 
   return (
@@ -42,9 +54,13 @@ export default function TasaDescuentoSelector({ values, setValues, setFieldError
       fullWidth
       type="text"
       InputLabelProps={{ shrink: true }}
-      value={String(values.discountTax ?? 0).replace(".", ",")}
+      value={draftValue}
+      onFocus={() => { isEditing.current = true; }}
       onChange={(event) => updateRate(event.target.value)}
-      onBlur={(event) => commitRate(event.target.value)}
+      onBlur={(event) => {
+        isEditing.current = false;
+        commitRate(event.target.value);
+      }}
       error={Boolean(error)}
       helperText={error}
       InputProps={{

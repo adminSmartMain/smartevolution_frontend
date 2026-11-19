@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { InputAdornment, TextField, Tooltip, IconButton } from "@mui/material";
 import ErrorIcon from "@mui/icons-material/Error";
 import InfoIcon from "@mui/icons-material/Info";
@@ -8,8 +8,16 @@ const normalize = (value) => String(value ?? "").replace(",", ".");
 
 export default function TasaInversionistaSelector({ values, setValues, setFieldError, errors, factura, index }) {
   const error = errors?.facturas?.[index]?.investorTax;
+  const isEditing = useRef(false);
+  const formatRate = (value) => String(value ?? 0).replace(".", ",");
+  const [draftValue, setDraftValue] = useState(formatRate(factura.investorTax));
+
+  useEffect(() => {
+    if (!isEditing.current) setDraftValue(formatRate(factura.investorTax));
+  }, [factura.investorTax]);
 
   const updateRate = (rawValue, shouldCommit = false) => {
+    if (!shouldCommit) setDraftValue(rawValue);
     if (rawValue === "" && !shouldCommit) {
       setValues({
         ...values,
@@ -32,6 +40,7 @@ export default function TasaInversionistaSelector({ values, setValues, setFieldE
       investorTax,
       facturas: calculateOperation(facturas, { opDate: values.opDate, discountTax }),
     }, false);
+    if (shouldCommit) setDraftValue(formatRate(investorTax));
   };
 
   return (
@@ -42,9 +51,13 @@ export default function TasaInversionistaSelector({ values, setValues, setFieldE
       fullWidth
       type="text"
       name={`facturas[${index}].investorTax`}
-      value={String(factura.investorTax ?? 0).replace(".", ",")}
+      value={draftValue}
+      onFocus={() => { isEditing.current = true; }}
       onChange={(event) => updateRate(event.target.value)}
-      onBlur={(event) => updateRate(event.target.value, true)}
+      onBlur={(event) => {
+        isEditing.current = false;
+        updateRate(event.target.value, true);
+      }}
       error={Boolean(error)}
       helperText={error}
       InputProps={{

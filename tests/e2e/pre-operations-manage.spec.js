@@ -107,6 +107,21 @@ test.describe("pre-operaciones: administrar", () => {
     ))).toBeTruthy();
   });
 
+  test("permite escribir tasas decimales sin perder el separador durante la edición", async ({ page }) => {
+    await prepareManagePage(page);
+    const discountRate = page.getByTestId("campo-discountTax").locator("input");
+    await discountRate.fill("26,5");
+    await expect(discountRate).toHaveValue("26,5");
+
+    await selectBill(page, 0, "1001");
+    await selectInvestor(page, 0);
+    const investorRate = page.getByTestId("campo-investorTax").first().locator("input");
+    await investorRate.fill("20,75");
+    await expect(investorRate).toHaveValue("20,75");
+    await investorRate.press("Tab");
+    await expect(investorRate).toHaveValue("20,75");
+  });
+
   test("al limpiar una factura el catálogo sigue disponible para escoger otra", async ({ page }) => {
     await prepareManagePage(page);
     await selectBill(page, 0, "1001");
