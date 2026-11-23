@@ -186,7 +186,7 @@ export const RefundC = () => {
       client: "",
       account: "",
       date: "",
-      amount: 0,
+      amount: null,
       applyGM: false,
       gmAmount: 0,
       bank: "",
