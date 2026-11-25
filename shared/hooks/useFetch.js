@@ -35,6 +35,8 @@ export const useFetch = ({ service, init }) => {
           err?.message ||
           "Se ha producido un error",
         code: err?.response?.status || err?.code || 404,
+        retryAfter: Number(err?.response?.headers?.["retry-after"] || 0),
+        metadata: err?.response?.data || {},
       });
     }
   };

@@ -1,3 +1,4 @@
+import { getAccessToken } from "@lib/auth/session";
 import Axios from "axios";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -5,7 +6,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 export const RegisterClientQuery = async (data) => {
   const res = await Axios.post(`${API_URL}/client/`, data, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -14,7 +15,7 @@ export const RegisterClientQuery = async (data) => {
 export const GetClientByID = async (id) => {
   const res = await Axios.get(`${API_URL}/client/${id}`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -24,7 +25,7 @@ export const GetClientByID = async (id) => {
 export const GetClienteRoles = async () => {
   const res = await Axios.get(`${API_URL}/client/client-roles/`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -34,7 +35,7 @@ export const ModifyClientQuery = async (data) => {
  
   const res = await Axios.patch(`${API_URL}/client/${data.id}`, data, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;

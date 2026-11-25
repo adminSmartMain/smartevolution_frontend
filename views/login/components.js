@@ -1,200 +1,69 @@
 import { VisibilityOffOutlined, VisibilityOutlined } from "@mui/icons-material";
-import LoginIcon from "@mui/icons-material/Login";
-import {
-  Box,
-  FormControl,
-  IconButton,
-  InputAdornment,
-  Typography,
-} from "@mui/material";
+import CircularProgress from "@mui/material/CircularProgress";
+import { Box, FormControl, IconButton, InputAdornment, Typography } from "@mui/material";
 import React, { useState } from "react";
 
 import MuiButton from "@styles/buttons/button";
 import MuiTextField from "@styles/fields";
 import HelperText from "@styles/helperText";
-import InputTitles from "@styles/inputTitles";
+import CaptchaGate from "./CaptchaGate";
 
 export const InputAdornments = ({
   formik,
-  values,
-  handleClickShowPassword,
-  handleMouseDownPassword,
   ToastContainer,
+  loading,
+  isSubmitting,
+  captchaRequired,
+  onCaptchaToken,
+  cooldownSeconds = 0,
 }) => {
-
   const [showPassword, setShowPassword] = useState(false);
+  const formDisabled = loading || isSubmitting || cooldownSeconds > 0;
+  const fieldStyles = (hasError) => ({
+    backgroundColor: "#fff",
+    border: hasError ? "1.5px solid #d14343" : "1px solid #c9d6e2",
+    borderRadius: 2,
+    "&:focus-within": { borderColor: "#008bb8", boxShadow: "0 0 0 3px rgba(0, 139, 184, 0.13)" },
+  });
 
-  const handleTogglePassword = () => {
-    setShowPassword((prev) => !prev);
-  };
   return (
     <>
-    <form onSubmit={formik.handleSubmit}>
-    <Box display="flex" flexDirection="column" 
-      sx={{ marginTop: "30px",
-        width:"275px",    
-    marginRight:"28px"}}>
-        {/* Título principal */}
-        <Typography
-          sx={{
-            color: "#1E88E5",
-            fontSize: "1.2rem", // Tamaño reducido
-            fontWeight: "bold",
-            textAlign: "center",
-            marginBottom: "8px",
-            marginLeft:"40px"
-          }}
-        >
-          Inicia sesión
-        </Typography>
-  
-        {/* Texto de registro */}
-        <Typography
-          sx={{
-            color: "#757575",
-            fontSize: "0.75rem", // Tamaño reducido
-            textAlign: "center",
-            marginBottom: "20px",
-             marginLeft:"40px",
-          }}
-        >
-          ¿No tienes cuenta? Contacta con la administración
-        </Typography>
-  
-        <Box display="flex" flexDirection="column">
-          {/* Campo Email */}
-          <FormControl fullWidth sx={{ marginBottom: "15px",width:"270px",marginLeft:"8px"}}>
-            <MuiTextField
-              id="email"
-              placeholder="Ingresa tu email"
-              name="email"
-              type="email"
-              aria-label="Correo electrónico"
-              onChange={formik.handleChange}
-              value={formik.values.email}
-              variant="standard"
-              margin="normal"
-              fullWidth
-              InputProps={{
-                disableUnderline: true,
-                sx: {
-                  backgroundColor: "transparent", // Fondo transparente
-                  marginTop: "-5px",
-                },
-              }}
-              error={formik.touched.email && Boolean(formik.errors.email)}
-              sx={{
-                backgroundColor: "transparent", // Fondo transparente
-                border: formik.touched.password && Boolean(formik.errors.password)
-                  ? "1.4px solid #E6643180" // Borde en rojo si hay error
-                  : "1px solid rgba(0, 0, 0, 0.23)", // Borde normal
-              }}
-            />
+      <form onSubmit={(event) => {
+        if (formDisabled) {
+          event.preventDefault();
+          return;
+        }
+        formik.handleSubmit(event);
+      }} noValidate>
+        <Box sx={{ mt: 4, width: "100%" }}>
+          <FormControl fullWidth sx={{ mb: 2 }}>
+            <Typography component="label" htmlFor="email" sx={{ color: "#20385d", fontSize: "0.9rem", fontWeight: 500, mb: 0.75 }}>Correo electrónico</Typography>
+            <MuiTextField id="email" placeholder="Ingresa tu correo electrónico" name="email" type="email" aria-label="Correo electrónico" onChange={formik.handleChange} onBlur={formik.handleBlur} value={formik.values.email} disabled={formDisabled} variant="standard" fullWidth InputProps={{ disableUnderline: true, sx: { px: 2, py: 0.55 } }} error={formik.touched.email && Boolean(formik.errors.email)} sx={fieldStyles(formik.touched.email && Boolean(formik.errors.email))} />
             <HelperText>{formik.touched.email && formik.errors.email}</HelperText>
           </FormControl>
-  
-          {/* Campo Contraseña */}
-          <FormControl fullWidth sx={{ marginBottom: "15px",width:"270px",marginLeft:"8px"}}>
-          <MuiTextField
-            id="password"
-            placeholder="Ingresa tu contraseña"
-            aria-label="Contraseña"
-            name="password"
-            type={showPassword ? "text" : "password"} // Usa el estado local
-            onChange={formik.handleChange}
-            value={formik.values.password}
-            variant="standard"
-            margin="normal"
-            fullWidth
-            error={formik.touched.password && Boolean(formik.errors.password)}
-            sx={{
-              backgroundColor: "transparent",
-              border: formik.touched.password && Boolean(formik.errors.password)
-                ? "1.4px solid #E6643180"
-                : "1px solid rgba(0, 0, 0, 0.23)",
-            }}
-            InputProps={{
+
+          <FormControl fullWidth sx={{ mb: 1 }}>
+            <Typography component="label" htmlFor="password" sx={{ color: "#20385d", fontSize: "0.9rem", fontWeight: 500, mb: 0.75 }}>Contraseña</Typography>
+            <MuiTextField id="password" placeholder="Ingresa tu contraseña" aria-label="Contraseña" name="password" type={showPassword ? "text" : "password"} onChange={formik.handleChange} onBlur={formik.handleBlur} value={formik.values.password} disabled={formDisabled} variant="standard" fullWidth error={formik.touched.password && Boolean(formik.errors.password)} sx={fieldStyles(formik.touched.password && Boolean(formik.errors.password))} InputProps={{
               disableUnderline: true,
-              sx: {
-                backgroundColor: "transparent",
-                marginTop: "-5px",
-              },
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton
-                    aria-label="toggle password visibility"
-                    onClick={handleTogglePassword} // Actualiza el estado local
-                    onMouseDown={(e) => e.preventDefault()} // Evita comportamiento por defecto
-                  >
-                    {showPassword ? (
-                      <VisibilityOffOutlined sx={{ color: "#5EA3A3" }} />
-                    ) : (
-                      <VisibilityOutlined sx={{ color: "#5EA3A3" }} />
-                    )}
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-          />
-          <HelperText>
-            {formik.touched.password && formik.errors.password}
-          </HelperText>
-        </FormControl>
-  
-          {/* Enlace de Olvidaste tu contraseña */}
-          <Box display="flex" justifyContent="flex-end" sx={{ marginTop: "2px" }}>
-            <Typography
-              component="a"
-              href="/auth/forgotPassword" // Usamos el href normal para la ruta
-              sx={{
-                color: "#1E88E5",
-                fontSize: "0.75rem", // Tamaño reducido
-                textDecoration: "none",
-                cursor: "pointer",
-                marginRight:"1px"
-              }}
-            >
-              ¿Olvidaste tu contraseña?
-            </Typography>
+              sx: { pl: 2, pr: 0.5, py: 0.55 },
+              endAdornment: <InputAdornment position="end"><IconButton aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"} onClick={() => setShowPassword((visible) => !visible)} onMouseDown={(event) => event.preventDefault()} disabled={formDisabled} edge="end">{showPassword ? <VisibilityOffOutlined sx={{ color: "#007fa8" }} /> : <VisibilityOutlined sx={{ color: "#007fa8" }} />}</IconButton></InputAdornment>,
+            }} />
+            <HelperText>{formik.touched.password && formik.errors.password}</HelperText>
+          </FormControl>
+
+          {captchaRequired && <CaptchaGate onToken={onCaptchaToken} />}
+
+          <Box display="flex" justifyContent="flex-end" sx={{ mb: 3, mt: 1 }}>
+            <Typography component="a" href="/auth/forgotPassword" sx={{ color: "#007fa8", fontSize: "0.88rem", fontWeight: 500, textDecoration: "none", "&:hover": { textDecoration: "underline" } }}>¿Olvidaste tu contraseña?</Typography>
           </Box>
-        </Box>
-  
-        {/* Botón de inicio */}
-        <Box display="flex" justifyContent="center" sx={{ marginTop: "10px",marginLeft:"30px" }}>
-          <MuiButton
-            variant="contained"
-            sx={{
-              backgroundColor: "#64b5f6", // Azul claro
-              color: "#fff",
-              width: "200px", // Ajuste de ancho (moderado)
-              height: "35px", // Menos alto
-              fontSize: "0.75rem", // Tamaño reducido
-              textTransform: "none",
-              borderRadius: "5px",
-              "&:hover": {
-                backgroundColor: "#42a5f5", // Azul más oscuro al hover
-              },
-            }}
-            type="submit"
-          >
-            Entrar
+
+          <MuiButton variant="contained" fullWidth disabled={formDisabled} sx={{ minHeight: 48, backgroundColor: "#008dbb", color: "#fff", fontSize: "0.95rem", fontWeight: 700, textTransform: "none", borderRadius: 2, boxShadow: "0 8px 18px rgba(0, 120, 165, 0.22)", "&:hover": { backgroundColor: "#00789f" } }} type="submit">
+            {loading || isSubmitting ? <CircularProgress size={18} color="inherit" aria-label="Iniciando sesión" /> : cooldownSeconds > 0 ? `Espera ${cooldownSeconds}s` : "Entrar"}
           </MuiButton>
         </Box>
-  
-      </Box>
-    </form>
-  
-    <ToastContainer
-      position="top-right"
-      autoClose={5000}
-      hideProgressBar={false}
-      newestOnTop={false}
-      closeOnClick
-      rtl={false}
-      pauseOnFocusLoss
-      draggable
-      pauseOnHover
-    />
-  </>
+      </form>
+      <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
+    </>
   );
 };

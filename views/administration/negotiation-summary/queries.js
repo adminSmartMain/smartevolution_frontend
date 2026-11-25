@@ -1,3 +1,4 @@
+import { getAccessToken } from "@lib/auth/session";
 import Axios from "axios";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -6,7 +7,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 export const GetNegotiationSummary = async (id) => {
   const res = await Axios.get(`${API_URL}/report/negotiationSummary?opId=${id}`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -17,7 +18,7 @@ export const GetNegotiationSummary = async (id) => {
 export const CreateNegotiationSummary = async (data) => {
   const res = await Axios.post(`${API_URL}/report/negotiationSummary/`, data, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -29,7 +30,7 @@ export const ModifyNegotiationSummary = async (data, id) => {
     data,
     {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
     }
   );
@@ -42,7 +43,7 @@ export const ModifyNegotiationSummary = async (data, id) => {
 export const GetRiskProfile = async (data) => {
   const res = await Axios.get(`${API_URL}/riskProfile/client/${data}`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   console.log(`${API_URL}/riskProfile/client/${data}`)
@@ -55,7 +56,7 @@ export const GetRiskProfile = async (data) => {
 export const RegisterDepositQuery = async (data) => {
   const res = await Axios.post(`${API_URL}/emitter-deposit/`, data, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -65,7 +66,7 @@ export const DeleteDepositById = async (id) => {
   console.log("id a eliminar",id)
   const res = await Axios.delete(`${API_URL}/emitter-deposit/${id}`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -79,7 +80,7 @@ export const ModifyDepositQuery = async (data) => {
 
   const res = await Axios.patch(`${API_URL}/emitter-deposit/${data.id}`, data, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -90,7 +91,7 @@ export const GetPurchaseOrderPDF = async (data) => {
     `${API_URL}/report/purchaseOrder/${data}?type=emitter`,
     {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
     }
   );
@@ -102,7 +103,7 @@ export const GetSummaryByID = async (id) => {
     `${API_URL}/report/negotiationSummary?pdf=undefined&id=undefined&opId=${id}`,
     {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
     }
   );
@@ -112,7 +113,7 @@ export const GetSummaryByID = async (id) => {
 export const GetDepositsOnly = async (id) => {
   const res = await Axios.get(`${API_URL}/emitter-deposit?opId=${id}`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -122,7 +123,7 @@ export const GetDepositsOnly = async (id) => {
 export const GetBankById = async (id) => {
   const res = await Axios.get(`${API_URL}/bank/${id}`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -132,7 +133,7 @@ export const GetBankById = async (id) => {
 export const GetAccountTypeById = async (id) => {
   const res = await Axios.get(`${API_URL}/account_type/${id}`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;

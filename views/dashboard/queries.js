@@ -1,3 +1,4 @@
+import { getAccessToken } from "@lib/auth/session";
 import Axios from "axios";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -7,7 +8,7 @@ export const dashboardInfo = async (params = {}) => {
     `${API_URL}/dashboard`,
     {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
     }
   );

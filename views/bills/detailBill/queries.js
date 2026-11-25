@@ -1,3 +1,4 @@
+import { getAccessToken } from "@lib/auth/session";
 import Axios from "axios";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -5,7 +6,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 export const GetBillList = async (params) => {
   const res = await Axios.get(`${API_URL}/bill/`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
     params,
   });
@@ -15,7 +16,7 @@ export const GetBillList = async (params) => {
 export const GetBillListByQuery = async (page) => {
   const res = await Axios.get(`${API_URL}/bill/?page=${page}`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -24,7 +25,7 @@ export const GetBillListByQuery = async (page) => {
 export const DeleteBillById = async (id) => {
   const res = await Axios.delete(`${API_URL}/bill/${id}`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -36,7 +37,7 @@ export const SyncBillNow = async (id) => {
     {},
     {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
     }
   );
@@ -47,7 +48,7 @@ export const SyncBillNow = async (id) => {
 export const GetLastOperationId = async (id) => {
   const res = await Axios.get(`${API_URL}/preOperation/last`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -57,7 +58,7 @@ export const GetLastOperationId = async (id) => {
 export const getTypeBill = async () => {
   const res = await Axios.get(`${API_URL}/type_bill/`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -72,7 +73,7 @@ export const CreateOperation = async (values, op) => {
     },
     {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
     }
   );
@@ -88,7 +89,7 @@ export const CreateBillManually = async (values) => {
     },
     {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
     }
   );
@@ -99,7 +100,7 @@ export const CreateBillManually = async (values) => {
 export const GetOperationById = async (data) => {
   const res = await Axios.get(`${API_URL}/preOperation/${data}`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -108,7 +109,7 @@ export const GetOperationById = async (data) => {
 export const GetBillFraction = async (id) => {
   const res = await Axios.get(`${API_URL}/preOperation/billFraction/${id}`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -117,7 +118,7 @@ export const GetBillFraction = async (id) => {
 export const DeleteOperation = async (id) => {
   const res = await Axios.delete(`${API_URL}/preOperation/${id}`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -126,7 +127,7 @@ export const DeleteOperation = async (id) => {
 export const GetRiskProfile = async (data) => {
   const res = await Axios.get(`${API_URL}/riskProfile/client/${data}`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -135,7 +136,7 @@ export const GetRiskProfile = async (data) => {
 export const Clients = async (data) => {
   const res = await Axios.get(`${API_URL}/client/all`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -146,7 +147,7 @@ export const Bills = async (data) => {
   if (data) {
     const res = await Axios.get(`${API_URL}/bill/${data}`, {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
     });
     return res.data;
@@ -161,7 +162,7 @@ export const EditBill = async (data) => {
     data, // Envía todos los datos en el cuerpo
     {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
     }
   );
@@ -171,7 +172,7 @@ export const EditBill = async (data) => {
 export const BillsByOperation = async (data) => {
   const res = await Axios.get(`${API_URL}/bill?opId=${data}`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -180,7 +181,7 @@ export const BillsByOperation = async (data) => {
 export const BrokerByClient = async (data) => {
   const res = await Axios.get(`${API_URL}/broker/client/${data}`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -189,7 +190,7 @@ export const BrokerByClient = async (data) => {
 export const payerByBill = async (data) => {
   const res = await Axios.get(`${API_URL}/bill?payerId=${data}`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -198,7 +199,7 @@ export const payerByBill = async (data) => {
 export const billById = async (data) => {
   const res = await Axios.get(`${API_URL}/bill?billEvent=${data}`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -206,7 +207,7 @@ export const billById = async (data) => {
 export const AccountsFromClient = async (data) => {
   const res = await Axios.get(`${API_URL}/account/client/${data}`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -216,7 +217,7 @@ export const AccountsFromClient = async (data) => {
 export const TypeOperation = async (data) => {
   const res = await Axios.get(`${API_URL}/type_operation`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -227,7 +228,7 @@ export const GetAllUsers = async (data) => {
   try {
     const res = await Axios.get(`${API_URL}/user/`, {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
     });
     return res.data;

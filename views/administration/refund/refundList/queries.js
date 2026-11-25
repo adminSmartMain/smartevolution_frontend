@@ -1,3 +1,4 @@
+import { getAccessToken } from "@lib/auth/session";
 import Axios from "axios";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -5,7 +6,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 export const GetRefund = async (params) => {
   const res = await Axios.get(`${API_URL}/refund`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
     params,
   });
@@ -18,7 +19,7 @@ export const GetRefundReceiptPDF = async (id) => {
     {},
     {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
     }
   );
@@ -28,7 +29,7 @@ export const GetRefundReceiptPDF = async (id) => {
 export const DeleteRefund = async (id) => {
   const res = await Axios.delete(`${API_URL}/refund/${id}`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;

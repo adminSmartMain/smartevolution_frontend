@@ -1,3 +1,4 @@
+import { getAccessToken } from "@lib/auth/session";
 import Axios from "axios";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -9,7 +10,7 @@ export const getOperationsVersionTwo = async (params = {}) => {
     }&investor=${params.investor || ""}&startDate=${params.startDate || ""}&endDate=${params.endDate || ""}&page=${params.page || 1}&status=${params.status ?? ""}`,
     {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
     }
   );
@@ -21,7 +22,7 @@ export const GetSummaryList = async (opId) => {
     `${API_URL}/report/negotiationSummary?pdf=undefined&id=undefined&opId=${opId}`,
     {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
    
     }
@@ -36,7 +37,7 @@ export const getOperationsVersionTwo2 = async (params = {}) => {
       params.billId || ""}&investor=${params.investor || ""}&page=${params.page || 1}&mode=operations&startDate=${params.startDate || ""}&endDate=${params.endDate || ""}&page=${params.page || 1}&status=${params.status ?? ""}`,
     {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
     }
   );
@@ -50,7 +51,7 @@ export const UpdateOperation = async (item) => {
     { ...item },
     {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
     }
   );
@@ -62,7 +63,7 @@ export const MassiveUpdateOperation = async (item) => {
     { ...item },
     {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
     }
   );
@@ -72,7 +73,7 @@ export const MassiveUpdateOperation = async (item) => {
 export const DeleteOperation = async (item) => {
   const res = await Axios.delete(`${API_URL}/preOperation/${item}`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -84,7 +85,7 @@ export const getMassiveOperationDrafts = async () => {
     `${API_URL}/preOperation/massive-drafts`,
     {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
     }
   );
@@ -97,7 +98,7 @@ export const deleteMassiveOperationDraft = async (draftId) => {
     `${API_URL}/preOperation/massive-drafts/${draftId}`,
     {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
     }
   );

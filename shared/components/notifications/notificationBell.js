@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import authContext from "@context/authContext";
 import {
   Badge,
   Box,
@@ -37,6 +38,7 @@ const formatNotificationDate = (value) => {
 
 export default function NotificationBell() {
   const router = useRouter();
+  const { authReady } = useContext(authContext);
   const [anchorEl, setAnchorEl] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -61,6 +63,7 @@ export default function NotificationBell() {
   }, []);
 
   useEffect(() => {
+    if (!authReady) return undefined;
     loadNotifications();
 
     const stopSocket = createNotificationsSocket({
@@ -93,7 +96,7 @@ export default function NotificationBell() {
         handleExternalChange
       );
     };
-  }, [loadNotifications]);
+  }, [authReady, loadNotifications]);
 
   const handleOpen = (event) => {
     setAnchorEl(event.currentTarget);

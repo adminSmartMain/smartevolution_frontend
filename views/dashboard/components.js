@@ -1,3 +1,4 @@
+import { getAccessToken } from "@lib/auth/session";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Alert,
@@ -358,12 +359,10 @@ export const DashboardContent = () => {
       setError(null);
 
       const response = await fetch(`${API_URL}/dashboard?periodo=${selectedPeriod}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("access-token")}` },
+        headers: { Authorization: `Bearer ${getAccessToken()}` },
       });
 
       if (response.status === 401) {
-        localStorage.removeItem("access-token");
-        localStorage.removeItem("refresh-token");
         window.location.assign("/auth/login");
         return;
       }

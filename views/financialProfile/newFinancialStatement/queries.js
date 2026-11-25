@@ -1,9 +1,8 @@
+import { getAccessToken } from "@lib/auth/session";
 import { totals } from "./libs/groups";
 
 import Axios from "axios";
 
-const token =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxOTQyMjk1OTkyLCJpYXQiOjE2Nzk0OTU5OTIsImp0aSI6IjU4OTc5YzVmYTgxODRlN2M4Y2NkNWJkNmYyNTc2ZTBlIiwidXNlcl9pZCI6ImU3OTkxZTQwLTE2ODQtNGZlOC05ZDcyLTU0NjMzMTM0MzEzZiIsIm5hbWUiOiJzbWFydCAgYWRtaW4iLCJyb2xlcyI6WyJzdXBlcnVzZXIiXSwiaXNfc3VwZXJ1c2VyIjp0cnVlfQ.eU3R88ps423NGzPieEX36OMPyvLVjqNq7IZz-SuOmOs";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -54,7 +53,7 @@ const changeObjectKeys = (data) => {
 export const GetFinancialProfileById = async (id) => {
   const res = await Axios.get(`${API_URL}/financialProfile/${id}/3`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -64,7 +63,7 @@ export const GetFinancialProfileById = async (id) => {
 export const GetCustomerById = async (id) => {
   const res = await Axios.get(`${API_URL}/client/${id}`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -87,7 +86,7 @@ export const AddNewPeriod = async (period) => {
     },
     {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
     }
   );
@@ -120,7 +119,7 @@ export const UpdatePeriod = async (
     { ...changedData, clientId: null },
     {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
     }
   );
@@ -146,7 +145,7 @@ export const UpdateFinancialCentral = async (
     },
     {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
     }
   );
@@ -156,7 +155,7 @@ export const UpdateFinancialCentral = async (
 export const getPeriodsType = async () => {
   const res = await Axios.get(`${API_URL}/type_period`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;

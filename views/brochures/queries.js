@@ -1,3 +1,4 @@
+import { getAccessToken } from "@lib/auth/session";
 import Axios from "axios";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -5,7 +6,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 export const GetBrochureList = async (type, params) => {
   const res = await Axios.get(`${API_URL}/selfManagement/${type}`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
     params,
   });
@@ -17,7 +18,7 @@ export const GetBrochureListByQuery = async (type, page) => {
     `${API_URL}/selfManagement/${type}?page=${page}`,
     {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
     }
   );
@@ -27,7 +28,7 @@ export const GetBrochureListByQuery = async (type, page) => {
 export const DeleteBrochureById = async (type, id) => {
   const res = await Axios.delete(`${API_URL}/selfManagement/${type}/${id}`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -41,7 +42,7 @@ export const AcceptBrochureById = async (type, id) => {
     },
     {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
     }
   );
@@ -56,7 +57,7 @@ export const RejectBrochureById = async (type, id) => {
     },
     {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
     }
   );
@@ -71,7 +72,7 @@ export const ReviewBrochureById = async (type, id) => {
     },
     {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
     }
   );
@@ -83,7 +84,7 @@ export const GetNaturalClientPDF = async (id) => {
     `${API_URL}/selfManagement/naturalClient?id=${id}`,
     {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
     }
   );
@@ -95,7 +96,7 @@ export const GetLegalClientPDF = async (id) => {
     `${API_URL}/selfManagement/legalClient?id=${id}`,
     {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
     }
   );
@@ -107,7 +108,7 @@ export const SendSignature = async (id, typeClient) => {
     `${API_URL}/selfManagement/${typeClient}?id=${id}`,
     {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
     }
   );

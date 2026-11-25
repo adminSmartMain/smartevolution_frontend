@@ -1,4 +1,9 @@
+import { getAccessToken } from "@lib/auth/session";
 const { test, expect } = require("@playwright/test");
+const corsHeaders = {
+  "access-control-allow-origin": "http://127.0.0.1:3000",
+  "access-control-allow-credentials": "true",
+};
 
 const token = (permissions = []) => {
   const payload = Buffer.from(
@@ -15,7 +20,7 @@ const token = (permissions = []) => {
 
 test("el login muestra un error si la API rechaza las credenciales", async ({ page }) => {
   await page.route("**/api/auth/login", (route) =>
-    route.fulfill({ status: 401, contentType: "application/json", body: '{"detail":"invalid"}' })
+    route.fulfill({ status: 401, contentType: "application/json", headers: corsHeaders, body: '{"detail":"invalid"}' })
   );
   await page.goto("/auth/login");
 
@@ -30,11 +35,12 @@ test("el login guarda sesión y navega al dashboard cuando la API responde corre
   await page.route("**/api/auth/login", (route) =>
     route.fulfill({
       contentType: "application/json",
-      body: JSON.stringify({ access: token(["bills.create"]), refresh: "refresh-for-qa" }),
+      headers: corsHeaders,
+      body: JSON.stringify({ access: token(["bills.create"]) }),
     })
   );
   await page.route("**/api/access-control/me/", (route) =>
-    route.fulfill({ contentType: "application/json", body: '{"data":{"permissions":["bills.create"]}}' })
+    route.fulfill({ contentType: "application/json", headers: corsHeaders, body: '{"data":{"permissions":["bills.create"]}}' })
   );
   await page.goto("/auth/login");
 
@@ -43,7 +49,9 @@ test("el login guarda sesión y navega al dashboard cuando la API responde corre
   await page.getByRole("button", { name: "Entrar" }).click();
 
   await expect(page).toHaveURL(/\/dashboard$/);
-  await expect(page.evaluate(() => localStorage.getItem("access-token"))).resolves.toBeTruthy();
+  await page.waitForTimeout(100);
+  await expect(page.evaluate(() => getAccessToken())).resolves.toBeNull();
+  await expect(page.evaluate(() => localStorage.getItem("refresh-token"))).resolves.toBeNull();
 });
 
 test("la contraseña se puede mostrar u ocultar sin cambiar su valor", async ({ page }) => {

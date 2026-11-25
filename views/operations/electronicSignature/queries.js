@@ -1,3 +1,4 @@
+import { getAccessToken } from "@lib/auth/session";
 import Axios from "axios";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -7,7 +8,7 @@ export const getBuyOrders = async (params = {}) => {
     params.opId = "undefined";
   const res = await Axios.get(`${API_URL}/buyOrder`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
     params,
   });
@@ -19,7 +20,7 @@ export const getNotifications = async (params) => {
     `${API_URL}/preOperation?opId=undefined&opIdV=undefined&notifications=electronicSignature&nOpId=undefined`,
     {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
       params,
     }
@@ -32,7 +33,7 @@ export const getOperationById = async (opId, investorId) => {
     `${API_URL}/preOperation?opId=undefined&opIdV=${opId}&investor=${investorId}`,
     {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
     }
   );
@@ -42,7 +43,7 @@ export const getOperationById = async (opId, investorId) => {
 export const sendBuyOrder = async (data) => {
   const res = await Axios.post(`${API_URL}/buyOrder`, data, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;

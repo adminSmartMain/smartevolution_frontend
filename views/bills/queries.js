@@ -1,3 +1,4 @@
+import { getAccessToken } from "@lib/auth/session";
 import Axios from "axios";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -5,7 +6,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 export const ReadBills = async (data) => {
   const res = await Axios.post(`${API_URL}/bill/read`, data, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -14,7 +15,7 @@ export const ReadBills = async (data) => {
 export const ReadCreditNotes = async (data) => {
   const res = await Axios.post(`${API_URL}/bill/read/credit-note`, data, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -23,18 +24,19 @@ export const ReadCreditNotes = async (data) => {
 export const SaveBills = async (data) => {
   const res = await Axios.post(`${API_URL}/bill/`, data, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
 };
 export const GetBillEvents = async (cufe) => {
-  
-
   try {
-    const res = await Axios.get(`https://api.billy.com.co/v2/invoices?cufe=${cufe}`, {
+    // Billy credentials must remain on the backend.  This endpoint performs
+    // the lookup with the server-side integration rather than exposing a
+    // provider token in browser code.
+    const res = await Axios.get(`${API_URL}/bill/?billEvent=${encodeURIComponent(cufe)}`, {
       headers: {
-        authorization: "Bearer " + "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpaWQiOiItTkJ0MnktbG8yaENyeFNEUFdZOSIsInNjcCI6eyJpbnYiOjB9LCJpYXQiOjE3NjI3ODQxODAsImV4cCI6MTc5NDMyMDE4MCwic3ViIjoiR0JXdWZHcWZSc1ZFNUp3ZmxiTXdtNTVKeWZIMyIsImp0aSI6Ii1PZGk2emJ3YjFSZU1hQ05oSlNSIn0.Io2W8NumwKrTosCq9S_RnzqyMYX8IOJF89VhAiihhts",
+        authorization: "Bearer " + getAccessToken(),
       },
     });
     

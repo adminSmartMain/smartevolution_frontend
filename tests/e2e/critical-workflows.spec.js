@@ -8,7 +8,6 @@ const token = (permissions) => {
 };
 
 async function prepareAuthorizedPage(page, permissions) {
-  await page.addInitScript((accessToken) => localStorage.setItem("access-token", accessToken), token(permissions));
   // The UI must render its form independently from production data. Individual
   // submission tests will replace these generic responses with exact fixtures.
   await page.route("**/api/**", (route) =>
@@ -16,6 +15,9 @@ async function prepareAuthorizedPage(page, permissions) {
   );
   await page.route("**/api/access-control/me/", (route) =>
     route.fulfill({ contentType: "application/json", body: JSON.stringify({ data: { permissions } }) })
+  );
+  await page.route("**/api/auth/token/refresh", (route) =>
+    route.fulfill({ contentType: "application/json", body: JSON.stringify({ access: token(permissions) }) })
   );
   // Customer wizard selectors expect these response shapes even when empty.
   await page.route("**/api/department", (route) =>
