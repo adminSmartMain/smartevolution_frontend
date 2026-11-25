@@ -8,6 +8,7 @@ const token = (permissions) => {
 };
 
 async function prepareAuthorizedPage(page, permissions) {
+  await page.context().addCookies([{ name: "se_csrf", value: "test-csrf", url: "http://127.0.0.1:3000" }]);
   // The UI must render its form independently from production data. Individual
   // submission tests will replace these generic responses with exact fixtures.
   await page.route("**/api/**", (route) =>

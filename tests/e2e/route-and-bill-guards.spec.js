@@ -12,6 +12,7 @@ const token = (permissions = []) => {
 };
 
 async function setSession(page, permissions) {
+  await page.context().addCookies([{ name: "se_csrf", value: "test-csrf", url: "http://127.0.0.1:3000" }]);
   await page.route("**/api/auth/token/refresh", (route) =>
     route.fulfill({ contentType: "application/json", headers: corsHeaders, body: JSON.stringify({ access: token(permissions) }) })
   );

@@ -38,13 +38,13 @@ export const InputAdornments = ({
         <Box sx={{ mt: 4, width: "100%" }}>
           <FormControl fullWidth sx={{ mb: 2 }}>
             <Typography component="label" htmlFor="email" sx={{ color: "#20385d", fontSize: "0.9rem", fontWeight: 500, mb: 0.75 }}>Correo electrónico</Typography>
-            <MuiTextField id="email" placeholder="Ingresa tu correo electrónico" name="email" type="email" aria-label="Correo electrónico" onChange={formik.handleChange} onBlur={formik.handleBlur} value={formik.values.email} disabled={formDisabled} variant="standard" fullWidth InputProps={{ disableUnderline: true, sx: { px: 2, py: 0.55 } }} error={formik.touched.email && Boolean(formik.errors.email)} sx={fieldStyles(formik.touched.email && Boolean(formik.errors.email))} />
+            <MuiTextField id="email" placeholder="Ingresa tu correo electrónico" name="email" type="email" onChange={formik.handleChange} onBlur={formik.handleBlur} value={formik.values.email} disabled={formDisabled} variant="standard" fullWidth InputProps={{ disableUnderline: true, sx: { px: 2, py: 0.55 } }} error={formik.touched.email && Boolean(formik.errors.email)} sx={fieldStyles(formik.touched.email && Boolean(formik.errors.email))} />
             <HelperText>{formik.touched.email && formik.errors.email}</HelperText>
           </FormControl>
 
           <FormControl fullWidth sx={{ mb: 1 }}>
             <Typography component="label" htmlFor="password" sx={{ color: "#20385d", fontSize: "0.9rem", fontWeight: 500, mb: 0.75 }}>Contraseña</Typography>
-            <MuiTextField id="password" placeholder="Ingresa tu contraseña" aria-label="Contraseña" name="password" type={showPassword ? "text" : "password"} onChange={formik.handleChange} onBlur={formik.handleBlur} value={formik.values.password} disabled={formDisabled} variant="standard" fullWidth error={formik.touched.password && Boolean(formik.errors.password)} sx={fieldStyles(formik.touched.password && Boolean(formik.errors.password))} InputProps={{
+            <MuiTextField id="password" placeholder="Ingresa tu contraseña" name="password" type={showPassword ? "text" : "password"} onChange={formik.handleChange} onBlur={formik.handleBlur} value={formik.values.password} disabled={formDisabled} variant="standard" fullWidth error={formik.touched.password && Boolean(formik.errors.password)} sx={fieldStyles(formik.touched.password && Boolean(formik.errors.password))} InputProps={{
               disableUnderline: true,
               sx: { pl: 2, pr: 0.5, py: 0.55 },
               endAdornment: <InputAdornment position="end"><IconButton aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"} onClick={() => setShowPassword((visible) => !visible)} onMouseDown={(event) => event.preventDefault()} disabled={formDisabled} edge="end">{showPassword ? <VisibilityOffOutlined sx={{ color: "#007fa8" }} /> : <VisibilityOutlined sx={{ color: "#007fa8" }} />}</IconButton></InputAdornment>,

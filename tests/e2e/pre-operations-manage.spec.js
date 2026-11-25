@@ -44,6 +44,7 @@ const json = (route, data) => route.fulfill({
 });
 
 async function prepareManagePage(page) {
+  await page.context().addCookies([{ name: "se_csrf", value: "test-csrf", url: "http://127.0.0.1:3000" }]);
   await page.route("**/api/**", async (route) => {
     const path = new URL(route.request().url()).pathname;
     if (path === "/api/auth/token/refresh") return json(route, { access: token(["preoperations.create"]) });

@@ -1,4 +1,3 @@
-import { getAccessToken } from "@lib/auth/session";
 const { test, expect } = require("@playwright/test");
 const corsHeaders = {
   "access-control-allow-origin": "http://127.0.0.1:3000",
@@ -49,8 +48,7 @@ test("el login guarda sesión y navega al dashboard cuando la API responde corre
   await page.getByRole("button", { name: "Entrar" }).click();
 
   await expect(page).toHaveURL(/\/dashboard$/);
-  await page.waitForTimeout(100);
-  await expect(page.evaluate(() => getAccessToken())).resolves.toBeNull();
+  await expect(page.evaluate(() => localStorage.getItem("access-token"))).resolves.toBeNull();
   await expect(page.evaluate(() => localStorage.getItem("refresh-token"))).resolves.toBeNull();
 });
 
@@ -60,7 +58,7 @@ test("la contraseña se puede mostrar u ocultar sin cambiar su valor", async ({ 
 
   await password.fill("Password_123");
   await expect(password).toHaveAttribute("type", "password");
-  await page.getByLabel("toggle password visibility").click();
+  await page.getByLabel("Mostrar contraseña").click();
 
   await expect(password).toHaveAttribute("type", "text");
   await expect(password).toHaveValue("Password_123");

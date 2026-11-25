@@ -8,9 +8,9 @@ test("muestra el formulario de inicio de sesión", async ({ page }) => {
   await page.goto("/auth/login");
 
   await expect(page).toHaveTitle("Smart Evolution - Inicio de sesión");
-  await expect(page.getByText("Inicia sesión")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Bienvenido" })).toBeVisible();
   await expect(page.getByLabel("Correo electrónico")).toBeVisible();
-  await expect(page.getByLabel("Contraseña")).toBeVisible();
+  await expect(page.getByLabel("Contraseña", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Entrar" })).toBeVisible();
   await expect(page.getByRole("link", { name: "¿Olvidaste tu contraseña?" })).toHaveAttribute(
     "href",
@@ -39,7 +39,7 @@ test("bloquea doble envío mientras el login está en curso", async ({ page }) =
   await page.goto("/auth/login");
   await page.locator('input[name="email"]').fill("security@example.com");
   await page.locator('input[name="password"]').fill("SecurePass_123!");
-  const submit = page.getByRole("button", { name: "Entrar" });
+  const submit = page.locator('button[type="submit"]');
 
   await submit.dblclick();
   await expect(submit).toBeDisabled();
