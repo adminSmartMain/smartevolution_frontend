@@ -18,7 +18,7 @@ export const StandardTextField = (props) => {
         {...rest}
         customInput={DefaultTextField}
         onValueChange={(values) => {
-          onChangeMasked(values);
+          onChangeMasked?.(values);
         }}
       />
     );
@@ -29,7 +29,7 @@ export const StandardTextField = (props) => {
         {...rest}
         customInput={DefaultTextField}
         onValueChange={(values) => {
-          onChangeMasked(values);
+          onChangeMasked?.(values);
         }}
       />
     );

@@ -227,7 +227,7 @@ Por solicitud cambia el factor de GM de 0,004 a 0,002 a partir del 26 de octubre
                     }
                     value={formik.values.amount}
                     onChangeMasked={(values) => {
-                      formik.setFieldValue("amount", values.floatValue || null);
+                      formik.setFieldValue("amount", values.floatValue ?? null);
                     }}
                     sx={
                       formik.touched.amount && Boolean(formik.errors.amount)
@@ -281,9 +281,6 @@ Por solicitud cambia el factor de GM de 0,004 a 0,002 a partir del 26 de octubre
                     allowNegative={false}
                     disabled={true}
                     margin="normal"
-                    onChangeMasked={(values) => {
-                      formik.setFieldValue("amount", values.floatValue);
-                    }}
                     sx={
                       formik.touched.amount && Boolean(formik.errors.amount)
                         ? {
