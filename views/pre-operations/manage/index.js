@@ -1,3 +1,4 @@
+import { getAccessToken } from "@lib/auth/session";
 // Hooks
 import { useEffect, useState } from "react";
 // Alerts
@@ -455,7 +456,7 @@ const verificarSaldosFacturas = async (billIds, facturasTransformadas) => {
             url,
             {
               headers: {
-                Authorization: `Bearer ${localStorage.getItem("access-token")}`,
+                Authorization: `Bearer ${getAccessToken()}`,
               },
               //timeout: 10000,
             }

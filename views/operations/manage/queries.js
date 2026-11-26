@@ -1,3 +1,4 @@
+import { getAccessToken } from "@lib/auth/session";
 import Axios from "axios";
 
 
@@ -7,7 +8,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 export const GetLastOperationId = async (id) => {
   const res = await Axios.get(`${API_URL}/preOperation/last`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -16,7 +17,7 @@ export const GetLastOperationId = async (id) => {
 export const getAllOperations  = async (data) => {
   const res = await Axios.get(`${API_URL}/preOperation/`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -39,7 +40,7 @@ export const CreateOperation = async (values, op) => {
       },
       {
         headers: {
-          authorization: "Bearer " + localStorage.getItem("access-token"),
+          authorization: "Bearer " + getAccessToken(),
         },
       }
     );
@@ -55,7 +56,7 @@ export const CreateOperation = async (values, op) => {
         },
         {
           headers: {
-            authorization: "Bearer " + localStorage.getItem("access-token"),
+            authorization: "Bearer " + getAccessToken(),
           },
         }
       );
@@ -80,7 +81,7 @@ export const UpdateOperation = async (data, previousValues, previousDeleted) => 
           { ...item },
           {
             headers: {
-              authorization: "Bearer " + localStorage.getItem("access-token"),
+              authorization: "Bearer " + getAccessToken(),
             },
           }
         );
@@ -97,7 +98,7 @@ export const UpdateOperation = async (data, previousValues, previousDeleted) => 
           },
           {
             headers: {
-              authorization: "Bearer " + localStorage.getItem("access-token"),
+              authorization: "Bearer " + getAccessToken(),
             },
           }
         );
@@ -118,7 +119,7 @@ export const UpdateOperation = async (data, previousValues, previousDeleted) => 
       { ...data[0] },
       {
         headers: {
-          authorization: "Bearer " + localStorage.getItem("access-token"),
+          authorization: "Bearer " + getAccessToken(),
         },
       }
     );
@@ -129,7 +130,7 @@ export const UpdateOperation = async (data, previousValues, previousDeleted) => 
 export const GetOperationById = async (data) => {
   const res = await Axios.get(`${API_URL}/preOperation/${data}?id=${data}`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -138,7 +139,7 @@ export const GetOperationById = async (data) => {
 export const GetBillFraction = async (id) => {
   const res = await Axios.get(`${API_URL}/preOperation/billFraction/${id}`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -147,7 +148,7 @@ export const GetBillFraction = async (id) => {
 export const DeleteOperation = async (id) => {
   const res = await Axios.delete(`${API_URL}/preOperation/${id}`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -156,7 +157,7 @@ export const DeleteOperation = async (id) => {
 export const GetRiskProfile = async (data) => {
   const res = await Axios.get(`${API_URL}/riskProfile/client/${data}`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;

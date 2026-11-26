@@ -1,3 +1,4 @@
+import { getAccessToken } from "@lib/auth/session";
 import Axios from "axios";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -5,7 +6,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 const authHeaders = () => ({
   authorization:
     "Bearer " +
-    localStorage.getItem("access-token"),
+    getAccessToken(),
 });
 
 export const normalizeNotification = (notification) => {
@@ -105,7 +106,7 @@ const getNotificationsWebSocketUrl = () => {
     return null;
   }
 
-  const token = localStorage.getItem("access-token");
+  const token = getAccessToken();
   if (!token || !API_URL) {
     return null;
   }

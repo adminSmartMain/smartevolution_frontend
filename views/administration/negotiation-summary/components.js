@@ -1,3 +1,4 @@
+import { getAccessToken } from "@lib/auth/session";
 import { useEffect, useState } from "react";
 import Axios from "axios";
 import Link from "next/link";
@@ -252,7 +253,7 @@ useEffect(() => {
           `${API_URL}/report/negotiationSummary?opId=${opIdSelected}&mode=query`,
           {
             headers: {
-              authorization: `Bearer ${localStorage.getItem("access-token")}`,
+              authorization: `Bearer ${getAccessToken()}`,
             },
           }
         );

@@ -1,3 +1,4 @@
+import { getAccessToken } from "@lib/auth/session";
 import { useState } from "react";
 import { useEffect,useRef } from "react";
 import Axios from "axios";
@@ -576,7 +577,7 @@ useEffect(() => {
           // Realizamos la solicitud al backend con los parámetros actualizados
           const response = await Axios.get(url, {
               headers: {
-                  authorization: `Bearer ${localStorage.getItem("access-token")}`,
+                  authorization: `Bearer ${getAccessToken()}`,
               },
               params: Object.fromEntries(params.entries()), // Convertimos URLSearchParams a un objeto plano
           });
@@ -594,7 +595,7 @@ useEffect(() => {
           setPage(1)
               const response = await Axios.get(url, {
                   headers: {
-                      authorization: `Bearer ${localStorage.getItem("access-token")}`,
+                      authorization: `Bearer ${getAccessToken()}`,
                   },
                   params: Object.fromEntries(params.entries()),
               });
@@ -656,7 +657,7 @@ const clearFilters = async () => {
     // Realizamos la solicitud al backend con los parámetros actualizados
     const responsef = await Axios.get(url, {
       headers: {
-          authorization: `Bearer ${localStorage.getItem("access-token")}`,
+          authorization: `Bearer ${getAccessToken()}`,
       },
       params: Object.fromEntries(params.entries()), // Convertimos URLSearchParams a un objeto plano
   });
@@ -770,7 +771,7 @@ const clearFilters = async () => {
       // Realizar la solicitud al backend
     const responsea = await Axios.get(url, {
       headers: {
-        authorization: `Bearer ${localStorage.getItem("access-token")}`,
+        authorization: `Bearer ${getAccessToken()}`,
       },
       params: params,
     });
@@ -879,7 +880,7 @@ const handleClosePicker = async () => {
     // Realizar la solicitud al backend
     const response = await Axios.get(url, {
       headers: {
-        authorization: `Bearer ${localStorage.getItem("access-token")}`,
+        authorization: `Bearer ${getAccessToken()}`,
       },
       params: params,
     });

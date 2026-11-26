@@ -1,3 +1,4 @@
+import { getAccessToken } from "@lib/auth/session";
 import Axios from "axios";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -7,7 +8,7 @@ export const getOperationById = async (data) => {
     `${API_URL}/preOperation?opId=undefined&opIdV=${data.opId}&investor=${data.investor}`,
     {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
     }
   );
@@ -17,7 +18,7 @@ export const getOperationById = async (data) => {
 export const sendBuyOrder = async (data) => {
   const res = await Axios.post(`${API_URL}/buyOrder/`, data, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -32,7 +33,7 @@ export const GetBuyOrderPDF = async (NoOP, investor) => {
     },
     {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
     }
   );

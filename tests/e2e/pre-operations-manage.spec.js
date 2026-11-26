@@ -44,9 +44,10 @@ const json = (route, data) => route.fulfill({
 });
 
 async function prepareManagePage(page) {
-  await page.addInitScript((accessToken) => localStorage.setItem("access-token", accessToken), token(["preoperations.create"]));
+  await page.context().addCookies([{ name: "se_csrf", value: "test-csrf", url: "http://127.0.0.1:3000" }]);
   await page.route("**/api/**", async (route) => {
     const path = new URL(route.request().url()).pathname;
+    if (path === "/api/auth/token/refresh") return json(route, { access: token(["preoperations.create"]) });
     if (path === "/api/access-control/me/") return json(route, { data: { permissions: ["preoperations.create"] } });
     if (path === "/api/client/all") return json(route, { data: clients });
     if (path === "/api/preOperation/last") return json(route, { data: 2264 });

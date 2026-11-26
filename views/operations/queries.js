@@ -1,3 +1,4 @@
+import { getAccessToken } from "@lib/auth/session";
 import Axios from "axios";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -8,7 +9,7 @@ export const getOperationsVersionTwo = async (params = {}) => {
       params.billId || ""}&investor=${params.investor || ""}&page=${params.page || 1}&mode=operations&startDate=${params.startDate || ""}&endDate=${params.endDate || ""}&status=${params.status ?? ""}`,
     {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
     }
   );

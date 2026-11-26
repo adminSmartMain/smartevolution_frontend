@@ -1,6 +1,7 @@
+import { getAccessToken } from "@lib/auth/session";
 import Axios from "axios";
 const API = `${process.env.NEXT_PUBLIC_API_URL}/access-control`;
-const config = () => ({ headers: { authorization: `Bearer ${localStorage.getItem("access-token")}` } });
+const config = () => ({ headers: { authorization: `Bearer ${getAccessToken()}` } });
 const userPayload = (data) => {
   if (typeof data?.profile_photo !== "string" || !data.profile_photo.startsWith("data:")) return data;
   const [metadata, encoded] = data.profile_photo.split(",");

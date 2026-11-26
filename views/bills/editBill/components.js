@@ -1,3 +1,4 @@
+import { getAccessToken } from "@lib/auth/session";
 import { useEffect, useState, useContext, useMemo } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import axios from 'axios';
@@ -203,7 +204,7 @@ const debouncedCheckBill = debounce(async (billNumber, callback) => {
         `${process.env.NEXT_PUBLIC_API_URL}/bill/${billNumber}`,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("access-token")}`,
+            Authorization: `Bearer ${getAccessToken()}`,
           },
           timeout: 10000,
         }

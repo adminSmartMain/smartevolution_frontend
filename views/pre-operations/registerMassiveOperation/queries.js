@@ -1,3 +1,4 @@
+import { getAccessToken } from "@lib/auth/session";
 import Axios from "axios";
 
 import { toast } from 'react-toastify'; // Asegúrate de tener instalada la librería
@@ -9,7 +10,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 export const GetLastOperationId = async (id) => {
   const res = await Axios.get(`${API_URL}/preOperation/last`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -25,7 +26,7 @@ export const CreateOperation = async (values, op) => {
       },
       {
         headers: {
-          authorization: "Bearer " + localStorage.getItem("access-token"),
+          authorization: "Bearer " + getAccessToken(),
         },
       }
     );
@@ -59,7 +60,7 @@ export const UpdateOperation = async (data) => {
           item,
           {
             headers: {
-              authorization: "Bearer " + localStorage.getItem("access-token"),
+              authorization: "Bearer " + getAccessToken(),
             },
           }
         );
@@ -76,7 +77,7 @@ export const UpdateOperation = async (data) => {
         data[0],
         {
           headers: {
-            authorization: "Bearer " + localStorage.getItem("access-token"),
+            authorization: "Bearer " + getAccessToken(),
           },
         }
       );
@@ -88,7 +89,7 @@ export const UpdateOperation = async (data) => {
 export const GetOperationById = async (data) => {
   const res = await Axios.get(`${API_URL}/preOperation/${data}`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -101,7 +102,7 @@ export const getOperationsByInvestor = async (params = {}) => {
     `${API_URL}/preOperation?status=0&investor=${params.investor || ""}`,
     {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
     }
   );
@@ -113,7 +114,7 @@ export const getOperationsByInvestor = async (params = {}) => {
 export const GetBillFraction = async (id) => {
   const res = await Axios.get(`${API_URL}/preOperation/billFraction/${id}`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -122,7 +123,7 @@ export const GetBillFraction = async (id) => {
 export const DeleteOperation = async (id) => {
   const res = await Axios.delete(`${API_URL}/preOperation/${id}`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -131,7 +132,7 @@ export const DeleteOperation = async (id) => {
 export const GetRiskProfile = async (data) => {
   const res = await Axios.get(`${API_URL}/riskProfile/client/${data}`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -140,7 +141,7 @@ export const GetRiskProfile = async (data) => {
 export const Clients = async (data) => {
   const res = await Axios.get(`${API_URL}/client/all`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -151,7 +152,7 @@ export const Bills = async (data) => {
   if (data) {
     const res = await Axios.get(`${API_URL}/bill/${data}`, {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
     });
     return res.data;
@@ -161,7 +162,7 @@ export const Bills = async (data) => {
 export const BillsByOperation = async (data) => {
   const res = await Axios.get(`${API_URL}/bill?opId=${data}`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -170,7 +171,7 @@ export const BillsByOperation = async (data) => {
 export const BrokerByClient = async (data) => {
   const res = await Axios.get(`${API_URL}/broker/client/${data}`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -179,7 +180,7 @@ export const BrokerByClient = async (data) => {
 export const payerByBill = async (data) => {
   const res = await Axios.get(`${API_URL}/bill?payerId=${data}`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -188,7 +189,7 @@ export const payerByBill = async (data) => {
 export const billById = async (data) => {
   const res = await Axios.get(`${API_URL}/bill?reBuy=${data}`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -196,7 +197,7 @@ export const billById = async (data) => {
 export const AccountsFromClient = async (data) => {
   const res = await Axios.get(`${API_URL}/account/client/${data}`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -206,7 +207,7 @@ export const AccountsFromClient = async (data) => {
 export const TypeOperation = async (data) => {
   const res = await Axios.get(`${API_URL}/type_operation`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -220,7 +221,7 @@ export const GetSummaryList = async (params) => {
     `${API_URL}/report/negotiationSummary?pdf=undefined&id=undefined&opId=undefined`,
     {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
       params,
     }
@@ -233,7 +234,7 @@ export const GetSummaryList = async (params) => {
 export const uploadExcel = async (formData) => {
   const res = await Axios.post(`${API_URL}/preOperation/uploadExcel`, formData, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
       "Content-Type": "multipart/form-data",
     },
   });
@@ -244,7 +245,7 @@ export const uploadExcel = async (formData) => {
 export const registerOperationFromUpload = async (payload) => {
   const res = await Axios.post(`${API_URL}/preOperation/registerOperationFromUpload`, payload, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -254,7 +255,7 @@ export const GetBillFractionBulk = async (payload) => {
 
     const res = await Axios.post(`${API_URL}/preOperation/billFractionBulk`, payload, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -267,7 +268,7 @@ export const GetClientsWithAccounts = async (payload) => {
     payload,
     {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
     }
   );
@@ -280,7 +281,7 @@ export const downloadMassiveOperationReceiptPdf = async (opId) => {
     `${API_URL}/preOperation/massive-receipt/${opId}`,
     {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
       responseType: "blob",
     }
@@ -295,7 +296,7 @@ export const createMassiveOperationDraft = async (payload) => {
     payload,
     {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
     }
   );
@@ -309,7 +310,7 @@ export const updateMassiveOperationDraft = async ({ draftId, payload }) => {
     payload,
     {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
     }
   );
@@ -322,7 +323,7 @@ export const getMassiveOperationDraft = async (draftId) => {
     `${API_URL}/preOperation/massive-drafts/${draftId}`,
     {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
     }
   );
@@ -336,7 +337,7 @@ export const validateMassiveOperationDraft = async (draftId) => {
     {},
     {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
     }
   );
@@ -353,7 +354,7 @@ export const markMassiveOperationDraftRegistered = async ({
     { registeredOpId },
     {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
     }
   );
@@ -366,7 +367,7 @@ export const getMassiveOperationDrafts = async () => {
     `${API_URL}/preOperation/massive-drafts?status=DRAFT`,
     {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
     }
   );

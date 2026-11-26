@@ -1,4 +1,8 @@
 const { test, expect } = require("@playwright/test");
+const corsHeaders = {
+  "access-control-allow-origin": "http://127.0.0.1:3000",
+  "access-control-allow-credentials": "true",
+};
 
 const token = (permissions = []) => {
   const payload = Buffer.from(
@@ -8,9 +12,12 @@ const token = (permissions = []) => {
 };
 
 async function setSession(page, permissions) {
-  await page.addInitScript((accessToken) => localStorage.setItem("access-token", accessToken), token(permissions));
+  await page.context().addCookies([{ name: "se_csrf", value: "test-csrf", url: "http://127.0.0.1:3000" }]);
+  await page.route("**/api/auth/token/refresh", (route) =>
+    route.fulfill({ contentType: "application/json", headers: corsHeaders, body: JSON.stringify({ access: token(permissions) }) })
+  );
   await page.route("**/api/access-control/me/", (route) =>
-    route.fulfill({ contentType: "application/json", body: JSON.stringify({ data: { permissions } }) })
+    route.fulfill({ contentType: "application/json", headers: corsHeaders, body: JSON.stringify({ data: { permissions } }) })
   );
 }
 

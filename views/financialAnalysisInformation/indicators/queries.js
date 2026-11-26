@@ -1,3 +1,4 @@
+import { getAccessToken } from "@lib/auth/session";
 import Axios from "axios";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -6,7 +7,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 export const GetFinancialProfileById = async (id) => {
   const res = await Axios.get(`${API_URL}/financial_profile/${id}`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -16,7 +17,7 @@ export const GetFinancialProfileById = async (id) => {
 export const GetCustomerById = async (id) => {
   const res = await Axios.get(`${API_URL}/client/${id}`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -26,7 +27,7 @@ export const GetCustomerById = async (id) => {
 export const GetFinancialProfileIndicatorsById = async (id) => {
   const res = await Axios.get(`${API_URL}/financialProfile/indicators/${id}`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -37,7 +38,7 @@ export const GetFinancialProfileIndicatorsPDF = async (id) => {
     `${API_URL}/financialProfile/indicators/${id}?pdf=true`,
     {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
     }
   );

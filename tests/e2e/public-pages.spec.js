@@ -4,7 +4,7 @@ test("la raíz redirige al inicio de sesión", async ({ page }) => {
   await page.goto("/");
 
   await expect(page).toHaveURL(/\/auth\/login$/);
-  await expect(page.getByText("Inicia sesión")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Bienvenido" })).toBeVisible();
 });
 
 test("el login valida correo y contraseña antes de enviar", async ({ page }) => {

@@ -1,3 +1,4 @@
+import { getAccessToken } from "@lib/auth/session";
 import Axios from "axios";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -5,7 +6,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 export const GetBillList = async (params={}) => {
   const res = await Axios.get(`${API_URL}/bill/`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
     params,
   });
@@ -15,7 +16,7 @@ export const GetBillList = async (params={}) => {
 export const GetBillListByQuery = async (page) => {
   const res = await Axios.get(`${API_URL}/bill/?page=${page}`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -24,7 +25,7 @@ export const GetBillListByQuery = async (page) => {
 export const DeleteBillById = async (id) => {
   const res = await Axios.delete(`${API_URL}/bill/${id}`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -36,7 +37,7 @@ export const GetBillEvents = async (id) => {
   try {
     const res = await Axios.get(`${API_URL}/bill/?billEvent=${id}`, {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
     });
     
@@ -51,7 +52,7 @@ export const GetBillEvents = async (id) => {
 export const getTypeBill = async () => {
   const res = await Axios.get(`${API_URL}/type_bill/`, {
     headers: {
-      authorization: "Bearer " + localStorage.getItem("access-token"),
+      authorization: "Bearer " + getAccessToken(),
     },
   });
   return res.data;
@@ -62,7 +63,7 @@ export const UpdateBillWatchlist = async (id, enabled) => {
     { enabled },
     {
       headers: {
-        authorization: "Bearer " + localStorage.getItem("access-token"),
+        authorization: "Bearer " + getAccessToken(),
       },
     }
   );

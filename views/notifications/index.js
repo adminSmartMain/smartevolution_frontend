@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import authContext from "@context/authContext";
 
 import {
   Alert,
@@ -29,6 +30,7 @@ import NotificationPreview from "./components/NotificationPreview";
 
 export default function NotificationsView() {
   const theme = useTheme();
+  const { authReady } = useContext(authContext);
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   const [notifications, setNotifications] = useState([]);
@@ -60,6 +62,7 @@ export default function NotificationsView() {
   }, []);
 
   useEffect(() => {
+    if (!authReady) return undefined;
     loadNotifications();
 
     const stopSocket = createNotificationsSocket({
@@ -90,7 +93,7 @@ export default function NotificationsView() {
         handleExternalChange
       );
     };
-  }, [loadNotifications]);
+  }, [authReady, loadNotifications]);
 
   const unreadCount = notifications.filter(
     (notification) => !notification.read

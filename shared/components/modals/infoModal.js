@@ -128,12 +128,19 @@ const SecurityDialog = () => {
           <DialogContent dividers>
             <Alert severity="info" icon={false} sx={{ mb: 2 }}>
               <Typography variant="body1" gutterBottom>
-                <strong>🔒 ¡Protege los datos de nuestros clientes!</strong>
+                <strong>🔒 ¡Protejamos la información de nuestros clientes!</strong>
               </Typography>
               <Typography variant="body1">
-                Por seguridad, nunca compartas tu usuario o clave, ni dentro ni
-                fuera de SmartEvolution. Así garantizamos transparencia y
-                protección en todas las transacciones.
+                Antes de ingresar tus credenciales o compartir información financiera,
+                verifica que estés utilizando un portal oficial de Smart Evolution.
+              </Typography>
+              <Typography variant="body1" sx={{ mt: 1 }}>
+                Nunca compartas contraseñas ni códigos de verificación por correo,
+                mensajes o enlaces desconocidos.
+              </Typography>
+              <Typography variant="body1" sx={{ mt: 1 }}>
+                Si recibes una solicitud sospechosa, confirma su autenticidad mediante
+                los canales oficiales de la empresa.
               </Typography>
             </Alert>
           </DialogContent>

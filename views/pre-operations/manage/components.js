@@ -1,3 +1,4 @@
+import { getAccessToken } from "@lib/auth/session";
 // components/RegisterOperationForm.js
 import React, { useEffect, useMemo, useState, useContext } from "react";
 import { debounce, set } from 'lodash';
@@ -518,7 +519,7 @@ const handleFileChange = (event, setFieldValue, index) => {
         `${process.env.NEXT_PUBLIC_API_URL}/bill/${billNumber}`,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("access-token")}`,
+            Authorization: `Bearer ${getAccessToken()}`,
           },
           timeout: 10000,
         }
